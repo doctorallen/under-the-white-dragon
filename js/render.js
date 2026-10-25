@@ -2,9 +2,8 @@
 // ---------------------------------------------------------------------------
 // Drawing a frame. The picture is made small (about T.view.min px on the
 // short side) and scaled up by whole pixels. The far layer, the painted
-// chunks and the props are drawn, then the light: a banded light map, worked
-// out on a 4 px grid fixed to the world so the bands hold still, multiplied
-// over them. People are lit after that, each by the light where they stand
+// chunks and the props are drawn, then the light: a light map worked out on a
+// 4 px grid fixed to the world and scaled up smooth, multiplied over them. People are lit after that, each by the light where they stand
 // but never below a floor, so a figure always reads against the wall. Then
 // the parts of props in front of people, what glows (with a bloom), the wet
 // ground's reflections, and the rain.
@@ -57,8 +56,11 @@ function render() {
   // the light
   lightMap(cx, cy);
   const LC = V.LC, lw = V.lc.width, lh = V.lc.height, ox = -(((cx % LC) + LC) % LC), oy = -(((cy % LC) + LC) % LC);
-  g.globalCompositeOperation = 'multiply'; g.drawImage(V.lc, ox, oy, lw * LC, lh * LC);
-  g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.1; g.drawImage(V.lc, ox, oy, lw * LC, lh * LC); g.globalAlpha = 1;
+  // the light is smooth: its grid is scaled up with filtering, so no cell edges show
+  g.imageSmoothingEnabled = true;
+  g.globalCompositeOperation = 'multiply'; g.drawImage(V.lc, ox - LC / 2, oy - LC / 2, lw * LC, lh * LC);
+  g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.1; g.drawImage(V.lc, ox - LC / 2, oy - LC / 2, lw * LC, lh * LC); g.globalAlpha = 1;
+  g.imageSmoothingEnabled = false;
   g.globalCompositeOperation = 'source-over';
   // people, enemies, the runner
   const actor = (s, x, y, flash) => {
@@ -74,7 +76,7 @@ function render() {
     if (s.e) gg.drawImage(s.e, sx, sy);
   };
   for (const n of Actors.npcs) if (!n.hidden) { const pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 7) % 4) : n.act === 'sit' ? 'sit' : 'stand'; actor(Actors.art(n, pose, n.face < 0), n.x, n.y); }
-  for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.drawImage(V.lc, 0, 0, lw, lh, ox - sx, oy - sy, lw * LC, lh * LC); t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); } }
+  for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); } }
   for (const e of Actors.enemies) { const s = Actors.enemyArt(e); actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0); }
   if (Player.inv <= 0 || Math.floor(Game.t * 16) % 2) actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1);
   // bolts and sparks: all glow
@@ -124,7 +126,7 @@ function lightAt(x, y, ox, oy) {
 }
 // ---- the light map ------------------------------------------------------------
 function lightMap(cx, cy) {
-  const V = View, LC = V.LC, lw = V.lc.width, lh = V.lc.height, d = V.limg.data, bands = T.light.bands, L = World.L, w = V.w, h = V.h;
+  const V = View, LC = V.LC, lw = V.lc.width, lh = V.lc.height, d = V.limg.data, L = World.L, w = V.w, h = V.h;
   const gx0 = Math.floor(cx / LC), gy0 = Math.floor(cy / LC);
   const lights = [];
   for (const l of L.lights) if (l.x > cx - l.r && l.x < cx + w + l.r && l.y > cy - l.r && l.y < cy + h + l.r) lights.push(l);
@@ -143,7 +145,7 @@ function lightMap(cx, cy) {
       let r = a[0], g = a[1], b = a[2];
       for (const l of row) { const dx = wx - l.x, dy = (wy - l.y) * (l.flat || 1), dd = dx * dx + dy * dy; if (dd > l.r * l.r) continue; const f = Math.pow(1 - Math.sqrt(dd) / l.r, 1.5) * l.k; r += f * l.c[0]; g += f * l.c[1]; b += f * l.c[2]; }
       if (low) { r = Math.max(r, low * 0.8); g = Math.max(g, low); b = Math.max(b, low * 0.9); }
-      const dz = (hash(gx0 + i, gy0 + j, 13) - 0.5) * 0.6, mx = Math.max(r, g, b, 0.001), qm = clamp(Math.round(Math.min(mx, 1.3) / 1.3 * bands + dz) / bands * 1.3, 0.03, 1.3), k = qm / mx;
+      const mx = Math.max(r, g, b, 0.001), qm = clamp(mx, 0.03, 1.3), k = qm / mx;
       const o = (j * lw + i) * 4; d[o] = Math.min(255, r * k * 255); d[o + 1] = Math.min(255, g * k * 255); d[o + 2] = Math.min(255, b * k * 255); d[o + 3] = 255;
     }
   }

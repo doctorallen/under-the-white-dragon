@@ -24,7 +24,7 @@ LEVELS.stack = {
         sky(P, 0, 0, 1800, 260, { low: 0.2, span: 0.6 });
         skyline(P, 0, 1800, 200, { seed: 3, hmin: 30, hmax: 110, fog: 0.55, lit: 0.18 });
         P.block(0, 150, 1800, 640, MAT.concreteD, { base: 0.4, fog: 0.42, fogc: [40, 24, 60], lip: 0, grain: 0.08 });
-        windows(P, 6, 158, 1800, 640, { w: 4, h: 5, gx: 6, gy: 8, lit: 0.16, seed: 4, glow: 0.2, dark: '#14121c' });
+        windows(P, 6, 158, 1800, 640, { w: 4, h: 5, gx: 6, gy: 8, lit: 0.16, seed: 4, glow: 0.2, unlit: false });
         haze(P, 0, 1800, 120, 330, [60, 36, 80], 0.5);
         for (const [x, y, n, c] of [[90, 170, 6, '#ff4ab0'], [520, 160, 5, '#3af0e0'], [900, 190, 4, '#ffd040'], [1300, 168, 6, '#ff4ab0'], [1640, 176, 5, '#3af0e0']]) sign(P, x, y, n, c, { vert: true });
         // the holo fish, swimming over the far block

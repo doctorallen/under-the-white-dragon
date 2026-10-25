@@ -58,7 +58,7 @@ class Pix {
     ax0 = Math.floor(ax0); ay0 = Math.floor(ay0); ax1 = Math.ceil(ax1); ay1 = Math.ceil(ay1);
     const x0 = Math.max(this.ox, ax0), y0 = Math.max(this.oy, ay0), x1 = Math.min(this.ox + this.w - 1, ax1), y1 = Math.min(this.oy + this.h - 1, ay1);
     if (x1 < x0 || y1 < y0) return;
-    const inside = o.inside || null, J = o.jit === undefined ? 0.9 : o.jit, n = x1 - x0 + 1, glow = o.glow || 0, fog = o.fog || 0, fogc = o.fogc || [20, 16, 30];
+    const inside = o.inside || null, J = o.jit === undefined ? 0.45 : o.jit, n = x1 - x0 + 1, glow = o.glow || 0, fog = o.fog || 0, fogc = o.fogc || [20, 16, 30];
     for (let y = y0; y <= y1; y++) {
       strokeRow(this.mid, this.jit, x0, n, y, seed);
       for (let i = 0; i < n; i++) {
@@ -81,9 +81,9 @@ class Pix {
 }
 // side-on lighting for a block
 function blockV(x0, y0, x1, y1, o = {}) {
-  const base = o.base === undefined ? 0.5 : o.base, s = o.seed || 3, grain = o.grain === undefined ? 0.14 : o.grain, lip = o.lip === undefined ? 1 : o.lip;
+  const base = o.base === undefined ? 0.5 : o.base, s = o.seed || 3, grain = o.grain === undefined ? 0.06 : o.grain, lip = o.lip === undefined ? 1 : o.lip;
   return (x, y) => {
-    let v = base + (noise(x / 23, y / 9, s) - 0.5) * 0.24 + (noise(x / 4, y / 30, s + 1) - 0.5) * grain;
+    let v = base + (noise(x / 40, y / 16, s) - 0.5) * 0.14 + (noise(x / 4, y / 30, s + 1) - 0.5) * grain;
     const top = y - y0, bot = y1 - y, l = x - x0, r = x1 - x;
     if (lip) { if (top < 1) v = 0.98; else if (top < 2) v = Math.max(v, 0.8); else if (top < 4) v += 0.1 * lip; }
     if (bot < 1) v -= 0.36; else if (bot < 3) v -= 0.16;
@@ -105,6 +105,7 @@ function windows(P, x0, y0, x1, y1, o = {}) {
   for (let y = y0; y + wh <= y1; y += wh + gy) for (let x = x0; x + ww <= x1; x += ww + gx) {
     if (!P.sees(x - 1, y, x + ww + 1, y + wh + 1)) continue;
     const h = hash(x, y, s), on = h < lit, p = pal[Math.floor(hash(x, y, s + 1) * pal.length)];
+    if (!on && o.unlit === false) continue;
     for (let j = 0; j < wh; j++) for (let i = 0; i < ww; i++) {
       let c;
       if (on) { c = mixRgb(col3(p[0]), col3(p[1]), j / wh); if (o.blinds && j % 2) c = mixRgb(c, [0, 0, 0], 0.5); if (hash(x, y, s + 2) > 0.8 && i > 0 && i < ww - 1 && j > 1) c = mixRgb(c, [10, 8, 12], 0.85); }

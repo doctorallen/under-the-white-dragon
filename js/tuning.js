@@ -19,5 +19,5 @@ const T = {
   ram: { max: 3, regen: 7 },
   neural: { base: 5, booster: 1 },
   day: { length: 1200, start: 20.5 }, // seconds in a day; the clock starts at 20:30
-  light: { bands: 9, lamp: 70, lowlight: 0.34 },
+  light: { lamp: 70, lowlight: 0.34 },
 };
