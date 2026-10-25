@@ -24,7 +24,8 @@ A side-scrolling noir for the phone. You're a detective with the Stack precinct,
 | Level | Depth | What's there | The way down |
 |---|---|---|---|
 | L0 The Spires | +300 m | Corporate towers above the smog. The ending. | (proposed) |
-| L1 The Stack | 0 m | Home: capsules, market, bar, clinic, walkways, drones | The Warden, then Breach on the shaft hatch |
+| Floor 31 | +40 m | Home: your apartment, the hall, the elevator | The elevator |
+| L1 The Stack | 0 m | Capsule hotel, market, bar, clinic, walkways, drones | The Warden, then Breach on the shaft hatch |
 | L2 Street level | −60 m | Under the overpasses: fence, clinic, gang turf | (proposed) the Gutter King, then the subway |
 | L3 Old Town | −140 m | The first city, sunk under the new one | (proposed) the Old Mayor |
 | L4 The Works | −260 m | Pumps, power, server farms | (proposed) the Foreman; heat needs a heat sink |
@@ -32,9 +33,10 @@ A side-scrolling noir for the phone. You're a detective with the Stack precinct,
 
 ## Built (first slice)
 
-- **Two levels:** the Stack and street level, joined by the shaft from the Stack's service yard and by the freight lift once you restore it (4 wire, 2 chips).
+- **Home:** an apartment on floor 31 of the block above the Stack: a bed (sleep heals you and passes the night), a closet (your gear), a window on the city. You walk out past the neighbours' doors and the people in the hall to the elevator, which goes to every level you've reached.
+- **Two levels below:** the Stack and street level, joined by the shaft from the Stack's service yard, by the freight lift once you restore it (4 wire, 2 chips), and by the block's elevator once you've been down.
 - **Movement:** the stick sets the pace: a light push walks, a full push runs (Shift walks on a keyboard). Jump, drop through walkways, stairs, ladders, a second jump with spring legs.
-- **Salvage:** hold Use on a machine to strip it. Yields are fixed per kind of machine (`things.js`). The pack holds 24 pieces. The capsule has an unlimited stash, and sleeping there heals you and passes the night.
+- **Salvage:** hold Use on a machine to strip it. Yields are fixed per kind of machine (`things.js`). There's no limit to what you carry and nothing to bank: once you have it, it's yours.
 - **Cutting:** grates take the cutter; heavy shutters need mantis blades.
 - **Ware** (`items.js`), built and fitted by Doc Vasquez for credits and salvage. Each has a neural load; your nervous system takes 5, or 6 with the booster:
   - lowlight optics (1): see in the dark, see hidden panels
@@ -54,7 +56,8 @@ A side-scrolling noir for the phone. You're a detective with the Stack precinct,
   - The Warden walks, fires bursts, stomps a shockwave you jump over, and charges. Beating it unlocks the shaft.
 - **The retinal overlay:** the runner's stock eye tags hostiles in sight with a thin red outline and a segmented health bar over the head; a drone taken over with Puppet is tagged green. Tags brighten once the enemy has seen you and dim under Ghost.
 - **A lived-in city:** everyone breathes when standing still; vendors work their hands; people glance about, and some smoke. Passers-by wander their stretch of floor most of the night with a line or two each. Signs breathe and now and then blink, a bad one stutters, tubes buzz, fires dance, and their light does the same. Adverts play on screens (scrolling glyphs, a koi, a three-scene billboard, an equaliser) and tint their own light. Behind the Stack the city stands in three layers of towers of every height and shape, moving at their own depths: setbacks, cantilevers, spires, masts, water tanks and rooftop billboards under a broken cloud deck. Giant holograms (a face, a koi, a ring) play between the layers and a monorail train runs the nearest. Flying cars cross the sky in three lanes of depth. Rats run the gutters and scatter from you, a cat keeps the walkway, newspapers, bags and cans blow along in a gusting wind, steam and smoke rise, water drips from the underside of the Stack onto the street, rain splashes.
-- **Death:** you wake in your capsule with an empty pack, six hours later.
+- **Gear,** in the spirit of Cyberpunk 2077: a slot each for head, face, outer torso, inner torso, legs, feet, a ranged weapon and a melee one. Every piece has a rarity (common, uncommon, rare, epic, legendary), armour or weapon stats, sometimes a perk (faster running, recharge, RAM), and shows on the runner. The inventory's Gear tab shows you between your slots; the other tabs are items, ware and programs, and jobs. Gear comes from vendors (Kit sells clothes, Ozu sells weapons and armour), jobs, stashes, the hidden panel and the Warden.
+- **Death:** you wake in your own bed six hours later, with everything you had.
 
 ## Story (light)
 
@@ -69,6 +72,6 @@ Told through Juno (an informant who trades leads for favours), the people, and w
 - **(proposed)** The Gutter King, the subway, and Old Town (L3), then the Works and the Bowels.
 - **(proposed)** More ware: scanner optics, gorilla arms, grip feet, heat sink, reflex booster, subdermal armour, thermal camo, deck slots.
 - **(proposed)** Standing with each level's crowd, and more jobs with real choices.
-- **(proposed)** Better places to live as you earn, with the stash as a wall of ware.
+- **(proposed)** Better places to live as you earn, with your gear on display.
 - **(proposed)** The Spires as the ending.
 - **(proposed)** Sound.

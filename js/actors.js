@@ -137,7 +137,7 @@ const Actors = {
     Fx.burst(e.x, e.y - (e.type === 'drone' ? 0 : 16), [255, 160, 60], e.type === 'warden' ? 40 : 14);
     if (e.type === 'drone') { const got = []; if (Game.give('glass', 1)) got.push('1 optic glass'); if (hash(e.i, Game.s.day, 3) < 0.5 && Game.give('chips', 1)) got.push('1 chips'); if (got.length) Game.toast('Drone down. + ' + got.join(', ')); Game.kill('drone'); }
     if (e.type === 'gang') { const cr = 10 + Math.floor(hash(e.i, Game.s.day, 4) * 20); Game.s.cr += cr; Game.give('alloy', 1); Game.toast('+ ' + cr + ' cr, 1 scrap alloy'); Game.kill('gang'); }
-    if (e.type === 'warden') { Game.s.flags.warden = true; Game.s.cr += 150; Game.give('chips', 2); Game.toast('The Warden goes down hard. Its lock on the shaft hatch lets go. + 150 cr, 2 chips', 'good'); this.boss = null; Save.write(); }
+    if (e.type === 'warden') { Game.s.flags.warden = true; Game.s.cr += 150; Game.give('chips', 2); Game.toast('The Warden goes down hard. Its lock on the shaft hatch lets go. + 150 cr, 2 chips', 'good'); Game.giveGear('helmet'); this.boss = null; Save.write(); }
     Hud.refresh();
   },
   // sprites for each, cached

@@ -21,12 +21,13 @@ On Android the browser offers to install it the first time you tap; after that, 
 | Fire (a blow up close) | J | Fire |
 | Use (hold to strip or cut) | E | The button names the action: Trade, Talk, Strip, Cut, Hack, Climb… |
 | Run program / pick next | Q / R | Program (hold to pick) |
-| Pack | I | Pack |
+| Inventory (gear, items, ware, jobs) | I | Gear |
 | Pause | Esc | II |
 
 ## The first slice
 
-- **The Stack (L1):** your capsule, Doc Vasquez's clinic, the market with Mama Ruiz's noodles and Kit's salvage stand, Juno's bar, two walkways up, the residential block, block drones, a data node with Breach, and the service yard with the Warden, the freight lift and the shaft down.
+- **Floor 31 (home):** your apartment (bed, closet, a window on the city), the hall past the neighbours' doors, and the elevator to the Stack and, once you've been there, street level.
+- **The Stack (L1):** the elevator up home, Doc Vasquez's clinic, the market with Mama Ruiz's noodles and Kit's salvage stand, Juno's bar, two walkways up, the residential block, block drones, a data node with Breach, and the service yard with the Warden, the freight lift and the shaft down.
 - **Street level (L2):** under the overpasses. Ozu pays more for salvage, a back-alley clinic hides a node with Puppet, a fire escape leads to a rooftop node with Ghost (spring legs needed), gangers hold the turf past the fire, a heavy shutter hides their stash (mantis blades needed), and the old subway to Old Town is sealed for now.
 - **Ware:** lowlight optics, spring legs, mantis blades. **Programs:** Breach, Ghost, Puppet. **Jobs:** three from Juno, the last of which pays a neural booster.
 

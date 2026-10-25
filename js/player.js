@@ -6,8 +6,8 @@
 // up. Ladders are climbed with up and down. Use works on whatever's nearest
 // (a prop or a person); stripping and cutting are held.
 // ---------------------------------------------------------------------------
-// the detective: a long trench coat, collar up, a blaster at the hip
-const RUNNER = { skin: '#c88a5a', hair: 'short', hairCol: '#1a1416', top: '#5e4c38', coat: 'long', legs: '#26262c', boots: '#161214', acc: '#ff8a20', trim: false, collar: true, blaster: true, belt: '#2a1e14', shirt: '#8a8a84' };
+// the detective, under whatever they wear (each piece of gear has a look)
+const RUNNER = { skin: '#c88a5a', hair: 'short', hairCol: '#1a1416', top: '#4a4a52', coat: 'none', legs: '#4a3e36', boots: '#3a2a22', acc: '#ff8a20', trim: false, blaster: true, belt: '#2a1e14' };
 const POSE_HANDS = {
   stand: {},
   jump: { fx: 27, fy: 29, bx: 14, by: 30 }, fall: { fx: 27, fy: 26, bx: 14, by: 26 }, strike: { fx: 31, fy: 30, bx: 15, by: 35 }, aim: { fx: 30, fy: 29, bx: 17, by: 36 }, shot: { fx: 30, fy: 28, bx: 17, by: 36 }, cut: { fx: 28, fy: 33, bx: 22, by: 34 },
@@ -20,11 +20,16 @@ const RunnerArt = {
     let s = this.cache.get(k);
     if (!s) {
       const o = Object.assign({}, RUNNER, { pose, hands: POSE_HANDS[pose] || {}, seed: 5, holding: true });
+      // the inner layer's colour shows as the body without a coat
+      for (const slot of SLOT_ORDER) { const g = Game.worn(slot); if (g && g.look) Object.assign(o, g.look); }
+      if (!Game.worn('outer') && o.shirt) o.top = o.shirt;
+      const mel = Game.worn('melee');
       if (st.eye) o.eye = '#3af0e0';
       if (st.legs) o.cyLegs = true;
       if (pose === 'cut') { o.cutter = true; o.blaster = false; }
       if (pose === 'shot') o.muzzle = true;
-      if (st.arm) { o.cyArm = true; if (pose === 'strike') { o.blade = '#3af0e0'; o.blaster = false; } }
+      if (st.arm) o.cyArm = true;
+      if (pose === 'strike' && (st.arm || mel)) { o.blade = mel ? mel.look.bladeCol : '#3af0e0'; o.blaster = false; }
       s = person(o); if (left) s = flipSprite(s);
       this.cache.set(k, s);
     }
@@ -34,7 +39,7 @@ const RunnerArt = {
 
 const Player = {
   x: 0, y: 0, vx: 0, vy: 0, face: 1, ground: false, coyote: 0, jumps: 0, drop: 0, ladder: null, inv: 0, hurtT: 0,
-  strikeT: 0, strikeCd: 0, aimT: 0, charge: T.blaster.shots, chargeT: 0, walked: 0, target: null, hold: null, ramT: 0,
+  strikeT: 0, strikeCd: 0, aimT: 0, charge: GEAR.blaster.shots, chargeT: 0, walked: 0, target: null, hold: null, ramT: 0,
   place(x, y) { this.x = x; this.y = y; this.vx = this.vy = 0; this.ladder = null; this.hold = null; this.ground = true; },
   box(x = this.x, y = this.y) { const P = T.player; return [x - P.w / 2, y - P.h, x + P.w / 2, y]; },
   hits(x, y) { const b = this.box(x, y); return World.hits(b[0] + 0.01, b[1] + 0.01, b[2] - 0.01, b[3] - 0.01); },
@@ -43,11 +48,12 @@ const Player = {
     const ax = Input.ax, ay = Input.ay;
     this.aimT = Math.max(0, this.aimT - dt);
     // the blaster recharges a shot at a time
-    if (this.charge < T.blaster.shots) { this.chargeT += dt; if (this.chargeT >= T.blaster.recharge) { this.chargeT = 0; this.charge++; Hud.refresh(); } } else this.chargeT = 0;
+    const W = Game.weapon();
+    if (this.charge < W.shots) { this.chargeT += dt; if (this.chargeT >= T.blaster.recharge / (1 + Game.perk('recharge'))) { this.chargeT = 0; this.charge++; Hud.refresh(); } } else this.chargeT = 0;
     this.inv = Math.max(0, this.inv - dt); this.hurtT = Math.max(0, this.hurtT - dt); this.strikeT = Math.max(0, this.strikeT - dt); this.strikeCd = Math.max(0, this.strikeCd - dt); this.drop = Math.max(0, this.drop - dt);
     if (ax && !this.strikeT) this.face = ax > 0 ? 1 : -1;
     // RAM comes back on its own
-    if (Game.s.ram < T.ram.max) { this.ramT += dt; if (this.ramT >= T.ram.regen) { this.ramT = 0; Game.s.ram++; Hud.refresh(); } } else this.ramT = 0;
+    if (Game.s.ram < T.ram.max) { this.ramT += dt; if (this.ramT >= T.ram.regen / (1 + Game.perk('ram'))) { this.ramT = 0; Game.s.ram++; Hud.refresh(); } } else this.ramT = 0;
     const jumpHit = Input.take('jumpHit');
     // ---- on a ladder
     if (!this.ladder && Math.abs(ay) > 0.5 && Math.abs(ax) < 0.6) {
@@ -65,7 +71,7 @@ const Player = {
     }
     // ---- running
     // the stick sets the pace: a light push walks, a full one runs
-    const m = Math.abs(ax), pace = m < 0.62 ? P.walk : lerp(P.walk, P.speed, clamp((m - 0.62) / 0.28, 0, 1));
+    const m = Math.abs(ax), sp = 1 + Game.perk('speed'), pace = (m < 0.62 ? P.walk : lerp(P.walk, P.speed, clamp((m - 0.62) / 0.28, 0, 1))) * sp;
     const busy = this.hold ? 0.15 : 1, target = Math.sign(ax) * pace * busy, acc = this.ground ? P.accel : P.airAccel;
     if (ax) this.vx += clamp(target - this.vx, -acc * dt, acc * dt);
     else this.vx -= clamp(this.vx, -P.friction * dt, P.friction * dt);
@@ -112,18 +118,18 @@ const Player = {
   fire() {
     const S = T.strike, x0 = this.face > 0 ? this.x : this.x - S.reach - 4, box = [x0, this.y - T.player.h + 2, x0 + S.reach + 4, this.y - 2];
     if (Actors.enemies.some((e) => { if (e.ally) return false; const b = Actors.hurtbox(e); return box[2] > b[0] && box[0] < b[2] && box[3] > b[1] && box[1] < b[3]; })) { this.strike(); return; }
-    const B = T.blaster;
+    const B = T.blaster, W = Game.weapon();
     if (this.charge < 1) { Game.toast('The blaster\'s recharging.'); this.strikeCd = 0.2; return; }
-    this.charge--; this.strikeCd = B.cd; this.aimT = 0.22; Hud.refresh();
+    this.charge--; this.strikeCd = W.cd; this.aimT = 0.22; Hud.refresh();
     const mx = this.x + this.face * 12, my = this.y - 22;
     let best = null, bd = 1e9;
     for (const e of Actors.enemies) { if (e.ally) continue; const b = Actors.hurtbox(e), tx = (b[0] + b[2]) / 2, ty = (b[1] + b[3]) / 2, dx = (tx - mx) * this.face, dy = ty - my; if (dx < 4 || dx > B.range || Math.abs(dy) > dx * 0.9 + 16) continue; const d = dx + Math.abs(dy) * 1.5; if (d < bd) { bd = d; best = [tx, ty]; } }
     const a = best ? Math.atan2(best[1] - my, best[0] - mx) : (this.face > 0 ? 0 : Math.PI);
-    Actors.bolts.push({ x: mx, y: my, vx: Math.cos(a) * B.speed, vy: Math.sin(a) * B.speed, t: B.life, dmg: Game.has('mantis') ? B.dmg + 4 : B.dmg, ally: true, player: true, c: [255, 170, 70] });
+    Actors.bolts.push({ x: mx, y: my, vx: Math.cos(a) * B.speed, vy: Math.sin(a) * B.speed, t: B.life, dmg: W.dmg, ally: true, player: true, c: W.bolt });
     Game.flash = { x: mx + this.face * 4, y: my, t: 0.07 };
   },
   strike() {
-    const S = T.strike, dmg = Game.has('mantis') ? S.mantis : S.dmg;
+    const S = T.strike, dmg = Game.strikeDmg();
     this.strikeT = 0.2; this.strikeCd = S.cd;
     const x0 = this.face > 0 ? this.x : this.x - S.reach - 4, box = [x0, this.y - T.player.h + 2, x0 + S.reach + 4, this.y - 2];
     if (Actors.hit(box, dmg, this.face)) Fx.sparks(this.x + this.face * 14, this.y - 18, 6);

@@ -32,39 +32,121 @@ function crowd(L, n, x0, x1, y, seed) {
   }
 }
 
+// the city behind, seen from the Stack and through windows above it: three
+// layers of towers, holograms between them, the monorail
+function cityLayers(L) {
+  // ---- the city behind: three layers of towers, nearer ones bigger, warmer
+  // and quicker to move; the sky and its clouds go with the farthest
+  L.layers = [
+    { f: 0.1, fy: 0.08, w: 960, h: 310, paint(P) {
+      P.area(0, 0, 960, 310, R(['#060c18', '#0c1a2c', '#163248', '#245068', '#3e7a88', '#6aa4a8'], 12, 0.3, 0.3), (x, y) => 0.12 + Math.pow(y / 310, 1.2) * 0.7, { jit: 0.4 });
+      cloudBands(P, 0, 960, 24, 170, R(['#0e2032', '#1a3448', '#2c5064', '#6a9aa4'], 9, 0.3, 0.2), 5);
+      skylineLayer(P, { w: 960, base: 300, wmin: 8, wmax: 26, hmin: 50, hmax: 170, pal: SKY_PAL.far, fog: 0.35, fogc: [40, 80, 112], seed: 11, styles: ['grid', 'dark', 'columns'], crowns: ['flat', 'spire', 'masts', 'flat'], signs: 0.05, cant: 0.1, glow: 0.35 });
+      haze(P, 0, 960, 200, 310, [52, 104, 122], 0.5);
+    } },
+    { f: 0.22, fy: 0.18, w: 1270, h: 390, paint(P) {
+      skylineLayer(P, { w: 1270, base: 390, wmin: 16, wmax: 46, hmin: 90, hmax: 250, pal: SKY_PAL.mid, fog: 0.3, fogc: [20, 34, 58], seed: 23, signs: 0.15, cant: 0.25, glow: 0.45 });
+      haze(P, 0, 1270, 300, 390, [22, 30, 56], 0.4);
+    } },
+    { f: 0.38, fy: 0.32, w: 1680, h: 460, paint(P) {
+      skylineLayer(P, { w: 1680, base: 460, wmin: 26, wmax: 70, hmin: 150, hmax: 330, gmin: 2, gmax: 26, pal: SKY_PAL.near, fog: 0.1, fogc: [18, 20, 40], seed: 37, signs: 0.4, cant: 0.4, rim: [58, 200, 210], glow: 0.55, crowns: ['flat', 'slope', 'billboard', 'tank', 'masts', 'billboard', 'spire'] });
+      // the monorail: a track on legs, across the whole layer
+      P.block(0, 300, 1680, 304, SKY_PAL.near, { base: 0.5, lip: 0.6 });
+      for (let x = 30; x < 1680; x += 140) P.block(x, 304, x + 5, 460, SKY_PAL.near, { base: 0.35, lip: 0 });
+      for (let x = 0; x < 1680; x += 6) P.put(x, 305, [58, 200, 210], 0.25);
+    } },
+  ];
+  L.holos.push({ layer: 2, kind: 'face', x: 380, y: 120, w: 96, h: 130, cols: [[255, 90, 190], [120, 220, 255]] });
+  L.holos.push({ layer: 1, kind: 'koi', x: 640, y: 96, w: 150, h: 80, cols: [[58, 240, 224], [255, 176, 64]] });
+  L.holos.push({ layer: 2, kind: 'ring', x: 1180, y: 150, w: 64, h: 64, cols: [[255, 176, 64], [255, 74, 176]] });
+  L.train = { layer: 2, y: 300, speed: 70, cars: 5, span: 1680 };
+}
+
+// the elevator's floors; one you haven't reached yet has a dead button
+const ELEVATOR = [
+  { level: 'home', name: 'Floor 31 · home', note: 'Your apartment, at the end of the hall.' },
+  { level: 'stack', name: 'The Stack', note: 'The market, Juno\'s bar, the clinic, the walkways.' },
+  { level: 'street', name: 'Street level', note: 'Under the overpasses, where the rain doesn\'t reach.', needs: 'been:street' },
+];
+
+// ---- home: your apartment on floor 31, the hall, the elevator --------------------
+LEVELS.home = {
+  name: 'Floor 31', depth: '+40 m',
+  make() {
+    const L = newLevel('home', 'Floor 31', 1520, 262);
+    const G = 226, CEIL = 104, APT = 384, EL = 1470;
+    cityLayers(L); L.layerDy = 70; // high up: the window looks across at the towers' upper floors
+    const WIN = [[44, 130, 214, 200], [1086, 140, 1176, 196]];
+    const plaster = R(['#1e1618', '#2e2226', '#443236', '#6a5050', '#9a7a70']), hallWall = R(['#141a1a', '#1e2828', '#2c3a38', '#4a5e58', '#7a948a']);
+    // the floor, the ceiling slab and the building above it, the end walls
+    L.floor(0, L.w, G, 36, MAT.concrete, { drips: 0, base: 0.4 });
+    L.block(0, 0, L.w, CEIL, MAT.concreteD, { base: 0.3, lip: 0, panels: [64, 40], drips: 0.08, dripLen: 10 });
+    L.wall(0, CEIL, 12, G, MAT.concreteD, { base: 0.35 }); L.wall(L.w - 12, CEIL, L.w, G, MAT.concreteD, { base: 0.35 });
+    // ---- the apartment: plaster walls round a big window on the city
+    L.paint(12, CEIL, APT, G, (P) => {
+      const inWin = (x, y) => WIN.some(([a, b, c, d]) => x >= a && x < c && y >= b && y < d);
+      P.area(12, CEIL, APT, G, plaster, blockV(12, CEIL, APT, G, { base: 0.42, lip: 0 }), { inside: (x, y) => !inWin(x, y) });
+      // the window: a frame, mullions, a sill; the city shows through
+      const [a, b, c, d] = WIN[0];
+      for (let x = a - 3; x < c + 3; x++) { P.put(x, b - 3, tone(MAT.steelD, 0.3)); P.put(x, b - 2, tone(MAT.steelD, 0.55)); for (let y = d; y < d + 4; y++) P.put(x, y, tone(MAT.steelD, y === d ? 0.75 : 0.4)); }
+      for (const mx of [a - 2, a + 56, a + 113, c]) for (let y = b - 2; y < d; y++) { P.put(mx, y, tone(MAT.steelD, 0.5)); P.put(mx + 1, y, tone(MAT.steelD, 0.25)); }
+      for (let x = a; x < c; x++) P.put(x, b + 34, tone(MAT.steelD, 0.4));
+      // a rug, skirting, a poster
+      P.block(60, G - 2, 300, G, R(['#3a1a24', '#5a2a34', '#7a3a44']), { base: 0.5, lip: 0 });
+      for (let x = 12; x < APT; x++) P.put(x, G - 3, tone(plaster, 0.2));
+      P.block(300, 132, 336, 176, R(['#1a1a2a', '#2a2a4a', '#3a3a6a']), { base: 0.5 }); sign(P, 304, 140, 7, '#ff4ab0', { seed: 77 });
+    });
+    L.light(130, 166, 120, [0.5, 0.75, 1], 0.45); // the city's light through the window
+    L.lamp(250, G, 40, '#ffd0a0', 0.9);
+    L.light(330, 118, 60, [1, 0.75, 0.5], 0.5);
+    L.prop('bed', 92, G, { label: 'bed' });
+    L.prop('deco', 150, G, { art: () => plant(), id: 'plant' });
+    L.prop('closet', 210, G, { label: 'closet' });
+    L.prop('deco', 272, G, { art: () => tvSet({ col: '#3a6aff' }), id: 'tv' }); L.light(272, G - 18, 34, [0.4, 0.55, 1], 0.6, 1, { mode: 'tube', seed: 5 });
+    L.prop('deco', 348, G, { art: () => kitchen(), id: 'kitchen' });
+    // the door out: a frame, the hall's light beyond
+    L.paint(APT, CEIL, APT + 12, G, (P) => { P.block(APT, CEIL, APT + 12, G - 38, MAT.concreteD, { base: 0.35 }); for (let y = G - 38; y < G; y++) for (let x = APT; x < APT + 12; x++) P.put(x, y, tone(MAT.steelD, x < APT + 2 || x > APT + 9 ? 0.6 : 0.15)); });
+    // ---- the hall: tiled walls, neighbours' doors, tubes that buzz
+    L.paint(APT + 12, CEIL, EL + 40, G, (P) => {
+      const inWin = (x, y) => WIN.some(([a, b, c, d]) => x >= a && x < c && y >= b && y < d);
+      P.area(APT + 12, CEIL, EL + 40, G, hallWall, blockV(APT + 12, CEIL, EL + 40, G, { base: 0.36, lip: 0, panels: [8, 8] }), { inside: (x, y) => !inWin(x, y) });
+      for (let x = APT + 12; x < EL + 40; x++) { for (let y = G - 26; y < G - 24; y++) P.put(x, y, tone(MAT.wood, 0.4)); for (let y = G - 24; y < G; y++) P.put(x, y, tone(R(['#141414', '#1e2420', '#2a3430']), 0.4 + hash(x >> 3, y >> 3, 4) * 0.2)); }
+      const [a, b, c, d] = WIN[1];
+      for (let x = a - 2; x < c + 2; x++) { P.put(x, b - 2, tone(MAT.steelD, 0.5)); P.put(x, d, tone(MAT.steelD, 0.7)); P.put(x, d + 1, tone(MAT.steelD, 0.35)); }
+      for (const mx of [a - 2, a + 44, c]) for (let y = b - 2; y < d; y++) P.put(mx, y, tone(MAT.steelD, 0.45));
+      // a noticeboard, graffiti, a fire hose
+      P.block(560, 150, 616, 190, MAT.wood, { base: 0.45 }); for (const [x, y, c2] of [[564, 154, '#e8e0c8'], [580, 160, '#ffd040'], [596, 152, '#c8e0f0'], [570, 172, '#ff9ab0'], [592, 174, '#e8e0c8']]) P.block(x, y, x + 12, y + 12, R([c2, c2]), { base: 0.6, lip: 0 });
+      for (let k = 0; k < 40; k++) P.put(860 + k, 180 + Math.sin(k * 0.5) * 3, [58, 240, 224], 0.3);
+      P.block(1300, 160, 1320, 186, R(['#5a1010', '#8a2020', '#c03030']), { base: 0.5 });
+    });
+    const doors = [[470, '#4a4450', 3102], [580, '#3a4a50', 3103], [690, '#5a4a3a', 3104, true], [800, '#4a3a4a', 3105], [920, '#3a3a44', 3106], [1030, '#4a4a3a', 3107], [1240, '#3a4450', 3108], [1350, '#5a3a3a', 3109]];
+    for (const [x, col, n, open] of doors) { L.prop('deco', x, G, { art: () => aptDoor({ col, open, lit: n % 2 ? '#ffd8a0' : '#9af0ff' }), id: 'apt' + n }); if (open) L.light(x, G - 16, 44, [1, 0.7, 0.4], 0.55); }
+    for (const x of [430, 640, 860, 1080, 1300]) L.tube(x, CEIL + 4, 22, '#e8f4e8', 0.75);
+    L.tube(1180, CEIL + 4, 22, '#e8f4e8', 0.45); L.sign(EL - 34, 132, 4, '#ffb040', { r: 40 });
+    L.light(1131, 168, 80, [0.5, 0.75, 1], 0.4);
+    L.prop('vending', 1150, G, { look: { col: '#ff4ab0', body: '#5a2a4a' }, label: 'vending machine' }); L.light(1150, G - 12, 34, [1, 0.3, 0.7], 0.6);
+    L.ad(744, 140, 40, 16, 'marquee', ['#3af0e0', '#e8e8f0']);
+    L.prop('elevator', EL, G, { level: 'home' }); L.light(EL, G - 40, 46, [1, 0.75, 0.4], 0.6);
+    L.litter(400, 1440, G, 3); L.critter('cat', 420, 1400, G, 1);
+    // the neighbours
+    L.npc({ name: 'Mrs Okafor', look: { skin: SKINS[5], hair: 'bun', hairCol: '#c8c8c8', top: '#6a3a5a', coat: 'long', legs: '#2a2030', tall: 0.9 }, x: 700, y: G, face: -1, sched: [[0, 2, 700, 'stand'], [2, 9, 700, 'away'], [9, 24, 700, 'stand']], lines: ['Detective. You\'re out late again. Eat something.', 'The lift was stuck between floors for an hour today. I sang to it.', 'Those people in 3107 fight every night. Don\'t you go knocking, it\'s not police business.', 'You look like my son. He went down to the Works.'] });
+    L.npc({ name: 'Tam', look: { skin: SKINS[2], hair: 'cap', capCol: '#ff4ab0', top: '#3a5a8a', legs: '#2a2a34', tall: 0.72 }, x: 980, y: G, sched: [[0, 1, 980, 'wander'], [1, 14, 980, 'away'], [14, 24, 980, 'wander']], lines: ['Is that a real blaster? Can I hold it? No? Okay.', 'My mum says detectives are just cops with sad coats.', 'I saw a synth once. It looked like a lady. It was nice to me.'] });
+    L.npc({ name: 'Rook\'s brother', look: { skin: SKINS[1], hair: 'undercut', hairCol: '#3af0e0', top: '#2a2a2a', coat: 'jacket', legs: '#1a1a24', cyArm: true, acc: '#3af0e0' }, x: 1110, y: G, face: -1, sched: [[0, 24, 1110, 'stand']], smoke: true, lines: ['Window\'s the only place on this floor you can smoke without the alarm going.', 'You want the elevator, it\'s at the end. Kick it if it sulks.'] });
+    // spawns, light, no weather indoors
+    L.spawns = { bed: [116, G], elevator: [EL, G] };
+    L.ambient = (x, y) => WIN.some(([a, b, c, d]) => x >= a && x < c && y >= b && y < d) ? [0.72, 0.78, 0.88] : x < APT ? [0.34, 0.28, 0.3] : [0.3, 0.32, 0.32];
+    L.rain = 0; L.dry = [[0, 0, L.w, L.h]];
+    return L;
+  },
+};
+
 // ---- L1: the Stack ------------------------------------------------------------
 LEVELS.stack = {
   name: 'The Stack', depth: '0 m',
   make() {
     const L = newLevel('stack', 'The Stack', 2560, 690);
     const G = 640, MID = 500, UP = 360, YARD = 2200;
-    // ---- the far side of the canyon: sky, spires, a wall of windows, haze
-    // ---- the city behind: three layers of towers, nearer ones bigger, warmer
-    // and quicker to move; the sky and its clouds go with the farthest
-    const SKYF = [24, 46, 72];
-    L.layers = [
-      { f: 0.1, fy: 0.08, w: 960, h: 310, paint(P) {
-        P.area(0, 0, 960, 310, R(['#060c18', '#0c1a2c', '#163248', '#245068', '#3e7a88', '#6aa4a8'], 12, 0.3, 0.3), (x, y) => 0.12 + Math.pow(y / 310, 1.2) * 0.7, { jit: 0.4 });
-        cloudBands(P, 0, 960, 24, 170, R(['#0e2032', '#1a3448', '#2c5064', '#6a9aa4'], 9, 0.3, 0.2), 5);
-        skylineLayer(P, { w: 960, base: 300, wmin: 8, wmax: 26, hmin: 50, hmax: 170, pal: SKY_PAL.far, fog: 0.35, fogc: [40, 80, 112], seed: 11, styles: ['grid', 'dark', 'columns'], crowns: ['flat', 'spire', 'masts', 'flat'], signs: 0.05, cant: 0.1, glow: 0.35 });
-        haze(P, 0, 960, 200, 310, [52, 104, 122], 0.5);
-      } },
-      { f: 0.22, fy: 0.18, w: 1270, h: 390, paint(P) {
-        skylineLayer(P, { w: 1270, base: 390, wmin: 16, wmax: 46, hmin: 90, hmax: 250, pal: SKY_PAL.mid, fog: 0.3, fogc: [20, 34, 58], seed: 23, signs: 0.15, cant: 0.25, glow: 0.45 });
-        haze(P, 0, 1270, 300, 390, [22, 30, 56], 0.4);
-      } },
-      { f: 0.38, fy: 0.32, w: 1680, h: 460, paint(P) {
-        skylineLayer(P, { w: 1680, base: 460, wmin: 26, wmax: 70, hmin: 150, hmax: 330, gmin: 2, gmax: 26, pal: SKY_PAL.near, fog: 0.1, fogc: [18, 20, 40], seed: 37, signs: 0.4, cant: 0.4, rim: [58, 200, 210], glow: 0.55, crowns: ['flat', 'slope', 'billboard', 'tank', 'masts', 'billboard', 'spire'] });
-        // the monorail: a track on legs, across the whole layer
-        P.block(0, 300, 1680, 304, SKY_PAL.near, { base: 0.5, lip: 0.6 });
-        for (let x = 30; x < 1680; x += 140) P.block(x, 304, x + 5, 460, SKY_PAL.near, { base: 0.35, lip: 0 });
-        for (let x = 0; x < 1680; x += 6) P.put(x, 305, [58, 200, 210], 0.25);
-      } },
-    ];
-    L.holos.push({ layer: 2, kind: 'face', x: 380, y: 120, w: 96, h: 130, cols: [[255, 90, 190], [120, 220, 255]] });
-    L.holos.push({ layer: 1, kind: 'koi', x: 640, y: 96, w: 150, h: 80, cols: [[58, 240, 224], [255, 176, 64]] });
-    L.holos.push({ layer: 2, kind: 'ring', x: 1180, y: 150, w: 64, h: 64, cols: [[255, 176, 64], [255, 74, 176]] });
-    L.train = { layer: 2, y: 300, speed: 70, cars: 5, span: 1680 };
+    cityLayers(L);
     // ---- the ground: one long slab under everything
     L.floor(0, L.w, G, 50, MAT.concrete, { drips: 0, base: 0.42 });
     // ---- the hotel and the clinic: a block on the left, cut away at the ground floor
@@ -85,8 +167,9 @@ LEVELS.stack = {
       if (lit) L.light(x, y - 20, 34, [1, 0.75, 0.45], 0.45);
     }
     L.paint(0, MID, 336, G, (P) => { for (let r = 1; r < 3; r++) for (let x = 0; x < 330; x++) P.put(x, G - r * 47 + 1, tone(MAT.steel, 0.55)); });
-    L.prop('capsule', 158, G, { label: 'capsule' });
-    L.light(158, G - 20, 40, [1, 0.8, 0.5], 0.7);
+    // the elevator up to the residential floors, where the capsule row breaks
+    L.prop('elevator', 158, G, { level: 'stack' });
+    L.light(158, G - 40, 40, [1, 0.75, 0.4], 0.6);
     L.tube(40, MID + 8, 24, '#ffe0c0', 0.55); L.tube(230, MID + 8, 24, '#ffe0c0', 0.55);
     // clinic: tiled teal, glass partitions, the chair, monitors, shelves of ware
     L.block(336, MID, 700, G, MAT.clinic, { base: 0.42, lip: 0, panels: [14, 14] });
@@ -162,7 +245,7 @@ LEVELS.stack = {
     L.sign(1530, 120, 8, '#3af0e0', { vert: true, r: 60 }); L.sign(2150, 150, 7, '#ff4ab0', { vert: true, r: 60 });
     // upper walkway: a data node, junk, a downed drone, a hidden panel
     L.prop('node', 1070, UP, { gives: { program: 'breach' }, level: 1, col: '#3af0e0' }); L.light(1070, UP - 18, 50, [0.3, 1, 0.95], 0.8);
-    L.prop('junk', 1300, UP); L.prop('wreck', 1480, UP, { label: 'downed drone' }); L.prop('junk', 1760, UP); L.prop('cache', 2110, UP, { label: 'hidden panel' });
+    L.prop('junk', 1300, UP); L.prop('wreck', 1480, UP, { label: 'downed drone' }); L.prop('junk', 1760, UP); L.prop('cache', 2110, UP, { label: 'hidden panel', gear: 'lenses' });
     for (const x of [1000, 1240, 1600, 1900]) L.tube(x, UP + 8, 20, '#d8f0ff', 0.5);
     // cables and laundry across the canyon; rain
     L.paint(700, 280, 1500, 470, (P) => { for (let k = 0; k < 4; k++) cable(P, 700, 300 + k * 6, 1500, 288 + k * 9, 18 + k * 4, '#08080c'); laundry(P, 760, 420, 1240, 428, 3); laundry(P, 1180, UP - 30, 1490, UP - 26, 5); });
@@ -202,7 +285,7 @@ LEVELS.stack = {
     L.critter('rat', 720, 2150, G, 3); L.critter('rat', 20, 320, G, 1); L.critter('rat', 2220, 2540, G, 1); L.critter('cat', 1520, 2160, MID, 1);
     L.litter(700, 2180, G, 8); L.litter(1500, 2180, MID, 3); L.litter(2210, 2550, G, 3);
     L.vents.push({ x: 860, y: 618, kind: 'steam' }, { x: 2280, y: 390, kind: 'steam' });
-    L.spawns = { capsule: [180, G], shaft: [2470, G], lift: [2380, G] };
+    L.spawns = { elevator: [158, G], shaft: [2470, G], lift: [2380, G] };
     L.ambient = (x, y) => { const t = clamp(1 - y / 520, 0, 1); return [0.16 + t * 0.12, 0.13 + t * 0.07, 0.24 + t * 0.14]; };
     L.wet.push({ y: G + 1, x0: 700, x1: L.w, depth: 22, k: 0.38 });
     L.rain = 1;
@@ -238,6 +321,7 @@ LEVELS.street = {
     L.ladder(120, 172, G);
     L.prop('exit', 120, 186, { to: ['stack', 'shaft'], label: 'Climb up to the Stack' });
     L.prop('lift', 300, G, { to: ['stack', 'lift'], dir: 'up' });
+    L.prop('elevator', 350, G, { level: 'street' }); L.light(350, G - 40, 36, [1, 0.75, 0.4], 0.5);
     L.sign(60, 200, 5, '#ff4ab0', { vert: true, r: 55 });
     // Ozu's kiosk
     L.prop('deco', 560, G, { art: DECO.stall({ awning: '#2a7a4a' }), id: 'ozu', front: 20 }); L.light(560, 430, 64, [0.5, 1, 0.6], 0.8);
@@ -266,7 +350,7 @@ LEVELS.street = {
     L.prop('junk', 1560, G); L.prop('rack', 1820, G, { label: 'dumped server rack' });
     L.wall(1930, 300, 1960, G, MAT.concrete, { base: 0.45 });
     L.block(1880, 300, 1930, G, MAT.concreteD, { base: 0.25, lip: 0 });
-    L.prop('heavy', 1886, G, { w: 26, h: 36 }); L.prop('stash', 1912, G, { label: 'gang stash' });
+    L.prop('heavy', 1886, G, { w: 26, h: 36 }); L.prop('stash', 1912, G, { label: 'gang stash', gear: ['mesh', 'baton'] });
     L.sign(1700, 320, 5, '#ff4ab0', { r: 55 });
     // further on: a car, and the old subway, sealed
     L.prop('car', 2080, G, { look: { col: '#3a3a4a' }, label: 'burnt-out car' });
@@ -289,7 +373,7 @@ LEVELS.street = {
     L.critter('rat', 0, 2300, G, 4); L.litter(0, 2380, G, 10);
     L.vents.push({ x: 820, y: G, kind: 'steam' }, { x: 1360, y: G, kind: 'steam' }, { x: 2040, y: G, kind: 'steam' });
     for (const x of [80, 230, 470, 760, 1010, 1330, 1520, 1890, 2150]) L.drips.push({ x, y0: 162, y1: G });
-    L.spawns = { shaft: [128, G], lift: [300, G] };
+    L.spawns = { shaft: [128, G], lift: [300, G], elevator: [350, G] };
     L.ambient = [0.15, 0.12, 0.2];
     L.wet.push({ y: G + 1, x0: 0, x1: L.w, depth: 24, k: 0.45 });
     L.rain = 0;

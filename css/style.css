@@ -90,6 +90,29 @@ body.touch #pads { display: flex; }
 .help p { color: var(--dim); }
 .help b { color: var(--ink); font-weight: 600; }
 
+/* ---- the inventory: tabs, a figure of you between its slots, gear cards ---- */
+.tabs { display: flex; gap: 2px; margin: -2px 0 10px; border-bottom: 1px solid var(--edge); }
+.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 6px 12px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+.tabs button.on { color: var(--teal); border-bottom-color: var(--teal); }
+.doll { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.doll .slots { display: grid; gap: 6px; }
+.slot { --r: var(--edge); text-align: left; padding: 5px 8px; border: 1px solid var(--r); border-left-width: 3px; background: linear-gradient(90deg, color-mix(in srgb, var(--r) 18%, transparent), rgba(16, 12, 24, 0.6)); min-width: 0; }
+.slot small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+.slot b { display: block; font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot.empty b { color: var(--dim); font-weight: 400; }
+.slot.sel { box-shadow: 0 0 0 1px var(--teal), 0 0 12px rgba(58, 240, 224, 0.35); }
+.slot .new { font-style: normal; color: var(--sodium); }
+.r-common { --r: #a8a8b4; } .r-uncommon { --r: #5ad86a; } .r-rare { --r: #40a8ff; } .r-epic { --r: #c060ff; } .r-legendary { --r: #ffb030; }
+.fig { display: grid; justify-items: center; gap: 4px; }
+#dollcv { width: 132px; height: 150px; image-rendering: pixelated; background: radial-gradient(ellipse at 50% 85%, rgba(58, 240, 224, 0.16), transparent 60%); }
+.stats { display: flex; flex-direction: column; align-items: center; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.stats b { color: var(--sodium); font-weight: 400; }
+.cards { display: grid; gap: 6px; }
+.card { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 10px; border: 1px solid color-mix(in srgb, var(--r) 55%, transparent); border-left: 3px solid var(--r); background: linear-gradient(90deg, color-mix(in srgb, var(--r) 12%, transparent), transparent 70%); }
+.card small { display: block; color: var(--dim); font-size: 13px; }
+.card small.rar { color: var(--r); font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.sw { display: inline-block; width: 8px; height: 8px; margin-right: 6px; }
+
 /* ---- jacking in ---- */
 #hack { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.78); display: grid; place-items: center; align-content: center; gap: 8px; }
 #hack[hidden] { display: none; }

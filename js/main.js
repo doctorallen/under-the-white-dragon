@@ -13,7 +13,7 @@ function boot() {
   Game.cam.x = Player.x; Game.cam.y = Player.y - 30;
   Hud.init();
   Game.toast(loaded ? 'Back on ' + World.L.name + '.' : 'Detective. Four synths walked off a corp transport in the Spires three nights ago and dropped out of sight. Last ping: the Stack, heading down.');
-  if (!loaded) setTimeout(() => Game.toast('Juno at the bar sells leads. The ripperdoc next door fits ware. Your blaster\'s charged.'), 3500);
+  if (!loaded) setTimeout(() => Game.toast('The elevator at the end of the hall goes down to the Stack. Juno at the bar there sells leads. Your blaster\'s charged.'), 3500);
   addEventListener('visibilitychange', () => { if (document.hidden) Save.write(); });
   addEventListener('pagehide', () => Save.write());
   $('loading').hidden = true;

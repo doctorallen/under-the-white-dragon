@@ -9,7 +9,7 @@ const PROP_ART = {
   vending: (p) => vending(p.look || {}), ac: () => acUnit(), rack: (p) => rack({ h: 40, seed: p.x, warn: true }), car: (p) => car(p.look || {}),
   junk: (p) => junk({ seed: p.x % 7 }), wreck: () => wreck(), cache: () => { const S = new Spr(16, 12, 81); S.ax = 8; S.ay = 11; S.box(0, 0, 15, 11, MAT.concreteD, { lo: 1, hi: 5 }); for (let x = 2; x < 14; x += 3) S.px(x, 5, '#a85ad8', true); return S.done(); },
   grate: (p) => grate({ w: p.w || 12, h: p.h || 32 }), heavy: (p) => heavyShutter({ w: p.w || 30, h: p.h || 32 }), hatch: (p) => hatch({ w: p.w || 26, h: p.h || 34, stripe: true }),
-  node: (p) => node({ col: p.col }), lift: (p) => liftCage({ on: Game.s.flags.lift }), capsule: (p) => capsule({ lit: true, col: '#e8c088' }), exit: () => null, deco: (p) => p.art(),
+  node: (p) => node({ col: p.col }), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), closet: () => closet(), elevator: (p) => elevator({ at: ELEVATOR.findIndex((f) => f.level === p.level) }), exit: () => null, deco: (p) => p.art(),
   sealed: (p) => hatch({ w: 40, h: 40, col: '#3a3a40', lock: '#ffb040', stripe: true }),
 };
 // what each kind gives when stripped: [item, min, max]
@@ -53,7 +53,9 @@ const Props = {
     if (p.kind === 'sealed') return { verb: 'Sealed', text: p.label || 'Sealed', tap: true, no: true };
     if (p.kind === 'node') return p.done ? null : { verb: 'Hack', text: 'Jack in', tap: true };
     if (p.kind === 'lift') return Game.s.flags.lift ? { verb: 'Ride', text: 'Take the lift ' + (p.dir || ''), tap: true } : { verb: 'Repair', text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
-    if (p.kind === 'capsule') return { verb: 'Rest', text: 'Your capsule', tap: true };
+    if (p.kind === 'bed') return { verb: 'Sleep', text: 'Your bed', tap: true };
+    if (p.kind === 'closet') return { verb: 'Gear', text: 'Your closet: change what you wear', tap: true };
+    if (p.kind === 'elevator') return { verb: 'Call', text: 'Call the elevator', tap: true };
     if (p.kind === 'exit') return { verb: 'Climb', text: p.label || 'Climb', tap: true };
     return null;
   },
@@ -64,6 +66,8 @@ const Props = {
       for (const [item, a, b] of YIELDS[p.kind]) { const n = a + Math.floor(hash(p.x, p.y, item.length + Game.s.day) * (b - a + 1)); if (n <= 0) continue; if (item === 'cr') { Game.s.cr += n; got.push(n + ' cr'); } else { const took = Game.give(item, n); if (took) got.push(took + ' ' + SALVAGE[item].name.toLowerCase()); } }
       this.finish(p); Fx.sparks(p.x, p.y - 8, 10);
       Game.toast(got.length ? '+ ' + got.join(', ') : 'Nothing worth taking.');
+      // some hold something to wear
+      if (p.gear) for (const g of [].concat(p.gear)) Game.giveGear(g);
       return;
     }
     if (p.kind === 'grate' || p.kind === 'heavy') { this.finish(p); Fx.sparks(p.x, p.y - 16, 16); Game.toast(p.kind === 'grate' ? 'Through.' : 'The shutter comes away.'); return; }
@@ -78,7 +82,9 @@ const Props = {
       if (!Game.s.flags.lift) { if (Game.pay({ wire: 4, chips: 2 })) { Game.s.flags.lift = true; p.spr = null; Game.toast('The lift shudders and lights up. It runs between the Stack and street level now.', 'good'); Save.write(); } else Game.toast('You need 4 wire and 2 chips.'); return; }
       Game.go(p.to[0], p.to[1]); return;
     }
-    if (p.kind === 'capsule') { Hud.toggle('home'); return; }
+    if (p.kind === 'bed') { Hud.toggle('bed'); return; }
+    if (p.kind === 'closet') { Hud.tab = 'gear'; Hud.toggle('pack'); return; }
+    if (p.kind === 'elevator') { Hud.toggle('elevator'); return; }
     if (p.kind === 'exit') { Game.go(p.to[0], p.to[1]); return; }
   },
   finish(p) { p.done = true; Game.s.done[p.id] = 1; p.spr = null; Save.write(); },

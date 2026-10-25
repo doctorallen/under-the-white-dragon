@@ -12,12 +12,13 @@ const T = {
     jump: 232, doubleJump: 205, gravity: 720, maxFall: 400, coyote: 0.1, climb: 62,
     hp: 100, iframes: 0.7,
   },
-  // the blaster: shots before it has to recharge, seconds per shot back
-  blaster: { shots: 6, recharge: 0.8, dmg: 16, speed: 300, life: 0.9, cd: 0.28, range: 200 },
-  strike: { reach: 20, dmg: 12, mantis: 26, cd: 0.32, knock: 120 },
+  // bolts: seconds per shot back, speed, life, aim range; each gun's damage,
+  // shots and cycle are in GEAR (items.js)
+  blaster: { recharge: 0.8, speed: 300, life: 0.9, range: 200 },
+  // a blow: bare-handed damage, or the melee weapon's; mantis blades add theirs
+  strike: { reach: 20, dmg: 12, mantis: 14, cd: 0.32, knock: 120 },
   // cutting things open: seconds at tier 1; the mantis arms are quicker
   cut: { speedMantis: 1.7 },
-  pack: { cap: 24 },
   ram: { max: 3, regen: 7 },
   neural: { base: 5, booster: 1 },
   day: { length: 1200, start: 20.5 }, // seconds in a day; the clock starts at 20:30

@@ -1,7 +1,7 @@
 'use strict';
 // ---------------------------------------------------------------------------
 // The game's state and its rules. Game.s is everything a save keeps: where
-// you are, your health and money, the pack and the stash, your ware and
+// you are, your health and money, what you carry and wear, your ware and
 // programs, what's been done to the city (props by id, flags), the jobs, and
 // the time of day.
 // ---------------------------------------------------------------------------
@@ -10,8 +10,8 @@ const Game = {
   s: null, cam: { x: 0, y: 0 }, toasts: [], particles: [], ghost: 0,
   fresh() {
     return {
-      v: 2, level: 'stack', spawn: 'capsule', px: 0, py: 0, hp: T.player.hp, cr: 40, ram: T.ram.max,
-      pack: {}, stash: {}, mods: { owned: {}, on: {} }, programs: {}, prog: null,
+      v: 3, level: 'home', spawn: 'bed', px: 0, py: 0, hp: T.player.hp, cr: 40, ram: T.ram.max,
+      pack: {}, gear: { owned: Object.fromEntries(Object.values(GEAR_START).map((g) => [g, 1])), on: Object.assign({}, GEAR_START) }, mods: { owned: {}, on: {} }, programs: {}, prog: null,
       done: {}, flags: {}, jobs: { taken: {}, done: {}, kills: {} }, time: T.day.start, day: 1, deaths: 0,
     };
   },
@@ -21,16 +21,29 @@ const Game = {
   neuralCap() { return T.neural.base + (this.s.flags.booster ? T.neural.booster : 0); },
   neuralLoad() { let n = 0; for (const m in this.s.mods.on) if (this.s.mods.on[m]) n += MODS[m].load; return n; },
   stage() { return { eye: this.has('lowlight'), legs: this.has('spring'), arm: this.has('mantis') }; },
-  // ---- the pack ----
+  // ---- what you carry: no limit, and once it's yours it stays yours ----
   packCount() { let n = 0; for (const k in this.s.pack) n += this.s.pack[k]; return n; },
-  give(item, n) { const room = T.pack.cap - this.packCount(), k = Math.min(n, room); if (k <= 0) { this.toast('Your pack is full. Stash it or sell it.', 'warn'); return 0; } this.s.pack[item] = (this.s.pack[item] || 0) + k; this.checkJobs(); Hud.refresh(); return k; },
-  canPay(cost) { for (const k in cost) { if (k === 'cr') { if (this.s.cr < cost.cr) return false; } else if ((this.s.pack[k] || 0) + (this.s.stash[k] || 0) < cost[k]) return false; } return true; },
-  // pay from the pack first, then the stash
+  give(item, n) { if (n <= 0) return 0; this.s.pack[item] = (this.s.pack[item] || 0) + n; this.checkJobs(); Hud.refresh(); return n; },
+  canPay(cost) { for (const k in cost) { if (k === 'cr') { if (this.s.cr < cost.cr) return false; } else if ((this.s.pack[k] || 0) < cost[k]) return false; } return true; },
   pay(cost) {
     if (!this.canPay(cost)) return false;
-    for (const k in cost) { if (k === 'cr') { this.s.cr -= cost.cr; continue; } let left = cost[k]; const a = Math.min(left, this.s.pack[k] || 0); this.s.pack[k] = (this.s.pack[k] || 0) - a; left -= a; this.s.stash[k] = (this.s.stash[k] || 0) - left; }
+    for (const k in cost) { if (k === 'cr') this.s.cr -= cost.cr; else this.s.pack[k] -= cost[k]; }
     Hud.refresh(); return true;
   },
+  // ---- gear: one piece a slot ----
+  worn(slot) { const id = this.s.gear.on[slot]; return id ? GEAR[id] : null; },
+  armor() { let a = 0; for (const k in this.s.gear.on) { const g = GEAR[this.s.gear.on[k]]; if (g && g.armor) a += g.armor; } return a; },
+  perk(name) { let v = 0; for (const k in this.s.gear.on) { const g = GEAR[this.s.gear.on[k]]; if (g && g.perk && g.perk[name]) v += g.perk[name]; } return v; },
+  weapon() { return this.worn('ranged') || GEAR.blaster; },
+  strikeDmg() { const m = this.worn('melee'); return (m ? m.strike : T.strike.dmg) + (this.has('mantis') ? T.strike.mantis : 0); },
+  giveGear(id) {
+    const G = GEAR[id]; if (!G || this.s.gear.owned[id]) return false;
+    this.s.gear.owned[id] = 1; if (!this.s.gear.on[G.slot]) this.equip(id);
+    this.toast('New gear: ' + G.name + ', ' + RARITY[G.rarity].name.toLowerCase() + ' ' + SLOTS[G.slot].toLowerCase() + '. Wear it from Gear.', 'good');
+    Hud.refresh(); return true;
+  },
+  equip(id) { const G = GEAR[id]; if (!this.s.gear.owned[id]) return; this.s.gear.on[G.slot] = id; if (G.slot === 'ranged') Player.charge = Math.min(Player.charge, G.shots); RunnerArt.cache.clear(); Hud.refresh(); Save.write(); },
+  unequip(slot) { if (slot === 'ranged') return; delete this.s.gear.on[slot]; RunnerArt.cache.clear(); Hud.refresh(); Save.write(); },
   reward(g) {
     if (!g) return;
     if (g.program) { this.s.programs[g.program] = true; if (!this.s.prog) this.s.prog = g.program; this.toast('New program: ' + PROGRAMS[g.program].name + '. ' + PROGRAMS[g.program].note, 'good'); }
@@ -52,7 +65,8 @@ const Game = {
     this.s.jobs.done[j.id] = true;
     const r = j.reward, got = [];
     if (r.cr) { this.s.cr += r.cr; got.push(r.cr + ' cr'); }
-    if (r.chips) { this.s.stash.chips = (this.s.stash.chips || 0) + r.chips; got.push(r.chips + ' chips to your stash'); }
+    if (r.chips) { this.give('chips', r.chips); got.push(r.chips + ' chips'); }
+    if (r.gear && this.giveGear(r.gear)) got.push(GEAR[r.gear].name.toLowerCase());
     if (r.booster) { this.s.flags.booster = true; got.push('a neural booster: your nervous system takes one more point of ware'); }
     this.toast('Job done: ' + j.title + '. ' + got.join(', ') + '.', 'good');
     if (j.story) setTimeout(() => this.toast(j.story, 'good'), 2500);
@@ -67,7 +81,7 @@ const Game = {
   // ---- moving between levels ----
   go(level, spawn) { this.fadeTo = { level, spawn }; this.fade = 0.001; },
   arrive(level, spawn) {
-    this.s.level = level; World.load(level);
+    this.s.level = level; this.s.flags['been:' + level] = true; World.load(level);
     const sp = World.L.spawns[spawn] || Object.values(World.L.spawns)[0];
     Player.place(sp[0], sp[1]); Actors.load(); Life.load();
     this.cam.x = Player.x; this.cam.y = Player.y - 30;
@@ -76,16 +90,17 @@ const Game = {
   },
   hurt(n, from) {
     if (Player.inv > 0 || this.paused) return;
-    this.s.hp -= n; Player.inv = T.player.iframes; Player.hurtT = 0.25;
+    // armour takes its share off every hit
+    this.s.hp -= n * 100 / (100 + this.armor()); Player.inv = T.player.iframes; Player.hurtT = 0.25;
     if (from) { Player.vx = Math.sign(Player.x - from.x || 1) * 110; Player.vy = -120; }
     Fx.burst(Player.x, Player.y - 16, [255, 60, 80], 8);
     if (this.s.hp <= 0) this.die();
     Hud.refresh();
   },
   die() {
-    this.s.deaths++; this.s.hp = T.player.hp; this.s.pack = {}; this.s.ram = T.ram.max; this.pass(6);
-    this.toast('You wake in your capsule, sore, with an empty pack. Somebody carried you home.', 'warn');
-    this.go('stack', 'capsule');
+    this.s.deaths++; this.s.hp = T.player.hp; this.s.ram = T.ram.max; this.pass(6);
+    this.toast('You wake in your own bed, sore, six hours later. Somebody carried you home.', 'warn');
+    this.go('home', 'bed');
   },
   toast(text, kind = '') {
     const last = this.toasts[this.toasts.length - 1];

@@ -1,13 +1,15 @@
 'use strict';
 // The game played headlessly in Chrome, sideways on a phone and on a desktop:
-// it boots without an error in the capsule (the desktop run without
-// WebGL2, so the 2D path is played too); a vending machine is stripped
+// it boots without an error in the apartment (the desktop run without
+// WebGL2, so the 2D path is played too); the runner walks the hall to the
+// elevator and rides it down to the Stack; a vending machine is stripped
 // for parts; Kit's and Juno's panels open and a job is taken; the stairs
 // carry the runner up to both walkways; the data node gives Breach; the
 // strike downs a drone; the grate into the service yard is cut; the Warden
-// falls; the hatch is breached and the shaft leads down to street level; a
-// car there gives coolant; the ripperdoc fits ware; a reload brings it all
-// back. Screenshots go to test/out. Chrome comes from $CHROME
+// falls and drops its helmet, which is worn from the Gear tab; the hatch is
+// breached and the shaft leads down to street level; a car there gives
+// coolant; the ripperdoc fits ware; the elevator there goes home; a reload
+// brings it all back. Screenshots go to test/out. Chrome comes from $CHROME
 // (puppeteer-core), or, where that isn't installed, playwright's Chromium.
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), OUT = path.join(__dirname, 'out');
@@ -65,9 +67,13 @@ async function run(B, url, vp, name, failures) {
   const E = (fn, arg) => page.evaluate(fn, arg);
   console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))));
   const st = await E(() => ({ level: Game.s.level, x: Player.x, frame: Game.frame }));
-  if (st.level !== 'stack' || Math.abs(st.x - 180) > 40) fail('the runner does not start by the capsule ' + JSON.stringify(st));
+  if (st.level !== 'home' || Math.abs(st.x - 116) > 40) fail('the runner does not start by the bed ' + JSON.stringify(st));
   if (!st.frame) fail('the loop is not running');
-  await shot('capsule');
+  await shot('home');
+  // down the hall to the elevator, and down to the Stack
+  const lift = await E(() => { T_.walkTo(1470); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-floor="stack"]'); if (b) b.click(); T_.run({}, 90); return { o, level: Game.s.level, x: Math.round(Player.x) }; });
+  if (lift.o !== 'elevator' || lift.level !== 'stack' || Math.abs(lift.x - 158) > 20) fail('the elevator did not take the runner down to the Stack ' + JSON.stringify(lift));
+  await shot('stack');
   // a vending machine, stripped
   const strip = await E(() => { T_.walkTo(966); T_.hold(200); return { done: World.props.find((p) => p.kind === 'vending').done, pack: Game.packCount(), cr: Game.s.cr }; });
   if (!strip.done || !strip.pack) fail('stripping the vending machine gave nothing ' + JSON.stringify(strip));
@@ -93,6 +99,9 @@ async function run(B, url, vp, name, failures) {
   const boss = await E(() => { const w = Actors.boss; for (let k = 0; k < 60 * 60 && w.hp > 0; k++) { Game.s.hp = 100; const d = w.x - Player.x; Input.bot = { ax: Math.abs(d) > 34 ? Math.sign(d) : 0, jump: w.state === 'stomp' }; if (w.state === 'stomp' && k % 20 === 0) Input.jumpHit = true; if (k % 14 === 0) { Player.face = Math.sign(d) || 1; Input.strikeHit = true; } step(1 / 60); } Input.bot = null; return { hp: w.hp, flag: !!Game.s.flags.warden }; });
   if (!boss.flag) fail('the Warden did not fall ' + JSON.stringify(boss));
   await shot('yard');
+  // its helmet, worn from the Gear tab
+  const gear = await E(() => { const a0 = Game.armor(); Hud.tab = 'gear'; Hud.slot = 'head'; Hud.toggle('pack'); const b = document.querySelector('button[data-equip="helmet"]'); if (b) b.click(); Hud.toggle(null); return { owned: !!Game.s.gear.owned.helmet, on: Game.s.gear.on.head, a0, a1: Game.armor() }; });
+  if (!gear.owned || gear.on !== 'helmet' || gear.a1 <= gear.a0) fail('the Warden\'s helmet was not worn ' + JSON.stringify(gear));
   // the hatch: breached, and down to street level
   const down = await E(() => { T_.walkTo(2500); T_.tap('useHit'); const h = World.props.find((p) => p.kind === 'hatch').done; T_.tap('useHit'); T_.run({}, 90); return { h, level: Game.s.level }; });
   if (!down.h || down.level !== 'street') fail('the hatch did not open the way down ' + JSON.stringify(down));
@@ -104,10 +113,13 @@ async function run(B, url, vp, name, failures) {
   const ware = await E(() => { Object.assign(Game.s.pack, { glass: 3, chips: 2 }); Game.s.cr += 100; Hud.toggle('doc'); const b = document.querySelector('button[data-buy="lowlight"]'); if (b) b.click(); Hud.toggle(null); return Game.has('lowlight'); });
   if (!ware) fail('the ripperdoc did not fit lowlight optics');
   await shot('lowlight');
+  // the elevator on street level goes home
+  const home = await E(() => { T_.walkTo(350); T_.tap('useHit'); const b = document.querySelector('button[data-floor="home"]'); if (b) b.click(); T_.run({}, 90); return Game.s.level; });
+  if (home !== 'home') fail('the street elevator did not go home (' + home + ')');
   // a reload brings it back
-  const before = await E(() => { Save.write(); return JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.mods.on, w: Game.s.flags.warden }); });
+  const before = await E(() => { Save.write(); return JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.mods.on, w: Game.s.flags.warden, g: Game.s.gear.on }); });
   await page.reload(); for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.Downlevel)); i++) await sleep(200);
-  const after = await E(() => JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.mods.on, w: Game.s.flags.warden }));
+  const after = await E(() => JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.mods.on, w: Game.s.flags.warden, g: Game.s.gear.on }));
   if (before !== after) fail('the save did not come back: ' + before + ' / ' + after);
   if (errors.length) fail('errors: ' + errors.slice(0, 5).join(' | '));
 }

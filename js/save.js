@@ -1,7 +1,8 @@
 'use strict';
 // ---------------------------------------------------------------------------
 // Saving: Game.s, in localStorage. The levels are built from code, so a save
-// only needs what's changed: props done by id, flags, the pack, the ware.
+// only needs what's changed: props done by id, flags, what you carry and
+// wear, the ware.
 // Every read and write is guarded, since storage can be missing or full.
 // ---------------------------------------------------------------------------
 const Save = {
@@ -18,7 +19,13 @@ const Save = {
   start() {
     const d = this.read();
     const f = Game.fresh();
-    if (d && d.v === 2) { Game.s = Object.assign(f, d, { mods: Object.assign(f.mods, d.mods), jobs: Object.assign(f.jobs, d.jobs) }); return true; }
+    if (d && (d.v === 2 || d.v === 3)) {
+      // a save from before the apartment: the stash goes into the pack, the
+      // capsule's spawn becomes the elevator, and you wear what you started in
+      if (d.v === 2) { for (const k in d.stash || {}) d.pack[k] = (d.pack[k] || 0) + d.stash[k]; delete d.stash; if (d.spawn === 'capsule') d.spawn = 'elevator'; d.v = 3; }
+      Game.s = Object.assign(f, d, { mods: Object.assign(f.mods, d.mods), jobs: Object.assign(f.jobs, d.jobs), gear: d.gear || f.gear });
+      return true;
+    }
     Game.s = f; return false;
   },
 };

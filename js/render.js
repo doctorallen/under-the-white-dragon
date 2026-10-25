@@ -40,7 +40,7 @@ function render() {
   // the layers of the city behind, back to front: each hides the glow of
   // those behind it, then its own holograms, train and traffic go on top
   World.layers.forEach((F, i) => {
-    const fx = -Math.round(cx * F.f), fy = -Math.round(cy * F.fy);
+    const fx = -Math.round(cx * F.f), fy = -Math.round(cy * F.fy + (L.layerDy || 0));
     g.drawImage(F.c, fx, fy);
     gg.globalCompositeOperation = 'destination-out'; gg.drawImage(F.c, fx, fy); gg.globalCompositeOperation = 'source-over';
     if (F.e) gg.drawImage(F.e, fx, fy);

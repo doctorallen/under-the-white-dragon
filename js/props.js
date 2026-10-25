@@ -183,3 +183,78 @@ function stripped(s) {
   g.globalCompositeOperation = 'destination-out'; for (let k = 0; k < Math.max(3, s.w * s.h / 60); k++) g.fillRect(Math.floor(hash(k, 1, s.w) * s.w), Math.floor(hash(k, 2, s.h) * s.h), 1 + Math.floor(hash(k, 3, 9) * 3), 1);
   return Object.assign({}, s, { c, e: null });
 }
+
+// ---- home: the apartment and the hall outside it ----------------------------
+// a flat panel: a door leaf or a cabinet front, lit from the left, a light
+// top edge, a dark bottom one (Spr.box shades round, for small things)
+function panel(S, x0, y0, x1, y1, ramp, o = {}) {
+  const R = ramp.map((c) => (typeof c === 'string' ? rgb(c) : c)), n = R.length - 1, a = o.a === undefined ? 0.55 : o.a, b = o.b === undefined ? 0.35 : o.b;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const t = y === y0 ? 0.85 : y === y1 ? 0.12 : a + (b - a) * ((x - x0) / Math.max(1, x1 - x0)) + (hash(x, y, 3) - 0.5) * 0.08; S.px(x, y, R[clamp(Math.round(t * n), 0, n)], o.glow); }
+}
+// a bed against the wall: a frame, a mattress, a rumpled blanket, a pillow
+function bed(o = {}) {
+  const W = 46, H = 18, S = new Spr(W, H, 201); S.ax = W / 2; S.ay = H - 1;
+  panel(S, 0, 10, W - 1, H - 1, MAT.steelD); panel(S, 0, 0, 3, H - 1, MAT.steelD, { a: 0.65, b: 0.5 });
+  panel(S, 3, 6, W - 2, 10, rp('#c8c4bc', 6), { a: 0.7, b: 0.5 });
+  S.shape([[14, 4], [W - 2, 5], [W - 1, 11], [12, 11], [10, 7]], rp(o.blanket || '#7a3a4a', 7), { down: 0.3, folds: true });
+  S.cap(6, 4, 10, 4, 2.4, 1.8, rp('#e8e4dc', 5));
+  for (let y = 12; y < H - 2; y += 2) for (let x = 6; x < W - 4; x += 8) S.px(x, y, MAT.steelD[0]);
+  return S.done();
+}
+// a closet: two doors, one open on a rail of coats, and a mirror
+function closet() {
+  const W = 30, H = 40, S = new Spr(W, H, 202); S.ax = W / 2; S.ay = H - 1; const wd = MAT.wood;
+  panel(S, 0, 0, W - 1, H - 1, wd, { a: 0.6, b: 0.45 });
+  panel(S, 2, 2, 14, H - 3, ['#140c08', '#2a1a10', '#3a2618'], { a: 0.4, b: 0.6 });
+  for (let x = 3; x < 14; x++) S.px(x, 5, MAT.chrome[3]);
+  for (const [x, c] of [[4, '#5e4c38'], [8, '#2a2438'], [11, '#34343c']]) S.shape([[x, 6], [x + 3, 6], [x + 3.5, 26], [x - 0.5, 26]], rp(c, 6), { down: 0.25 });
+  panel(S, 16, 2, W - 3, H - 3, wd, { a: 0.65, b: 0.5 }); panel(S, 18, 5, W - 5, 24, ['#3a5060', '#6a90a0', '#a8d0dc'], { a: 0.7, b: 0.3 });
+  S.px(17, 20, MAT.chrome[4]);
+  return S.done();
+}
+// a kitchenette: a counter, a hotplate, a sink, cups of noodles, a shelf
+function kitchen() {
+  const W = 44, H = 36, S = new Spr(W, H, 203); S.ax = W / 2; S.ay = H - 1;
+  panel(S, 0, 16, W - 1, H - 1, rp('#4a5058', 6)); panel(S, 0, 14, W - 1, 17, rp('#8a8a84', 6), { a: 0.7, b: 0.55 });
+  for (let x = 4; x < W - 2; x += 14) { panel(S, x, 20, x + 11, H - 3, rp('#3a4048', 6), { a: 0.5, b: 0.4 }); S.px(x + 9, 24, MAT.chrome[4]); }
+  S.ell(10, 13, 4, 1.4, MAT.steelD); S.px(10, 14, '#ff4020', true); S.px(11, 14, '#ff6030', true);
+  S.box(26, 13, 36, 15, MAT.chrome, { lo: 1, hi: 5 }); S.limb(34, 13, 34, 8, 0.8, MAT.chrome); S.limb(34, 8, 31, 8, 0.8, MAT.chrome);
+  for (const x of [17, 21]) { S.box(x, 9, x + 3, 13, ['#c8c0b0', '#e8e0d0', '#ffffff'], { lo: 1, hi: 2 }); S.px(x + 1, 10, '#d83a3a'); }
+  S.box(2, 4, W - 3, 5, MAT.wood, { lo: 1, hi: 5 }); for (let x = 5; x < W - 6; x += 5) S.box(x, 0, x + 2, 3, rp(['#3a8a8a', '#a88a3a', '#8a3a6a'][x % 3]), { lo: 1, hi: 4 });
+  return S.done();
+}
+// a screen on a stand, playing (life.js draws nothing on it; it's a still)
+function tvSet(o = {}) {
+  const W = 26, H = 26, S = new Spr(W, H, 204); S.ax = W / 2; S.ay = H - 1; const c = col3(o.col || '#3a8aff');
+  panel(S, 0, 0, W - 1, 15, MAT.steelD);
+  for (let y = 2; y < 14; y++) for (let x = 2; x < W - 2; x++) S.px(x, y, mixRgb(c, [10, 10, 30], 0.35 + hash(x >> 2, y >> 1, 9) * 0.5 + (y % 2) * 0.1), true);
+  S.limb(W / 2, 16, W / 2, H - 4, 1, MAT.steelD); S.box(W / 2 - 6, H - 3, W / 2 + 6, H - 1, MAT.steelD, { lo: 1, hi: 4 });
+  return S.done();
+}
+// a plant in a pot, a little sad
+function plant() {
+  const S = new Spr(14, 22, 205); S.ax = 7; S.ay = 21;
+  S.box(3, 15, 10, 21, rp('#8a4a2a', 6), { lo: 1, hi: 5 });
+  for (let k = 0; k < 7; k++) { const a = -1.4 + k * 0.45, l = 6 + (k % 3) * 2; S.limb(7, 15, 7 + Math.cos(a - 0.2) * l * 0.6, 15 - Math.sin(Math.abs(a) + 0.6) * l, 1, ['#1a3a1a', '#2a5a2a', '#4a8a3a']); }
+  return S.done();
+}
+// a neighbour's door in the hall: a number plate, a peephole, maybe open
+function aptDoor(o = {}) {
+  const w = 20, h = 32, S = new Spr(w + 4, h + 6, 206); S.ax = (w + 4) / 2; S.ay = h + 5; const r = rp(o.col || '#4a4450', 7);
+  panel(S, 0, 4, w + 3, h + 5, MAT.steelD, { a: 0.6, b: 0.4 });
+  if (o.open) { panel(S, 2, 6, w + 1, h + 5, ['#2a1a10', '#6a4020', '#a87040', '#e8b070'], { a: 0.75, b: 0.45 }); for (let y = 8; y < h + 4; y++) S.px(w - 4, y, '#ffd8a0', true); panel(S, w - 3, 6, w + 1, h + 5, r); }
+  else { panel(S, 2, 6, w + 1, h + 5, r); S.px(w / 2 + 2, 14, '#c8c8d0'); S.px(w - 2, h / 2 + 6, '#c8c8d0'); }
+  // the number, in little lit digits
+  panel(S, 5, 7, 13, 11, ['#0a0a0e', '#16161c']); for (let i = 0; i < 3; i++) S.px(6 + i * 2, 9, o.lit || '#ffd8a0', true);
+  return S.done();
+}
+// elevator doors: brushed steel, a seam down the middle, floor lights over them
+function elevator(o = {}) {
+  const W = 40, H = 48, S = new Spr(W, H, 207); S.ax = W / 2; S.ay = H - 1;
+  panel(S, 0, 6, W - 1, H - 1, MAT.steelD, { a: 0.6, b: 0.4 });
+  panel(S, 4, 9, W / 2 - 1, H - 1, MAT.chrome, { a: 0.62, b: 0.45 }); panel(S, W / 2, 9, W - 5, H - 1, MAT.chrome, { a: 0.5, b: 0.32 });
+  for (let y = 10; y < H; y++) S.px(W / 2 - 1, y, '#141418');
+  for (let i = 0; i < 6; i++) S.px(8 + i * 5, 2, i === (o.at || 0) ? '#ffb040' : '#3a3020', i === (o.at || 0));
+  panel(S, W - 4, 24, W - 1, 30, MAT.steel); S.px(W - 3, 26, '#3af0e0', true); S.px(W - 3, 28, '#3af0e0', true);
+  return S.done();
+}
