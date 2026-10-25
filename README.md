@@ -48,7 +48,8 @@ Strip machines for parts. Cut through grates and shutters. Jack into data nodes 
 | `js/player.js` | The runner: movement, ladders, strikes, Use; effects |
 | `js/actors.js` | People's routines and roles, enemies, the Warden, bolts |
 | `js/hack.js` | Jacking in |
-| `js/render.js` | The frame: layers, light, actors, glow, reflections, rain |
+| `js/gl.js` | The frame's last stage in WebGL2: bloom, reflections, the scale-up |
+| `js/render.js` | The frame: layers, light, actors, rain; a 2D finish without WebGL2 |
 | `js/hud.js` | HUD and panels |
 | `js/main.js` | Boot and the loop |
 | `test/check.sh` | Static checks |

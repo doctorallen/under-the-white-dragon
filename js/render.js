@@ -11,7 +11,8 @@
 const View = {
   cv: null, g: null, low: null, lg: null, gl: null, gg: null, bl: null, bg: null, bl2: null, bg2: null, lc: null, lgc: null, limg: null, tmp: null, tg: null,
   scale: 1, w: 0, h: 0, LC: 4,
-  init() { this.cv = $('view'); this.g = this.cv.getContext('2d'); addEventListener('resize', () => this.resize()); this.resize(); },
+  // WebGL2 finishes the frame where there is one (gl.js); else the 2D canvas
+  init() { this.cv = $('view'); if (!GL.init(this.cv)) this.g = this.cv.getContext('2d'); addEventListener('resize', () => this.resize()); this.resize(); },
   resize() {
     const dpr = window.devicePixelRatio || 1, W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
     this.scale = clamp(Math.round(Math.min(W, H) / T.view.min), 1, T.view.maxScale);
@@ -84,24 +85,6 @@ function render() {
   // bolts and sparks: all glow
   for (const b of Actors.bolts) { const x = Math.round(b.x - cx), y = Math.round(b.y - cy); gg.fillStyle = css(b.c); if (b.wave) gg.fillRect(x - 3, y - 8, 6, 10); else { gg.fillRect(x - 2, y - 1, 4, 2); gg.fillStyle = '#fff'; gg.fillRect(x - 1, y - 1, 2, 2); } }
   for (const p of Game.particles) { gg.fillStyle = css(p.c); gg.fillRect(Math.round(p.x - cx), Math.round(p.y - cy), 1, 1); }
-  // the glow, and its bloom
-  g.globalCompositeOperation = 'lighter'; g.drawImage(V.gl, 0, 0);
-  V.bg.clearRect(0, 0, V.bl.width, V.bl.height); V.bg.drawImage(V.gl, 0, 0, V.bl.width, V.bl.height);
-  V.bg2.clearRect(0, 0, V.bl2.width, V.bl2.height); V.bg2.drawImage(V.gl, 0, 0, V.bl2.width, V.bl2.height);
-  g.imageSmoothingEnabled = true; g.globalAlpha = 0.75; g.drawImage(V.bl, -2, -2, w + 4, h + 4); g.globalAlpha = 0.5; g.drawImage(V.bl2, -5, -5, w + 10, h + 10); g.globalAlpha = 1; g.imageSmoothingEnabled = false;
-  // wet ground: what's above, flipped, rippled and dim
-  for (const wt of L.wet) {
-    const y0 = wt.y - cy; if (y0 < 0 || y0 > h) continue;
-    const x0 = Math.max(0, wt.x0 - cx), x1 = Math.min(w, wt.x1 - cx); if (x1 <= x0) continue;
-    const t = V.tg, d = Math.min(wt.depth, h - y0); if (V.tmp.width < w) V.tmp.width = w; if (V.tmp.height < d) V.tmp.height = Math.max(V.tmp.height, d);
-    t.globalCompositeOperation = 'copy'; t.drawImage(V.low, x0, Math.max(0, y0 - d), x1 - x0, Math.min(d, y0), 0, 0, x1 - x0, Math.min(d, y0));
-    for (let k = 0; k < d && y0 - 1 - k >= 0; k++) {
-      const off = Math.round(Math.sin(k * 0.9 + Game.t * 2 + k * k * 0.05) * (k > 2 ? 1 : 0));
-      g.globalAlpha = wt.k * (1 - k / wt.depth) * (k % 2 ? 0.8 : 1);
-      g.drawImage(V.tmp, 0, Math.min(d, y0) - 1 - k, x1 - x0, 1, x0 + off, y0 + k, x1 - x0, 1);
-    }
-    g.globalAlpha = 1;
-  }
   // rain, brighter where the light is: each drop two short strokes, drawn
   // in four batches by brightness
   if (L.rain) {
@@ -114,8 +97,26 @@ function render() {
     }
     B.forEach((arr, b) => { g.fillStyle = `rgba(170,190,230,${0.06 + b * 0.08})`; for (let i = 0; i < arr.length; i += 3) { const x = arr[i], y = arr[i + 1], l = arr[i + 2]; g.fillRect(x, y, 1, l >> 1); g.fillRect(x + 1, y + (l >> 1), 1, l - (l >> 1)); } });
   }
+  // the wet strips in view (view px)
+  const wets = [];
+  for (const wt of L.wet) { const y0 = wt.y - cy, x0 = Math.max(0, wt.x0 - cx), x1 = Math.min(w, wt.x1 - cx); if (y0 >= 0 && y0 <= h && x1 > x0) wets.push({ x0, y0, x1, depth: wt.depth, k: wt.k }); }
+  if (GL.ok) { GL.frame(V.low, V.gl, wets, Game.fade); return; }
+  // ---- without WebGL2: glow, bloom, reflections and the fade in 2D
+  g.globalCompositeOperation = 'lighter'; g.drawImage(V.gl, 0, 0);
+  V.bg.clearRect(0, 0, V.bl.width, V.bl.height); V.bg.drawImage(V.gl, 0, 0, V.bl.width, V.bl.height);
+  V.bg2.clearRect(0, 0, V.bl2.width, V.bl2.height); V.bg2.drawImage(V.gl, 0, 0, V.bl2.width, V.bl2.height);
+  g.imageSmoothingEnabled = true; g.globalAlpha = 0.75; g.drawImage(V.bl, -2, -2, w + 4, h + 4); g.globalAlpha = 0.5; g.drawImage(V.bl2, -5, -5, w + 10, h + 10); g.globalAlpha = 1; g.imageSmoothingEnabled = false;
+  for (const wt of wets) {
+    const { x0, y0, x1 } = wt, t = V.tg, d = Math.min(wt.depth, h - y0); if (V.tmp.width < w) V.tmp.width = w; if (V.tmp.height < d) V.tmp.height = Math.max(V.tmp.height, d);
+    t.globalCompositeOperation = 'copy'; t.drawImage(V.low, x0, Math.max(0, y0 - d), x1 - x0, Math.min(d, y0), 0, 0, x1 - x0, Math.min(d, y0));
+    for (let k = 0; k < d && y0 - 1 - k >= 0; k++) {
+      const off = Math.round(Math.sin(k * 0.9 + Game.t * 2 + k * k * 0.05) * (k > 2 ? 1 : 0));
+      g.globalAlpha = wt.k * (1 - k / wt.depth) * (k % 2 ? 0.8 : 1);
+      g.drawImage(V.tmp, 0, Math.min(d, y0) - 1 - k, x1 - x0, 1, x0 + off, y0 + k, x1 - x0, 1);
+    }
+    g.globalAlpha = 1;
+  }
   g.globalCompositeOperation = 'source-over';
-  // a fade between levels
   if (Game.fade > 0) { g.fillStyle = `rgba(0,0,0,${clamp(Game.fade, 0, 1)})`; g.fillRect(0, 0, w, h); }
   V.g.imageSmoothingEnabled = false;
   V.g.drawImage(V.low, 0, 0, w * V.scale, h * V.scale);

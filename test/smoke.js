@@ -1,6 +1,7 @@
 'use strict';
 // The game played headlessly in Chrome, sideways on a phone and on a desktop:
-// it boots without an error in the capsule; a vending machine is stripped
+// it boots without an error in the capsule (the desktop run without
+// WebGL2, so the 2D path is played too); a vending machine is stripped
 // for parts; Kit's and Juno's panels open and a job is taken; the stairs
 // carry the runner up to both walkways; the data node gives Breach; the
 // strike downs a drone; the grate into the service yard is cut; the Warden
@@ -60,6 +61,7 @@ async function run(B, url, vp, name, failures) {
   await page.evaluate(HELPERS);
   const shot = (n) => page.screenshot({ path: path.join(OUT, `${name}-${n}.png`) });
   const E = (fn, arg) => page.evaluate(fn, arg);
+  console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))));
   const st = await E(() => ({ level: Game.s.level, x: Player.x, frame: Game.frame }));
   if (st.level !== 'stack' || Math.abs(st.x - 180) > 40) fail('the runner does not start by the capsule ' + JSON.stringify(st));
   if (!st.frame) fail('the loop is not running');
@@ -115,7 +117,7 @@ async function run(B, url, vp, name, failures) {
   try { B = await browser(); } catch (e) { console.log('::error title=smoke::no browser: ' + String(e.stack || e).replace(/\n/g, ' ')); throw e; }
   try {
     await run(B, url, PHONE, 'phone', failures);
-    await run(B, url, DESKTOP, 'desktop', failures);
+    await run(B, url + '?nogl', DESKTOP, 'desktop', failures); // the 2D path, as without WebGL2
   } catch (e) { failures.push('crashed: ' + (e.stack || e)); }
   await B.b.close(); server.close();
   if (failures.length) {
