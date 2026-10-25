@@ -17,6 +17,7 @@ function serve() {
   return new Promise((ok) => {
     const s = http.createServer((req, res) => {
       const p = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]).replace(/\/$/, '/index.html'));
+      if (req.url === '/favicon.ico') { res.writeHead(204); res.end(); return; }
       if (!p.startsWith(ROOT) || !fs.existsSync(p)) { res.writeHead(404); res.end(); return; }
       res.writeHead(200, { 'content-type': TYPES[path.extname(p)] || 'application/octet-stream' }); fs.createReadStream(p).pipe(res);
     });
@@ -45,7 +46,7 @@ async function run(B, url, vp, name, failures) {
   await page.goto(url);
   await sleep(1200);
   const shot = (n) => page.screenshot({ path: path.join(OUT, `${name}-${n}.png`) });
-  await page.evaluate(() => { localStorage.clear(); });
+  await page.evaluate(() => { Save.wipe(); }); // (wipe, not clear: leaving the page saves)
   await page.reload(); await sleep(1200);
   // in the burrow
   const st = await page.evaluate(() => ({ home: Player.home, ground: Player.ground, frame: Game.frame }));
