@@ -15,7 +15,7 @@ Strip machines for parts. Cut through grates and shutters. Jack into data nodes 
 | Drop through a walkway | Down + jump | Stick down + Jump |
 | Jump (twice with spring legs) | Space / K | Jump |
 | Strike | J | Strike |
-| Use (hold to strip or cut) | E | Use |
+| Use (hold to strip or cut) | E | The button names the action: Trade, Talk, Strip, Cut, Hack, Climb… |
 | Run program / pick next | Q / R | Program (hold to pick) |
 | Pack | I | Pack |
 | Pause | Esc | II |

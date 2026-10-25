@@ -42,19 +42,19 @@ const Props = {
   prompt(p) {
     if (p.kind === 'deco') return null;
     if (p.kind === 'cache' && !Game.has('lowlight')) return null;
-    if (YIELDS[p.kind]) return p.done ? null : { text: 'Strip ' + (p.label || p.kind), hold: STRIP_TIME[p.kind] };
-    if (p.kind === 'grate') return p.done ? null : { text: 'Cut the grate', hold: 1.3 };
-    if (p.kind === 'heavy') return p.done ? null : Game.has('mantis') ? { text: 'Cut the shutter', hold: 2.0 } : { text: 'Too heavy for the cutter', tap: true, no: true };
+    if (YIELDS[p.kind]) return p.done ? null : { verb: 'Strip', text: 'Strip ' + (p.label || p.kind), hold: STRIP_TIME[p.kind] };
+    if (p.kind === 'grate') return p.done ? null : { verb: 'Cut', text: 'Cut the grate', hold: 1.3 };
+    if (p.kind === 'heavy') return p.done ? null : Game.has('mantis') ? { verb: 'Cut', text: 'Cut the shutter', hold: 2.0 } : { verb: 'Cut', text: 'Too heavy for the cutter', tap: true, no: true };
     if (p.kind === 'hatch') {
-      if (p.done) return p.to ? { text: p.goLabel || 'Go through', tap: true } : null;
-      if (p.needs && !Game.flag(p.needs)) return { text: p.needsLabel || 'Locked', tap: true, no: true };
-      return Game.s.programs.breach ? { text: 'Run Breach (1 RAM)', tap: true } : { text: 'Locked. A Breach program would open it', tap: true, no: true };
+      if (p.done) return p.to ? { verb: 'Climb', text: p.goLabel || 'Go through', tap: true } : null;
+      if (p.needs && !Game.flag(p.needs)) return { verb: 'Locked', text: p.needsLabel || 'Locked', tap: true, no: true };
+      return Game.s.programs.breach ? { verb: 'Breach', text: 'Run Breach (1 RAM)', tap: true } : { verb: 'Locked', text: 'Locked. A Breach program would open it', tap: true, no: true };
     }
-    if (p.kind === 'sealed') return { text: p.label || 'Sealed', tap: true, no: true };
-    if (p.kind === 'node') return p.done ? null : { text: 'Jack in', tap: true };
-    if (p.kind === 'lift') return Game.s.flags.lift ? { text: 'Take the lift ' + (p.dir || ''), tap: true } : { text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
-    if (p.kind === 'capsule') return { text: 'Your capsule', tap: true };
-    if (p.kind === 'exit') return { text: p.label || 'Climb', tap: true };
+    if (p.kind === 'sealed') return { verb: 'Sealed', text: p.label || 'Sealed', tap: true, no: true };
+    if (p.kind === 'node') return p.done ? null : { verb: 'Hack', text: 'Jack in', tap: true };
+    if (p.kind === 'lift') return Game.s.flags.lift ? { verb: 'Ride', text: 'Take the lift ' + (p.dir || ''), tap: true } : { verb: 'Repair', text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
+    if (p.kind === 'capsule') return { verb: 'Rest', text: 'Your capsule', tap: true };
+    if (p.kind === 'exit') return { verb: 'Climb', text: p.label || 'Climb', tap: true };
     return null;
   },
   // Use, done: on a tap, or when a held bar fills

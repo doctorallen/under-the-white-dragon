@@ -21,6 +21,10 @@ const Hud = {
     this.set('place', World.L.name);
     const tg = Player.target;
     this.set('prompt', tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : '');
+    // the Use button says what it would do, in a word
+    const verb = tg && !Game.paused ? tg.pr.verb || 'Use' : 'Use';
+    this.set('bUse', verb);
+    if (this.last.useState !== (tg ? (tg.pr.no ? 'no' : 'on') : 'off')) { this.last.useState = tg ? (tg.pr.no ? 'no' : 'on') : 'off'; $('bUse').classList.toggle('idle', !tg); $('bUse').classList.toggle('no', !!(tg && tg.pr.no)); }
     $('prompt').classList.toggle('no', !!(tg && tg.pr.no));
     $('holdbar').style.width = Player.hold ? Math.min(100, (Player.hold.t / Player.hold.need) * 100) + '%' : '0';
     const b = Actors.boss; if (b && b.state !== 'idle') { $('boss').hidden = false; $('bossfill').style.width = Math.max(0, (b.hp / b.max) * 100) + '%'; } else $('boss').hidden = true;

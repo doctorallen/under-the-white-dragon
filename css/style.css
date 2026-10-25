@@ -56,6 +56,8 @@ body.touch #pads { display: flex; }
 #pads button { width: 64px; height: 64px; border-radius: 50%; background: rgba(26, 18, 36, 0.62); border: 2px solid rgba(166, 156, 182, 0.6); font-size: 12px; touch-action: none; padding: 0; }
 #pads #bStrike { width: 74px; height: 74px; border-color: rgba(255, 74, 106, 0.8); margin-bottom: 30px; }
 #pads #bUse { border-color: rgba(58, 240, 224, 0.75); margin-bottom: 64px; }
+#pads #bUse.idle { opacity: 0.45; }
+#pads #bUse.no { border-color: rgba(255, 176, 64, 0.75); color: var(--sodium); }
 #pads #bProg { width: 54px; height: 54px; font-size: 10px; border-color: rgba(255, 74, 176, 0.7); margin-bottom: 6px; }
 #pads #bProg.none { opacity: 0.4; }
 #pads button.down { background: rgba(58, 240, 224, 0.35); }

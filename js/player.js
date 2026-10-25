@@ -126,7 +126,7 @@ const Player = {
     for (const n of Actors.npcs) {
       if (n.hidden) continue;
       const dx = Math.abs(n.x - this.x); if (dx > 20 || Math.abs(n.y - this.y) > 14) continue;
-      if (dx < bd) { bd = dx; best = { n, pr: { text: n.def.role ? NPC_ROLE[n.def.role].prompt(n) : 'Talk to ' + n.def.name, tap: true } }; }
+      if (dx < bd) { bd = dx; best = { n, pr: { verb: n.def.role ? NPC_ROLE[n.def.role].verb : 'Talk', text: n.def.role ? NPC_ROLE[n.def.role].prompt(n) : 'Talk to ' + n.def.name, tap: true } }; }
     }
     this.target = best;
     const useHit = Input.take('useHit');
