@@ -10,7 +10,19 @@
 const Pwa = {
   reg: null, prompt: null, build: null, reloading: false,
   init() {
-    addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); this.prompt = e; if (Hud.open === 'pause') Hud.refresh(); });
+    // the browser's own install pop-up: on the first tap or key press after the
+    // browser says the game can be installed, ask once (again after a few days
+    // if it was turned down). The event isn't held back, so the browser can
+    // also show its own install bar.
+    addEventListener('beforeinstallprompt', (e) => { this.prompt = e; if (Hud.open === 'pause') Hud.refresh(); });
+    const ask = () => {
+      if (!this.prompt || this.installed()) return;
+      let last = 0; try { last = +localStorage.getItem('downlevel.installAsked') || 0; } catch (err) { /* storage unavailable */ }
+      if (Date.now() - last < 3 * 864e5) return;
+      try { localStorage.setItem('downlevel.installAsked', String(Date.now())); } catch (err) { /* storage unavailable */ }
+      this.install();
+    };
+    addEventListener('pointerup', ask); addEventListener('keyup', ask);
     addEventListener('appinstalled', () => { this.prompt = null; Game.toast('Installed. Downlevel is on your home screen.', 'good'); });
     fetch('version.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((v) => { this.build = v && v.build; }).catch(() => {});
     if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;

@@ -77,10 +77,11 @@ function render() {
     // what glows behind a figure is hidden by it
     occlude(s.c, sx, sy);
     if (s.e) gg.drawImage(s.e, sx, sy);
+    return [sx, sy];
   };
   for (const n of Actors.npcs) if (!n.hidden) { const pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 7) % 4) : n.act === 'sit' ? 'sit' : 'stand'; actor(Actors.art(n, pose, n.face < 0), n.x, n.y); }
   for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } }
-  for (const e of Actors.enemies) { const s = Actors.enemyArt(e); actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0); }
+  for (const e of Actors.enemies) { const s = Actors.enemyArt(e), at = actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0); if (at) tag(e, s, at[0], at[1]); }
   if (Player.inv <= 0 || Math.floor(Game.t * 16) % 2) actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1);
   // bolts and sparks: all glow
   for (const b of Actors.bolts) { const x = Math.round(b.x - cx), y = Math.round(b.y - cy); gg.fillStyle = css(b.c); if (b.wave) gg.fillRect(x - 3, y - 8, 6, 10); else { gg.fillRect(x - 2, y - 1, 4, 2); gg.fillStyle = '#fff'; gg.fillRect(x - 1, y - 1, 2, 2); } }
@@ -120,6 +121,36 @@ function render() {
   if (Game.fade > 0) { g.fillStyle = `rgba(0,0,0,${clamp(Game.fade, 0, 1)})`; g.fillRect(0, 0, w, h); }
   V.g.imageSmoothingEnabled = false;
   V.g.drawImage(V.low, 0, 0, w * V.scale, h * V.scale);
+}
+// The runner's retinal overlay tags what's hostile: a thin outline round its
+// shape and a bar of its health over its head, drawn as light (into the glow
+// layer, so it reads like a projection and blooms a little). Red for
+// hostiles, green for a drone you've taken over; brighter when it has seen
+// you. Under Ghost, the tags dim: you're not the only one hidden.
+const TagArt = { outlines: new WeakMap() };
+function outlineOf(s) {
+  let o = TagArt.outlines.get(s); if (o) return o;
+  const [c, g] = canvasOf(s.w + 2, s.h + 2);
+  for (const [dx, dy] of [[0, 1], [2, 1], [1, 0], [1, 2]]) g.drawImage(s.c, dx, dy);
+  g.globalCompositeOperation = 'destination-out'; g.drawImage(s.c, 1, 1);
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+  TagArt.outlines.set(s, c); return c;
+}
+function tag(e, s, sx, sy) {
+  const gg = View.gg, ally = e.ally > 0, alert = ally || e.state !== 'idle' || Actors.sees(e, 120) || e.hp < e.max;
+  const col = ally ? [80, 255, 140] : [255, 56, 80], k = (Game.ghost > 0 ? 0.35 : 1) * (alert ? 1 : 0.55);
+  // the outline, tinted
+  const o = outlineOf(s), t = View.tg; if (View.tmp.width < o.width || View.tmp.height < o.height) { View.tmp.width = Math.max(View.tmp.width, o.width); View.tmp.height = Math.max(View.tmp.height, o.height); }
+  t.globalCompositeOperation = 'copy'; t.drawImage(o, 0, 0); t.globalCompositeOperation = 'source-in'; t.fillStyle = css(col); t.fillRect(0, 0, o.width, o.height);
+  gg.globalAlpha = 0.55 * k; gg.drawImage(View.tmp, 0, 0, o.width, o.height, sx - 1, sy - 1, o.width, o.height); gg.globalAlpha = 1;
+  // the health bar: segments over the top of its shape
+  if (e.type === 'warden') return; // the Warden's bar is on the HUD
+  const b = Actors.hurtbox(e), n = e.type === 'drone' ? 5 : 6, w = n * 3 - 1, x0 = Math.round((b[0] + b[2]) / 2 - w / 2 - View.cx), y0 = Math.round(b[1] - View.cy) - 5, lit = Math.ceil((e.hp / e.max) * n);
+  gg.globalAlpha = k;
+  for (let i = 0; i < n; i++) { gg.fillStyle = i < lit ? css(col) : css(col.map((q) => q * 0.25)); gg.fillRect(x0 + i * 3, y0, 2, 2); }
+  // brackets at the bar's ends, the overlay's mark
+  gg.fillStyle = css(col.map((q) => q * 0.7)); gg.fillRect(x0 - 2, y0 - 1, 1, 4); gg.fillRect(x0 + w + 1, y0 - 1, 1, 4);
+  gg.globalAlpha = 1;
 }
 // hide the glow layer under a sprite's shape: the glow is added over the
 // whole frame at the end, so without this a sign or a monitor behind

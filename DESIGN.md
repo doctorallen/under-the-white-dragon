@@ -52,6 +52,7 @@ A side-scrolling cyberpunk game for the phone. You live in a capsule on the Stac
   - Block drones hover and shoot.
   - Gangers close in with blades.
   - The Warden walks, fires bursts, stomps a shockwave you jump over, and charges. Beating it unlocks the shaft.
+- **The retinal overlay:** the runner's stock eye tags hostiles in sight with a thin red outline and a segmented health bar over the head; a drone taken over with Puppet is tagged green. Tags brighten once the enemy has seen you and dim under Ghost.
 - **Death:** you wake in your capsule with an empty pack, six hours later.
 
 ## Story (light)
