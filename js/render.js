@@ -37,7 +37,16 @@ function render() {
   gg.globalCompositeOperation = 'source-over'; gg.fillStyle = '#000'; gg.fillRect(0, 0, w, h);
   // the far layer
   if (World.far) { const F = World.far, fx = -Math.round(cx * F.f), fy = -Math.round(cy * F.fy); g.drawImage(F.c, fx, fy); if (F.e) gg.drawImage(F.e, fx, fy); }
-  Life.drawTraffic(g, gg, cx, cy);
+  // the layers of the city behind, back to front: each hides the glow of
+  // those behind it, then its own holograms, train and traffic go on top
+  World.layers.forEach((F, i) => {
+    const fx = -Math.round(cx * F.f), fy = -Math.round(cy * F.fy);
+    g.drawImage(F.c, fx, fy);
+    gg.globalCompositeOperation = 'destination-out'; gg.drawImage(F.c, fx, fy); gg.globalCompositeOperation = 'source-over';
+    if (F.e) gg.drawImage(F.e, fx, fy);
+    Skyline.draw(i, g, gg, fx, fy); Life.drawTraffic(g, gg, cx, cy, i);
+  });
+  if (!World.layers.length) Life.drawTraffic(g, gg, cx, cy);
   // the painted chunks
   const CS = T.chunk;
   for (let ky = Math.floor(cy / CS); ky <= Math.floor((cy + h) / CS); ky++) for (let kx = Math.floor(cx / CS); kx <= Math.floor((cx + w) / CS); kx++) {
@@ -86,7 +95,7 @@ function render() {
   };
   for (const n of Actors.npcs) if (!n.hidden) {
     // standing still, everyone breathes; vendors work their hands
-    const br = (Game.t * 0.7 + n.i * 0.37) % 1 < 0.5, pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 7) % 4) : n.act === 'sit' ? 'sit' : n.act === 'work' && (Game.t * 1.6 + n.i) % 1 < 0.5 ? 'work' : br ? 'breathe' : 'stand';
+    const br = (Game.t * 0.7 + n.i * 0.37) % 1 < 0.5, pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 4.6) % 6) : n.act === 'sit' ? 'sit' : n.act === 'work' && (Game.t * 1.6 + n.i) % 1 < 0.5 ? 'work' : br ? 'breathe' : 'stand';
     actor(Actors.art(n, pose, n.face < 0), n.x, n.y);
     if (n.def.smoke) { const on = (Game.t * 0.4 + n.i) % 1 < 0.3; gg.fillStyle = on ? '#ffb040' : '#a83a10'; gg.fillRect(Math.round(n.x + n.face * 6 - cx), Math.round(n.y - 24 - cy), 1, 1); }
   }

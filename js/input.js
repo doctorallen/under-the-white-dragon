@@ -11,7 +11,7 @@ const Input = {
   ax: 0, ay: 0, jump: false, use: false, jumpHit: false, strikeHit: false, useHit: false, progHit: false,
   keys: new Set(), stick: null, touch: false, bot: null,
   init() {
-    const map = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', Space: 'j', KeyK: 'j', KeyE: 'e', KeyF: 'e' };
+    const map = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', Space: 'j', KeyK: 'j', KeyE: 'e', KeyF: 'e', ShiftLeft: 'slow', ShiftRight: 'slow' };
     addEventListener('keydown', (e) => {
       if (Hack.on) { if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'KeyJ' || e.code === 'Enter') { Hack.tap(); e.preventDefault(); } if (e.code === 'Escape') Hack.quit(); return; }
       if (e.repeat) { if (map[e.code]) e.preventDefault(); return; }
@@ -39,7 +39,7 @@ const Input = {
     pad.addEventListener('pointermove', (e) => {
       if (!this.stick || e.pointerId !== this.stick.id) return;
       const R = 34, dx = clamp(e.clientX - this.stick.x, -R, R), dy = clamp(e.clientY - this.stick.y, -R, R);
-      this.ax = Math.abs(dx) > R * 0.28 ? dx / R : 0; this.ay = Math.abs(dy) > R * 0.45 ? dy / R : 0;
+      this.ax = Math.abs(dx) > R * 0.2 ? dx / R : 0; this.ay = Math.abs(dy) > R * 0.45 ? dy / R : 0;
       knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     });
     const up = (e) => { if (!this.stick || e.pointerId !== this.stick.id) return; this.stick = null; this.ax = 0; this.ay = 0; base.classList.remove('on'); };
@@ -58,7 +58,7 @@ const Input = {
   },
   fromKeys() {
     const k = this.keys;
-    if (!this.stick) { this.ax = (k.has('r') ? 1 : 0) - (k.has('l') ? 1 : 0); this.ay = (k.has('d') ? 1 : 0) - (k.has('u') ? 1 : 0); }
+    if (!this.stick) { this.ax = ((k.has('r') ? 1 : 0) - (k.has('l') ? 1 : 0)) * (k.has('slow') ? 0.4 : 1); this.ay = (k.has('d') ? 1 : 0) - (k.has('u') ? 1 : 0); }
     this.jump = k.has('j') || $('bJump').classList.contains('down');
     this.use = k.has('e') || $('bUse').classList.contains('down');
   },

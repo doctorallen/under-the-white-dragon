@@ -94,11 +94,13 @@ const Life = {
   },
   // the flying cars behind the blocks: lanes across the far layer, each car's
   // place worked out from the clock, so nothing needs keeping
-  drawTraffic(g, gg, cx, cy) {
-    const L = World.L, F = World.far; if (!L.traffic.length || !F) return;
+  drawTraffic(g, gg, cx, cy, layer) {
+    const L = World.L;
     const t = Game.t, w = View.w;
     L.traffic.forEach((lane, li) => {
-      const span = L.far.w + 200, scale = lane.scale;
+      if ((lane.layer === undefined ? -1 : lane.layer) !== (layer === undefined ? -1 : layer)) return;
+      const F = layer === undefined ? World.far : World.layers[layer]; if (!F) return;
+      const span = (layer === undefined ? L.far.w : L.layers[layer].w) + 200, scale = lane.scale;
       for (let j = 0; j < lane.n; j++) {
         const off = hash(li, j, 31) * span, x = ((off + t * lane.speed * lane.dir) % span + span) % span - 100;
         const sx = Math.round(x - cx * F.f), sy = Math.round(lane.y + Math.sin(t * 0.9 + j) * 1.5 - cy * F.fy);

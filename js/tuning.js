@@ -8,7 +8,7 @@ const T = {
   view: { min: 200, maxScale: 8 },
   chunk: 256,
   player: {
-    w: 10, h: 30, speed: 72, accel: 1000, airAccel: 640, friction: 1300,
+    w: 10, h: 30, speed: 98, walk: 42, accel: 1000, airAccel: 640, friction: 1300,
     jump: 232, doubleJump: 205, gravity: 720, maxFall: 400, coyote: 0.1, climb: 62,
     hp: 100, iframes: 0.7,
   },

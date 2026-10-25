@@ -8,17 +8,31 @@ function person(o = {}) {
   // a canvas 40 x 50, the feet at the bottom middle; heights in units of a
   // 33 px adult, so `tall` scales the whole figure from the feet
   const S = new Spr(44, 52, o.seed || 1); S.ax = 20; S.ay = 51;
-  const F = 51, u = o.tall || 1, Y = (h) => F - h * u, cx = 20, wd = o.wide || 0;
+  const pose0 = o.pose || 'stand';
+  // a gait: walkN or runN, N of 6 steps round the cycle. Each leg swings
+  // forward lifted and back planted, opposite to the other; the arms swing
+  // against the legs; the body rises as the legs pass and dips as they part.
+  // Running strides further, lifts higher, leans in and pumps the arms.
+  const gait = /^(walk|run)(\d)$/.exec(pose0);
+  let gaitSt = null, gbob = 0, lean = 0;
+  if (gait) {
+    const run = gait[1] === 'run', ph = (+gait[2] / 6) * Math.PI * 2, A = run ? 6.6 : 4.6, lift = run ? 4.2 : 2, sA = Math.sin(ph), cA = Math.cos(ph);
+    gaitSt = [[-A * sA, Math.max(0, -cA) * lift], [A * sA, Math.max(0, cA) * lift]];
+    gbob = run ? -1.3 * Math.abs(cA) + 0.3 : -0.7 * (1 - Math.abs(sA));
+    lean = run ? 1.6 : 0.4;
+    if (!o.fixedHands) { const sw = run ? 3.2 : 2.2, hy = run ? 33 : 37; o = Object.assign({}, o, { hands: Object.assign({}, o.hands || {}, { fx: 24 + lean - sw * sA * (o.holding ? 0.4 : 1), fy: hy - (run ? Math.abs(sA) * 1.5 : 0), bx: 17 + lean + sw * sA, by: hy + 1 - (run ? Math.abs(sA) : 0) }) }); }
+  }
+  const F = 51, u = o.tall || 1, Y = (h) => F - h * u, lx = 20, cx = 20 + lean, wd = o.wide || 0;
   const sk = rp(o.skin || SKINS[0], 6), top = rp(o.top || '#3a3a48', 7), legs = rp(o.legs || '#2a2a34', 6), boots = rp(o.boots || '#18161c', 5);
   const hair = rp(o.hairCol || '#1a1414', 6), chrome = MAT.chrome, acc = o.acc ? col3(o.acc) : null, dark = (r) => r.map((c) => mixRgb(c, [8, 6, 12], 0.3));
-  const pose = o.pose || 'stand', bob = pose === 'walk1' || pose === 'walk3' ? -0.6 : pose === 'breathe' ? -0.75 : 0;
+  const pose = pose0, bob = gait ? gbob : pose === 'breathe' ? -0.75 : 0;
   // the stride: [back, front] foot offsets and lifts
-  const st = { stand: [[-1.2, 0], [1.6, 0]], walk0: [[-4, 0], [4, 0]], walk1: [[-1, 1.6], [1, 0]], walk2: [[4, 0], [-4, 0]], walk3: [[1, 0], [-1, 1.6]], sit: [[2, 0], [5, 0]], jump: [[-2.5, 3.2], [2.5, 1.6]], fall: [[-1.5, 1], [2, 2.2]], climb0: [[-0.5, 3], [0.5, 0]], climb1: [[-0.5, 0], [0.5, 3]], strike: [[-3.5, 0], [3.5, 0]], cut: [[-2, 0], [2.6, 0]], hurt: [[-2.5, 1], [1, 0]] }[pose] || [[-1, 0], [1.5, 0]];
+  const st = { stand: [[-1.2, 0], [1.6, 0]], sit: [[2, 0], [5, 0]], jump: [[-2.5, 3.2], [2.5, 1.6]], fall: [[-1.5, 1], [2, 2.2]], climb0: [[-0.5, 3], [0.5, 0]], climb1: [[-0.5, 0], [0.5, 3]], strike: [[-3.5, 0], [3.5, 0]], cut: [[-2, 0], [2.6, 0]], hurt: [[-2.5, 1], [1, 0]] }[pose] || gaitSt || [[-1, 0], [1.5, 0]];
   const head = Y(29.5) + bob, sh = Y(24) + bob, waist = Y(16) + bob, hip = Y(14) + bob, knee = Y(7.2), ank = Y(1.6);
   // a leg: thigh, shin, boot; chrome if it's cyberware
   const leg = (f, back) => {
-    const [dx, lift] = f, ramp = o.cyLegs ? chrome : legs, R = back ? dark(ramp) : ramp, kx = cx + dx * 0.55 + (pose === 'sit' ? 5 : 0.6), ky = pose === 'sit' ? hip + 1 : knee - lift * 0.6, ax = cx + dx + (pose === 'sit' ? 6 : 0), ay = pose === 'sit' ? F - 2 : ank - lift;
-    S.cap(cx + (back ? -1.2 : 1) + dx * 0.15, hip, kx, ky, 2.3 + wd * 0.3, 1.9, R);
+    const [dx, lift] = f, ramp = o.cyLegs ? chrome : legs, R = back ? dark(ramp) : ramp, kx = lx + lean * 0.5 + dx * 0.55 + (pose === 'sit' ? 5 : 0.6), ky = pose === 'sit' ? hip + 1 : knee - lift * 0.6, ax = lx + dx + (pose === 'sit' ? 6 : 0), ay = pose === 'sit' ? F - 2 : ank - lift;
+    S.cap(lx + lean * 0.7 + (back ? -1.2 : 1) + dx * 0.15, hip, kx, ky, 2.3 + wd * 0.3, 1.9, R);
     S.cap(kx, ky, ax, ay, 1.8, 1.4, R);
     if (o.cyLegs && acc) { S.px(kx, ky, acc, true); S.px(ax, ay - 2, acc, true); }
     const B = back ? dark(boots) : boots;
@@ -44,7 +58,12 @@ function person(o = {}) {
   // the body: a coat to the knee or a jacket to the hip, a collar, a belt
   const w0 = 4.4 + wd, sx0 = cx - w0, sx1 = cx + w0 - 0.6;
   if (o.coat === 'long') leg(st[1], false); // under a long coat the front leg goes first
-  if (o.coat === 'long') S.shape([[sx0 - 0.4, waist], [sx1 + 0.3, waist], [sx1 + 1.6, Y(5.5)], [cx + 0.5, Y(6.5)], [sx0 - 1.8, Y(5.2)]], top, { down: 0.3, folds: true });
+  // the skirt of a long coat opens over the front knee and trails behind,
+  // further and higher at a run
+  if (o.coat === 'long') {
+    const run = gait && gait[1] === 'run', fdx = gait ? Math.max(0, st[1][0], st[0][0]) : 0, hem = run ? Y(7.5) : gait ? Y(6.2) : Y(5.5);
+    S.shape([[sx0 - 0.4, waist], [sx1 + 0.3, waist], [sx1 + 1.6 + fdx * 0.45, hem], [cx + 0.5, hem - 1], [sx0 - 1.8 - (run ? 2.6 : gait ? 0.8 : 0), hem + (run ? -2 : 0.3)]], top, { down: 0.3, folds: true });
+  }
   S.shape([[sx0 + 0.6, sh - 0.6], [sx1 - 0.2, sh - 0.6], [sx1 + 0.6, sh + 2], [sx1 - 0.4, waist], [sx1, hip + 0.8], [sx0, hip + 0.8], [sx0 + 0.4, waist], [sx0 - 0.4, sh + 2]], top);
   if (o.shirt) S.shape([[cx + 1.6, sh], [sx1 - 0.6, sh], [sx1 - 0.8, waist - 1], [cx + 2.4, waist - 1]], rp(o.shirt, 5));
   if (o.apron) S.shape([[cx - 1, sh + 3], [sx1 + 0.8, sh + 3], [sx1 + 1.6, Y(5)], [cx - 1.5, Y(5)]], rp(o.apron, 6), { down: 0.25 });

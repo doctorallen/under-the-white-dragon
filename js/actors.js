@@ -147,13 +147,13 @@ const Actors = {
     return s;
   },
   enemyArt(e) {
-    const left = e.face < 0, k = e.type + (left ? 'L' : 'R') + (e.ally ? 'a' : '') + (e.type === 'gang' ? (e.state === 'wind' ? 's' : e.moving ? Math.floor(e.walked / 7) % 4 : 'i') : '');
+    const left = e.face < 0, k = e.type + (left ? 'L' : 'R') + (e.ally ? 'a' : '') + (e.type === 'gang' ? (e.state === 'wind' ? 's' : e.moving ? (Math.abs(e.vx) > 45 ? 'r' : 'w') + (Math.floor(e.walked / (Math.abs(e.vx) > 45 ? 6.5 : 4.6)) % 6) : 'i') : '');
     if (!this.cache) this.cache = new Map();
     let s = this.cache.get(k + (e.type === 'gang' ? e.i % 3 : ''));
     if (!s) {
       if (e.type === 'drone') s = drone({ eye: e.ally ? '#3aff80' : '#ff3040', light: e.ally ? '#3aff80' : null });
       else if (e.type === 'warden') s = mech({});
-      else { const pose = e.state === 'wind' ? 'strike' : e.moving ? 'walk' + (Math.floor(e.walked / 7) % 4) : 'stand'; s = person(Object.assign({}, GANG_LOOKS[e.i % 3], { pose, hands: pose === 'strike' ? { fx: 31, fy: 30 } : undefined, seed: 40 + e.i })); }
+      else { const pose = e.state === 'wind' ? 'strike' : e.moving ? (Math.abs(e.vx) > 45 ? 'run' + (Math.floor(e.walked / 6.5) % 6) : 'walk' + (Math.floor(e.walked / 4.6) % 6)) : 'stand'; s = person(Object.assign({}, GANG_LOOKS[e.i % 3], { pose, hands: pose === 'strike' ? { fx: 31, fy: 30 } : undefined, seed: 40 + e.i })); }
       if (left) s = flipSprite(s);
       this.cache.set(k + (e.type === 'gang' ? e.i % 3 : ''), s);
     }

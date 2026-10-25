@@ -9,7 +9,7 @@
 // the detective: a long trench coat, collar up, a blaster at the hip
 const RUNNER = { skin: '#c88a5a', hair: 'short', hairCol: '#1a1416', top: '#5e4c38', coat: 'long', legs: '#26262c', boots: '#161214', acc: '#ff8a20', trim: false, collar: true, blaster: true, belt: '#2a1e14', shirt: '#8a8a84' };
 const POSE_HANDS = {
-  stand: {}, walk0: { fx: 25, fy: 37, bx: 16, by: 36 }, walk1: {}, walk2: { fx: 22, fy: 38, bx: 19, by: 36 }, walk3: {},
+  stand: {},
   jump: { fx: 27, fy: 29, bx: 14, by: 30 }, fall: { fx: 27, fy: 26, bx: 14, by: 26 }, strike: { fx: 31, fy: 30, bx: 15, by: 35 }, aim: { fx: 30, fy: 29, bx: 17, by: 36 }, shot: { fx: 30, fy: 28, bx: 17, by: 36 }, cut: { fx: 28, fy: 33, bx: 22, by: 34 },
   climb0: { fx: 23, fy: 18, bx: 18, by: 24 }, climb1: { fx: 23, fy: 24, bx: 18, by: 18 }, hurt: { fx: 24, fy: 30, bx: 14, by: 30 },
 };
@@ -19,7 +19,7 @@ const RunnerArt = {
     const st = Game.stage(), k = pose + (left ? 'L' : 'R') + (st.eye ? 'e' : '') + (st.legs ? 'l' : '') + (st.arm ? 'a' : '');
     let s = this.cache.get(k);
     if (!s) {
-      const o = Object.assign({}, RUNNER, { pose, hands: POSE_HANDS[pose] || {}, seed: 5 });
+      const o = Object.assign({}, RUNNER, { pose, hands: POSE_HANDS[pose] || {}, seed: 5, holding: true });
       if (st.eye) o.eye = '#3af0e0';
       if (st.legs) o.cyLegs = true;
       if (pose === 'cut') { o.cutter = true; o.blaster = false; }
@@ -64,7 +64,9 @@ const Player = {
       if (this.ladder) { this.walked += Math.abs(this.vy * dt); this.interact(dt); return; }
     }
     // ---- running
-    const busy = this.hold ? 0.15 : 1, target = ax * P.speed * busy, acc = this.ground ? P.accel : P.airAccel;
+    // the stick sets the pace: a light push walks, a full one runs
+    const m = Math.abs(ax), pace = m < 0.62 ? P.walk : lerp(P.walk, P.speed, clamp((m - 0.62) / 0.28, 0, 1));
+    const busy = this.hold ? 0.15 : 1, target = Math.sign(ax) * pace * busy, acc = this.ground ? P.accel : P.airAccel;
     if (ax) this.vx += clamp(target - this.vx, -acc * dt, acc * dt);
     else this.vx -= clamp(this.vx, -P.friction * dt, P.friction * dt);
     // ---- jumping, dropping through, the second jump
@@ -175,7 +177,9 @@ const Player = {
     if (this.hold) return 'cut';
     if (this.ladder) return Math.floor(this.walked / 7) % 2 ? 'climb0' : 'climb1';
     if (!this.ground) return this.vy < 0 ? 'jump' : 'fall';
-    if (Math.abs(this.vx) > 8) return 'walk' + (Math.floor(this.walked / 7) % 4);
+    const v = Math.abs(this.vx);
+    if (v > 64) return 'run' + (Math.floor(this.walked / 6.5) % 6);
+    if (v > 6) return 'walk' + (Math.floor(this.walked / 4.6) % 6);
     return (Game.t * 0.65) % 1 < 0.5 ? 'breathe' : 'stand'; // breathing
   },
 };

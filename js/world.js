@@ -12,7 +12,7 @@ const LEVELS = {};
 function newLevel(id, name, w, h) {
   const L = {
     id, name, w, h, ops: [], solids: [], ways: [], ladders: [], props: [], lights: [], npcs: [], enemies: [], wet: [], spawns: {},
-    rain: 0, dry: [], flicks: [], ads: [], critters: [], trash: [], vents: [], drips: [], traffic: [], ambient: [0.2, 0.18, 0.26], far: null, music: null,
+    rain: 0, dry: [], flicks: [], ads: [], critters: [], trash: [], vents: [], drips: [], traffic: [], holos: [], train: null, layers: [], ambient: [0.2, 0.18, 0.26], far: null, music: null,
     paint(x0, y0, x1, y1, fn) { this.ops.push({ x0, y0, x1, y1, fn, seed: this.ops.length * 31 + 7 }); },
     block(x0, y0, x1, y1, ramp, o = {}) { this.paint(x0, y0, x1, y1, (P) => P.block(x0, y0, x1, y1, ramp, o)); },
     solid(x0, y0, x1, y1) { this.solids.push({ x0, y0, x1, y1 }); },
@@ -48,7 +48,7 @@ function newLevel(id, name, w, h) {
 }
 
 const World = {
-  L: null, far: null, props: [],
+  L: null, far: null, layers: [], props: [],
   load(id) {
     if (!LEVELS[id].built) LEVELS[id].built = LEVELS[id].make();
     const L = (this.L = LEVELS[id].built);
@@ -56,6 +56,9 @@ const World = {
     // the far layer: painted once, moved at a fraction of the camera's speed
     this.far = null;
     if (L.far) { const f = L.far, P = new Pix(f.w, f.h, 0, 0); P.n = 3; f.paint(P); this.far = Object.assign({ f: f.f, fy: f.fy === undefined ? f.f : f.fy }, P.canvases()); }
+    // or several, back to front, each moving less the further it is
+    if (!L.layersPainted) L.layersPainted = L.layers.map((f, i) => { const P = new Pix(f.w, f.h, 0, 0); P.n = 3 + i * 100; f.paint(P); return Object.assign({ f: f.f, fy: f.fy === undefined ? f.f : f.fy }, P.canvases()); });
+    this.layers = L.layersPainted;
     // props, with what's been done to them
     this.props = L.props.map((p) => Object.assign({}, p, { done: !!Game.s.done[p.id] }));
     for (const p of this.props) Props.init(p);

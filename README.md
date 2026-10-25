@@ -14,7 +14,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 
 | | Keyboard | Phone |
 |---|---|---|
-| Move | Arrows / WASD | Drag on the left side |
+| Move (walk or run) | Arrows / WASD, hold Shift to walk | Drag on the left side: a little to walk, all the way to run |
 | Ladders | Up / down | Stick up / down |
 | Drop through a walkway | Down + jump | Stick down + Jump |
 | Jump (twice with spring legs) | Space / K | Jump |
@@ -53,6 +53,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/actors.js` | People's routines and roles, enemies, the Warden, bolts |
 | `js/hack.js` | Jacking in |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
+| `js/skyline.js` | The city behind: layered towers, clouds, giant holograms, the monorail |
 | `js/gl.js` | The frame's last stage in WebGL2: bloom, reflections, the scale-up |
 | `js/render.js` | The frame: layers, light, actors, rain; a 2D finish without WebGL2 |
 | `js/hud.js` | HUD and panels |
