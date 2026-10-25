@@ -55,6 +55,7 @@ const Game = {
     if (r.chips) { this.s.stash.chips = (this.s.stash.chips || 0) + r.chips; got.push(r.chips + ' chips to your stash'); }
     if (r.booster) { this.s.flags.booster = true; got.push('a neural booster: your nervous system takes one more point of ware'); }
     this.toast('Job done: ' + j.title + '. ' + got.join(', ') + '.', 'good');
+    if (j.story) setTimeout(() => this.toast(j.story, 'good'), 2500);
     Hud.refresh(); Save.write();
   },
   kill(type) { for (const j of JOBS) if (j.kills && j.kills[type] && this.s.jobs.taken[j.id] && !this.s.jobs.done[j.id]) { const k = j.id + ':' + type; this.s.jobs.kills[k] = (this.s.jobs.kills[k] || 0) + 1; if (this.s.jobs.kills[k] === j.kills[type]) this.toast(j.title + ': done. Go and see Juno.', 'good'); } },

@@ -26,6 +26,9 @@ button.quiet { background: transparent; }
 #ram { display: flex; gap: 3px; }
 #ram i { width: 12px; height: 5px; background: rgba(58, 240, 224, 0.18); border: 1px solid rgba(58, 240, 224, 0.5); }
 #ram i.on { background: var(--teal); box-shadow: 0 0 6px var(--teal); }
+#charge { display: flex; gap: 2px; }
+#charge i { width: 6px; height: 4px; background: rgba(255, 138, 32, 0.18); border: 1px solid rgba(255, 138, 32, 0.5); }
+#charge i.on { background: #ff8a20; box-shadow: 0 0 5px #ff8a20; }
 #cr { color: var(--sodium); text-shadow: 0 1px 2px #000; }
 #where { position: absolute; left: 50%; transform: translateX(-50%); top: max(8px, env(safe-area-inset-top)); display: flex; gap: 10px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; text-shadow: 0 1px 2px #000, 0 0 6px #000; }
 #where #clock { color: var(--teal); }

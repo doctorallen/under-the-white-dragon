@@ -28,9 +28,10 @@ const PROGRAMS = {
 };
 const PROGRAM_ORDER = Object.keys(PROGRAMS);
 
-// Jobs from Juno, the fixer at the bar on the Stack.
+// Jobs from Juno, the fixer at the bar on the Stack: she trades in leads,
+// and leads cost favours.
 const JOBS = [
-  { id: 'coolant', title: 'Cold hands', text: 'Bring me three coolant. The cars down on street level are full of it, if you can get down there.', need: { coolant: 3 }, reward: { cr: 150 } },
+  { id: 'coolant', title: 'Cold hands', text: 'Leads cost, detective. Bring me three coolant. The cars down on street level are full of it, if you can get down there.', need: { coolant: 3 }, reward: { cr: 150 } },
   { id: 'drones', title: 'Clear the walkway', text: 'Block drones keep buzzing my customers on the upper walkway. Take down four of them.', kills: { drone: 4 }, reward: { cr: 120, chips: 1 } },
-  { id: 'clinic', title: 'House call', after: ['coolant', 'drones'], text: 'There\'s a clinic on street level with a terminal full of somebody else\'s secrets. Jack in and bring me what\'s on it.', flag: 'clinicData', reward: { cr: 200, booster: true } },
+  { id: 'clinic', title: 'House call', after: ['coolant', 'drones'], text: 'One of your synths came through a back-alley clinic on street level two nights ago. Its terminal remembers. Jack in and bring me the record.', story: 'The record: a woman, no ID, paid cash to have a serial cut out of her wrist. She asked the way to the subway.', flag: 'clinicData', reward: { cr: 200, booster: true } },
 ];

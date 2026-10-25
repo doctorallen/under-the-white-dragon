@@ -1,6 +1,6 @@
 # Downlevel
 
-A side-scrolling cyberpunk game for the phone. You live in a capsule in a megablock, and the city goes down further than anyone has mapped.
+A side-scrolling cyberpunk noir for the phone. You're a detective in a trench coat with a blaster, tracing four runaway synths down through a vertical city that goes deeper than anyone has mapped.
 
 **Play:** https://doctorallen.github.io/underhill/ (best on a phone held sideways). The repo keeps the name of the game it replaced, Underhill, until it's renamed.
 
@@ -18,7 +18,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | Ladders | Up / down | Stick up / down |
 | Drop through a walkway | Down + jump | Stick down + Jump |
 | Jump (twice with spring legs) | Space / K | Jump |
-| Strike | J | Strike |
+| Fire (a blow up close) | J | Fire |
 | Use (hold to strip or cut) | E | The button names the action: Trade, Talk, Strip, Cut, Hack, Climb… |
 | Run program / pick next | Q / R | Program (hold to pick) |
 | Pack | I | Pack |

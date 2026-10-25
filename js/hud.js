@@ -40,6 +40,7 @@ const Hud = {
     const s = Game.s; if (!s) return;
     $('hpfill').style.width = Math.max(0, (s.hp / T.player.hp) * 100) + '%';
     $('ram').innerHTML = '<i class="on"></i>'.repeat(s.ram) + '<i></i>'.repeat(T.ram.max - s.ram);
+    $('charge').innerHTML = '<i class="on"></i>'.repeat(Player.charge) + '<i></i>'.repeat(T.blaster.shots - Player.charge);
     $('cr').textContent = s.cr + ' cr';
     $('packn').textContent = Game.packCount() + '/' + T.pack.cap;
     $('bProg').textContent = s.prog ? PROGRAMS[s.prog].name : 'No program';
@@ -80,7 +81,7 @@ const Hud = {
         h += `<div class="row ${st === 'done' ? 'passed' : ''}"><div><b>${j.title}</b><small>${j.text}</small><small class="gold">Pays ${rw}</small></div>${btn}</div>`;
       }
       h += '</div>';
-      if (JOBS.every((j) => s.jobs.done[j.id])) h += '<p class="sub">"You\'ve been useful. The clinic data mentions the Works. Someone down there is buying up the city\'s old code. When the subway opens, I\'ll have more."</p>';
+      if (JOBS.every((j) => s.jobs.done[j.id])) h += '<p class="sub">"Your woman went down the old subway, and she wasn\'t alone. People down there say the synths are looking for whoever made them. Nobody up here made them, detective. When the subway opens, I\'ll have more."</p>';
     } else if (which === 'doc') {
       title.textContent = 'Doc Vasquez';
       h += `<p class="sub">Neural load ${Game.neuralLoad()} of ${Game.neuralCap()}. Ware costs parts and money to build; fitting and removing is free.</p><div class="rows">`;
@@ -93,8 +94,8 @@ const Hud = {
     } else if (which === 'pause') {
       title.textContent = 'Downlevel';
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
-        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Strike</b> J. <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Pack</b> I.</p>
-        <p>Strip machines for parts, sell them, or take them to the ripperdoc for ware. Jack into data nodes for programs. Juno at the bar has work. The way down is in the service yard at the east end of the Stack, past the Warden.</p></div>
+        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Pack</b> I.</p>
+        <p>You\'re a detective with the Stack precinct, tracing four synths who ran from the Spires and went down. Juno at the bar sells leads for favours. Strip machines for parts, sell them, or take them to the ripperdoc for ware. Jack into data nodes for programs. The way down is in the service yard at the east end of the Stack, past the Warden.</p></div>
         <div class="buttons"><button data-act="resume">Resume</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     body.innerHTML = h;

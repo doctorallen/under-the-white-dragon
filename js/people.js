@@ -80,6 +80,7 @@ function person(o = {}) {
   const [hx, hy] = hf;
   if (o.cutter) { const c = col3(o.cutterCol || '#ffb040'); S.cap(hx - 1, hy, hx + 5, hy - 0.5, 1.2, 1.1, MAT.steel); S.cap(hx + 0.5, hy + 1, hx + 0.5, hy + 2.5, 0.9, 0.8, MAT.steelD); S.px(hx + 6, hy - 0.5, c, true); S.px(hx + 7, hy - 0.5, mixRgb(c, [255, 255, 255], 0.6), true); S.px(hx + 2, hy - 1.5, c, true); }
   if (o.blade) { const c = col3(o.blade); for (let q = 0; q < 11; q++) S.px(hx + 1 + q * 0.95, hy - 1 - q * 0.45, q < 2 ? chrome[2] : mixRgb(c, [255, 255, 255], q % 4 ? 0.25 : 0.7), q >= 2); }
+  if (o.blaster) { S.cap(hx - 1.5, hy - 1.2, hx + 5.5, hy - 1.6, 1.7, 1.4, MAT.steelD); S.cap(hx + 5, hy - 1.6, hx + 7.5, hy - 1.6, 0.8, 0.8, MAT.steel); S.cap(hx - 0.5, hy, hx - 0.8, hy + 2.6, 0.9, 0.8, ['#1a120c', '#3a2618', '#5a3c24']); S.px(hx + 2, hy - 2.6, '#ff8a20', true); if (o.muzzle) { S.px(hx + 8.5, hy - 1.6, '#ffffff', true); S.px(hx + 9.5, hy - 1.6, '#ffd080', true); S.px(hx + 8.5, hy - 2.6, '#ffb040', true); S.px(hx + 8.5, hy - 0.6, '#ffb040', true); } }
   if (o.gun) { S.cap(hx - 1, hy - 1, hx + 6, hy - 1.4, 1.4, 1.2, MAT.steelD); S.px(hx + 1, hy + 0.8, MAT.steelD[2]); S.px(hx + 4, hy - 1.4, col3(o.visor || '#ff3040'), true); }
   if (o.bowl) { S.cap(hx - 0.5, hy - 1, hx + 3, hy - 1, 1.6, 1.4, ['#5a1a0e', '#a83a1e', '#e06a3a', '#ffa070']); S.px(hx + 1, hy - 4, '#d8d8e0'); S.px(hx + 2, hy - 6, '#b8b8c0'); S.px(hx + 1, hy - 8, '#9898a0'); }
   if (o.phone) { S.px(hx + 1, hy - 1, col3(o.phone), true); S.px(hx + 1, hy - 2, col3(o.phone), true); }

@@ -4,7 +4,7 @@ The full design doc with painted art for every level: https://claude.ai/artifact
 
 ## The pitch
 
-A side-scrolling cyberpunk game for the phone. You live in a capsule on the Stack, a megablock level of a vertical city, and the city goes down further than anyone has mapped. Each trip takes you lower to strip machines for parts, crack terminals for programs, and bring it home to wire into your body. At the bottom is the machine that runs the city. What you find there sends you up to the Spires for the ending.
+A side-scrolling noir for the phone. You're a detective with the Stack precinct, in a trench coat with a blaster on your hip. Four synths walked off a corporate transport in the Spires and dropped out of sight; the precinct wants them found, and their trail goes down. You follow it level by level, deeper than anyone has mapped: strip machines for parts, crack terminals, buy leads, and wire ware into your body to get further. At the bottom is the machine that runs the city, and the synths seem to think it's who made them. What you find there sends you up to the Spires, to the people who say they did.
 
 ## The loop
 
@@ -48,7 +48,7 @@ A side-scrolling cyberpunk game for the phone. You live in a capsule on the Stac
   - Vendors buy salvage: Kit at base price, Ozu at 1.4×.
   - Mama Ruiz sells noodles that heal.
   - Juno gives three jobs: coolant, drones, then the clinic data, which pays a neural booster.
-- **Fights:** strike up close.
+- **Fights:** the blaster fires a bolt at the nearest hostile ahead (aim-assisted, up or down a little), six shots that recharge one at a time; up close, Fire is a blow instead (the blades, with mantis arms).
   - Block drones hover and shoot.
   - Gangers close in with blades.
   - The Warden walks, fires bursts, stomps a shockwave you jump over, and charges. Beating it unlocks the shaft.
@@ -57,7 +57,11 @@ A side-scrolling cyberpunk game for the phone. You live in a capsule on the Stac
 
 ## Story (light)
 
-Told through the fixer, the people and the nodes. The city's code is being bought up from below. The clinic data points to the Works. The Root at the bottom is the city's mind, or what's left of it, and what you learn there sends you up to the Spires.
+Told through Juno (an informant who trades leads for favours), the people, and what the nodes remember. Original, in the spirit of Blade Runner rather than borrowing from it.
+- **The case:** four synths ran from the Spires. The precinct calls you a tracer.
+- **First lead:** the street clinic's records show a woman with no ID who paid to have a serial cut from her wrist and asked the way to the subway.
+- **Further down:** the synths are looking for whoever made them. Nobody up top did. The Root at the bottom is the city's mind, or what's left of it. What you learn there sends you up to the Spires for the ending.
+- (proposed) Each synth is a case with a choice at the end: retire them, let them go, or something else. People react to what you chose.
 
 ## Proposed (not built)
 
