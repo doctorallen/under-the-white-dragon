@@ -137,6 +137,8 @@ LEVELS.stack = {
     L.ambient = (x, y) => { const t = clamp(1 - y / 520, 0, 1); return [0.16 + t * 0.12, 0.13 + t * 0.07, 0.24 + t * 0.14]; };
     L.wet.push({ y: G + 1, x0: 700, x1: L.w, depth: 22, k: 0.38 });
     L.rain = 1;
+    // under the walkways and indoors it doesn't rain
+    L.dry = [[0, MID, YARD - 14, L.h], [960, UP, YARD - 14, MID]];
     return L;
   },
 };

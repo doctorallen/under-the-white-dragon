@@ -73,10 +73,12 @@ function render() {
     t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0);
     if (flash) { t.globalCompositeOperation = 'source-atop'; t.fillStyle = 'rgba(255,255,255,0.7)'; t.fillRect(0, 0, s.w, s.h); }
     g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h);
+    // what glows behind a figure is hidden by it
+    occlude(s.c, sx, sy);
     if (s.e) gg.drawImage(s.e, sx, sy);
   };
   for (const n of Actors.npcs) if (!n.hidden) { const pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 7) % 4) : n.act === 'sit' ? 'sit' : 'stand'; actor(Actors.art(n, pose, n.face < 0), n.x, n.y); }
-  for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); } }
+  for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } }
   for (const e of Actors.enemies) { const s = Actors.enemyArt(e); actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0); }
   if (Player.inv <= 0 || Math.floor(Game.t * 16) % 2) actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1);
   // bolts and sparks: all glow
@@ -106,6 +108,7 @@ function render() {
     const n = Math.round(w * h / 260), tt = Game.t, B = [[], [], [], []];
     for (let k = 0; k < n; k++) {
       const sp = 220 + hash(k, 5, 31) * 80, y = ((hash(k, 2, 31) * (h + 40) + tt * sp) % (h + 40)) - 20, x = ((hash(k, 1, 31) * (w + 40) - cx * 0.9 + y * 0.35) % (w + 40) + w + 40) % (w + 40) - 20;
+      if (L.dry && L.dry.some((r) => x + cx > r[0] && x + cx < r[2] && y + cy > r[1] && y + cy < r[3])) continue; // under cover
       const li = lightAt(x, y, ox, oy), b = Math.min(3, Math.floor(Math.max(li[0], li[1], li[2]) / 70));
       B[b].push(Math.round(x), Math.round(y), 3 + ((k * 7) % 4));
     }
@@ -117,6 +120,10 @@ function render() {
   V.g.imageSmoothingEnabled = false;
   V.g.drawImage(V.low, 0, 0, w * V.scale, h * V.scale);
 }
+// hide the glow layer under a sprite's shape: the glow is added over the
+// whole frame at the end, so without this a sign or a monitor behind
+// someone would shine through them
+function occlude(c, x, y) { const gg = View.gg; gg.globalCompositeOperation = 'destination-out'; gg.drawImage(c, x, y); gg.globalCompositeOperation = 'source-over'; }
 // the light map's colour at a point on the screen (0..255)
 function lightAt(x, y, ox, oy) {
   const V = View, lw = V.lc.width, lh = V.lc.height, i = clamp(Math.floor((x - ox) / V.LC), 0, lw - 1), j = clamp(Math.floor((y - oy) / V.LC), 0, lh - 1), o = (j * lw + i) * 4, d = V.limg.data;

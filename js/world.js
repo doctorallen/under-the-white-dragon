@@ -12,7 +12,7 @@ const LEVELS = {};
 function newLevel(id, name, w, h) {
   const L = {
     id, name, w, h, ops: [], solids: [], ways: [], ladders: [], props: [], lights: [], npcs: [], enemies: [], wet: [], spawns: {},
-    rain: 0, ambient: [0.2, 0.18, 0.26], far: null, music: null,
+    rain: 0, dry: [], ambient: [0.2, 0.18, 0.26], far: null, music: null,
     paint(x0, y0, x1, y1, fn) { this.ops.push({ x0, y0, x1, y1, fn, seed: this.ops.length * 31 + 7 }); },
     block(x0, y0, x1, y1, ramp, o = {}) { this.paint(x0, y0, x1, y1, (P) => P.block(x0, y0, x1, y1, ramp, o)); },
     solid(x0, y0, x1, y1) { this.solids.push({ x0, y0, x1, y1 }); },
