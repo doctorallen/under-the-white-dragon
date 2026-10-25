@@ -1,0 +1,14 @@
+{
+  "name": "underhill",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Underhill, a side-on painted-pixel digging game for the phone browser, in plain JavaScript. The game itself needs nothing installed: these are the test tools only.",
+  "scripts": {
+    "test": "sh test/check.sh && node test/smoke.js",
+    "check": "sh test/check.sh",
+    "smoke": "node test/smoke.js"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.13.0"
+  }
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#08060c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Underhill">
+<meta name="description" content="A small folk digs down under the hill, through old cellars and dwarf halls, to where the rock turns strange.">
+<title>Underhill</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="hud">
+  <div id="where"><b id="depth">0 m</b><span id="stratum"></span><small id="kit"></small></div>
+  <div id="topbtns">
+    <button id="bBench" hidden>Bench</button>
+    <button id="bCat">Catalog</button>
+    <button id="bMenu" aria-label="Menu">II</button>
+  </div>
+  <div id="bag"></div>
+  <div id="toasts" aria-live="polite"></div>
+</div>
+
+<div id="stickzone"></div>
+<div id="stick"><div id="knob"></div></div>
+<div id="pads">
+  <button id="bLadder">Ladder</button>
+  <button id="bTorch">Torch</button>
+  <button id="bDig">Dig</button>
+  <button id="bJump">Jump</button>
+</div>
+
+<section id="panel" hidden>
+  <header><h2 id="panelTitle"></h2><button id="panelClose" aria-label="Close">✕</button></header>
+  <div id="panelBody"></div>
+</section>
+
+<div id="rotate">Turn your phone sideways.</div>
+
+<script src="js/util.js"></script>
+<script src="js/tuning.js"></script>
+<script src="js/world.js"></script>
+<script src="js/paint.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/craft.js"></script>
+<script src="js/game.js"></script>
+<script src="js/save.js"></script>
+<script src="js/input.js"></script>
+<script src="js/player.js"></script>
+<script src="js/render.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

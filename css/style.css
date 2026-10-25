@@ -1,0 +1,84 @@
+:root {
+  --ink: #f2e6cc;
+  --dim: #b8a888;
+  --wood: #2a1c12;
+  --wood2: #3a2818;
+  --edge: #5a4028;
+  --moss: #6a8a48;
+  --gold: #e8b850;
+  --teal: #3af0e0;
+  --warn: #f08a5a;
+  --pad: max(12px, env(safe-area-inset-left));
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: #08060c; color: var(--ink); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; font: 14px/1.35 Georgia, 'Iowan Old Style', 'Palatino Linotype', serif; }
+#view { position: fixed; inset: 0; width: 100vw; height: 100vh; image-rendering: pixelated; display: block; }
+button { font: inherit; color: var(--ink); background: var(--wood2); border: 1px solid var(--edge); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:disabled { opacity: 0.4; cursor: default; }
+button.quiet { background: transparent; }
+
+/* ---- the HUD ---- */
+#hud { position: fixed; inset: 0; pointer-events: none; padding: max(8px, env(safe-area-inset-top)) var(--pad) 0; }
+#where { position: absolute; left: var(--pad); top: max(8px, env(safe-area-inset-top)); text-shadow: 0 1px 2px #000, 0 0 6px #000; display: flex; flex-direction: column; }
+#where b { font-size: 20px; letter-spacing: 0.02em; }
+#where span { font-style: italic; color: var(--ink); }
+#where small { color: var(--dim); font-size: 12px; }
+#topbtns { position: absolute; right: max(12px, env(safe-area-inset-right)); top: max(8px, env(safe-area-inset-top)); display: flex; gap: 6px; pointer-events: auto; }
+#topbtns button { background: rgba(26, 18, 12, 0.82); }
+#bBench { border-color: var(--gold); color: var(--gold); }
+#bag { position: absolute; left: 50%; transform: translateX(-50%); top: max(8px, env(safe-area-inset-top)); display: flex; gap: 3px; }
+#bag.full .slot { border-color: var(--warn); }
+.slot { width: 30px; height: 30px; background: rgba(20, 14, 10, 0.72); border: 1px solid rgba(120, 90, 60, 0.6); border-radius: 4px; position: relative; display: grid; place-items: center; }
+.slot img, .bins img, .need img, .entry img { image-rendering: pixelated; }
+.slot img { width: 24px; height: 24px; }
+.slot i { position: absolute; right: 2px; bottom: 0; font-style: normal; font-size: 11px; text-shadow: 0 1px 1px #000; }
+#toasts { position: absolute; left: 50%; transform: translateX(-50%); top: calc(max(8px, env(safe-area-inset-top)) + 66px); display: flex; flex-direction: column; align-items: center; gap: 4px; width: min(460px, 52vw); }
+.toast { background: rgba(20, 14, 10, 0.85); border: 1px solid var(--edge); border-radius: 6px; padding: 4px 10px; text-align: center; transition: opacity 0.6s; }
+.toast.new { border-color: var(--teal); }
+.toast.home { border-color: var(--gold); }
+.toast.warn { border-color: var(--warn); }
+
+/* ---- touch controls: shown once a touch is seen ---- */
+#stickzone { position: fixed; left: 0; top: 60px; bottom: 0; width: 50vw; touch-action: none; }
+#stick { position: fixed; width: 92px; height: 92px; margin: -46px 0 0 -46px; border-radius: 50%; border: 2px solid rgba(242, 230, 204, 0.25); background: rgba(20, 14, 10, 0.25); pointer-events: none; display: none; }
+#stick.on { display: block; }
+#knob { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; border-radius: 50%; background: rgba(242, 230, 204, 0.35); transform: translate(-50%, -50%); }
+#pads { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); display: none; gap: 10px; align-items: flex-end; }
+body.touch #pads { display: flex; }
+#pads button { width: 66px; height: 66px; border-radius: 50%; background: rgba(42, 28, 18, 0.7); border: 2px solid rgba(120, 90, 60, 0.8); font-size: 13px; touch-action: none; }
+#pads #bDig { width: 78px; height: 78px; border-color: rgba(232, 184, 80, 0.8); margin-bottom: 26px; }
+#pads #bTorch, #pads #bLadder { width: 50px; height: 50px; font-size: 11px; }
+#pads button.down { background: rgba(232, 184, 80, 0.45); }
+
+/* ---- the panels ---- */
+#panel { position: fixed; inset: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); max-width: 620px; margin: 0 auto; background: linear-gradient(#2a1c12, #1e140c); border: 1px solid var(--edge); border-radius: 10px; display: flex; flex-direction: column; box-shadow: 0 8px 40px #000; }
+#panel[hidden] { display: none; }
+#panel header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--edge); }
+#panel h2 { margin: 0; font-size: 18px; font-weight: normal; letter-spacing: 0.04em; }
+#panelBody { overflow-y: auto; padding: 10px 12px 14px; touch-action: pan-y; }
+.sub { margin: 0 0 6px; color: var(--dim); }
+.bins { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.bin, .need { display: inline-flex; align-items: center; gap: 2px; }
+.bin img { width: 28px; height: 28px; }
+.bin.none { opacity: 0.4; }
+.recipe { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid rgba(90, 64, 40, 0.5); }
+.recipe small { display: block; color: var(--dim); }
+.recipe.passed { opacity: 0.5; }
+.recipe.locked { opacity: 0.6; }
+.needs { display: flex; gap: 10px; margin-top: 3px; color: var(--warn); }
+.need.ok { color: var(--moss); }
+.need img { width: 22px; height: 22px; }
+.tag { color: var(--dim); font-size: 12px; font-style: italic; white-space: nowrap; }
+.cat { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.entry { display: flex; gap: 8px; align-items: flex-start; background: rgba(0, 0, 0, 0.2); border-radius: 6px; padding: 6px; }
+.entry img { width: 36px; height: 36px; flex: none; }
+.entry small { display: block; color: var(--dim); }
+.entry .count { color: var(--gold); }
+.entry.unknown img { filter: brightness(0) opacity(0.5); }
+.help p { color: var(--dim); }
+.help b { color: var(--ink); font-weight: normal; }
+
+#rotate { display: none; }
+@media (orientation: portrait) and (max-width: 600px) {
+  #rotate { display: grid; place-items: center; position: fixed; inset: 0; background: #08060c; color: var(--dim); font-style: italic; z-index: 9; }
+}
