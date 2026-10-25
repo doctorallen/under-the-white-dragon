@@ -11,7 +11,7 @@ function person(o = {}) {
   const F = 51, u = o.tall || 1, Y = (h) => F - h * u, cx = 20, wd = o.wide || 0;
   const sk = rp(o.skin || SKINS[0], 6), top = rp(o.top || '#3a3a48', 7), legs = rp(o.legs || '#2a2a34', 6), boots = rp(o.boots || '#18161c', 5);
   const hair = rp(o.hairCol || '#1a1414', 6), chrome = MAT.chrome, acc = o.acc ? col3(o.acc) : null, dark = (r) => r.map((c) => mixRgb(c, [8, 6, 12], 0.3));
-  const pose = o.pose || 'stand', bob = pose === 'walk1' || pose === 'walk3' ? -0.6 : 0;
+  const pose = o.pose || 'stand', bob = pose === 'walk1' || pose === 'walk3' ? -0.6 : pose === 'breathe' ? -0.75 : 0;
   // the stride: [back, front] foot offsets and lifts
   const st = { stand: [[-1.2, 0], [1.6, 0]], walk0: [[-4, 0], [4, 0]], walk1: [[-1, 1.6], [1, 0]], walk2: [[4, 0], [-4, 0]], walk3: [[1, 0], [-1, 1.6]], sit: [[2, 0], [5, 0]], jump: [[-2.5, 3.2], [2.5, 1.6]], fall: [[-1.5, 1], [2, 2.2]], climb0: [[-0.5, 3], [0.5, 0]], climb1: [[-0.5, 0], [0.5, 3]], strike: [[-3.5, 0], [3.5, 0]], cut: [[-2, 0], [2.6, 0]], hurt: [[-2.5, 1], [1, 0]] }[pose] || [[-1, 0], [1.5, 0]];
   const head = Y(29.5) + bob, sh = Y(24) + bob, waist = Y(16) + bob, hip = Y(14) + bob, knee = Y(7.2), ank = Y(1.6);

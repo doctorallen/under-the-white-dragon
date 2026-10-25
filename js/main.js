@@ -9,7 +9,7 @@ function boot() {
   World.load(Game.s.level);
   const sp = World.L.spawns[Game.s.spawn] || Object.values(World.L.spawns)[0];
   if (loaded && Game.s.px) Player.place(Game.s.px, Game.s.py); else Player.place(sp[0], sp[1]);
-  Actors.load();
+  Actors.load(); Life.load();
   Game.cam.x = Player.x; Game.cam.y = Player.y - 30;
   Hud.init();
   Game.toast(loaded ? 'Back on ' + World.L.name + '.' : 'Detective. Four synths walked off a corp transport in the Spires three nights ago and dropped out of sight. Last ping: the Stack, heading down.');
@@ -30,6 +30,7 @@ function step(dt) {
   Game.ghost = Math.max(0, Game.ghost - dt);
   Player.step(dt);
   Actors.step(dt);
+  Life.step(dt);
   Fx.step(dt);
   // the camera leads a little the way you face
   const tx = Player.x + Player.face * 24, ty = Player.y - 52 + clamp(Player.vy * 0.12, -10, 30);

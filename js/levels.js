@@ -11,6 +11,27 @@ const DECO = {
   capsule: (o) => () => capsule(o), chair: () => () => docChair(), door: (o) => () => door(o), shutter: (o) => () => shutter(o), terminal: (o) => () => terminal(o),
 };
 
+// people passing through: a few made up from a seed, wandering their stretch
+// of floor in the day and gone home at night, with something to say
+const CROWD_LINES = [
+  'Third shift this week. Fourth if you count this one.', 'Rain\'s warm tonight. That\'s the chemicals.', 'Lift\'s out again. Lift\'s always out.',
+  'My kid wants a chrome arm for her birthday. She\'s nine.', 'They\'re hiring at the Works. Nobody comes back up to say how it is.', 'You see the fish on the billboard? It follows you if you look at it.',
+  'Got any change? No? Me neither.', 'They say synths don\'t sleep. I don\'t sleep either. Doesn\'t make me one.', 'Don\'t eat the street noodles. Eat Mama\'s.',
+  'Detective? You don\'t look like a detective. That\'s probably the point.', 'I haven\'t seen the sky in eleven years. I hear it\'s overrated.', 'Somebody stole the copper out of my wall again.',
+];
+function crowd(L, n, x0, x1, y, seed) {
+  const r = new Rng(seed);
+  for (let i = 0; i < n; i++) {
+    const hairs = ['short', 'bob', 'long', 'cap', 'hood', 'bun', 'bald', 'undercut'], tops = ['#3a4a5a', '#5a3a3a', '#3a5a3a', '#4a4a4a', '#6a5a3a', '#2a2a3a', '#5a3a5a', '#c8c0b0'];
+    const look = { skin: r.pick(SKINS), hair: r.pick(hairs), hairCol: r.pick(['#1a1414', '#3a2a20', '#8a6a4a', '#c8c8c8', '#ff4ab0', '#3af0e0']), top: r.pick(tops), coat: r.f() < 0.4 ? 'long' : 'jacket', legs: r.pick(['#2a2a2a', '#1a1a24', '#3a3028']), tall: 0.88 + r.f() * 0.14 };
+    if (r.f() < 0.25) { look.umbrella = r.pick(['#2a3a5a', '#5a2a3a', '#2a2a2a']); if (r.f() < 0.5) look.umbrellaGlow = r.pick(['#3af0e0', '#ff4ab0']); }
+    if (r.f() < 0.2) { look.cyArm = true; look.acc = r.pick(['#3af0e0', '#ff4ab0', '#ffb040']); }
+    // a night city: out most hours, home for a few before dawn
+    const home = x0 + r.f() * (x1 - x0), h0 = 2 + r.i(0, 2), h1 = h0 + 3 + r.i(0, 3);
+    L.npc({ name: r.pick(['Passer-by', 'Commuter', 'Local', 'Night worker']), look, x: home, y, sched: [[0, h0, home, 'wander'], [h0, h1, home, 'away'], [h1, 24, home, 'wander']], lines: [r.pick(CROWD_LINES), r.pick(CROWD_LINES)], smoke: r.f() < 0.2 && !look.umbrella });
+  }
+}
+
 // ---- L1: the Stack ------------------------------------------------------------
 LEVELS.stack = {
   name: 'The Stack', depth: '0 m',
@@ -27,11 +48,6 @@ LEVELS.stack = {
         windows(P, 6, 158, 1800, 640, { w: 4, h: 5, gx: 6, gy: 8, lit: 0.16, seed: 4, glow: 0.2, unlit: false });
         haze(P, 0, 1800, 120, 330, [60, 36, 80], 0.5);
         for (const [x, y, n, c] of [[90, 170, 6, '#ff4ab0'], [520, 160, 5, '#3af0e0'], [900, 190, 4, '#ffd040'], [1300, 168, 6, '#ff4ab0'], [1640, 176, 5, '#3af0e0']]) sign(P, x, y, n, c, { vert: true });
-        // the holo fish, swimming over the far block
-        const fx = 640, fy = 230, c = [58, 240, 224];
-        for (let a = 0; a < Math.PI * 2; a += 0.01) { const x = fx + Math.cos(a) * 26, y = fy + Math.sin(a) * 8 * (1 + Math.cos(a) * 0.3); if (Math.round(y) % 2 === 0) P.put(x, y, c, 0.9); }
-        for (let k = 0; k < 10; k++) { P.put(fx - 32 - k * 0.3, fy - k, c, 0.7); P.put(fx - 32 - k * 0.3, fy + k, c, 0.7); }
-        P.put(fx + 16, fy - 2, [255, 255, 255], 1);
       },
     };
     // ---- the ground: one long slab under everything
@@ -125,7 +141,7 @@ LEVELS.stack = {
     N({ name: 'Doc Vasquez', role: 'doc', look: { skin: SKINS[0], hair: 'bald', top: '#e0e8e8', coat: 'long', legs: '#3a4a4a', cyArm: 'both', acc: '#3af0e0', eye: '#3af0e0' }, x: 560, y: G, face: -1, sched: [[0, 24, 560, 'stand']], lines: ['Sit down. Don\'t touch anything that glows.', 'Your nervous system only takes so much. Choose.', 'Synths? On my table I can\'t tell them from you anymore. Only by what they ask for.'] });
     N({ name: 'Juno', role: 'fixer', look: { skin: SKINS[3], hair: 'bob', hairCol: '#ff4ab0', top: '#2a1a2a', coat: 'long', legs: '#1a1a1e', acc: '#ff4ab0', eye: '#ff4ab0' }, x: 1420, y: G, face: -1, sched: [[0, 24, 1420, 'stand']], lines: ['The precinct sent a tracer. Cute. I have leads; they cost.', 'Everything in this city runs downhill. Money, water, synths.'] });
     N({ name: 'Ines', look: { skin: SKINS[1], hair: 'short', top: '#3a5a7a', legs: '#2a2a3a' }, x: 868, y: G, sched: [[19, 23, 868, 'sit'], [23, 24, 1560, 'away'], [0, 7, 1560, 'away'], [7, 19, 760, 'wander']], lines: ['Night shift at the plant. Third this week.', 'Mama\'s broth is the only warm thing on this level.'] });
-    N({ name: 'Teo', look: { skin: SKINS[3], hair: 'mohawk', hairCol: '#ff4ab0', hairGlow: true, top: '#1a1a1a', legs: '#2a1a2a', cyArm: true, acc: '#ff4ab0' }, x: 904, y: G, face: -1, sched: [[20, 24, 904, 'sit'], [0, 3, 904, 'sit'], [3, 20, 1320, 'wander']], lines: ['You\'re the tracer? Don\'t look at me, I\'m all meat. Mostly.', 'Chrome arm\'s from Vasquez. Still itches.', 'Don\'t go in the yard. The Warden doesn\'t do warnings.'] });
+    N({ name: 'Teo', smoke: true, look: { skin: SKINS[3], hair: 'mohawk', hairCol: '#ff4ab0', hairGlow: true, top: '#1a1a1a', legs: '#2a1a2a', cyArm: true, acc: '#ff4ab0' }, x: 904, y: G, face: -1, sched: [[20, 24, 904, 'sit'], [0, 3, 904, 'sit'], [3, 20, 1320, 'wander']], lines: ['You\'re the tracer? Don\'t look at me, I\'m all meat. Mostly.', 'Chrome arm\'s from Vasquez. Still itches.', 'Don\'t go in the yard. The Warden doesn\'t do warnings.'] });
     N({ name: 'Mr. Hale', look: { skin: SKINS[0], hair: 'short', hairCol: '#3a2a20', top: '#2a2a2a', coat: 'long', shirt: '#d8d8d8', legs: '#1a1a1e', umbrella: '#2a3a5a', umbrellaGlow: '#3af0e0' }, x: 1700, y: MID, sched: [[6, 9, 1180, 'wander'], [9, 18, 2020, 'away'], [18, 22, 1660, 'wander'], [22, 24, 1660, 'away'], [0, 6, 1660, 'away']], lines: ['Twenty-two years in accounts. Never once been below the market.', 'They say the lift in the yard used to go all the way down.'] });
     N({ name: 'Old Pei', look: { skin: SKINS[5], hair: 'long', hairCol: '#c8c8c8', top: '#5a3a5a', coat: 'long', legs: '#2a2030', tall: 0.9 }, x: 1880, y: MID, sched: [[0, 24, 1880, 'wander']], lines: ['Forty years in that capsule. They built three more levels on top of me.', 'My husband went down to the Works in sixty-one. The pay was good.', 'You hear it at night? The hum, from under everything.', 'A girl came through last week asking the way down. Polite. Too polite.'] });
     N({ name: 'Rook', look: { skin: SKINS[2], hair: 'cap', capCol: '#a83a2a', top: '#3a6a3a', legs: '#2a2a2a', phone: '#9af0ff', hands: { fx: 24, fy: 36 } }, x: 1240, y: UP, sched: [[0, 24, 1240, 'stand']], lines: ['Up here\'s the only place the signal\'s clean.', 'That node by the stairs? Corp junk. Locked tight. Unless you can jack in.'] });
@@ -133,6 +149,17 @@ LEVELS.stack = {
     // ---- the block's drones
     for (const [x, y, a, b] of [[1200, UP - 40, 1080, 1420], [1560, UP - 46, 1440, 1760], [1900, UP - 40, 1780, 2120], [1700, MID - 46, 1560, 1900], [2000, MID - 40, 1880, 2160]]) L.enemy('drone', x, y, { range: [a, b] });
     // spawns, light, weather
+    // ---- the city going about its business
+    crowd(L, 4, 720, 1290, G, 61); crowd(L, 3, 1560, 2120, MID, 62); crowd(L, 2, 1000, 1480, UP, 63);
+    L.traffic = [{ y: 92, scale: 0.12, speed: 26, dir: -1, n: 6, fog: 0.4 }, { y: 128, scale: 0.17, speed: 40, dir: 1, n: 5, fog: 0.55 }, { y: 168, scale: 0.24, speed: 62, dir: -1, n: 3, fog: 0.75 }];
+    L.ad(396, 430, 64, 42, 'cycle', ['#ffb040', '#ff4ab0']);
+    L.ad(1650, 262, 80, 46, 'koi', ['#3af0e0', '#9af0ff']);
+    L.ad(760, 514, 90, 15, 'marquee', ['#ffd040', '#ff4ab0']);
+    L.ad(1436, 516, 40, 14, 'bars', ['#ff6a3a', '#ffd040']);
+    L.ad(2290, 560, 90, 15, 'marquee', ['#ff3040', '#e8e8f0']);
+    L.critter('rat', 720, 2150, G, 3); L.critter('rat', 20, 320, G, 1); L.critter('rat', 2220, 2540, G, 1); L.critter('cat', 1520, 2160, MID, 1);
+    L.litter(700, 2180, G, 8); L.litter(1500, 2180, MID, 3); L.litter(2210, 2550, G, 3);
+    L.vents.push({ x: 860, y: 618, kind: 'steam' }, { x: 2280, y: 390, kind: 'steam' });
     L.spawns = { capsule: [180, G], shaft: [2470, G], lift: [2380, G] };
     L.ambient = (x, y) => { const t = clamp(1 - y / 520, 0, 1); return [0.16 + t * 0.12, 0.13 + t * 0.07, 0.24 + t * 0.14]; };
     L.wet.push({ y: G + 1, x0: 700, x1: L.w, depth: 22, k: 0.38 });
@@ -189,10 +216,10 @@ LEVELS.street = {
     L.walk(1330, 1460, 290, 6);
     L.block(1330, 296, 1460, G, MAT.brickD, { base: 0.34, lip: 0, bands: 3 });
     L.prop('node', 1420, 290, { gives: { program: 'ghost' }, level: 2, col: '#ff4ab0' }); L.light(1420, 272, 50, [1, 0.3, 0.7], 0.8);
-    L.prop('deco', 1200, G, { art: DECO.barrel(), id: 'fire1' }); L.light(1200, G - 15, 60, [1, 0.55, 0.25], 1.1);
+    L.prop('deco', 1200, G, { art: DECO.barrel(), id: 'fire1' }); L.fire(1200, G - 15);
     // gang turf: graffiti, a burning barrel, a car, junk, the cache behind a heavy shutter
     L.paint(1500, 300, 2000, G, (P) => { for (let k = 0; k < 6; k++) { const x = 1520 + k * 80, y = 360 + hash(k, 1, 3) * 40, c = [[255, 74, 176], [58, 240, 224], [255, 208, 64]][k % 3]; for (let t = 0; t < 40; t++) P.put(x + t, y + Math.sin(t * 0.4 + k) * 5, c, 0.15); } });
-    L.prop('deco', 1640, G, { art: DECO.barrel(), id: 'fire2' }); L.light(1640, G - 15, 60, [1, 0.55, 0.25], 1.1);
+    L.prop('deco', 1640, G, { art: DECO.barrel(), id: 'fire2' }); L.fire(1640, G - 15);
     L.prop('car', 1740, G, { look: { col: '#2a3a2a', under: '#3af0e0' }, label: 'gang car', flip: true }); L.light(1740, G + 2, 50, [0.3, 1, 0.95], 0.6, 2.5);
     L.prop('junk', 1560, G); L.prop('rack', 1820, G, { label: 'dumped server rack' });
     L.wall(1930, 300, 1960, G, MAT.concrete, { base: 0.45 });
@@ -208,12 +235,18 @@ LEVELS.street = {
     const N = (o) => L.npc(o);
     N({ name: 'Ozu', role: 'vendor', rate: 1.4, look: { skin: SKINS[5], hair: 'cap', capCol: '#4a4a2a', top: '#4a3a2a', apron: '#3a2a1a', legs: '#2a241e', hands: { fx: 26, fy: 38 } }, x: 560, y: G, sched: [[0, 24, 560, 'work']], lines: ['Up top they pay you in noodles. Down here we pay in cash.', 'Salvage? I pay better than Kit. Don\'t tell Kit.'], behind: true });
     N({ name: 'Sister Ama', look: { skin: SKINS[1], hair: 'long', hairCol: '#1a1414', top: '#d8e8e0', coat: 'long', legs: '#3a4a40', eye: '#3aff80' }, x: 940, y: G, sched: [[0, 24, 940, 'stand']], lines: ['The clinic\'s terminal? Not mine. The last doctor left in a hurry.', 'We patch up whatever the gangs leave.'] });
-    N({ name: 'Dusk', look: { skin: SKINS[3], hair: 'hood', top: '#3a3028', legs: '#2a2420' }, x: 1182, y: G, sched: [[0, 24, 1182, 'stand']], lines: ['Warm here. Warmest place on the street.', 'The Gutter King\'s lot own everything past the next pillar.'] });
+    N({ name: 'Dusk', smoke: true, look: { skin: SKINS[3], hair: 'hood', top: '#3a3028', legs: '#2a2420' }, x: 1182, y: G, sched: [[0, 24, 1182, 'stand']], lines: ['Warm here. Warmest place on the street.', 'The Gutter King\'s lot own everything past the next pillar.'] });
     N({ name: 'Lark', look: { skin: SKINS[1], hair: 'long', hairCol: '#4a3a30', top: '#4a3a4a', coat: 'long', legs: '#2a2420', tall: 0.92 }, x: 1218, y: G, face: -1, sched: [[0, 24, 1218, 'stand']], lines: ['My brother went down the subway before they sealed it.', 'You hear the trains sometimes. There aren\'t any trains.'] });
     N({ name: 'Bo', look: { skin: SKINS[0], hair: 'short', hairCol: '#c8a060', top: '#2a3a2a', legs: '#2a2a2a' }, x: 640, y: G, sched: [[6, 22, 640, 'wander'], [22, 24, 300, 'away'], [0, 6, 300, 'away']], lines: ['Lift\'s been dead since the Warden came. Somebody fix it, I\'m tired of the ladder.'] });
     // the gang, and a clinic drone
     for (const [x, a, b] of [[1560, 1500, 1700], [1720, 1640, 1860], [1820, 1760, 1880]]) L.enemy('gang', x, G, { range: [a, b] });
     L.enemy('drone', 960, 340, { range: [860, 1060] });
+    // ---- the street going about its business
+    crowd(L, 3, 200, 1080, G, 71);
+    L.ad(704, 318, 50, 34, 'koi', ['#ff4ab0', '#ffb0e0']); L.ad(984, 330, 26, 34, 'bars', ['#3aff80', '#ffd040']); L.ad(1584, 300, 28, 44, 'cycle', ['#3af0e0', '#ff4ab0']); L.ad(2200, 336, 70, 15, 'marquee', ['#ffb040', '#3af0e0']);
+    L.critter('rat', 0, 2300, G, 4); L.litter(0, 2380, G, 10);
+    L.vents.push({ x: 820, y: G, kind: 'steam' }, { x: 1360, y: G, kind: 'steam' }, { x: 2040, y: G, kind: 'steam' });
+    for (const x of [80, 230, 470, 760, 1010, 1330, 1520, 1890, 2150]) L.drips.push({ x, y0: 162, y1: G });
     L.spawns = { shaft: [128, G], lift: [300, G] };
     L.ambient = [0.15, 0.12, 0.2];
     L.wet.push({ y: G + 1, x0: 0, x1: L.w, depth: 24, k: 0.45 });

@@ -37,6 +37,7 @@ function render() {
   gg.globalCompositeOperation = 'source-over'; gg.fillStyle = '#000'; gg.fillRect(0, 0, w, h);
   // the far layer
   if (World.far) { const F = World.far, fx = -Math.round(cx * F.f), fy = -Math.round(cy * F.fy); g.drawImage(F.c, fx, fy); if (F.e) gg.drawImage(F.e, fx, fy); }
+  Life.drawTraffic(g, gg, cx, cy);
   // the painted chunks
   const CS = T.chunk;
   for (let ky = Math.floor(cy / CS); ky <= Math.floor((cy + h) / CS); ky++) for (let kx = Math.floor(cx / CS); kx <= Math.floor((cx + w) / CS); kx++) {
@@ -47,6 +48,9 @@ function render() {
     gg.globalCompositeOperation = 'destination-out'; gg.drawImage(ch.c, ch.x - cx, ch.y - cy); gg.globalCompositeOperation = 'source-over';
     if (ch.e) gg.drawImage(ch.e, ch.x - cx, ch.y - cy);
   }
+  // flickering signs and tubes: their glow dims with their light
+  for (const f of L.flicks) { if (f.x1 < cx || f.x0 > cx + w || f.y1 < cy || f.y0 > cy + h) continue; const k = Life.flick(f.fl); if (k > 0.97) continue; gg.globalCompositeOperation = 'destination-out'; gg.fillStyle = `rgba(0,0,0,${1 - k})`; gg.fillRect(f.x0 - cx, f.y0 - cy, f.x1 - f.x0, f.y1 - f.y0); gg.globalCompositeOperation = 'source-over'; g.fillStyle = `rgba(0,0,0,${(1 - k) * 0.55})`; g.fillRect(f.x0 - cx, f.y0 - cy, f.x1 - f.x0, f.y1 - f.y0); }
+  Life.drawAds(gg, cx, cy);
   // props
   for (const p of World.props) {
     const s = Props.sprite(p); if (!s) continue;
@@ -54,6 +58,7 @@ function render() {
     if (x > w || y > h || x + s.w < 0 || y + s.h < 0) continue;
     g.drawImage(s.c, x, y); if (s.e) gg.drawImage(s.e, x, y);
   }
+  Life.drawWorld(g, gg, cx, cy);
   // the light
   lightMap(cx, cy);
   const LC = V.LC, lw = V.lc.width, lh = V.lc.height, ox = -(((cx % LC) + LC) % LC), oy = -(((cy % LC) + LC) % LC);
@@ -79,12 +84,18 @@ function render() {
     if (s.e) gg.drawImage(s.e, sx, sy);
     return [sx, sy];
   };
-  for (const n of Actors.npcs) if (!n.hidden) { const pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 7) % 4) : n.act === 'sit' ? 'sit' : 'stand'; actor(Actors.art(n, pose, n.face < 0), n.x, n.y); }
+  for (const n of Actors.npcs) if (!n.hidden) {
+    // standing still, everyone breathes; vendors work their hands
+    const br = (Game.t * 0.7 + n.i * 0.37) % 1 < 0.5, pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 7) % 4) : n.act === 'sit' ? 'sit' : n.act === 'work' && (Game.t * 1.6 + n.i) % 1 < 0.5 ? 'work' : br ? 'breathe' : 'stand';
+    actor(Actors.art(n, pose, n.face < 0), n.x, n.y);
+    if (n.def.smoke) { const on = (Game.t * 0.4 + n.i) % 1 < 0.3; gg.fillStyle = on ? '#ffb040' : '#a83a10'; gg.fillRect(Math.round(n.x + n.face * 6 - cx), Math.round(n.y - 24 - cy), 1, 1); }
+  }
   for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } }
   for (const e of Actors.enemies) { const s = Actors.enemyArt(e), at = actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0); if (at) tag(e, s, at[0], at[1]); }
   if (Player.inv <= 0 || Math.floor(Game.t * 16) % 2) actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1);
   // bolts and sparks: all glow
   for (const b of Actors.bolts) { const x = Math.round(b.x - cx), y = Math.round(b.y - cy); gg.fillStyle = css(b.c); if (b.player) { const sp = Math.hypot(b.vx, b.vy), ux = b.vx / sp, uy = b.vy / sp; for (let k = 0; k < 7; k++) { gg.fillStyle = k < 2 ? '#fff4d8' : css(b.c.map((q) => q * (1 - k / 9))); gg.fillRect(Math.round(x - ux * k), Math.round(y - uy * k), 1, 1); } continue; } if (b.wave) gg.fillRect(x - 3, y - 8, 6, 10); else { gg.fillRect(x - 2, y - 1, 4, 2); gg.fillStyle = '#fff'; gg.fillRect(x - 1, y - 1, 2, 2); } }
+  Life.drawGlints(gg, cx, cy);
   for (const p of Game.particles) { gg.fillStyle = css(p.c); gg.fillRect(Math.round(p.x - cx), Math.round(p.y - cy), 1, 1); }
   // rain, brighter where the light is: each drop two short strokes, drawn
   // in four batches by brightness
@@ -168,7 +179,7 @@ function lightMap(cx, cy) {
   const V = View, LC = V.LC, lw = V.lc.width, lh = V.lc.height, d = V.limg.data, L = World.L, w = V.w, h = V.h;
   const gx0 = Math.floor(cx / LC), gy0 = Math.floor(cy / LC);
   const lights = [];
-  for (const l of L.lights) if (l.x > cx - l.r && l.x < cx + w + l.r && l.y > cy - l.r && l.y < cy + h + l.r) lights.push(l);
+  for (const l of L.lights) if (l.x > cx - l.r && l.x < cx + w + l.r && l.y > cy - l.r && l.y < cy + h + l.r) lights.push(l.flick ? { x: l.x, y: l.y, r: l.r, c: l.c, flat: l.flat, k: l.k * Life.flick(l.flick) } : l);
   // the runner's cutter gives off a little light of its own; so do the bolts
   lights.push({ x: Player.x + Player.face * 6, y: Player.y - 16, r: T.light.lamp, c: [1, 0.78, 0.5], k: 0.32, flat: 1 });
   for (const b of Actors.bolts) lights.push({ x: b.x, y: b.y, r: 30, c: b.c.map((q) => q / 255), k: 0.5, flat: 1 });

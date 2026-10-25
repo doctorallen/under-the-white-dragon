@@ -12,7 +12,7 @@ const LEVELS = {};
 function newLevel(id, name, w, h) {
   const L = {
     id, name, w, h, ops: [], solids: [], ways: [], ladders: [], props: [], lights: [], npcs: [], enemies: [], wet: [], spawns: {},
-    rain: 0, dry: [], ambient: [0.2, 0.18, 0.26], far: null, music: null,
+    rain: 0, dry: [], flicks: [], ads: [], critters: [], trash: [], vents: [], drips: [], traffic: [], ambient: [0.2, 0.18, 0.26], far: null, music: null,
     paint(x0, y0, x1, y1, fn) { this.ops.push({ x0, y0, x1, y1, fn, seed: this.ops.length * 31 + 7 }); },
     block(x0, y0, x1, y1, ramp, o = {}) { this.paint(x0, y0, x1, y1, (P) => P.block(x0, y0, x1, y1, ramp, o)); },
     solid(x0, y0, x1, y1) { this.solids.push({ x0, y0, x1, y1 }); },
@@ -29,9 +29,16 @@ function newLevel(id, name, w, h) {
       this.paint(x - 5, y0, x + 5, y1, (P) => { for (let y = y0; y < y1; y++) { P.put(x - 4, y, tone(MAT.steel, 0.65)); P.put(x - 3, y, tone(MAT.steel, 0.3)); P.put(x + 3, y, tone(MAT.steel, 0.5)); P.put(x + 4, y, tone(MAT.steel, 0.2)); if ((y - y0) % 5 === 0) for (let i = -3; i <= 3; i++) P.put(x + i, y, tone(MAT.steel, 0.7 - (i + 3) * 0.06)); } });
       this.ladders.push({ x, y0, y1 });
     },
-    light(x, y, r, col, k = 1, flat = 1) { this.lights.push({ x, y, r, c: typeof col === 'string' ? rgb(col).map((q) => q / 255) : col, k, flat }); },
-    sign(x, y, n, colr, o = {}) { const [w, h] = signSize(n, o.vert); this.paint(x, y, x + w, y + h, (P) => sign(P, x, y, n, colr, o)); this.light(x + w / 2, y + h / 2, o.r || Math.max(w, h) * 2 + 26, colr, o.k || 0.85); },
-    tube(x, y, w, colr = '#e8f4ff', k = 0.75) { this.paint(x, y, x + w, y + 2, (P) => tubePaint(P, x, y, w, colr)); this.light(x + w / 2, y + 6, w * 1.8 + 40, colr, k, 1.15); },
+    light(x, y, r, col, k = 1, flat = 1, flick = null) { const l = { x, y, r, c: typeof col === 'string' ? rgb(col).map((q) => q / 255) : col, k, flat, flick }; this.lights.push(l); return l; },
+    // signs and tubes flicker (life.js): the light and the glow of the tube itself, together
+    sign(x, y, n, colr, o = {}) { const [w, h] = signSize(n, o.vert); this.paint(x, y, x + w, y + h, (P) => sign(P, x, y, n, colr, o)); const fl = { mode: o.dead ? 'bad' : 'sign', seed: x * 7 + y }; this.light(x + w / 2, y + h / 2, o.r || Math.max(w, h) * 2 + 26, colr, o.k || 0.85, 1, fl); this.flicks.push({ x0: x, y0: y, x1: x + w, y1: y + h, fl }); },
+    tube(x, y, w, colr = '#e8f4ff', k = 0.75) { this.paint(x, y, x + w, y + 2, (P) => tubePaint(P, x, y, w, colr)); const fl = { mode: 'tube', seed: x * 13 + y }; this.light(x + w / 2, y + 6, w * 1.8 + 40, colr, k, 1.15, fl); this.flicks.push({ x0: x, y0: y - 1, x1: x + w, y1: y + 3, fl }); },
+    // a fire: a light that dances, and smoke
+    fire(x, y, r = 60, k = 1.1) { this.light(x, y, r, [1, 0.55, 0.25], k, 1, { mode: 'fire', seed: x }); this.vents.push({ x, y: y - 6, kind: 'smoke' }); },
+    // a screen: an animated advert drawn each frame (life.js) on a dark panel
+    ad(x, y, w, h, kind, cols) { this.paint(x - 2, y - 2, x + w + 2, y + h + 2, (P) => { P.block(x - 2, y - 2, x + w + 2, y + h + 2, MAT.steelD, { base: 0.35 }); P.area(x, y, x + w, y + h, R(['#04060a', '#0a0e16']), () => 0.3); }); const l = this.light(x + w / 2, y + h / 2, Math.max(w, h) * 1.6 + 30, [1, 1, 1], 0.6); this.ads.push({ x, y, w, h, kind, cols: cols.map(rgb), l }); },
+    critter(kind, x0, x1, y, n = 1) { for (let i = 0; i < n; i++) this.critters.push({ kind, x0, x1, y }); },
+    litter(x0, x1, y, n) { this.trash.push({ x0, x1, y, n }); },
     lamp(x, y, h, colr = '#ffe0b0', k = 1) { this.paint(x, y - h, x + 10, y, (P) => lampPaint(P, x, y, h, colr)); this.light(x + 7, y - h + 8, h * 1.7, colr, k, 1.2); },
     prop(kind, x, y, o = {}) { const p = Object.assign({ id: this.id + ':' + kind + ':' + Math.round(x) + ':' + Math.round(y), kind, x, y }, o); this.props.push(p); return p; },
     npc(def) { this.npcs.push(def); return def; },

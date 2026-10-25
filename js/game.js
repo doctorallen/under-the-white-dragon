@@ -69,7 +69,7 @@ const Game = {
   arrive(level, spawn) {
     this.s.level = level; World.load(level);
     const sp = World.L.spawns[spawn] || Object.values(World.L.spawns)[0];
-    Player.place(sp[0], sp[1]); Actors.load();
+    Player.place(sp[0], sp[1]); Actors.load(); Life.load();
     this.cam.x = Player.x; this.cam.y = Player.y - 30;
     Hud.refresh(); Save.write();
     this.toast(LEVELS[level].name + ' · ' + LEVELS[level].depth);

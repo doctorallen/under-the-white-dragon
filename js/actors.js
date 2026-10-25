@@ -49,7 +49,7 @@ const Actors = {
       if (act === 'wander') { n.wt -= dt; if (n.wt <= 0) { n.wt = 3 + hash(n.i, Game.frame, 2) * 5; n.tx = e[2] + (hash(n.i, Game.frame, 3) - 0.5) * 120; } tx = n.tx; }
       const d = tx - n.x;
       if (Math.abs(d) > 2 && !n.bubble) { n.x += Math.sign(d) * Math.min(Math.abs(d), 26 * dt); n.face = Math.sign(d); n.moving = true; n.walked = (n.walked || 0) + 26 * dt; if (n.hidden) n.hidden = false; }
-      else { n.moving = false; if (act === 'away') n.hidden = true; else n.hidden = false; if (Math.abs(Player.x - n.x) < 40 && Math.abs(Player.y - n.y) < 20 && act !== 'work' && act !== 'sit') n.face = Math.sign(Player.x - n.x) || n.face; }
+      else { n.moving = false; if (act === 'away') n.hidden = true; else n.hidden = false; if (Math.abs(Player.x - n.x) < 40 && Math.abs(Player.y - n.y) < 20 && act !== 'work' && act !== 'sit') n.face = Math.sign(Player.x - n.x) || n.face; else if (act === 'stand' && !n.def.face && hash(n.i, Math.floor(Game.t * 0.25), 3) < 0.35) n.face = hash(n.i, Math.floor(Game.t * 0.25), 4) < 0.5 ? -1 : 1; }
       n.act = act;
     }
     // ---- enemies
@@ -143,7 +143,7 @@ const Actors = {
   // sprites for each, cached
   art(n, pose, left) {
     const k = pose + (left ? 'L' : 'R'); let s = n.art.get(k);
-    if (!s) { s = person(Object.assign({}, n.def.look, { pose, seed: 20 + n.i })); if (left) s = flipSprite(s); n.art.set(k, s); }
+    if (!s) { const look = Object.assign({}, n.def.look, { pose: pose === 'work' ? 'breathe' : pose, seed: 20 + n.i }); if (pose === 'work') { const hd = look.hands || {}; look.hands = Object.assign({}, hd, { fy: (hd.fy || 38) - 3, fx: (hd.fx || 25) + 1 }); } if (n.def.smoke && pose !== 'work') look.hands = Object.assign({}, look.hands || {}, { fx: 26, fy: 27 }); s = person(look); if (left) s = flipSprite(s); n.art.set(k, s); }
     return s;
   },
   enemyArt(e) {

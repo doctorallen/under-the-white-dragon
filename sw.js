@@ -34,6 +34,7 @@ const FILES = [
   'js/player.js',
   'js/actors.js',
   'js/hack.js',
+  'js/life.js',
   'js/gl.js',
   'js/render.js',
   'js/hud.js',
