@@ -1,219 +1,246 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// The painted world. Collision is tiles, but nothing is drawn as a tile: the
-// solid/open boundary is the tiles' solidity smoothed between their centres
-// and wandered by noise, so caves are round and ragged; and every surface is
-// laid in short horizontal strokes of a few close tones (strokeRow, util.js),
-// each stroke one tone read at its middle, so the rock reads as paint.
+// The painted city. A level is a list of painting operations in world
+// coordinates; the world is painted lazily in chunks (T.chunk px square),
+// each chunk running only the operations that touch it. Every area is laid in
+// short horizontal strokes of close tones (strokeRow), each stroke one tone
+// read at its middle, and every block is lit side-on: a lit lip on top, the
+// west face lit, soot under, the east face shaded, grime running down.
 //
-// Rock is seen side-on: the top of any ledge catches the light (a lit lip),
-// a face to the west is lit, an underside goes to soot, a face to the east
-// is shaded, and a mass darkens a little inward. Behind the open is the back
-// wall, dimmer, in its stratum's (or room's) own ramp, with a shadow under
-// every ceiling. Turf grows where rock meets the sky. Some rock has its own
-// marks: dressed stone its joints, seam rock its circuitry (which glows).
-//
-// The world is painted lazily in chunks (T.world.chunk tiles square), each a
-// colour canvas (transparent where the sky shows) and a glow canvas, and a
-// chunk is painted again when a tile in or near it is dug.
+// A chunk is a colour canvas (transparent where the far layer shows through)
+// and a glow canvas (what lights itself). Strokes depend only on the place
+// and each operation's own seed, so chunks meet without seams.
 // ---------------------------------------------------------------------------
-const LOOK = {
-  rock: {
-    [M.TURF]: rampOf(['#3a2618', '#5a3c24', '#7a5434', '#d8b080']),
-    [M.EARTH]: rampOf(['#3a2618', '#5a3c24', '#7a5434', '#d8b080']),
-    [M.HOMEWALL]: rampOf(['#3a2618', '#5a3c24', '#7a5434', '#d8b080']),
-    [M.CLAY]: rampOf(['#2e2a24', '#48403a', '#625848', '#c8b898']),
-    [M.STONE]: rampOf(['#20262a', '#343e40', '#4c5856', '#b8c8c0']),
-    [M.DRESSED]: rampOf(['#2e2e2a', '#4a4a44', '#68665e', '#e0dccc']),
-    [M.SEAMROCK]: rampOf(['#141022', '#221c38', '#342c52', '#b8a0f0']),
-    [M.BEDROCK]: rampOf(['#0c0a0e', '#16141a', '#22202a', '#605a70'], 7),
-  },
-  // the back walls behind the open: by room, else by stratum
-  wall: {
-    home: rampOf(['#5a3e26', '#7a5838', '#9a744c', '#c8a070']),
-    homeLow: rampOf(['#3a2414', '#5a3a20', '#7a5230', '#a87444']),
-    cellar: rampOf(['#3a3630', '#504a42', '#686054']),
-    tunnel: rampOf(['#2a2018', '#3a2c20', '#4a3a2a']),
-    hall: rampOf(['#262624', '#36362f', '#48463e']),
-    cellars: rampOf(['#2e2014', '#42301e', '#56402a']),
-    diggings: rampOf(['#24201a', '#322c24', '#40382e']),
-    oldgrowth: rampOf(['#181e1c', '#242c28', '#323a34']),
-    seam: rampOf(['#100c1c', '#1a142a', '#26203a']),
-  },
-  grass: rampOf(['#1e3418', '#2e4c22', '#3f6b2f', '#5c8f3e', '#7ab04c', '#a0cc60'], 8, 0.4, 0.2),
+const R = (anchors, n = 9, deep = 0.55, high = 0.3) => rampOf(anchors, n, deep, high);
+const MAT = {
+  concrete: R(['#2e2a2a', '#4a4440', '#68605a', '#a89c90']),
+  concreteD: R(['#1e1c20', '#2e2a30', '#423c42', '#7a7076']),
+  steel: R(['#1a2028', '#2a3440', '#40505e', '#90a4b4']),
+  steelD: R(['#101418', '#1a2028', '#28323c', '#5a6a78']),
+  rust: R(['#2a140c', '#4a2414', '#6e3a1e', '#b8703a']),
+  glass: R(['#0a1a24', '#12303e', '#1e4a5a', '#6ab8c8']),
+  glassC: R(['#14141e', '#22243a', '#363a5a', '#9aa0d8']),
+  brick: R(['#2a1410', '#4a2418', '#6a3622', '#b06a48']),
+  brickD: R(['#1a0e0c', '#2e1a14', '#44261c', '#7a4a36']),
+  tile: R(['#2a2e2a', '#3e4440', '#5a625a', '#b0b8a8']),
+  tileW: R(['#2e2a26', '#4a443c', '#6a6256', '#c8bca8']),
+  asphalt: R(['#0e0e12', '#18181e', '#24242c', '#52525e']),
+  machine: R(['#141a18', '#202a26', '#2e3c36', '#6a8478']),
+  copper: R(['#2a140a', '#5a2e14', '#8a4a22', '#e09050']),
+  chrome: R(['#2a2e38', '#5a6270', '#9aa4b4', '#eef2f8']),
+  plastic: R(['#2a1e2a', '#463246', '#664a64', '#b08ab0']),
+  wood: R(['#1c120c', '#3a2618', '#5a3c24', '#9a7048']),
+  clinic: R(['#0e1a1c', '#1a2c2e', '#2a4244', '#a0d0c8']),
+  sky: R(['#05040c', '#0e0a1e', '#1e1434', '#4a2a5a', '#a04a6a'], 14, 0.3, 0.3),
 };
-const ROOM_WALL = { 1: 'home', 2: 'tunnel', 3: 'hall', 4: 'cellar' };
+const col3 = (h) => (typeof h === 'string' ? rgb(h) : h);
 
-const Paint = {
-  chunks: new Map(), keep: 28, queue: [],
-  key: (cx, cy) => cx + ',' + cy,
-  get(cx, cy) {
-    const k = this.key(cx, cy);
-    let c = this.chunks.get(k);
-    if (!c) { c = paintChunk(cx, cy); this.chunks.set(k, c); }
-    c.used = Game.frame;
-    if (this.chunks.size > this.keep) {
-      let old = null; for (const [kk, v] of this.chunks) if (!old || v.used < old[1].used) old = [kk, v];
-      if (old && old[1].used < Game.frame) this.chunks.delete(old[0]);
-    }
-    return c;
-  },
-  // a tile changed: paint again every chunk whose picture it touches
-  changed(tx, ty) {
-    const CH = T.world.chunk, seen = new Set();
-    for (const [dx, dy] of [[-2, -2], [2, -2], [-2, 2], [2, 2], [0, 0]]) {
-      const cx = Math.floor((tx + dx) / CH), cy = Math.floor((ty + dy) / CH), k = this.key(cx, cy);
-      if (seen.has(k) || !this.chunks.has(k)) continue;
-      seen.add(k); this.chunks.set(k, paintChunk(cx, cy));
-    }
-  },
-  clear() { this.chunks.clear(); },
-};
-
-function paintChunk(cx, cy) {
-  const TL = T.tile, CH = T.world.chunk, S = CH * TL, pad = 16, PW = S + pad * 2, seed = World.seed;
-  const X0 = cx * S - pad, Y0 = cy * S - pad;
-  const kind = new Uint8Array(PW * PW), mat = new Uint8Array(PW * PW), room = new Uint8Array(PW * PW), dist = new Uint8Array(PW * PW);
-  // ---- what each pixel is: rock (1), open (0) or sky (2)
-  for (let j = 0; j < PW; j++) {
-    const py = Y0 + j, fy = py / TL - 0.5, iy = Math.floor(fy), v = fy - iy;
-    for (let i = 0; i < PW; i++) {
-      const px = X0 + i, fx = px / TL - 0.5, ix = Math.floor(fx), u = fx - ix;
-      const a = World.solid(ix, iy), b = World.solid(ix + 1, iy), c = World.solid(ix, iy + 1), d = World.solid(ix + 1, iy + 1);
-      const f = (a ? (1 - u) * (1 - v) : 0) + (b ? u * (1 - v) : 0) + (c ? (1 - u) * v : 0) + (d ? u * v : 0) + (noise(px / 7, py / 6, seed + 11) - 0.5) * 0.42;
-      const p = j * PW + i, tx = Math.floor(px / TL), ty = Math.floor(py / TL);
-      if (f > 0.5) {
-        kind[p] = 1;
-        let m = World.at(tx, ty);
-        if (m === M.AIR) { const cands = [[ix, iy, (1 - u) * (1 - v)], [ix + 1, iy, u * (1 - v)], [ix, iy + 1, (1 - u) * v], [ix + 1, iy + 1, u * v]].filter(([x, y]) => World.solid(x, y)).sort((p1, p2) => p2[2] - p1[2]); m = cands.length ? World.at(cands[0][0], cands[0][1]) : M.EARTH; }
-        mat[p] = m;
-      } else {
-        kind[p] = World.isSky(tx, ty) ? 2 : 0;
-        room[p] = World.roomAt(tx, ty);
+// A pixel buffer over a piece of the world: (ox, oy) is its top left.
+class Pix {
+  constructor(w, h, ox = 0, oy = 0) {
+    this.w = w; this.h = h; this.ox = ox; this.oy = oy; this.n = 1; this.glowed = false;
+    this.c = new Uint8ClampedArray(w * h * 4); this.g = new Uint8ClampedArray(w * h * 4);
+    this.mid = new Int16Array(w + 16); this.jit = new Float32Array(w + 16);
+  }
+  put(x, y, col, glow = 0) {
+    x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy;
+    if (x < 0 || y < 0 || x >= this.w || y >= this.h || !col) return;
+    const o = (y * this.w + x) * 4; this.c[o] = col[0]; this.c[o + 1] = col[1]; this.c[o + 2] = col[2]; this.c[o + 3] = 255;
+    if (glow) { this.g[o] = col[0] * glow; this.g[o + 1] = col[1] * glow; this.g[o + 2] = col[2] * glow; this.g[o + 3] = 255; this.glowed = true; }
+    else this.g[o] = this.g[o + 1] = this.g[o + 2] = this.g[o + 3] = 0;
+  }
+  // mix what's there towards a colour (haze, steam)
+  tint(x, y, col, k) { x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy; if (x < 0 || y < 0 || x >= this.w || y >= this.h) return; const o = (y * this.w + x) * 4; if (!this.c[o + 3]) return; this.c[o] = lerp(this.c[o], col[0], k); this.c[o + 1] = lerp(this.c[o + 1], col[1], k); this.c[o + 2] = lerp(this.c[o + 2], col[2], k); }
+  // a painted area: inside(x, y) says what's in it, v(x, y) its value (0..1)
+  // read at each stroke's middle, so the area reads as brushwork
+  area(ax0, ay0, ax1, ay1, ramp, v, o = {}) {
+    const seed = o.seed === undefined ? this.n * 13 + 5 : o.seed; this.n++;
+    ax0 = Math.floor(ax0); ay0 = Math.floor(ay0); ax1 = Math.ceil(ax1); ay1 = Math.ceil(ay1);
+    const x0 = Math.max(this.ox, ax0), y0 = Math.max(this.oy, ay0), x1 = Math.min(this.ox + this.w - 1, ax1), y1 = Math.min(this.oy + this.h - 1, ay1);
+    if (x1 < x0 || y1 < y0) return;
+    const inside = o.inside || null, J = o.jit === undefined ? 0.9 : o.jit, n = x1 - x0 + 1, glow = o.glow || 0, fog = o.fog || 0, fogc = o.fogc || [20, 16, 30];
+    for (let y = y0; y <= y1; y++) {
+      strokeRow(this.mid, this.jit, x0, n, y, seed);
+      for (let i = 0; i < n; i++) {
+        const x = x0 + i; if (inside && !inside(x, y)) continue;
+        const m = x0 + this.mid[i], vx = v(x, y), vm = m >= ax0 && m <= ax1 && (!inside || inside(m, y)) ? v(m, y) : vx;
+        let c = tone(ramp, clamp(vm * 0.6 + vx * 0.4, 0, 1), this.jit[i] * J);
+        if (fog) c = mixRgb(c, fogc, fog);
+        this.put(x, y, c, glow);
       }
     }
   }
-  // ---- how far each rock pixel is from the open (to 14)
-  for (let p = 0; p < PW * PW; p++) dist[p] = kind[p] === 1 ? 14 : 0;
-  for (let j = 0; j < PW; j++) for (let i = 0; i < PW; i++) { const p = j * PW + i; if (!dist[p]) continue; let m = dist[p]; if (i) m = Math.min(m, dist[p - 1] + 1); if (j) m = Math.min(m, dist[p - PW] + 1); dist[p] = m; }
-  for (let j = PW - 1; j >= 0; j--) for (let i = PW - 1; i >= 0; i--) { const p = j * PW + i; if (!dist[p]) continue; let m = dist[p]; if (i < PW - 1) m = Math.min(m, dist[p + 1] + 1); if (j < PW - 1) m = Math.min(m, dist[p + PW] + 1); dist[p] = m; }
-  const K = (i, j) => (i < 0 || j < 0 || i >= PW || j >= PW ? 1 : kind[j * PW + i]);
-  const open = (i, j) => K(i, j) !== 1;
-  // ---- the paint
-  const [cc, cg] = canvasOf(S, S), [ec, eg] = canvasOf(S, S);
-  const cimg = cg.createImageData(S, S), eimg = eg.createImageData(S, S), cd = cimg.data, ed = eimg.data;
-  const mid = new Int16Array(PW), jit = new Float32Array(PW), val = new Float32Array(PW), rmp = new Array(PW);
-  let glows = false;
-  for (let j = pad; j < pad + S; j++) {
-    const py = Y0 + j;
-    strokeRow(mid, jit, X0, PW, py, seed + 21);
-    const strat = World.stratum(Math.floor(py / TL));
-    for (let i = 0; i < PW; i++) {
-      const p = j * PW + i, px = X0 + i, k = kind[p];
-      if (k === 2) { val[i] = 0; rmp[i] = null; continue; }
-      const n1 = noise(px / 40, py / 18, seed + 31), n2 = noise(px / 36, py / 3, seed + 32);
-      let v;
-      if (k === 1) {
-        const m = mat[p], host = MAT[m] && MAT[m].host ? MAT[m].host : m, d = dist[p];
-        let r = LOOK.rock[host] || LOOK.rock[M.EARTH];
-        v = 0.5 + (n1 - 0.5) * 0.3 + (Math.floor(noise(px / 14, py / 9, seed + 33) * 5) / 5 - 0.4) * 0.16 + (n2 > 0.66 ? 0.08 : n2 < 0.2 ? -0.07 : 0);
-        v -= Math.min(0.14, Math.max(0, d - 6) * 0.016);
-        if (open(i, j - 1)) v = 1; else if (open(i, j - 2)) v = Math.max(v, 0.84); else if (open(i, j - 3)) v = Math.max(v, 0.7);
-        else if (open(i - 1, j) || open(i - 2, j)) v += 0.2;
-        if (open(i, j + 1)) v -= 0.3; else if (open(i, j + 2)) v -= 0.15;
-        if (open(i + 1, j) || open(i + 2, j)) v -= 0.1;
-        if (d > 3 && n2 > 0.82 && hash(px >> 3, py, seed + 7) < 0.5) v -= 0.2;
-        // turf where the rock meets the sky
-        if ((host === M.TURF || host === M.EARTH || host === M.HOMEWALL)) { let s = -1; for (let q = 1; q <= 5; q++) if (K(i, j - q) === 2) { s = q; break; } if (s > 0) { r = LOOK.grass; v = s <= 1 ? 1 : 1 - s * 0.13 + (hash(px, py, 5) - 0.5) * 0.2; } }
-        rmp[i] = r;
-      } else {
-        const rm = room[p], wk = ROOM_WALL[rm] || strat.id;
-        let r = LOOK.wall[wk] || LOOK.wall.cellars;
-        v = 0.42 + (n1 - 0.5) * 0.26 + (n2 > 0.62 ? 0.08 : 0) + (Math.floor(noise(px / 10, py / 8, seed + 34) * 4) / 4 - 0.4) * 0.1;
-        if (rm === 1) { const ty = Math.floor(py / TL); if (ty >= World.home.y1 - 1) { r = LOOK.wall.homeLow; v = 0.5 + (px % 9 === 0 ? -0.25 : 0); } else v = 0.62 + (n1 - 0.5) * 0.15; }
-        if (rm === 3 || rm === 4) { if (py % 9 === 0 || (px + (Math.floor(py / 9) * 7) % 16) % 16 === 0) v -= 0.2; }
-        if (rm === 2 && (py % 10 === 0)) v -= 0.1;
-        let up = 0; for (let q = 1; q <= 14; q++) if (K(i, j - q) === 1) { up = 1 - q / 15; break; }
-        let dn = 0; for (let q = 1; q <= 6; q++) if (K(i, j + q) === 1) { dn = 1 - q / 7; break; }
-        v += -up * 0.3 + dn * 0.08;
-        rmp[i] = r;
-      }
-      val[i] = clamp(v, 0, 1);
-    }
-    for (let i = pad; i < pad + S; i++) {
-      const p = j * PW + i, k = kind[p], o = ((j - pad) * S + (i - pad)) * 4;
-      if (k === 2) continue;
-      const m = mid[i] >= 0 && mid[i] < PW && kind[j * PW + mid[i]] === k && rmp[mid[i]] === rmp[i] ? mid[i] : i;
-      let c = tone(rmp[i], val[m] * 0.6 + val[i] * 0.4, jit[i] * 0.9);
-      if (k === 0) c = mixRgb(c, SOOT, 0.28);
-      cd[o] = c[0]; cd[o + 1] = c[1]; cd[o + 2] = c[2]; cd[o + 3] = 255;
-      // the marks some rock has of its own
-      const px = X0 + i, py = Y0 + j, hm = k === 1 ? (MAT[mat[p]] && MAT[mat[p]].host) || mat[p] : 0;
-      if (hm === M.DRESSED && dist[p] <= 10) {
-        const row = Math.floor(py / 9);
-        if (py % 9 === 0 || (px + (row * 7) % 16) % 16 === 0) { cd[o] *= 0.45; cd[o + 1] *= 0.45; cd[o + 2] *= 0.45; }
-        else if (py % 9 === 1 || (px + (row * 7) % 16) % 16 === 1) { cd[o] = lerp(cd[o], 224, 0.25); cd[o + 1] = lerp(cd[o + 1], 214, 0.25); cd[o + 2] = lerp(cd[o + 2], 190, 0.25); }
-      }
-      if (hm === M.SEAMROCK) {
-        const vt = px % 7 === 0 && hash(Math.floor(px / 7), Math.floor(py / 22), seed + 41) > 0.86;
-        const ht = py % 7 === 0 && hash(Math.floor(px / 22), Math.floor(py / 7), seed + 42) > 0.9;
-        if (vt || ht) {
-          const teal = hash(Math.floor(px / 60), Math.floor(py / 60), seed + 43) > 0.45, gc = teal ? [58, 240, 224] : [255, 74, 176];
-          const node = vt && ht;
-          cd[o] = gc[0]; cd[o + 1] = gc[1]; cd[o + 2] = gc[2];
-          const g = dist[p] < 12 ? 0.55 : 0.25; ed[o] = gc[0] * g; ed[o + 1] = gc[1] * g; ed[o + 2] = gc[2] * g; ed[o + 3] = 255; glows = true;
-          if (node) { cd[o] = cd[o + 1] = cd[o + 2] = 255; ed[o] = ed[o + 1] = ed[o + 2] = 255; }
-        }
-      }
-    }
+  block(x0, y0, x1, y1, ramp, o = {}) { this.area(x0, y0, x1, y1, ramp, blockV(x0, y0, x1, y1, o), o); }
+  // does a world box touch this buffer?
+  sees(x0, y0, x1, y1) { return x1 >= this.ox && y1 >= this.oy && x0 < this.ox + this.w && y0 < this.oy + this.h; }
+  canvases() {
+    const [c, g] = canvasOf(this.w, this.h); g.putImageData(new ImageData(this.c, this.w, this.h), 0, 0);
+    let e = null; if (this.glowed) { const [ec, eg] = canvasOf(this.w, this.h); eg.putImageData(new ImageData(this.g, this.w, this.h), 0, 0); e = ec; }
+    return { c, e };
   }
-  // ---- what's in the rock: the finds, painted over it, glinting
-  const put = (x, y, c, glow) => {
-    const i = x - cx * S, j = y - cy * S; if (i < 0 || j < 0 || i >= S || j >= S) return;
-    const p = (j + pad) * PW + (i + pad); if (kind[p] !== 1) return;
-    const o = (j * S + i) * 4; cd[o] = c[0]; cd[o + 1] = c[1]; cd[o + 2] = c[2]; cd[o + 3] = 255;
-    if (glow) { ed[o] = c[0]; ed[o + 1] = c[1]; ed[o + 2] = c[2]; ed[o + 3] = 255; glows = true; }
+}
+// side-on lighting for a block
+function blockV(x0, y0, x1, y1, o = {}) {
+  const base = o.base === undefined ? 0.5 : o.base, s = o.seed || 3, grain = o.grain === undefined ? 0.14 : o.grain, lip = o.lip === undefined ? 1 : o.lip;
+  return (x, y) => {
+    let v = base + (noise(x / 23, y / 9, s) - 0.5) * 0.24 + (noise(x / 4, y / 30, s + 1) - 0.5) * grain;
+    const top = y - y0, bot = y1 - y, l = x - x0, r = x1 - x;
+    if (lip) { if (top < 1) v = 0.98; else if (top < 2) v = Math.max(v, 0.8); else if (top < 4) v += 0.1 * lip; }
+    if (bot < 1) v -= 0.36; else if (bot < 3) v -= 0.16;
+    if (l < 2) v += 0.12; if (r < 2) v -= 0.14;
+    if (o.inward) v -= Math.min(o.inward, Math.min(top, bot, l, r) * 0.006);
+    if (o.drips) { const d = hash(x, 0, s + 5); if (d > 1 - o.drips && top < 3 + (d - 1 + o.drips) / o.drips * (o.dripLen || 40)) v -= 0.14; }
+    if (o.bands) { if ((y - y0) % o.bands === 0) v -= 0.18; else if ((y - y0) % o.bands === 1) v += 0.08; }
+    if (o.panels) { const px = (x - x0) % o.panels[0], py = (y - y0) % o.panels[1]; if (px === 0 || py === 0) v -= 0.2; else if (px === 1 || py === 1) v += 0.07; }
+    return v;
   };
-  const tx0 = cx * CH - 1, ty0 = cy * CH - 1;
-  for (let ty = ty0; ty <= ty0 + CH + 1; ty++) for (let tx = tx0; tx <= tx0 + CH + 1; tx++) {
-    const m = World.at(tx, ty), info = MAT[m]; if (!info || !info.ore) continue;
-    paintFind(info.item, tx * TL, ty * TL, put, hash(tx, ty, seed));
-  }
-  cg.putImageData(cimg, 0, 0);
-  if (glows) eg.putImageData(eimg, 0, 0);
-  return { c: cc, e: glows ? ec : null, x: cx * S, y: cy * S, used: 0 };
 }
 
-// A find, as it shows in the rock (x, y: the tile's top left), by its kind.
-function paintFind(item, x, y, put, h) {
-  const C = ITEMS[item].col.map(rgb), L = C[2], Md = C[1], D = C[0];
-  const crystal = (cx, by, hgt, w, lean) => {
-    for (let k = 0; k < hgt; k++) {
-      const top = hgt - 1 - k, wi = top === 0 ? 1 : top === 1 ? Math.max(1, w - 1) : w, ox = Math.round(cx + lean * k - (wi - 1) / 2);
-      for (let q = 0; q < wi; q++) put(ox + q, by - k, wi === 1 ? L : q === 0 ? L : q === wi - 1 ? D : Md, top <= 1 || q === 0);
+// ---- decals: what the city puts on its walls --------------------------------
+// windows in a grid: lit ones warm, cool or pink, some with blinds or a figure
+function windows(P, x0, y0, x1, y1, o = {}) {
+  const ww = o.w || 4, wh = o.h || 5, gx = o.gx || 3, gy = o.gy || 4, lit = o.lit === undefined ? 0.35 : o.lit, s = o.seed || 7;
+  const pal = o.pal || [['#ffd890', '#e8a050'], ['#a0f0ff', '#40a0d0'], ['#ff90d0', '#c04090'], ['#fff0d0', '#c0a080']];
+  const dark = col3(o.dark || '#0c1018'), frame = col3(o.frame || '#06060a');
+  for (let y = y0; y + wh <= y1; y += wh + gy) for (let x = x0; x + ww <= x1; x += ww + gx) {
+    if (!P.sees(x - 1, y, x + ww + 1, y + wh + 1)) continue;
+    const h = hash(x, y, s), on = h < lit, p = pal[Math.floor(hash(x, y, s + 1) * pal.length)];
+    for (let j = 0; j < wh; j++) for (let i = 0; i < ww; i++) {
+      let c;
+      if (on) { c = mixRgb(col3(p[0]), col3(p[1]), j / wh); if (o.blinds && j % 2) c = mixRgb(c, [0, 0, 0], 0.5); if (hash(x, y, s + 2) > 0.8 && i > 0 && i < ww - 1 && j > 1) c = mixRgb(c, [10, 8, 12], 0.85); }
+      else c = mixRgb(dark, [60, 80, 100], (i + j < 2 ? 0.25 : 0) + hash(x + i, y + j, s) * 0.08);
+      P.put(x + i, y + j, c, on ? o.glow || 0.35 : 0);
     }
-  };
-  switch (item) {
-    case 'spice': case 'neon': case 'mithril':
-      for (let k = 0; k < 3; k++) crystal(x + 3 + k * 3 + Math.round(h * 2), y + 10 - (k % 2), 4 + Math.round(hash(k, h * 99, 1) * 4), 2 + (k % 2), (hash(k, h * 77, 2) - 0.5) * 0.4);
-      return;
-    case 'copper': case 'tin': case 'ironore': case 'coal':
-      // lumps of ore in the rock, lit on their upper left, a fleck or two
-      for (let k = 0; k < 4; k++) {
-        const cx = x + 2 + Math.round(hash(k, h * 97, 3) * 8), cy = y + 2 + Math.round(hash(k, h * 89, 4) * 8), r = 1 + Math.round(hash(k, h * 83, 5) * 1.2);
-        for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (i * i + j * j <= r * r + 1) put(cx + i, cy + j, i + j < -r + 1 ? L : i + j > r - 1 ? D : Md, item !== 'coal' && i + j < -r);
-      }
-      return;
-    case 'shard':
-      for (let k = 0; k < 2; k++) crystal(x + 4 + k * 4 + Math.round(h * 2), y + 10, 5 + Math.round(hash(k, h * 99, 1) * 3), 2, (hash(k, h * 77, 2) - 0.5) * 0.6);
-      return;
-    case 'coin': for (const [cx, cy] of [[4, 5], [8, 8]]) for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (i * i + j * j <= 5) put(x + cx + i, y + cy + j, i + j < -1 ? L : i + j > 1 ? D : Md, i + j < 0); return;
-    case 'button': for (let j = -3; j <= 3; j++) for (let i = -3; i <= 3; i++) if (i * i + j * j <= 9) put(x + 6 + i, y + 6 + j, (i === -1 || i === 1) && j === 0 ? D : i + j < -2 ? L : Md, i + j < -2); return;
-    case 'spoon': for (let k = 0; k < 7; k++) put(x + 2 + k, y + 8 - (k >> 1), k > 4 ? L : Md, k > 5); for (let j = -1; j <= 1; j++) for (let i = -2; i <= 1; i++) put(x + 9 + i, y + 4 + j, i < 0 ? L : Md, i < 0); return;
-    case 'iron': for (let k = 0; k < 9; k++) { put(x + 2 + k, y + 5, Md); put(x + 2 + k, y + 6, D); if (k % 4 === 0) put(x + 2 + k, y + 4, L); } put(x + 5, y + 8, Md); put(x + 9, y + 3, D); return;
-    case 'wire': for (let k = 0; k < 12; k++) { const yy = y + 6 + Math.round(Math.sin((x + k) * 0.5)); put(x + k, yy, Md, false); put(x + k, yy + 1, D); if ((x + k) % 6 === 0) put(x + k, yy, L, true); } return;
-    case 'rune': for (const [i, j] of [[5, 2], [5, 3], [5, 4], [5, 5], [5, 6], [5, 7], [4, 3], [6, 3], [3, 5], [7, 6], [6, 7]]) put(x + i, y + j, L, true); return;
-    case 'goggles': for (const cx of [4, 9]) for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) { const d = i * i + j * j; if (d <= 5) put(x + cx + i, y + 6 + j, d >= 3 ? Md : L, d < 3); } for (let k = 0; k < 12; k++) put(x + k, y + 4, D); return;
-    case 'chip': for (let j = 3; j < 9; j++) for (let i = 2; i < 10; i++) put(x + i, y + j, j === 3 || i === 2 ? Md : D); for (let i = 3; i < 10; i += 2) { put(x + i, y + 2, [216, 168, 58]); put(x + i, y + 9, [216, 168, 58]); } put(x + 6, y + 5, L, true); put(x + 5, y + 6, L, true); return;
+    if (o.sill) for (let i = -1; i <= ww; i++) P.put(x + i, y + wh, frame);
   }
+}
+// a sign of invented glyphs, in neon tube
+const GLYPHS = [];
+for (let k = 0; k < 40; k++) { const g = []; for (let j = 0; j < 5; j++) for (let i = 0; i < 3; i++) if (hash(i, j, 900 + k) > 0.5 || (i === 1 && j === 2)) g.push([i, j]); GLYPHS.push(g); }
+function signSize(n, vert) { return vert ? [7, n * 6 + 3] : [n * 4 + 3, 9]; }
+function sign(P, x, y, n, colr, o = {}) {
+  const c = col3(colr), vert = o.vert, pad = 2, [w, h] = signSize(n, vert), back = col3(o.back || '#0a0810');
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const edge = i === 0 || j === 0 || i === w - 1 || j === h - 1; P.put(x + i, y + j, mixRgb(back, c, edge ? 0.35 : 0.04), edge ? 0.25 : 0); }
+  for (let k = 0; k < n; k++) {
+    const g = GLYPHS[Math.floor(hash(k, x + y, o.seed || 3) * GLYPHS.length)], gx = x + pad + (vert ? 0 : k * 4), gy = y + pad + (vert ? k * 6 : 0);
+    if (o.dead && hash(k, 1, x) < o.dead) continue;
+    for (const [i, j] of g) P.put(gx + i, gy + j, mixRgb(c, [255, 255, 255], 0.45), 1);
+  }
+}
+// a pipe, round, lit from the upper left
+function pipe(P, x0, y0, x1, y1, ramp, o = {}) {
+  const vert = x1 - x0 < y1 - y0;
+  P.area(x0, y0, x1, y1, ramp, (x, y) => {
+    const t = vert ? (x - x0) / Math.max(1, x1 - x0) : (y - y0) / Math.max(1, y1 - y0);
+    let v = 0.75 - Math.abs(t - 0.3) * 1.3 + (noise(x / 9, y / 9, 4) - 0.5) * 0.15;
+    if (o.joints) { const a = vert ? y : x; if (a % o.joints < 2) v += 0.12; else if (a % o.joints < 3) v -= 0.2; }
+    return v;
+  }, o);
+}
+function cable(P, x0, y0, x1, y1, sag, colr, o = {}) {
+  const n = Math.ceil(Math.abs(x1 - x0) + Math.abs(y1 - y0)) * 2, c = col3(colr);
+  for (let k = 0; k <= n; k++) { const t = k / n, x = lerp(x0, x1, t), y = lerp(y0, y1, t) + Math.sin(Math.PI * t) * sag; P.put(x, y, c, o.glow || 0); if (o.thick) P.put(x, y + 1, mixRgb(c, [0, 0, 0], 0.4)); }
+}
+function girder(P, x0, y0, x1, y1, ramp, o = {}) {
+  const h = y1 - y0, step = o.step || h;
+  P.block(x0, y0, x1, y0 + 1, ramp, { base: 0.6 }); P.block(x0, y1 - 1, x1, y1, ramp, { base: 0.4, lip: 0 });
+  for (let x = x0; x < x1; x += step) for (let k = 0; k <= step; k++) { const t = k / step; P.put(x + k, y0 + 2 + t * (h - 4), tone(ramp, 0.45 - t * 0.1)); P.put(x + k + 1, y0 + 2 + t * (h - 4), tone(ramp, 0.3)); if (x + step - k <= x1) P.put(x + step - k, y0 + 2 + t * (h - 4), tone(ramp, 0.55)); }
+}
+function haze(P, x0, x1, y0, y1, colr, k) {
+  const c = col3(colr);
+  for (let y = Math.max(y0, P.oy); y < Math.min(y1, P.oy + P.h); y++) { const t = 1 - Math.abs((y - (y0 + y1) / 2) / ((y1 - y0) / 2)); for (let x = Math.max(x0, P.ox); x < Math.min(x1, P.ox + P.w); x++) P.tint(x, y, c, t * k * (0.8 + noise(x / 30, y / 6, 77) * 0.4)); }
+}
+function skyline(P, x0, x1, base, o = {}) {
+  const r = new Rng(o.seed || 5), ramp = o.ramp || MAT.concreteD, fog = o.fog || 0, fogc = o.fogc || [40, 24, 60];
+  let x = x0 - r.i(0, 20);
+  while (x < x1) {
+    const w = r.i(o.wmin || 14, o.wmax || 40), h = r.i(o.hmin || 40, o.hmax || 150), xe = x + w, top = base - h, sp = r.f() < 0.5, sw = r.i(3, Math.max(4, w / 3)), sx = x + r.i(1, Math.max(1, w - sw)), sh = r.i(6, 20), ant = r.f() < 0.4;
+    P.block(x, top, xe, base, ramp, { base: 0.35, fog, fogc, grain: 0.06, lip: 0.4 });
+    if (sp) P.block(sx, top - sh, sx + sw, top, ramp, { base: 0.3, fog, fogc });
+    if (P.sees(x, top, xe, base)) for (let wy = top + 4; wy < base - 2; wy += 3) for (let wx = x + 2; wx < xe - 1; wx += 2) if (hash(wx, wy, o.seed || 5) < (o.lit || 0.12)) P.put(wx, wy, mixRgb(col3(hash(wx, wy, 6) < 0.6 ? '#ffd8a0' : hash(wx, wy, 7) < 0.5 ? '#9af0ff' : '#ff80c8'), fogc, fog * 0.7), 0.5);
+    if (ant) P.put(x + (w >> 1), top - 1, [255, 40, 40], 1);
+    x = xe + r.i(-6, 4);
+  }
+}
+function sky(P, x0, x1, y0, y1, o = {}) {
+  const ramp = o.ramp || MAT.sky, h = y1 - y0;
+  P.area(x0, y0, x1, y1, ramp, (x, y) => (o.low || 0.15) + Math.pow((y - y0) / h, 1.6) * (o.span || 0.7) + (noise(x / 60, y / 10, 9) - 0.5) * 0.12, { jit: 0.6 });
+}
+function tubePaint(P, x, y, w, colr) { const c = col3(colr); for (let i = 0; i < w; i++) { P.put(x + i, y, mixRgb(c, [255, 255, 255], 0.5), 1); P.put(x + i, y + 1, mixRgb(c, [0, 0, 0], 0.2), 0.6); } }
+function lampPaint(P, x, y, h, colr) {
+  for (let j = 0; j < h; j++) { P.put(x, y - j, tone(MAT.steel, 0.5)); P.put(x + 1, y - j, tone(MAT.steel, 0.25)); }
+  for (let i = 0; i < 9; i++) { P.put(x + i, y - h, tone(MAT.steel, 0.6)); P.put(x + i, y - h + 1, tone(MAT.steel, 0.3)); }
+  for (let i = 5; i < 10; i++) P.put(x + i, y - h + 2, mixRgb(col3(colr), [255, 255, 255], 0.5), 1);
+}
+function glassWall(P, x0, y0, x1, y1, o = {}) {
+  const mw = o.mw || 10, mh = o.mh || 14, ramp = o.ramp || MAT.glass;
+  P.area(x0, y0, x1, y1, ramp, (x, y) => {
+    let v = 0.32 + (noise(x / 50, y / 80, 21) - 0.5) * 0.25 + ((x + y * 0.6) % 40 < 6 ? 0.18 : 0) + ((x - y * 0.3) % 70 < 3 ? 0.12 : 0) - (y - y0) / (y1 - y0) * 0.1;
+    const mx = (x - x0) % mw, my = (y - y0) % mh;
+    if (mx === 0 || my === 0) v = 0.12; else if (mx === 1 || my === 1) v += 0.1;
+    if (x - x0 < 2) v += 0.25; if (x1 - x < 2) v -= 0.1;
+    return v;
+  }, { jit: 0.5 });
+  if (o.lit) windows(P, x0 + 2, y0 + 2, x1 - 1, y1, { w: mw - 2, h: mh - 2, gx: 2, gy: 2, lit: o.lit, seed: o.seed || 3, glow: 0.18, dark: '#0a1a24', pal: o.pal });
+}
+function heap(P, x0, x1, ybase, hgt, ramp, seed = 5) {
+  const top = (x) => ybase - hgt * (0.5 + noise(x / 18, 0, seed) * 0.5);
+  P.area(x0, ybase - hgt - 4, x1, ybase, ramp, (x, y) => 0.55 - (y - top(x)) / 40 + (y - top(x) < 2 ? 0.35 : 0) + (noise(x / 3, y / 3, seed + 1) - 0.5) * 0.3, { inside: (x, y) => y > top(x) });
+}
+function corrugated(P, x0, y0, x1, y1, ramp, o = {}) {
+  P.area(x0, y0, x1, y1, ramp, (x, y) => { let v = 0.45 + ((x - x0) % 3 === 0 ? 0.2 : (x - x0) % 3 === 2 ? -0.15 : 0) + (noise(x / 12, y / 12, 41) - 0.5) * 0.4; if (y - y0 < 1) v = 0.9; if (y1 - y < 1) v -= 0.3; if (noise(x / 6, y / 5, 43) > 0.72) v -= 0.25; return v; }, o);
+}
+function stringLightsPaint(P, x0, y0, x1, y1, sag, cols) {
+  cable(P, x0, y0, x1, y1, sag, '#0e0c0a');
+  const n = Math.floor(Math.abs(x1 - x0) / 7);
+  for (let k = 1; k < n; k++) { const t = k / n, x = lerp(x0, x1, t), y = lerp(y0, y1, t) + Math.sin(Math.PI * t) * sag + 1, c = col3(cols[k % cols.length]); P.put(x, y, mixRgb(c, [255, 255, 255], 0.4), 1); P.put(x, y + 1, c, 0.7); }
+}
+function railing(P, x0, x1, y, ramp, o = {}) {
+  const h = o.h || 7;
+  for (let x = x0; x <= x1; x++) { P.put(x, y - h, tone(ramp, 0.75)); P.put(x, y - h + 1, tone(ramp, 0.35)); }
+  for (let x = x0; x <= x1; x += o.step || 5) for (let y2 = y - h; y2 < y; y2++) P.put(x, y2, tone(ramp, 0.45));
+}
+function laundry(P, x0, y0, x1, y1, seed) {
+  cable(P, x0, y0, x1, y1, 4, '#141418');
+  for (let x = x0 + 4; x < x1 - 4; x += 7 + Math.floor(hash(x, 1, seed) * 5)) {
+    const t = (x - x0) / (x1 - x0), y = lerp(y0, y1, t) + Math.sin(Math.PI * t) * 4, c = rampOf([['#a83a3a', '#3a6aa8', '#d8d0b0', '#3a8a5a', '#8a3aa8'][Math.floor(hash(x, 2, seed) * 5)]], 5, 0.5, 0.25), w = 4 + Math.floor(hash(x, 3, seed) * 3), h = 5 + Math.floor(hash(x, 4, seed) * 4);
+    P.area(x, y + 1, x + w, y + h, c, (a, b) => 0.7 - (b - y) / 14 - (a - x) / 20);
+  }
+}
+// a floor slab, side-on, with a lit lip and grime under it
+function slab(P, x0, x1, y, th, ramp, o = {}) { P.block(x0, y, x1, y + th, ramp, Object.assign({ base: 0.45, drips: 0.08, dripLen: 10, inward: 0.1 }, o)); }
+function stairsPaint(P, x0, y0, x1, y1, ramp) {
+  const n = Math.max(1, Math.round(Math.abs(y1 - y0) / 4)), dx = (x1 - x0) / n, dy = (y1 - y0) / n;
+  for (let k = 0; k < n; k++) P.block(Math.min(x0 + k * dx, x0 + (k + 1) * dx), y0 + k * dy, Math.max(x0 + k * dx, x0 + (k + 1) * dx) + 1, y0 + k * dy + 2, ramp, { base: 0.5 });
+  for (let k = 0; k <= n; k++) for (let j = 1; j < 9; j++) if (k % 3 === 0) P.put(x0 + k * dx, y0 + k * dy - j, tone(ramp, 0.55));
+  cable(P, x0, y0 - 9, x1, y1 - 9, 0, tone(ramp, 0.7));
+}
+// water: a still dark surface the reflections play on
+function water(P, x0, x1, y, depth, ramp) { P.area(x0, y, x1, y + depth, ramp, (x, yy) => 0.25 + (noise(x / 20, yy / 2, 61) - 0.5) * 0.2 + ((yy - y) < 1 ? 0.3 : 0)); }
+
+// ---- the chunk cache ----------------------------------------------------------
+const Paint = {
+  chunks: new Map(), level: null, queue: [],
+  reset(level) { this.chunks.clear(); this.level = level; },
+  key: (cx, cy) => cx + ',' + cy,
+  has(cx, cy) { return this.chunks.has(this.key(cx, cy)); },
+  get(cx, cy) { const k = this.key(cx, cy); let c = this.chunks.get(k); if (!c) { c = paintChunk(this.level, cx, cy); this.chunks.set(k, c); } return c; },
+  // paint one chunk not yet painted near (x, y), if there is one: a frame's
+  // spare work, so walking into new ground doesn't stall
+  ahead(x, y) {
+    const CS = T.chunk, L = this.level, cx0 = Math.floor(x / CS), cy0 = Math.floor(y / CS);
+    let best = null, bd = 1e9;
+    for (let cy = cy0 - 2; cy <= cy0 + 2; cy++) for (let cx = cx0 - 3; cx <= cx0 + 3; cx++) {
+      if (cx < 0 || cy < 0 || cx * CS >= L.w || cy * CS >= L.h || this.has(cx, cy)) continue;
+      const d = Math.abs(cx - cx0) + Math.abs(cy - cy0); if (d < bd) { bd = d; best = [cx, cy]; }
+    }
+    if (best) this.get(best[0], best[1]);
+    return !!best;
+  },
+};
+function paintChunk(L, cx, cy) {
+  const CS = T.chunk, P = new Pix(CS, CS, cx * CS, cy * CS);
+  for (const op of L.ops) if (P.sees(op.x0, op.y0, op.x1, op.y1)) { P.n = op.seed; op.fn(P); }
+  const { c, e } = P.canvases();
+  return { c, e, x: cx * CS, y: cy * CS };
 }

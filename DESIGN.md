@@ -1,37 +1,68 @@
-# Underhill: design
+# Downlevel: design
+
+The full design doc with painted art for every level: https://claude.ai/artifact/Jr4SRs1tDLfp29Q5UrXr1s
 
 ## The pitch
 
-You are a small folk in a burrow under a hill in Thistledown, a quiet Shire-like village. Under every hill there are cellars, under the cellars the old diggings, under those the dwarves' halls, and under those the rock has started turning into something else: circuitry, neon crystal, and a rift hanging open in an arch. Rifts lead sideways into other worlds (a neon city, a dry spice seam, a derelict station).
+A side-scrolling cyberpunk game for the phone. You live in a capsule on the Stack, a megablock level of a vertical city, and the city goes down further than anyone has mapped. Each trip takes you lower to strip machines for parts, crack terminals for programs, and bring it home to wire into your body. At the bottom is the machine that runs the city. What you find there sends you up to the Spires for the ending.
 
-The loop: **descend → dig and haul → sort, catalog and craft → go deeper.** Sessions are short and phone-sized. A trip down and back is a few minutes.
+## The loop
 
-## What makes it click
+**Go down → strip and crack → bring it home → wire it in.** Short phone sessions: a trip down and back takes a few minutes.
 
-- **Mining and crafting.** Ore is the reason to dig. Each stratum has ore the next pick needs, and the next pick opens the next stratum.
-- **Organizing loot.** Everything you bring home has a place: ore in the bins, curios on the shelves, a swatch pinned on the catalog board. The catalog is a list of everything there is to find, with silhouettes of what you haven't found yet.
-- **Exploration with a gradient.** The deeper you go the stranger it gets. The first wrong thing is a copper wire running through the clay that nobody in Underhill made.
+| Underhill had | Downlevel has |
+|---|---|
+| Dig through rock | Cut through grates, shutters, vents and hatches. Your ware decides what opens. |
+| Ore in veins | Salvage in machines: vending machines, AC units, server racks, cars, junk, downed drones. |
+| Curios for the catalog | Programs from data nodes. |
+| Picks, lamps, packs at the bench | Ware from the ripperdoc, programs on the deck. |
+| Ladders home | Ladders and freight lifts you get running again. |
+| Strata | Levels of city, from crowded and human at the top to machine and strange at the bottom. |
+
+## The city
+
+| Level | Depth | What's there | The way down |
+|---|---|---|---|
+| L0 The Spires | +300 m | Corporate towers above the smog. The ending. | (proposed) |
+| L1 The Stack | 0 m | Home: capsules, market, bar, clinic, walkways, drones | The Warden, then Breach on the shaft hatch |
+| L2 Street level | −60 m | Under the overpasses: fence, clinic, gang turf | (proposed) the Gutter King, then the subway |
+| L3 Old Town | −140 m | The first city, sunk under the new one | (proposed) the Old Mayor |
+| L4 The Works | −260 m | Pumps, power, server farms | (proposed) the Foreman; heat needs a heat sink |
+| L5 The Bowels | −400 m | The core that runs the city | (proposed) the Root |
 
 ## Built (first slice)
 
-- One seeded world, 128 × 300 tiles: the hill and the burrow, two neighbours' cellars, three shored runs of the Old Diggings with a cart and dead lanterns, the wire, two dwarf halls with pillars and rune doors, and the Seam with the rift arch at the bottom. Caves open up more the deeper you go.
-- **Digging.** Hold Dig, aimed sideways, up or down. Time = `T.dig.base × hardness ÷ pick speed`. Each rock needs a pick tier: earth and clay take the old pick, stone bronze, dressed stone and mithril iron, seam rock mithril.
-- **The pack.** 8 slots to start. Ore stacks to 10 and curios to 5. A full pack won't take more finds: go home.
-- **Home.** Walk in and the pack unpacks. Ore goes to the bins, curios to the shelves (drawn on them), and everything new goes in the catalog.
-- **The bench** (at home). Torches (4), ladders (8), then a chain of upgrades. Each upgrade needs the one before:
-  - Picks: bronze (copper, tin, coal), then iron (iron ore, coal), then mithril (mithril, iron ore, coal).
-  - Lamps: hooded (copper, coal), then shard (glow shard, copper, iron ore).
-  - Packs: stitched, 10 slots (copper, tin, coal), then framed, 12 slots (iron ore, tin).
-- **Getting home.** Climb any rock you're pressed against (stick up). Ladders (start with 16) go into open tiles and hold you. Torches stay lit where you leave them.
-- **Kit on the sprite.** The goggles (a curio in an Old Growth hall wall) go on when you bring them home. The iron pick adds copper plates and a brow lamp. The pick head shows its metal.
-- **Light.** Ambient light falls with depth and is tinted by stratum. The lamp's reach grows with the lamp. The light is drawn in dithered bands. Glowing things bloom.
-- **Saving.** Automatic: every 8 s, on unpacking, on crafting, and when the page hides.
+- **Two levels:** the Stack and street level, joined by the shaft from the Stack's service yard and by the freight lift once you restore it (4 wire, 2 chips).
+- **Movement:** run, jump, drop through walkways, stairs, ladders, a second jump with spring legs.
+- **Salvage:** hold Use on a machine to strip it. Yields are fixed per kind of machine (`things.js`). The pack holds 24 pieces. The capsule has an unlimited stash, and sleeping there heals you and passes the night.
+- **Cutting:** grates take the cutter; heavy shutters need mantis blades.
+- **Ware** (`items.js`), built and fitted by Doc Vasquez for credits and salvage. Each has a neural load; your nervous system takes 5, or 6 with the booster:
+  - lowlight optics (1): see in the dark, see hidden panels
+  - spring legs (2): double jump
+  - mantis blades (3): damage, heavy shutters, faster cutting
+- **Programs**, from data nodes, run for RAM (3, refilling over time). Jacking in is a short timing puzzle; failing costs health.
+  - Breach: locked hatches, stuns a drone
+  - Ghost: enemies lose you
+  - Puppet: a drone fights for you
+- **People:** a day passes in 20 minutes. People keep schedules (work, sit, wander, go home) and talk.
+  - Vendors buy salvage: Kit at base price, Ozu at 1.4×.
+  - Mama Ruiz sells noodles that heal.
+  - Juno gives three jobs: coolant, drones, then the clinic data, which pays a neural booster.
+- **Fights:** strike up close.
+  - Block drones hover and shoot.
+  - Gangers close in with blades.
+  - The Warden walks, fires bursts, stomps a shockwave you jump over, and charges. Beating it unlocks the shaft.
+- **Death:** you wake in your capsule with an empty pack, six hours later.
+
+## Story (light)
+
+Told through the fixer, the people and the nodes. The city's code is being bought up from below. The clinic data points to the Works. The Root at the bottom is the city's mind, or what's left of it, and what you learn there sends you up to the Spires.
 
 ## Proposed (not built)
 
-- **(proposed)** The rift: step through the arch into a sideways rift (Neon District, Dry Seam, Derelict Station), each a short side-scrolling level with its own ore and curios. Rift visitors come back up to Thistledown.
-- **(proposed)** Creatures in the deep strata, and a reason to fight (Terraria-style). Boss-like guardians at the rift.
-- **(proposed)** Sorting at home as play: shelves you arrange, sets that complete for a reward, a museum-like display room dug out of the burrow.
-- **(proposed)** A lift or rope line once you've reached a depth, so long trips stay short.
-- **(proposed)** More kit: a brow-lamp upgrade, gloves, spice-powered tools from beyond the rift.
+- **(proposed)** The Gutter King, the subway, and Old Town (L3), then the Works and the Bowels.
+- **(proposed)** More ware: scanner optics, gorilla arms, grip feet, heat sink, reflex booster, subdermal armour, thermal camo, deck slots.
+- **(proposed)** Standing with each level's crowd, and more jobs with real choices.
+- **(proposed)** Better places to live as you earn, with the stash as a wall of ware.
+- **(proposed)** The Spires as the ending.
 - **(proposed)** Sound.

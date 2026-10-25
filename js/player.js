@@ -1,163 +1,170 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// The small folk. x is the middle of the feet, y the soles (world px). Moves
-// against the tiles as a box; steps up a one-tile ledge without jumping;
-// climbs any rock it's pressed against (up on the stick); digs the tile it
-// aims at (the way it faces, or up or down on the stick), as quick as the
-// pick and the rock allow.
+// The runner. x is the middle of the feet, y the soles (world px). Moves as a
+// box against the level: solid boxes stop it, walkways and stairs hold it up
+// from above only (down and jump drops through), small ledges are stepped
+// up. Ladders are climbed with up and down. Use works on whatever's nearest
+// (a prop or a person); stripping and cutting are held.
 // ---------------------------------------------------------------------------
-const Player = {
-  x: 0, y: 0, vx: 0, vy: 0, face: 1, ground: false, coyote: 0, climbing: false, stepOff: 0,
-  walked: 0, digT: null, digging: false, swing: 0, home: false, wasHome: false,
-  place(x, y) { this.x = x; this.y = y; this.vx = this.vy = 0; },
-  hits(x, y) {
-    const P = T.player, TL = T.tile, e = 0.01;
-    const x0 = Math.floor((x - P.w / 2 + e) / TL), x1 = Math.floor((x + P.w / 2 - e) / TL), y0 = Math.floor((y - P.h + e) / TL), y1 = Math.floor((y - e) / TL);
-    for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) if (World.solid(tx, ty)) return true;
-    return false;
+const RUNNER = { skin: '#c88a5a', hair: 'undercut', hairCol: '#1a1a24', top: '#2e4a4c', coat: 'long', legs: '#2a2a34', boots: '#1a1418', acc: '#ff8a20', collar: true, pack: '#4a4038', cutter: true, belt: '#3a2a1a' };
+const POSE_HANDS = {
+  stand: {}, walk0: { fx: 25, fy: 37, bx: 16, by: 36 }, walk1: {}, walk2: { fx: 22, fy: 38, bx: 19, by: 36 }, walk3: {},
+  jump: { fx: 27, fy: 29, bx: 14, by: 30 }, fall: { fx: 27, fy: 26, bx: 14, by: 26 }, strike: { fx: 31, fy: 30, bx: 15, by: 35 }, cut: { fx: 28, fy: 33, bx: 22, by: 34 },
+  climb0: { fx: 23, fy: 18, bx: 18, by: 24 }, climb1: { fx: 23, fy: 24, bx: 18, by: 18 }, hurt: { fx: 24, fy: 30, bx: 14, by: 30 },
+};
+const RunnerArt = {
+  cache: new Map(),
+  get(pose, left) {
+    const st = Game.stage(), k = pose + (left ? 'L' : 'R') + (st.eye ? 'e' : '') + (st.legs ? 'l' : '') + (st.arm ? 'a' : '');
+    let s = this.cache.get(k);
+    if (!s) {
+      const o = Object.assign({}, RUNNER, { pose, hands: POSE_HANDS[pose] || {}, seed: 5 });
+      if (st.eye) o.eye = '#3af0e0';
+      if (st.legs) o.cyLegs = true;
+      if (st.arm) { o.cyArm = true; if (pose === 'strike') { o.blade = '#3af0e0'; o.cutter = false; } }
+      s = person(o); if (left) s = flipSprite(s);
+      this.cache.set(k, s);
+    }
+    return s;
   },
+};
+
+const Player = {
+  x: 0, y: 0, vx: 0, vy: 0, face: 1, ground: false, coyote: 0, jumps: 0, drop: 0, ladder: null, inv: 0, hurtT: 0,
+  strikeT: 0, strikeCd: 0, walked: 0, target: null, hold: null, ramT: 0,
+  place(x, y) { this.x = x; this.y = y; this.vx = this.vy = 0; this.ladder = null; this.hold = null; this.ground = true; },
+  box(x = this.x, y = this.y) { const P = T.player; return [x - P.w / 2, y - P.h, x + P.w / 2, y]; },
+  hits(x, y) { const b = this.box(x, y); return World.hits(b[0] + 0.01, b[1] + 0.01, b[2] - 0.01, b[3] - 0.01); },
   step(dt) {
-    const P = T.player, TL = T.tile, ax = Input.ax, ay = Input.ay;
-    if (ax) this.face = ax > 0 ? 1 : -1;
-    const wallL = this.hits(this.x - 2.5, this.y), wallR = this.hits(this.x + 2.5, this.y);
-    // climbing: up against rock, or pushing into a wall in the air
-    const pushWall = (ax < 0 && wallL) || (ax > 0 && wallR);
-    this.climbing = (ay < -0.3 && (wallL || wallR || pushWall)) || (!this.ground && pushWall && this.vy > 0);
-    // on a ladder: up and down as you like, and it holds you
-    const lc = Math.floor(this.x / TL), onL = Ladders.has(lc, Math.floor((this.y - 2) / TL)) || Ladders.has(lc, Math.floor((this.y - P.h + 2) / TL)) || (ay > 0.3 && Ladders.has(lc, Math.floor((this.y + 2) / TL)));
-    this.onLadder = onL && (ay !== 0 || !this.ground) && !Input.jump;
-    // running
-    const target = ax * P.speed * (this.digging && this.ground ? 0.25 : 1), acc = this.ground ? P.accel : P.airAccel;
+    const P = T.player; Input.apply();
+    const ax = Input.ax, ay = Input.ay;
+    this.inv = Math.max(0, this.inv - dt); this.hurtT = Math.max(0, this.hurtT - dt); this.strikeT = Math.max(0, this.strikeT - dt); this.strikeCd = Math.max(0, this.strikeCd - dt); this.drop = Math.max(0, this.drop - dt);
+    if (ax && !this.strikeT) this.face = ax > 0 ? 1 : -1;
+    // RAM comes back on its own
+    if (Game.s.ram < T.ram.max) { this.ramT += dt; if (this.ramT >= T.ram.regen) { this.ramT = 0; Game.s.ram++; Hud.refresh(); } } else this.ramT = 0;
+    const jumpHit = Input.take('jumpHit');
+    // ---- on a ladder
+    if (!this.ladder && Math.abs(ay) > 0.5 && Math.abs(ax) < 0.6) {
+      const l = World.ladderAt(this.x, this.y - P.h, this.y + (ay > 0 ? 3 : 0));
+      if (l && (ay < 0 ? this.y > l.y0 + 2 : this.y < l.y1 - 1)) { this.ladder = l; this.x = l.x; this.vx = 0; this.jumps = 0; this.hold = null; }
+    }
+    if (this.ladder) {
+      const l = this.ladder;
+      this.vy = ay * P.climb; this.y += this.vy * dt; this.vx = 0;
+      if (this.y <= l.y0) { this.y = l.y0; this.ladder = null; this.ground = true; this.vy = 0; }
+      else if (this.y >= l.y1) { this.y = l.y1; this.ladder = null; this.ground = true; this.vy = 0; }
+      else if (jumpHit) { this.ladder = null; this.vy = -P.jump * 0.7; this.vx = this.face * 60; }
+      else if (Math.abs(ax) > 0.6 && Math.abs(ay) < 0.3) { this.ladder = null; }
+      if (this.ladder) { this.walked += Math.abs(this.vy * dt); this.interact(dt); return; }
+    }
+    // ---- running
+    const busy = this.hold ? 0.15 : 1, target = ax * P.speed * busy, acc = this.ground ? P.accel : P.airAccel;
     if (ax) this.vx += clamp(target - this.vx, -acc * dt, acc * dt);
     else this.vx -= clamp(this.vx, -P.friction * dt, P.friction * dt);
-    // jumping
+    // ---- jumping, dropping through, the second jump
     this.coyote = this.ground ? P.coyote : Math.max(0, this.coyote - dt);
-    if (Input.take('jumpHit') && (this.coyote > 0 || this.climbing)) { this.vy = -P.jump * (this.climbing ? 0.85 : 1); this.coyote = 0; this.ground = false; }
-    // falling or climbing
-    if (this.onLadder) { this.vy = ay * P.climb * 1.4; this.climbing = true; if (Math.abs(ax) < 0.3) this.x += clamp(lc * TL + TL / 2 - this.x, -30 * dt, 30 * dt); }
-    else if (this.climbing) this.vy = ay < -0.3 ? -P.climb : Math.min(this.vy + P.gravity * dt, 34);
-    else this.vy = Math.min(this.vy + P.gravity * dt, P.maxFall);
-    if (!Input.jump && this.vy < -60 && !this.climbing) this.vy += P.gravity * dt * 0.9; // a short hop if the jump's let go
-    // across, stepping up a single tile
+    if (jumpHit) {
+      const onWay = this.ground && !World.hits(this.x - 4, this.y, this.x + 4, this.y + 2) && World.way(this.x, this.y - 1, this.y + 1) !== null;
+      if (ay > 0.5 && onWay) { this.drop = 0.25; this.ground = false; this.y += 1; }
+      else if (this.coyote > 0) { this.vy = -P.jump; this.coyote = 0; this.ground = false; this.jumps = 1; }
+      else if (Game.has('spring') && this.jumps < 2) { this.vy = -P.doubleJump; this.jumps = 2; Fx.burst(this.x, this.y, [58, 240, 224], 6); }
+    }
+    this.vy = Math.min(this.vy + P.gravity * dt, P.maxFall);
+    if (!Input.jump && this.vy < -70) this.vy += P.gravity * dt * 0.9;
+    // ---- across: step up a small ledge, or stop at the wall
     let nx = this.x + this.vx * dt;
-    if (this.hits(nx, this.y)) {
-      if ((this.ground || this.climbing) && !this.hits(nx, this.y - TL) && !this.hits(this.x, this.y - TL)) { this.y -= TL; this.stepOff += TL; }
-      else {
-        nx = this.vx > 0 ? Math.floor((this.x + P.w / 2 + this.vx * dt) / TL) * TL - P.w / 2 - 0.001 : Math.ceil((this.x - P.w / 2 + this.vx * dt) / TL) * TL + P.w / 2 + 0.001;
-        if (this.hits(nx, this.y)) nx = this.x;
-        this.vx = 0;
-      }
+    const hx = this.hits(nx, this.y);
+    if (hx) {
+      let stepped = false;
+      if (this.ground) for (let s = 2; s <= 7; s += 1) if (!this.hits(nx, this.y - s)) { this.y -= s; stepped = true; break; }
+      if (!stepped) { nx = this.vx > 0 ? hx.x0 - P.w / 2 - 0.01 : hx.x1 + P.w / 2 + 0.01; if (this.hits(nx, this.y)) nx = this.x; this.vx = 0; }
     }
     this.walked += Math.abs(nx - this.x); this.x = nx;
-    // down (or up)
-    let ny = this.y + this.vy * dt; this.ground = false;
-    if (this.hits(this.x, ny)) {
-      if (this.vy > 0) { ny = Math.floor(ny / TL) * TL; this.ground = true; }
-      else ny = Math.ceil((ny - P.h) / TL) * TL + P.h + 0.001;
-      if (this.hits(this.x, ny)) ny = this.y;
-      this.vy = 0;
+    // following stairs down or up while walking on them
+    if (this.ground && this.vy >= 0 && !this.drop) { const s = World.way(this.x, this.y - 7, this.y + 7); if (s !== null && !this.hits(this.x, s)) this.y = s; }
+    // ---- down (or up)
+    const wasY = this.y; let ny = this.y + this.vy * dt; this.ground = false;
+    if (this.vy >= 0) {
+      const hy = this.hits(this.x, ny);
+      if (hy) { ny = hy.y0; this.vy = 0; this.ground = true; }
+      else if (!this.drop) { const s = World.way(this.x, wasY - 0.5, ny + 0.5); if (s !== null) { ny = s; this.vy = 0; this.ground = true; } }
+      if (this.ground) this.jumps = 0;
+    } else {
+      const hy = this.hits(this.x, ny);
+      if (hy) { ny = hy.y1 + T.player.h + 0.01; this.vy = 0; }
     }
     this.y = ny;
-    this.stepOff = Math.max(0, this.stepOff - dt * 90);
-    // home: unpack whenever you're in with something in the bag
-    const tx = Math.floor(this.x / TL), ty = Math.floor((this.y - 6) / TL);
-    this.home = World.roomAt(tx, ty) === 1;
-    if (this.home && Game.s.bag.length) Bag.unpack();
-    if (this.home !== this.wasHome) { this.wasHome = this.home; Hud.refresh(); }
-    Game.s.deepest = Math.max(Game.s.deepest, World.depth(ty));
-    this.doDig(dt);
-    if (Input.take('torchHit')) this.torch();
-    if (Input.take('ladderHit')) this.ladder();
+    if (this.y > World.L.h + 40) { Game.hurt(20); const sp = Object.values(World.L.spawns)[0]; this.place(sp[0], sp[1]); }
+    if (Input.take('strikeHit') && this.strikeCd <= 0 && !this.hold) this.strike();
+    if (Input.take('progHit')) this.runProgram();
+    this.interact(dt);
   },
-  // the tile the pick is aimed at
-  aim() {
-    const TL = T.tile, P = T.player, ax = Input.ax, ay = Input.ay, col = Math.floor(this.x / TL);
-    const below = Math.floor((this.y + 1) / TL), feet = Math.floor((this.y - 1) / TL), head = Math.floor((this.y - P.h + 1) / TL);
-    // straight down or up: whichever tile under (or over) the feet is still rock
-    const cl = Math.floor((this.x - P.w / 2 + 0.5) / TL), cr = Math.floor((this.x + P.w / 2 - 0.5) / TL);
-    const pickCol = (row) => (World.solid(col, row) ? col : World.solid(cl, row) ? cl : cr);
-    if (ay > 0.5 && Math.abs(ax) < 0.5) return [pickCol(below), below];
-    if (ay < -0.5 && Math.abs(ax) < 0.5) { const up = Math.floor((this.y - P.h - 1) / TL); return [pickCol(up), up]; }
-    const fc = Math.floor((this.x + this.face * (P.w / 2 + 3)) / TL);
-    if (ay > 0.5) return [fc, below];
-    if (ay < -0.5) return [fc, head - 1];
-    for (const r of [feet, head]) if (World.solid(fc, r)) return [fc, r];
-    return World.solid(col, below) && !this.ground ? [col, below] : [fc, feet];
+  strike() {
+    const S = T.strike, dmg = Game.has('mantis') ? S.mantis : S.dmg;
+    this.strikeT = 0.2; this.strikeCd = S.cd;
+    const x0 = this.face > 0 ? this.x : this.x - S.reach - 4, box = [x0, this.y - T.player.h + 2, x0 + S.reach + 4, this.y - 2];
+    if (Actors.hit(box, dmg, this.face)) Fx.sparks(this.x + this.face * 14, this.y - 18, 6);
   },
-  doDig(dt) {
-    this.digging = false;
-    if (!Input.dig) { this.digT = null; return; }
-    const [tx, ty] = this.aim(), m = World.at(tx, ty), info = MAT[m];
-    this.digging = true; this.swing += dt;
-    // digging straight down or up: settle over the shaft, so you drop into it
-    if (Math.abs(Input.ax) < 0.5 && Math.abs(Input.ay) > 0.5) { const c = tx * T.tile + T.tile / 2; if (!this.hits(this.x + clamp(c - this.x, -1, 1), this.y)) this.x += clamp(c - this.x, -40 * dt, 40 * dt); }
-    if (!info || !World.solid(tx, ty)) { this.digT = null; return; }
-    if (!isFinite(info.hard)) { Game.toast(m === M.HOMEWALL ? 'Not the burrow walls.' : 'Nothing gets through that.'); this.digT = null; return; }
-    const tier = info.tier || 1;
-    if (tier > Game.s.pick) { Game.toast('Too hard for the ' + PICKS[Game.s.pick].name.toLowerCase() + '. Needs a ' + PICKS[tier].name.toLowerCase() + '.'); this.digT = null; return; }
-    if (info.item && !Bag.canTake(info.item)) { Game.toast('Your pack is full. Home to unpack.', 'warn'); this.digT = null; return; }
-    if (!this.digT || this.digT.x !== tx || this.digT.y !== ty) this.digT = { x: tx, y: ty, t: 0, need: T.dig.base * info.hard / PICKS[Game.s.pick].speed, chip: 0 };
-    const d = this.digT; d.t += dt; d.chip -= dt;
-    if (d.chip <= 0) { d.chip = 0.13; Fx.chips(tx, ty, m, 2); }
-    if (d.t >= d.need) {
-      const item = World.dig(tx, ty);
-      Paint.changed(tx, ty);
-      Fx.chips(tx, ty, m, 7);
-      if (item) Bag.add(item);
-      this.digT = null;
+  runProgram() {
+    const prog = Game.s.prog;
+    if (!prog) { Game.toast('No programs yet. Data nodes have them.'); return; }
+    const tp = this.target && this.target.p;
+    if (prog === 'breach' && tp && tp.kind === 'hatch' && !tp.done) { Props.use(tp); return; }
+    Programs.run(prog);
+  },
+  // what Use would work on, and working it
+  interact(dt) {
+    let best = null, bd = 1e9;
+    for (const p of World.props) {
+      if (p.kind === 'deco') continue;
+      const reach = p.kind === 'exit' ? 14 : p.kind === 'car' ? 30 : p.kind === 'lift' ? 16 : 18 + (p.block ? (p.block.x1 - p.block.x0) / 2 : 0);
+      const dx = Math.abs(p.x - this.x), dy = p.kind === 'exit' ? Math.abs(p.y - (this.y - 16)) : Math.abs(p.y - this.y);
+      if (dx > reach || dy > (p.kind === 'exit' ? 24 : 26)) continue;
+      const pr = Props.prompt(p); if (!pr) continue;
+      if (dx < bd) { bd = dx; best = { p, pr }; }
     }
-  },
-  torch() {
-    if (Game.s.torches <= 0) { Game.toast('No torches. The bench makes them from coal and copper.'); return; }
-    const TL = T.tile, tx = Math.floor(this.x / TL), ty = Math.floor((this.y - 14) / TL);
-    if (World.isSky(tx, ty)) { Game.toast('No need for a torch up here.'); return; }
-    if (Game.s.placed.some(([x, y]) => Math.abs(x - tx) < 2 && Math.abs(y - ty) < 2)) return;
-    Game.s.placed.push([tx, ty]); Game.s.torches--;
-    Hud.refresh();
-  },
-  // a ladder: the lowest open tile in the column from the feet up that has none
-  ladder() {
-    const TL = T.tile, tx = Math.floor(this.x / TL), feet = Math.floor((this.y - 1) / TL);
-    if (Game.s.ladders <= 0) { Game.toast('No ladders left. The bench makes them from copper.'); return; }
-    for (let ty = feet; ty >= feet - 3; ty--) {
-      if (World.solid(tx, ty)) break;
-      if (Ladders.has(tx, ty)) continue;
-      if (World.isSky(tx, ty)) { Game.toast('No need for a ladder up here.'); return; }
-      Ladders.add(tx, ty); Game.s.ladders--; Hud.refresh(); return;
+    for (const n of Actors.npcs) {
+      if (n.hidden) continue;
+      const dx = Math.abs(n.x - this.x); if (dx > 20 || Math.abs(n.y - this.y) > 14) continue;
+      if (dx < bd) { bd = dx; best = { n, pr: { text: n.def.role ? NPC_ROLE[n.def.role].prompt(n) : 'Talk to ' + n.def.name, tap: true } }; }
     }
+    this.target = best;
+    const useHit = Input.take('useHit');
+    if (this.hold) {
+      if (!Input.use || !best || best.p !== this.hold.p) { this.hold = null; }
+      else {
+        const sp = Game.has('mantis') ? T.cut.speedMantis : 1, t0 = this.hold.t;
+        this.hold.t += dt * sp; this.face = Math.sign(this.hold.p.x - this.x) || this.face;
+        if (Math.floor(this.hold.t * 8) !== Math.floor(t0 * 8)) Fx.sparks(this.x + this.face * 12, this.y - 16, 2);
+        if (this.hold.t >= this.hold.need) { const p = this.hold.p; this.hold = null; Props.use(p); }
+      }
+      return;
+    }
+    if (!useHit || !best) return;
+    if (best.n) { Actors.talk(best.n); return; }
+    if (best.pr.hold) { this.hold = { p: best.p, t: 0, need: best.pr.hold }; return; }
+    if (best.pr.no) { Game.toast(best.pr.text + '.'); return; }
+    Props.use(best.p);
   },
   pose() {
-    if (this.digging && this.digT) return this.swing % 0.26 < 0.13 ? 'dig0' : 'dig1';
-    if (this.digging) return 'dig0';
-    if (this.onLadder) return Math.floor(this.y / 6) % 2 ? 'climb0' : 'climb1';
-    if (this.climbing && !this.ground) return Math.floor(this.y / 6) % 2 ? 'climb0' : 'climb1';
-    if (!this.ground) return 'jump';
-    if (Math.abs(this.vx) > 8) return 'walk' + (Math.floor(this.walked / 6) % 4);
-    return Game.t % 1.6 < 0.8 ? 'idle0' : 'idle1';
+    if (this.hurtT > 0) return 'hurt';
+    if (this.strikeT > 0) return 'strike';
+    if (this.hold) return 'cut';
+    if (this.ladder) return Math.floor(this.walked / 7) % 2 ? 'climb0' : 'climb1';
+    if (!this.ground) return this.vy < 0 ? 'jump' : 'fall';
+    if (Math.abs(this.vx) > 8) return 'walk' + (Math.floor(this.walked / 7) % 4);
+    return 'stand';
   },
 };
 
-// ---- ladders: tiles you can climb, kept in the save as tile indices ---------
-const Ladders = {
-  set: new Set(),
-  load() { this.set = new Set(Game.s.ladderAt || []); },
-  has(x, y) { return this.set.has(y * World.w + x); },
-  add(x, y) { const i = y * World.w + x; this.set.add(i); Game.s.ladderAt = [...this.set]; },
-  // a ladder goes when the rock round it does? no: only if its tile fills (never), so this is all
-};
-
-// ---- chips of rock and the like -------------------------------------------
+// ---- sparks, bursts -----------------------------------------------------------
 const Fx = {
-  chips(tx, ty, m, n) {
-    const TL = T.tile, ramp = LOOK.rock[MAT[m] && MAT[m].host ? MAT[m].host : m] || LOOK.rock[M.EARTH];
-    for (let k = 0; k < n; k++) {
-      const h1 = hash(Game.frame, k, 1), h2 = hash(Game.frame, k, 2), h3 = hash(Game.frame, k, 3);
-      Game.particles.push({ x: tx * TL + 2 + h1 * 8, y: ty * TL + 2 + h2 * 8, vx: (h1 - 0.5) * 90, vy: -30 - h3 * 70, t: 0.5 + h3 * 0.4, c: css(ramp[2 + Math.floor(h2 * (ramp.length - 3))]) });
-    }
-    if (Game.particles.length > 120) Game.particles.splice(0, Game.particles.length - 120);
+  sparks(x, y, n) {
+    for (let k = 0; k < n; k++) { const h1 = hash(Game.frame, k, 1), h2 = hash(Game.frame, k, 2), h3 = hash(Game.frame, k, 3); Game.particles.push({ x, y, vx: (h1 - 0.5) * 160, vy: -40 - h2 * 110, t: 0.25 + h3 * 0.35, c: [255, 160 + h3 * 90, 60 + h3 * 120], g: 400 }); }
+    Game.flash = { x, y, t: 0.08 };
+    this.cap();
   },
-  step(dt) {
-    for (const p of Game.particles) { p.vy += 500 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.t -= dt; if (World.solid(Math.floor(p.x / T.tile), Math.floor(p.y / T.tile))) { p.vy *= -0.3; p.vx *= 0.5; p.y -= 1; } }
-    Game.particles = Game.particles.filter((p) => p.t > 0);
-  },
+  burst(x, y, c, n) { for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2 + hash(Game.frame, k, 4), s = 40 + hash(Game.frame, k, 5) * 70; Game.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0.3 + hash(Game.frame, k, 6) * 0.3, c, g: 0 }); } this.cap(); },
+  cap() { if (Game.particles.length > 200) Game.particles.splice(0, Game.particles.length - 200); },
+  step(dt) { for (const p of Game.particles) { p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.t -= dt; } Game.particles = Game.particles.filter((p) => p.t > 0); if (Game.flash) { Game.flash.t -= dt; if (Game.flash.t <= 0) Game.flash = null; } },
 };
