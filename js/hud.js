@@ -95,7 +95,7 @@ const Hud = {
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
         <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Strike</b> J. <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Pack</b> I.</p>
         <p>Strip machines for parts, sell them, or take them to the ripperdoc for ware. Jack into data nodes for programs. Juno at the bar has work. The way down is in the service yard at the east end of the Stack, past the Warden.</p></div>
-        <div class="buttons"><button data-act="resume">Resume</button><button data-act="newgame" class="quiet">New game…</button></div>`;
+        <div class="buttons"><button data-act="resume">Resume</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     body.innerHTML = h;
     // the buttons
@@ -103,6 +103,7 @@ const Hud = {
       stashAll: () => { for (const k in s.pack) { s.stash[k] = (s.stash[k] || 0) + s.pack[k]; } s.pack = {}; this.refresh(); Save.write(); },
       takeAll: () => { for (const k of SALVAGE_ORDER) { const room = T.pack.cap - Game.packCount(), n = Math.min(room, s.stash[k] || 0); if (n > 0) { s.pack[k] = (s.pack[k] || 0) + n; s.stash[k] -= n; } } this.refresh(); },
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
+      install: () => Pwa.install(),
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     body.querySelectorAll('button[data-prog]').forEach((b) => (b.onclick = () => { s.prog = b.dataset.prog; this.refresh(); }));

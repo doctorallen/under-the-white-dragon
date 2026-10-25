@@ -17,6 +17,14 @@ for f in $(grep -o 'href="[^"]*"' index.html | cut -d'"' -f2 | grep -v '^http' |
   test -f "$f" || { echo "index.html links a missing file: $f"; exit 1; }
 done
 
+# the service worker caches everything the page loads, for offline play
+for f in $(grep -o 'src="js/[^"]*"' index.html | cut -d'"' -f2) css/style.css manifest.webmanifest; do
+  grep -q "'$f'" sw.js || { echo "sw.js does not cache $f"; exit 1; }
+done
+for f in $(grep -o "'icons/[^']*'" sw.js | tr -d "'"); do test -f "$f" || { echo "sw.js caches a missing file: $f"; exit 1; }; done
+node --check sw.js
+grep -q "__BUILD__" sw.js || { echo "sw.js lost its __BUILD__ stamp"; exit 1; }
+
 dups=$(grep -hoE '^(function|const|let|var|class) [A-Za-z0-9_$]+' js/*.js | awk '{print $2}' | sort | uniq -d)
 if [ -n "$dups" ]; then echo "declared in more than one file: $dups"; exit 1; fi
 

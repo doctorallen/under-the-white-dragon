@@ -17,6 +17,7 @@ function boot() {
   addEventListener('visibilitychange', () => { if (document.hidden) Save.write(); });
   addEventListener('pagehide', () => Save.write());
   $('loading').hidden = true;
+  Pwa.init();
   window.Downlevel = { Game, World, Player, Actors, Save };
   requestAnimationFrame(loop);
 }

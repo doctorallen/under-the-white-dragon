@@ -6,6 +6,10 @@ A side-scrolling cyberpunk game for the phone. You live in a capsule in a megabl
 
 Strip machines for parts. Cut through grates and shutters. Jack into data nodes for programs. Sell salvage to vendors, take jobs from Juno the fixer, and have the ripperdoc build and fit ware into your body. Every piece of ware changes how you move or fight, and your nervous system only takes so much. The way down from each level is guarded.
 
+## Install
+
+On Android, use Install in the pause menu (or the browser's menu). On iPhone, Share, then Add to Home Screen. The installed game plays offline, and always checks for a new version: whenever it comes back to the foreground it looks for one, and if there is one it saves and reloads onto it. The pause menu shows the build.
+
 ## Controls
 
 | | Keyboard | Phone |
@@ -51,7 +55,9 @@ Strip machines for parts. Cut through grates and shutters. Jack into data nodes 
 | `js/gl.js` | The frame's last stage in WebGL2: bloom, reflections, the scale-up |
 | `js/render.js` | The frame: layers, light, actors, rain; a 2D finish without WebGL2 |
 | `js/hud.js` | HUD and panels |
+| `js/pwa.js` | Installing, and reloading onto a new deploy |
 | `js/main.js` | Boot and the loop |
+| `sw.js`, `manifest.webmanifest`, `icons/` | The service worker (network first), the app manifest and icons |
 | `test/check.sh` | Static checks |
 | `test/smoke.js` | Headless play-through on phone and desktop |
 

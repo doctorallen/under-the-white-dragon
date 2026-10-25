@@ -11,7 +11,7 @@
 // (puppeteer-core), or, where that isn't installed, playwright's Chromium.
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), OUT = path.join(__dirname, 'out');
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
 const PHONE = { width: 844, height: 390, deviceScaleFactor: 3, isMobile: true, hasTouch: true };
 const DESKTOP = { width: 1280, height: 800, deviceScaleFactor: 1 };
 
@@ -19,6 +19,8 @@ function serve() {
   return new Promise((ok) => {
     const s = http.createServer((req, res) => {
       if (req.url === '/favicon.ico') { res.writeHead(204); res.end(); return; }
+      // the deploy writes version.json; here it's a local build
+      if (req.url.startsWith('/version.json')) { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"build": "local"}'); return; }
       const p = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]).replace(/\/$/, '/index.html'));
       if (!p.startsWith(ROOT) || !fs.existsSync(p)) { res.writeHead(404); res.end(); return; }
       res.writeHead(200, { 'content-type': TYPES[path.extname(p)] || 'application/octet-stream' }); fs.createReadStream(p).pipe(res);
