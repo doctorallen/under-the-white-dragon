@@ -113,12 +113,18 @@ async function run(B, url, vp, name, failures) {
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const server = await serve(), url = `http://localhost:${server.address().port}/index.html?seed=${process.env.SEED || 20261025}`;
-  const B = await browser(), failures = [];
+  let B; const failures = [];
+  try { B = await browser(); } catch (e) { console.log('::error title=smoke::no browser: ' + String(e.stack || e).replace(/\n/g, ' ')); throw e; }
   try {
     await run(B, url, PHONE, 'phone', failures);
     await run(B, url, DESKTOP, 'desktop', failures);
   } catch (e) { failures.push('crashed: ' + (e.stack || e)); }
   await B.b.close(); server.close();
-  if (failures.length) { console.log('smoke: FAILED\n  ' + failures.join('\n  ')); process.exit(1); }
+  if (failures.length) {
+    console.log('smoke: FAILED\n  ' + failures.join('\n  '));
+    // on GitHub Actions, as annotations too, so they show on the run's page
+    if (process.env.GITHUB_ACTIONS) for (const f of failures) console.log('::error title=smoke::' + f.replace(/\n/g, ' ').slice(0, 900));
+    process.exit(1);
+  }
   console.log('smoke: ok');
 })();
