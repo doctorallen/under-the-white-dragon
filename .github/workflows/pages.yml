@@ -32,7 +32,7 @@ jobs:
           touch _site/.nojekyll
           # stamp this deploy: a new service worker each time, and a build id
           BUILD=$(echo "$GITHUB_SHA" | cut -c1-7)
-          sed -i "s/__BUILD__/$BUILD/" _site/sw.js
+          sed -i "s/__BUILD__/$BUILD/" _site/sw.js _site/js/pwa.js
           echo "{\"build\": \"$BUILD\"}" > _site/version.json
       - uses: actions/upload-pages-artifact@v3
         with:

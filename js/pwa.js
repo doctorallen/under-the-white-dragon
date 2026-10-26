@@ -4,9 +4,13 @@
 // the network first, so a fresh load is always the latest deploy. A game left
 // open (or installed and resumed) checks for a new deploy whenever it comes
 // back to the foreground and every fifteen minutes; when one has taken over,
-// the game saves and reloads onto it. The pause menu offers Install where the
+// the game saves and reloads onto it, unless the page is already that
+// version (it usually is: a page loaded fresh from the network is current,
+// and the new worker taking over just after it needs no reload). The pause menu offers Install where the
 // browser allows it, and says how on iPhone.
 // ---------------------------------------------------------------------------
+// the deploy stamps this with the commit, as it does sw.js
+const PAGE_BUILD = '__BUILD__';
 const Pwa = {
   reg: null, prompt: null, build: null, reloading: false,
   init() {
@@ -30,7 +34,10 @@ const Pwa = {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       // a new version took over: save, and reload onto it (not on the very first install)
       if (!hadController || this.reloading) return;
-      this.reloading = true; Save.write(); location.reload();
+      fetch('version.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((v) => {
+        if (v && v.build === PAGE_BUILD) return; // already running it
+        this.reloading = true; Save.write(); location.reload();
+      });
     });
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
       this.reg = reg;
