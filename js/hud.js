@@ -216,7 +216,7 @@ const Hud = {
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
         <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Gear</b> I. <b>Map</b> M.</p>
         <p>You\'re a tracer with the precinct. Four synths ran from the Spires and went down into the city; Lieutenant Hale gives you their cases one at a time, and the night desk always has a short one. Find the clues (pick things up, enhance photos, ask people, press them), follow the leads to the suspect, run the baseline test, and decide: retire, arrest or let go. Retire a human and it costs you. Your spinner is on the pad at the end of your hall; the old subway and the lift cages go deeper. Strip machines for parts, sell them, or take them to Mags for gear. Anywhere, a cab takes you home for a fare.</p></div>
-        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
+        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     if (['vendor', 'qm', 'fab'].includes(which) && this.who) h = workHtml(this.who.def.name) + h;
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
@@ -227,7 +227,7 @@ const Hud = {
     const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(((8 - h0) + 24) % 24 || 24); Actors.load(); Game.toast('You sleep. Morning, or what passes for it. You wake healed, your RAM full.', 'good'); this.toggle(null); this.refresh(); Save.write(); },
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
-      map: () => this.toggle('map'), dev: () => this.toggle('dev'),
+      map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => this.toggle('dev'),
       cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'home' || !Game.pay({ cr: fare })) return; Flight.start('home', 'pad', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));

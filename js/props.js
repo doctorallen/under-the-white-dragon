@@ -343,3 +343,21 @@ function itemIcon(k) {
   else { panel(S, 2, 3, 13, 13, rp('#c8b890', 5), { a: 0.7, b: 0.5 }); for (let y = 6; y < 12; y += 2) for (let x = 4; x < 11; x++) if (hash(x, y, k.length) > 0.3) S.px(x, y, '#3a3428'); S.box(9, 1, 12, 4, rp('#ff4a6a', 4)); }
   S.ax = 8; S.ay = 15; return S.done();
 }
+
+// a ladder up to a manhole: rungs in a shaft, light from the street coming down
+function manholeLadder() {
+  const S = new Spr(30, 64, 432); S.ax = 15; S.ay = 63;
+  panel(S, 4, 0, 25, 63, MAT.concreteD, { a: 0.35, b: 0.25 });
+  for (let y = 0; y < 64; y++) for (let x = 8; x < 22; x++) if (hash(x, y, 3) < 0.18 * (1 - y / 64)) S.px(x, y, '#c8d8e8', true);
+  for (const x of [9, 20]) S.limb(x, 0, x, 63, 1.2, MAT.steel);
+  for (let y = 4; y < 62; y += 6) S.limb(9, y, 20, y, 1, MAT.steel);
+  panel(S, 2, 0, 27, 3, MAT.steelD, { a: 0.7, b: 0.5 });
+  return S.done();
+}
+// a manhole in the street: a ring of iron, the cover pushed aside, steam
+function manholeCover() {
+  const S = new Spr(30, 8, 433); S.ax = 15; S.ay = 7;
+  S.ell(13, 5, 11, 2.4, MAT.steelD); S.ell(13, 5, 8, 1.6, ['#020204', '#06060a']); S.ell(22, 4, 7, 2, MAT.steel);
+  for (let x = 17; x < 28; x += 3) S.px(x, 4, MAT.steel[1]);
+  return S.done();
+}

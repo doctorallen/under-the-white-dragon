@@ -295,32 +295,39 @@ const BLOCKS = {
 for (const D of DISTRICTS) LEVELS[D[0]] = { name: D[1], depth: DEPTH_OF[D[2]], tier: D[2], district: true, theme: D[3], make: () => makeDistrict(D) };
 
 // ---- travel between places: what's open, and how you get there -----------------
-// the hubs and districts by depth; the spinner flies the sky and the street,
-// the subway runs Old Town, the lift cages go down to the Works and the Bowels
+// Any way out (a spinner pad, a subway platform, a lift cage, a manhole)
+// opens the city map, and from it you can go anywhere you've opened: the
+// spinner flies the sky and the street, a manhole ladder takes you down into
+// the undercity, the old subway runs to Old Town, lift cages go deeper.
 const Travel = {
-  HUBS: { home: 1, precinct: 1, stack: 1, street: 2, oldtown: 3, works: 4, bowels: 5, spires: 0 },
-  // is a place on the list yet
+  // the band of the city a place is in, from its depth
+  band(id) { const L = LEVELS[id]; return L && L.metres !== undefined ? stratumOf(L.metres).id : 'high'; },
+  // is a place open to you yet
   open(id) {
     const L = LEVELS[id], f = (k) => Game.flag(k);
-    if (!L) return false;
-    if (id === 'home' || id === 'precinct' || id === 'stack') return true;
+    if (!L || L.metres === undefined) return false;
+    if (f('been:' + id) || id === 'home' || id === 'precinct' || id === 'stack') return true;
     if (id === 'spires') return Game.s.pack.spirepass > 0;
-    if (id === 'street') return f('been:street');
-    if (id === 'oldtown' || id === 'works' || id === 'bowels') return f('been:' + id);
-    const t = L.tier; return t === 1 || (t === 2 && f('been:street')) || (t === 3 && f('been:oldtown')) || (t === 4 && f('been:works')) || (t === 5 && f('been:bowels'));
+    if (id === 'oldtown') return Game.s.pack.subwaypass > 0 && f('been:street');
+    const b = this.band(id);
+    if (b === 'high') return true;
+    if (b === 'street' || b === 'under') return f('been:street');
+    if (b === 'old') return f('been:oldtown');
+    if (b === 'works') return f('been:works');
+    if (b === 'bowels') return f('been:bowels');
+    return false;
   },
-  tierOf(id) { return id in this.HUBS ? this.HUBS[id] : (LEVELS[id] && LEVELS[id].tier) || 1; },
-  // what a mode of transport reaches: the spinner the sky (0 to 2), the subway
-  // Old Town and the street (2, 3), the lifts the deep (3 to 5)
-  reaches(mode, id) { const t = this.tierOf(id); return mode === 'spinner' ? t <= 2 : mode === 'subway' ? t === 2 || t === 3 : t >= 3; },
-  places(mode) { return Object.keys(LEVELS).filter((id) => id !== World.L.id && this.reaches(mode, id) && (mode !== 'subway' || id === 'street' || this.tierOf(id) === 3) && (mode !== 'spinner' || !['oldtown', 'works', 'bowels'].includes(id))); },
-  spawnFor(id, mode) { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); if (L.spawns.enter) return 'enter'; if (mode === 'spinner') return L.spawns.pad ? 'pad' : 'elevator'; return L.spawns[mode] ? mode : Object.keys(L.spawns)[0]; },
-  go(id, mode) {
+  // how you'd get there
+  how(id) { return { sky: 'Spinner', high: 'Spinner', street: 'Spinner', under: 'Down a manhole', old: 'Subway', works: 'Lift cage', bowels: 'Lift cage' }[this.band(id)]; },
+  spawnFor(id) { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); if (L.spawns.enter) return 'enter'; if (World.L && this.band(World.L.id) === 'under' && L.spawns.manhole) return 'manhole'; for (const k of ['pad', 'elevator', 'subway', 'lift']) if (L.spawns[k]) return k; return Object.keys(L.spawns)[0]; },
+  go(id) {
     Hud.toggle(null);
-    const sp = this.spawnFor(id, mode);
-    if (mode === 'spinner') Flight.start(id, sp, false);
-    else { Game.toast(mode === 'subway' ? 'The train lurches into the dark.' : 'The cage drops, and keeps dropping.'); Game.go(id, sp); }
+    const sp = this.spawnFor(id), b = this.band(id);
+    if (b === 'sky' || b === 'high' || b === 'street') Flight.start(id, sp, false);
+    else { Game.toast({ under: 'You climb down the ladder into the dark and the drip.', old: 'The old train lurches off into the dark.', works: 'The cage drops, and keeps dropping.', bowels: 'The cage drops past the last of the lights.' }[b]); Game.go(id, sp); }
   },
+  // where a key door leads
+  KEYS: { subwaypass: 'oldtown', mayorkey: 'works', workspass: 'bowels' },
 };
 
 // ---- the story's hubs: Old Town, the Works, the Bowels, the Spires --------------

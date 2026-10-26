@@ -9,7 +9,7 @@ const PROP_ART = {
   vending: (p) => vending(p.look || {}), ac: () => acUnit(), rack: (p) => rack({ h: 40, seed: p.x, warn: true }), car: (p) => car(p.look || {}),
   junk: (p) => junk({ seed: p.x % 7 }), wreck: () => wreck(), cache: () => { const S = new Spr(16, 12, 81); S.ax = 8; S.ay = 11; S.box(0, 0, 15, 11, MAT.concreteD, { lo: 1, hi: 5 }); for (let x = 2; x < 14; x += 3) S.px(x, 5, '#a85ad8', true); return S.done(); },
   grate: (p) => grate({ w: p.w || 12, h: p.h || 32 }), heavy: (p) => heavyShutter({ w: p.w || 30, h: p.h || 32 }), hatch: (p) => hatch({ w: p.w || 26, h: p.h || 34, stripe: true }),
-  node: (p) => node({ col: p.col }), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? spinner({}) : p.mode === 'subway' ? subwayDoor() : liftCage({ on: true })),
+  node: (p) => node({ col: p.col }), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? spinner({}) : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
   keydoor: (p) => (p.mode === 'subway' ? subwayDoor() : hatch({ w: 40, h: 44, col: '#3a3a40', lock: Game.s.pack[p.key] > 0 ? '#3aff80' : '#ffb040', stripe: true })), locker: () => locker(), clue: (p) => marker({ col: p.K.kind === 'photo' ? '#3af0e0' : '#ffd040' }), pickup: () => marker({ col: '#ff9ad8' }), closet: () => closet(), elevator: (p) => elevator({ at: ELEVATOR.findIndex((f) => f.level === p.level) }), exit: () => null, deco: (p) => p.art(),
   sealed: (p) => hatch({ w: 40, h: 40, col: '#3a3a40', lock: '#ffb040', stripe: true }),
 };
@@ -56,7 +56,7 @@ const Props = {
     if (p.kind === 'lift') return Game.s.flags.lift ? { verb: 'Ride', text: 'Take the lift ' + (p.dir || ''), tap: true } : { verb: 'Repair', text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
     if (p.kind === 'bed') return { verb: 'Sleep', text: 'Your bed', tap: true };
     if (p.kind === 'spinner') return { verb: 'Fly', text: 'Your spinner', tap: true };
-    if (p.kind === 'transit') return { verb: p.mode === 'spinner' ? 'Fly' : 'Ride', text: p.mode === 'spinner' ? 'Your spinner' : p.mode === 'subway' ? 'The subway' : 'The lift cage', tap: true };
+    if (p.kind === 'transit') return { verb: p.mode === 'spinner' ? 'Fly' : p.mode === 'hatch' ? 'Climb' : p.mode === 'manhole' ? 'Climb down' : 'Ride', text: p.mode === 'spinner' ? 'Your spinner' : p.mode === 'subway' ? 'The subway' : p.mode === 'hatch' ? 'The ladder up to the street' : p.mode === 'manhole' ? 'The manhole, down into the undercity' : 'The lift cage', tap: true };
     if (p.kind === 'keydoor') return Game.s.pack[p.key] > 0 ? { verb: 'Ride', text: p.label, tap: true } : { verb: 'Locked', text: p.label + ': it needs the ' + ITEM[p.key].name.toLowerCase(), tap: true, no: true };
     if (p.kind === 'locker') return p.done ? null : { verb: 'Open', text: 'Open the ' + (p.label || 'locker'), hold: 0.8 };
     if (p.kind === 'clue') return { verb: p.K.kind === 'photo' ? 'Enhance' : 'Examine', text: (p.K.kind === 'photo' ? 'A photo: ' : '') + p.K.name, tap: true };
@@ -92,7 +92,7 @@ const Props = {
     if (p.kind === 'bed') { Hud.toggle('bed'); return; }
     if (p.kind === 'spinner') { Hud.mode = 'spinner'; Hud.toggle('travel'); return; }
     if (p.kind === 'transit') { Hud.mode = p.mode; Hud.toggle('travel'); return; }
-    if (p.kind === 'keydoor') { if (Game.s.pack[p.key] > 0) { Hud.mode = p.mode; Hud.toggle('travel'); } else Game.toast(p.label + '. Locked: it needs the ' + ITEM[p.key].name.toLowerCase() + '.'); return; }
+    if (p.kind === 'keydoor') { if (Game.s.pack[p.key] > 0) Travel.go(Travel.KEYS[p.key] || 'street'); else Game.toast(p.label + '. Locked: it needs the ' + ITEM[p.key].name.toLowerCase() + '.'); return; }
     if (p.kind === 'locker') { const got = Game.loot(p.tier || Quests.tier(World.L.id), hash(p.x, p.y, 91) * 1e6, 1); this.finish(p); Fx.sparks(p.x, p.y - 12, 6); Game.toast('+ ' + got.join(', ')); return; }
     if (p.kind === 'clue') { if (p.K.kind === 'photo') Enhancer.open(p.caseId, p.cid, p.x, p.y); else { Cases.found(p.caseId, p.cid); } return; }
     if (p.kind === 'pickup') { Game.give(p.item, 1); Game.toast('Got: ' + ITEM[p.item].name + '. ' + (ITEM[p.item].note || ''), 'good'); World.questProps(); return; }
