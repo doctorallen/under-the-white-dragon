@@ -13,7 +13,7 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: #08060c; color: var(--ink); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; font: 14px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; }
-#view { position: fixed; inset: 0; width: 100vw; height: 100vh; image-rendering: pixelated; display: block; }
+#view { position: fixed; left: 0; top: 0; image-rendering: pixelated; display: block; }
 button { font: inherit; color: var(--ink); background: rgba(26, 18, 36, 0.86); border: 1px solid var(--edge); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
 button:disabled { opacity: 0.4; cursor: default; }
 button.quiet { background: transparent; }

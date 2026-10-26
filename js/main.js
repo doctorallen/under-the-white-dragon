@@ -39,9 +39,21 @@ function step(dt) {
   Game.cam.x += (tx - Game.cam.x) * Math.min(1, dt * 5); Game.cam.y += (ty - Game.cam.y) * Math.min(1, dt * 6);
   if (Game.t - Save.last > 8) Save.write();
 }
+// frames running slow (under 40 a second for two seconds of play): finish
+// them at a lower resolution, a step at a time
+const Perf = {
+  t: 0, n: 0,
+  check(dt) {
+    if (Game.paused || Flight.on || document.hidden) { this.t = this.n = 0; return; }
+    this.t += dt; this.n++;
+    if (this.t < 2) return;
+    const fps = this.n / this.t; this.t = this.n = 0;
+    if ((Dev.s.res || 'auto') === 'auto' && fps < 40 && View.q > 1) { View.q--; View.resize(); }
+  },
+};
 function loop(now) {
-  const dt = Math.min(0.1, (now - (Game.last || now)) / 1000); Game.last = now; Dev.frame(dt);
-  if (!Game.paused) { Game.acc += dt; let n = 0; while (Game.acc >= 1 / 60 && n < 6) { step(1 / 60); Game.acc -= 1 / 60; n++; } if (n >= 6) Game.acc = 0; }
+  const dt = Math.min(0.1, (now - (Game.last || now)) / 1000); Game.last = now; Dev.frame(dt); Perf.check(dt);
+  if (!Game.paused) { Game.acc += dt; let n = 0; while (Game.acc >= 1 / 60 && n < 4) { step(1 / 60); Game.acc -= 1 / 60; n++; } if (n >= 4) Game.acc = 0; }
   else Game.acc = 0;
   render(); Hud.tick();
   if (performance.now() - now < 9 || Game.frame % 4 === 0) Paint.ahead(Game.cam.x, Game.cam.y);

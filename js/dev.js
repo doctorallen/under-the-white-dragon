@@ -4,7 +4,7 @@
 // (localStorage `downlevel.dev`), never in the save.
 // ---------------------------------------------------------------------------
 const Dev = {
-  s: { god: false, ammo: false, freeze: false, fps: false, teleport: false, speed: 1 },
+  s: { god: false, ammo: false, freeze: false, fps: false, teleport: false, speed: 1, res: 'auto' },
   fps: 0, fa: 0, fn: 0,
   load() { try { Object.assign(this.s, JSON.parse(localStorage.getItem('downlevel.dev') || '{}')); } catch (e) { /* storage unavailable */ } },
   save() { try { localStorage.setItem('downlevel.dev', JSON.stringify(this.s)); } catch (e) { /* storage unavailable */ } },
@@ -15,6 +15,7 @@ const Dev = {
     const spawns = Object.keys(LEVELS).map((id) => { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); return Object.keys(L.spawns).map((sp) => `<button data-devgo="${id}:${sp}">${LEVELS[id].name} · ${sp}</button>`).join(''); }).join('');
     return `<p class="sub">For testing. These live in this browser only, not in your save.</p>
       <h3>Switches</h3><div class="togs">${tog('god', 'God mode', 'Nothing hurts you.')}${tog('ammo', 'Endless charge', 'The blaster never runs dry.')}${tog('freeze', 'Stop the clock', 'Time of day stays put.')}${tog('teleport', 'Teleport from the map', 'Tap anywhere on the map to go there.')}${tog('fps', 'Frame rate', 'Shown by the clock.')}</div>
+      <h3>Resolution · now ${View.out}× the view</h3><div class="buttons">${['auto', '1', '2', '3'].map((r) => `<button data-devres="${r}" class="${(this.s.res || 'auto') === r ? 'go' : ''}">${r === 'auto' ? 'Auto' : r + '×'}</button>`).join('')}</div><p class="dim">Auto starts at 3× and drops a step when frames run under 40 a second.</p>
       <h3>Run speed · ×${this.s.speed}</h3><input type="range" min="0.5" max="4" step="0.25" value="${this.s.speed}" data-devrange="speed">
       <h3>Time of day · ${Game.clock()}</h3><input type="range" min="0" max="23.99" step="0.25" value="${Game.hour()}" data-devrange="time">
       <h3>Give</h3><div class="buttons">${btn('cr', '+1000 cr')}${btn('parts', '+10 of every part')}${btn('gear', 'All gear')}${btn('gadgets', 'All gadgets')}${btn('programs', 'All programs')}${btn('heal', 'Heal, fill RAM')}${btn('levels', 'Every piece +1')}</div>
@@ -38,6 +39,7 @@ const Dev = {
       undo: () => { for (const p of World.props) if (p.done) { p.done = false; delete s.done[p.id]; p.spr = null; Props.init(p); } },
     };
     body.querySelectorAll('button[data-devdo]').forEach((b) => (b.onclick = () => { act[b.dataset.devdo](); Game.toast('Dev: ' + b.textContent + '.'); Hud.refresh(); Save.write(); }));
+    body.querySelectorAll('button[data-devres]').forEach((b) => (b.onclick = () => { this.s.res = b.dataset.devres; if (this.s.res === 'auto') View.q = 3; this.save(); View.resize(); Hud.panel('dev'); }));
     body.querySelectorAll('button[data-devgo]').forEach((b) => (b.onclick = () => { const [l, sp] = b.dataset.devgo.split(':'); Hud.toggle(null); Game.go(l, sp); }));
   },
 };

@@ -119,7 +119,7 @@ const GL = {
     g.useProgram(P.p); g.bindFramebuffer(g.FRAMEBUFFER, null); g.viewport(0, 0, g.drawingBufferWidth, g.drawingBufferHeight);
     [[this.tScene, 'scene'], [this.tGlow, 'glow'], [A.t, 'b1'], [C.t, 'b2']].forEach(([t, name], i) => { g.activeTexture(g.TEXTURE0 + i); g.bindTexture(g.TEXTURE_2D, t); g.uniform1i(P.u[name], i); });
     g.uniform2f(P.u.low, V.w, V.h); g.uniform2f(P.u.b1s, A.w, A.h); g.uniform2f(P.u.b2s, C.w, C.h);
-    g.uniform1f(P.u.scale, V.scale); g.uniform1f(P.u.screenH, g.drawingBufferHeight); g.uniform1f(P.u.fade, clamp(fade, 0, 1)); g.uniform1f(P.u.time, Game.t);
+    g.uniform1f(P.u.scale, V.out); g.uniform1f(P.u.screenH, g.drawingBufferHeight); g.uniform1f(P.u.fade, clamp(fade, 0, 1)); g.uniform1f(P.u.time, Game.t);
     const wv = new Float32Array(16), wk = new Float32Array(8); wets.slice(0, 4).forEach((w, i) => { wv.set([w.x0, w.y0, w.x1, w.depth], i * 4); wk.set([w.k, w.depth], i * 2); });
     g.uniform4fv(P.u.wet, wv); g.uniform2fv(P.u.wetk, wk); g.uniform1i(P.u.nwet, Math.min(4, wets.length));
     g.drawArrays(g.TRIANGLES, 0, 3);

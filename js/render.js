@@ -10,14 +10,21 @@
 // ---------------------------------------------------------------------------
 const View = {
   cv: null, g: null, low: null, lg: null, gl: null, gg: null, bl: null, bg: null, bl2: null, bg2: null, lc: null, lgc: null, limg: null, tmp: null, tg: null,
-  scale: 1, w: 0, h: 0, LC: 4,
+  scale: 1, w: 0, h: 0, LC: 4, out: 1, q: 3,
   // WebGL2 finishes the frame where there is one (gl.js); else the 2D canvas
   init() { this.cv = $('view'); if (!GL.init(this.cv)) this.g = this.cv.getContext('2d'); addEventListener('resize', () => this.resize()); this.resize(); },
   resize() {
     const dpr = window.devicePixelRatio || 1, W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
     this.scale = clamp(Math.round(Math.min(W, H) / T.view.min), 1, T.view.maxScale);
     this.w = Math.ceil(W / this.scale); this.h = Math.ceil(H / this.scale);
-    this.cv.width = W; this.cv.height = H;
+    // the finished frame is made at `out` screen pixels to a view pixel (at
+    // most q, the quality: 3, or less when frames run slow) and the browser
+    // scales it the rest of the way, crisply: far fewer pixels to finish than
+    // the screen's own, for a picture that's made of big pixels anyway
+    const q = Dev.s.res && Dev.s.res !== 'auto' ? +Dev.s.res : this.q;
+    this.out = Math.max(1, Math.min(this.scale, q));
+    this.cv.width = this.w * this.out; this.cv.height = this.h * this.out;
+    this.cv.style.width = (this.w * this.scale) / dpr + 'px'; this.cv.style.height = (this.h * this.scale) / dpr + 'px';
     [this.low, this.lg] = canvasOf(this.w, this.h);
     [this.gl, this.gg] = canvasOf(this.w, this.h);
     [this.bl, this.bg] = canvasOf(Math.ceil(this.w / 4), Math.ceil(this.h / 4)); this.bg.imageSmoothingEnabled = true;
@@ -83,12 +90,20 @@ function render() {
     const sx = Math.round(x - s.ax - cx), sy = Math.round(y - s.ay - cy);
     if (sx > w || sy > h || sx + s.w < 0 || sy + s.h < 0) return;
     const col = lightAt(sx + s.w / 2, sy + s.h * 0.55, ox, oy);
-    const t = V.tg; if (V.tmp.width < s.w || V.tmp.height < s.h) { V.tmp.width = Math.max(V.tmp.width, s.w); V.tmp.height = Math.max(V.tmp.height, s.h); }
-    t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0);
-    t.globalCompositeOperation = 'multiply'; t.fillStyle = flash ? '#ffffff' : css(col); t.fillRect(0, 0, s.w, s.h);
-    t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0);
-    if (flash) { t.globalCompositeOperation = 'source-atop'; t.fillStyle = 'rgba(255,255,255,0.7)'; t.fillRect(0, 0, s.w, s.h); }
-    g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h);
+    // the sprite lit by that colour, kept: most figures stand in the same light frame after frame
+    const key = flash ? 'f' : ((col[0] >> 3) << 10) | ((col[1] >> 3) << 5) | (col[2] >> 3);
+    if (!s.lit) s.lit = new Map();
+    let lc = s.lit.get(key);
+    if (!lc) {
+      if (s.lit.size > 24) s.lit.clear();
+      const [c, t] = canvasOf(s.w, s.h);
+      t.drawImage(s.c, 0, 0);
+      t.globalCompositeOperation = 'multiply'; t.fillStyle = flash ? '#ffffff' : css(col.map((q) => ((q >> 3) << 3) + 4)); t.fillRect(0, 0, s.w, s.h);
+      t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0);
+      if (flash) { t.globalCompositeOperation = 'source-atop'; t.fillStyle = 'rgba(255,255,255,0.7)'; t.fillRect(0, 0, s.w, s.h); }
+      lc = c; s.lit.set(key, lc);
+    }
+    g.drawImage(lc, sx, sy);
     // what glows behind a figure is hidden by it
     occlude(s.c, sx, sy);
     if (s.e) gg.drawImage(s.e, sx, sy);
@@ -147,7 +162,7 @@ function finishFrame(wets) {
   g.globalCompositeOperation = 'source-over';
   if (Game.fade > 0) { g.fillStyle = `rgba(0,0,0,${clamp(Game.fade, 0, 1)})`; g.fillRect(0, 0, w, h); }
   V.g.imageSmoothingEnabled = false;
-  V.g.drawImage(V.low, 0, 0, w * V.scale, h * V.scale);
+  V.g.drawImage(V.low, 0, 0, w * V.out, h * V.out);
 }
 // The runner's retinal overlay tags what's hostile: a thin outline round its
 // shape and a bar of its health over its head, drawn as light (into the glow
@@ -201,19 +216,28 @@ function lightMap(cx, cy) {
   for (const b of Actors.bolts) lights.push({ x: b.x, y: b.y, r: 30, c: b.c.map((q) => q / 255), k: 0.5, flat: 1 });
   if (Game.flash) lights.push({ x: Game.flash.x, y: Game.flash.y, r: 60, c: [1, 0.75, 0.4], k: 1, flat: 1 });
   for (const e of Actors.enemies) if (e.type === 'warden') lights.push({ x: e.x + e.face * 20, y: e.y - 50, r: 50, c: [1, 0.25, 0.3], k: 0.5, flat: 1 });
-  const low = Game.has('scanner') ? T.light.lowlight : 0, amb = L.ambient;
-  const row = [];
-  for (let j = 0; j < lh; j++) {
-    const wy = (gy0 + j) * LC + LC / 2;
-    row.length = 0; for (const l of lights) if (Math.abs(wy - l.y) * (l.flat || 1) < l.r) row.push(l);
-    for (let i = 0; i < lw; i++) {
-      const wx = (gx0 + i) * LC + LC / 2, a = typeof amb === 'function' ? amb(wx, wy) : amb;
-      let r = a[0], g = a[1], b = a[2];
-      for (const l of row) { const dx = wx - l.x, dy = (wy - l.y) * (l.flat || 1), dd = dx * dx + dy * dy; if (dd > l.r * l.r) continue; const f = Math.pow(1 - Math.sqrt(dd) / l.r, 1.5) * l.k; r += f * l.c[0]; g += f * l.c[1]; b += f * l.c[2]; }
-      if (low) { r = Math.max(r, low * 0.8); g = Math.max(g, low); b = Math.max(b, low * 0.9); }
-      const mx = Math.max(r, g, b, 0.001), qm = clamp(mx, 0.03, 1.3), k = qm / mx;
-      const o = (j * lw + i) * 4; d[o] = Math.min(255, r * k * 255); d[o + 1] = Math.min(255, g * k * 255); d[o + 2] = Math.min(255, b * k * 255); d[o + 3] = 255;
+  const low = Game.has('scanner') ? T.light.lowlight : 0, amb = L.ambient, n = lw * lh;
+  // ambient first, then each light adds itself over just the cells it reaches
+  if (!V.lR || V.lR.length !== n) { V.lR = new Float32Array(n); V.lG = new Float32Array(n); V.lB = new Float32Array(n); }
+  const R = V.lR, G = V.lG, B = V.lB, fn = typeof amb === 'function';
+  for (let j = 0, o = 0; j < lh; j++) { const wy = (gy0 + j) * LC + LC / 2; for (let i = 0; i < lw; i++, o++) { const a = fn ? amb((gx0 + i) * LC + LC / 2, wy) : amb; R[o] = a[0]; G[o] = a[1]; B[o] = a[2]; } }
+  for (const l of lights) {
+    const fl = l.flat || 1, r = l.r, r2 = r * r, c0 = l.c[0] * l.k, c1 = l.c[1] * l.k, c2 = l.c[2] * l.k, inv = 1 / r;
+    const i0 = Math.max(0, Math.floor((l.x - r) / LC) - gx0), i1 = Math.min(lw - 1, Math.ceil((l.x + r) / LC) - gx0);
+    const j0 = Math.max(0, Math.floor((l.y - r / fl) / LC) - gy0), j1 = Math.min(lh - 1, Math.ceil((l.y + r / fl) / LC) - gy0);
+    for (let j = j0; j <= j1; j++) {
+      const dy = ((gy0 + j) * LC + LC / 2 - l.y) * fl, dy2 = dy * dy; if (dy2 >= r2) continue;
+      for (let i = i0, o = j * lw + i0; i <= i1; i++, o++) {
+        const dx = (gx0 + i) * LC + LC / 2 - l.x, dd = dx * dx + dy2; if (dd >= r2) continue;
+        const t = 1 - Math.sqrt(dd) * inv, f = t * Math.sqrt(t); R[o] += f * c0; G[o] += f * c1; B[o] += f * c2;
+      }
     }
+  }
+  for (let o = 0; o < n; o++) {
+    let r = R[o], g = G[o], b = B[o];
+    if (low) { r = Math.max(r, low * 0.8); g = Math.max(g, low); b = Math.max(b, low * 0.9); }
+    const mx = Math.max(r, g, b, 0.001), qm = mx < 0.03 ? 0.03 : mx > 1.3 ? 1.3 : mx, k = (qm / mx) * 255, q = o * 4;
+    d[q] = Math.min(255, r * k); d[q + 1] = Math.min(255, g * k); d[q + 2] = Math.min(255, b * k); d[q + 3] = 255;
   }
   V.lgc.putImageData(V.limg, 0, 0);
 }
