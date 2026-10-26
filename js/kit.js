@@ -254,7 +254,7 @@ function kShop(L, x0, x1, G, kind, col, o = {}) {
       P.block(ix0, G - 10, ix1, G, KMAT.whitepanel, { base: 0.5 });
     } else if (kind === 'clinic' || kind === 'dental' || kind === 'vet') { // white tile, a glass door, a bed or a chair inside
       P.area(ix0, iy0, ix1, G, KMAT.whitepanel, (x, y) => 0.55 + (((x - ix0) % 6 === 0 || (y - iy0) % 6 === 0) ? -0.15 : 0));
-      kFill(P, ix0 + 4, iy0 + 4, mid - 2, G, '#cfefff', 0.35);
+      kFill(P, ix0 + 4, iy0 + 4, mid - 2, G, '#7aa8b4', 0.12);
       for (let y = iy0 + 4; y < G; y++) P.put(ix0 + 4 + ((y * 3) % (mid - ix0 - 6)), y, [255, 255, 255], 0.4);
       kFill(P, mid + 2, iy0 + 6, ix1 - 4, G - 16, '#0e1a1e'); for (let k = 0; k < (ix1 - mid - 8); k++) P.put(mid + 3 + k, G - 22 - Math.round(Math.sin(k * 0.8) * 2 + (k % 9 === 0 ? -3 : 0)), [90, 255, 160], 0.9);
     } else if (kind === 'pachinko' || kind === 'arcade') { // a wall of bulbs and machines
@@ -286,7 +286,7 @@ function kShop(L, x0, x1, G, kind, col, o = {}) {
   // signs and lights
   if (o.sign !== false && kind !== 'shutter') L.sign(Math.round(mid - (o.signN || 5) * 2 - 1), G - h - 11, o.signN || 5, col || '#ffd040', { r: 50, seed });
   if (kind === 'pharmacy' || kind === 'clinic' || kind === 'dental' || kind === 'vet') { const cc = kind === 'pharmacy' ? '#3aff80' : kind === 'clinic' ? '#ff3a4a' : '#e8f4ff'; L.paint(x1 - 14, G - h - 22, x1 - 2, G - h - 8, (P) => { kFill(P, x1 - 14, G - h - 22, x1 - 2, G - h - 8, '#0a0e10'); kCross(P, x1 - 8, G - h - 15, 4, cc); }); L.light(x1 - 8, G - h - 15, 50, cc, 0.7); }
-  if (kind !== 'shutter') L.light(mid, G - h / 2, Math.max(50, w * 0.8), kind === 'clinic' || kind === 'dental' || kind === 'vet' ? [0.85, 0.95, 1] : c.map((q) => Math.min(1, q / 255 * 0.7 + 0.3)), kind === 'bar' || kind === 'club' ? 0.6 : 0.75);
+  if (kind !== 'shutter') L.light(mid, G - h / 2, Math.max(50, w * 0.8), kind === 'clinic' || kind === 'dental' || kind === 'vet' ? [0.7, 0.85, 0.95] : c.map((q) => Math.min(1, q / 255 * 0.7 + 0.3)), kind === 'bar' || kind === 'club' ? 0.6 : 0.75);
 }
 
 // ---- buildings ------------------------------------------------------------------
