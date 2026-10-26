@@ -11,6 +11,7 @@ const MapView = {
   // the level as one picture, made once per level
   picture() {
     const L = World.L; if (this.cache[L.id]) return this.cache[L.id];
+    this.cache = {}; // one level's picture at a time
     const [c, g] = canvasOf(L.w, L.h), CS = T.chunk;
     g.fillStyle = '#0a0c14'; g.fillRect(0, 0, L.w, L.h);
     for (let ky = 0; ky * CS < L.h; ky++) for (let kx = 0; kx * CS < L.w; kx++) { const ch = Paint.get(kx, ky); g.drawImage(ch.c, ch.x, ch.y); }

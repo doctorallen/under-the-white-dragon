@@ -8,13 +8,6 @@
 // ---------------------------------------------------------------------------
 const Flight = {
   on: false, t: 0, dur: 4.6, to: null, spawn: null, cab: false, L: null, layers: null, skip: false,
-  // the destinations: where the spinner sets down on each level
-  PLACES: [
-    { level: 'home', spawn: 'pad', name: 'Home', note: 'The pad on floor 31.' },
-    { level: 'precinct', spawn: 'pad', name: 'Precinct 9', note: 'Cases from Lieutenant Hale; the quartermaster\'s gadgets.' },
-    { level: 'stack', spawn: 'elevator', name: 'The Stack', note: 'You set down on the block\'s roof and ride the elevator down.' },
-    { level: 'street', spawn: 'elevator', name: 'Street level', note: 'Down through the overpasses to the block\'s street door.', needs: 'been:street' },
-  ],
   cabFare() { return World.L.id === 'street' ? 45 : 30; },
   init() { addEventListener('pointerdown', () => { if (this.on && this.t > 0.6) this.skip = true; }); },
   start(level, spawn, cab) {

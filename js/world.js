@@ -48,7 +48,7 @@ function newLevel(id, name, w, h) {
 }
 
 const World = {
-  L: null, far: null, layers: [], props: [],
+  L: null, far: null, layers: [], props: [], shared: {},
   load(id) {
     if (!LEVELS[id].built) LEVELS[id].built = LEVELS[id].make();
     const L = (this.L = LEVELS[id].built);
@@ -57,7 +57,9 @@ const World = {
     this.far = null;
     if (L.far) { const f = L.far, P = new Pix(f.w, f.h, 0, 0); P.n = 3; f.paint(P); this.far = Object.assign({ f: f.f, fy: f.fy === undefined ? f.f : f.fy }, P.canvases()); }
     // or several, back to front, each moving less the further it is
-    if (!L.layersPainted) L.layersPainted = L.layers.map((f, i) => { const P = new Pix(f.w, f.h, 0, 0); P.n = 3 + i * 100; f.paint(P); return Object.assign({ f: f.f, fy: f.fy === undefined ? f.f : f.fy }, P.canvases()); });
+    // (the same city behind many places is painted once and shared)
+    const paintLayers = () => L.layers.map((f, i) => { const P = new Pix(f.w, f.h, 0, 0); P.n = 3 + i * 100; f.paint(P); return Object.assign({ f: f.f, fy: f.fy === undefined ? f.f : f.fy }, P.canvases()); });
+    if (!L.layersPainted) L.layersPainted = L.layersKey ? (World.shared[L.layersKey] = World.shared[L.layersKey] || paintLayers()) : paintLayers();
     this.layers = L.layersPainted;
     // props, with what's been done to them
     this.props = L.props.map((p) => Object.assign({}, p, { done: !!Game.s.done[p.id] }));

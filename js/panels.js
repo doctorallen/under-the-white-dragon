@@ -61,17 +61,8 @@ const PANELS = {
     const C = Cases.def(Enhancer.id), K = C.clues[Enhancer.cid];
     return ['Enhance · ' + K.name, `<div class="photowrap"><canvas id="photocv"></canvas></div><p class="sub" id="photonote">${Enhancer.found ? K.text : 'Tap to enhance where you want to look. Something in this picture matters.'}</p><div class="buttons"><button data-act="resume" class="go">Done</button></div>`];
   },
-  travel(s) {
-    const mode = Hud.mode || 'spinner', names = { spinner: 'Your spinner', subway: 'The subway', lift: 'The lift cages' };
-    const places = Travel.places(mode), byTier = {};
-    for (const id of places) (byTier[Travel.tierOf(id)] = byTier[Travel.tierOf(id)] || []).push(id);
-    const tierName = { 0: 'Above the clouds', 1: 'Up high', 2: 'Street level', 3: 'Old Town', 4: 'The Works', 5: 'The Bowels' };
-    let h = `<div class="travel"><p class="sub">${mode === 'spinner' ? 'Precinct issue, nine years old, still fast.' : mode === 'subway' ? 'The old line. The trains still run, somehow.' : 'A cage on a cable, going down.'} Where to?</p>`;
-    for (const t of Object.keys(byTier).sort()) {
-      h += `<h3>${tierName[t]}</h3><div class="rows">` + byTier[t].map((id) => { const L = LEVELS[id], ok = Travel.open(id), here = Cases.open().some((c) => { const w = Cases.where(c); return w && w.level === id; }) || Quests.open().some((q) => { const w = Quests.where(q); return w && w.level === id; }); return `<div class="row ${ok ? '' : 'passed'}"><div><b>${L.name}${here ? ' <i class="mark">◆</i>' : ''}</b><small>${ok ? (L.district ? THEME_NAMES[L.theme] || 'District' : 'Hub') : lockText(id)}</small></div><button data-go="${id}" class="go" ${ok ? '' : 'disabled'}>Go</button></div>`; }).join('') + '</div>';
-    }
-    return [names[mode], h + '</div>'];
-  },
+  travel() { return ['The city', WorldMap.html(false)]; },
+  citymap() { return ['The city', WorldMap.html(true)]; },
   ending(s) {
     const E = CASES.maker.ending.find((e) => e.flag === s.flags.ending) || CASES.maker.ending[0];
     const fates = ['iris', 'bishop', 'wren'].map((k) => `${CASES[k].suspect.name}: ${{ retire: 'retired', arrest: 'arrested', release: 'let go' }[s.flags[k]] || '?'}`).join(' · ');
@@ -82,11 +73,10 @@ const PANELS = {
 function workHtml(name) {
   return Quests.actionsFor(name).filter((a) => a.kind === 'offer').map((a) => { const Q = QUESTS[a.id]; return `<div class="ask"><h3>Work: ${Q.title}</h3><p class="dim">${Q.text}</p><div class="buttons"><button data-take="${a.id}" class="go">Take it</button></div></div>`; }).join('');
 }
-const THEME_NAMES = { neon: 'Neon streets', blocks: 'Housing blocks', plaza: 'Corporate plaza', docks: 'Canal docks', scrap: 'Scrapyards', flood: 'Flooded streets', line: 'The old line', works: 'Machine halls', servers: 'Server farms', tunnel: 'Cable tunnels', vault: 'Cooling vaults' };
 function lockText(id) {
   if (id === 'spires') return 'Meridian\'s air lanes: you need an access code';
-  if (id === 'street') return 'Find the way down from the Stack first';
-  const t = Travel.tierOf(id); return { 2: 'Find the way down to street level first', 3: 'Open the old subway on street level first', 4: 'Take the Mayor\'s lift down from Old Town first', 5: 'Go down the shaft from the Works first' }[t] || 'Not yet';
+  if (id === 'oldtown') return Game.s.pack.subwaypass > 0 ? 'Find the way down to street level first' : 'The old subway is sealed: Hale can get you a pass';
+  return { street: 'Find the way down from the Stack first', under: 'Get down to street level first: the manholes are there', old: 'Ride the old subway down to Old Town first', works: 'Take the Mayor\'s lift down from Old Town first', bowels: 'Go down the shaft from the Works first' }[Travel.band(id)] || 'Not yet';
 }
 // the case file: rank, then each open case: what's found, what's left, the
 // leads, the suspect; then open jobs and what's been closed
@@ -132,7 +122,6 @@ function panelBind(body, which) {
   body.querySelectorAll('button[data-night]').forEach((b) => (b.onclick = () => { Cases.takeNight(); re(); }));
   body.querySelectorAll('button[data-warrant]').forEach((b) => (b.onclick = () => { Warrants.take(+b.dataset.warrant); re(); }));
   body.querySelectorAll('button[data-role]').forEach((b) => (b.onclick = () => { Hud.toggle(null); NPC_ROLE[n.def.role].use(n); }));
-  body.querySelectorAll('button[data-go]').forEach((b) => (b.onclick = () => Travel.go(b.dataset.go, Hud.mode)));
   body.querySelectorAll('button[data-track]').forEach((b) => (b.onclick = () => { s.track = b.dataset.track; re(); }));
   body.querySelectorAll('button[data-use]').forEach((b) => (b.onclick = () => { if (ITEM[b.dataset.use].kind === 'throwable') { s.quick = b.dataset.use; Hud.toggle(null); Game.useItem(b.dataset.use); } else { Game.useItem(b.dataset.use); re(); } }));
   body.querySelectorAll('button[data-quick]').forEach((b) => (b.onclick = () => { s.quick = b.dataset.quick; Hud.refresh(); }));
@@ -140,4 +129,5 @@ function panelBind(body, which) {
   body.querySelectorAll('button[data-call]').forEach((b) => (b.onclick = () => { const c = Cases.st(Baseline.id); c.test = b.dataset.call; Save.write(); const who = Actors.npcs.find((q) => q.def.name === Cases.def(Baseline.id).suspect.name); Hud.toggle('talk', who || Hud.who); }));
   if (which === 'test') { const cv = $('testcv'), dpr = window.devicePixelRatio || 1; cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr; if (!Baseline.raf) Baseline.draw(); }
   if (which === 'photo') Enhancer.attach();
+  if (which === 'travel' || which === 'citymap') WorldMap.attach();
 }

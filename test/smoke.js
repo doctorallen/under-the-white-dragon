@@ -76,7 +76,7 @@ async function run(B, url, vp, name, failures) {
   if (!st.frame) fail('the loop is not running');
   await shot('home');
   // out to the pad and the spinner, up to the precinct
-  const fly = await E(() => { T_.walkTo(1760); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-go="precinct"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
+  const fly = await E(() => { T_.walkTo(1760); T_.tap('useHit'); const o = Hud.open; WorldMap.sel = 'precinct'; WorldMap.info(); const b = document.querySelector('button[data-go="precinct"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
   if (fly.o !== 'travel' || !fly.on || fly.level !== 'precinct') fail('the spinner did not fly to the precinct ' + JSON.stringify(fly));
   await shot('precinct');
   // Hale's job and the first case, and the quartermaster's lenses
@@ -139,7 +139,7 @@ async function run(B, url, vp, name, failures) {
   const home = await E(() => { T_.walkTo(350); T_.tap('useHit'); const b = document.querySelector('button[data-floor="home"]'); if (b) b.click(); T_.run({}, 90); return Game.s.level; });
   if (home !== 'home') fail('the street elevator did not go home (' + home + ')');
   // the spinner to Neon Row and the Menagerie case
-  const row = await E(() => { T_.walkTo(1760); T_.tap('useHit'); const b = document.querySelector('button[data-go="d_neonrow"]'); if (b) b.click(); T_.run({}, 330); return { level: Game.s.level, clues: World.props.filter((p) => p.kind === 'clue').length }; });
+  const row = await E(() => { T_.walkTo(1760); T_.tap('useHit'); WorldMap.sel = 'd_neonrow'; WorldMap.info(); const b = document.querySelector('button[data-go="d_neonrow"]'); if (b) b.click(); T_.run({}, 330); return { level: Game.s.level, clues: World.props.filter((p) => p.kind === 'clue').length }; });
   if (row.level !== 'd_neonrow' || row.clues !== 3) fail('the spinner did not reach Neon Row with its clues ' + JSON.stringify(row));
   const clues = await E(() => {
     const out = {};
@@ -182,7 +182,9 @@ async function run(B, url, vp, name, failures) {
   // every level loads and draws
   if (name === 'phone') {
     const lv = await E(() => { const bad = []; const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
-    if (lv.bad.length || lv.n < 25) fail('levels failed to load: ' + JSON.stringify(lv));
+    if (lv.bad.length || lv.n < 30) fail('levels failed to load: ' + JSON.stringify(lv));
+    const cm = await E(() => { Hud.toggle('citymap'); const ok = !!WorldMap.img && !!$('worldcv'); const off = Object.keys(LEVELS).filter((id) => LEVELS[id].metres === undefined || LEVELS[id].mapX === undefined); Hud.toggle(null); return { ok, off }; });
+    if (!cm.ok || cm.off.length) fail('the city map did not open, or places are missing from it ' + JSON.stringify(cm));
   }
   // a reload brings it back
   const before = await E(() => { Save.write(); return JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.gadgets, w: Game.s.flags.warden, g: Game.s.gear.on }); });

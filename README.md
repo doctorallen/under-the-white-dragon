@@ -30,7 +30,8 @@ On Android the browser offers to install it the first time you tap; after that, 
 
 ## The city
 
-- **Five hand-built hubs** and **23 generated districts** in six tiers, from the Spires above the clouds to the Bowels: Floor 31 (home), Precinct 9, the Stack, street level, Old Town, the Works, the Bowels and the Spires. Districts are built from a theme's blocks (`gen.js`) and reached by spinner up high, by the old subway in Old Town and by lift cages below that.
+- **35 places, every one built by hand**, from the Spires above the clouds to the Bowels: home, the precinct, the Stack and street level; up high Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge and the Arcology Gardens; on the street the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley and Clinic Row; under it the undercity (the Main Drain, Boiler House Nine, Substation Seven, the Waterworks); then Old Town and its arcade, chapel, old line, cistern market and lantern quarter; the Works with its pump hall, foundry, server farm and coolant vats; the Bowels with its cable run, cooling vaults, gut and old roots.
+- **The city map:** every way out (a spinner pad, a subway platform, a lift cage, a manhole) opens a cross-section of the whole city with every place pinned at its depth; tap one and go. The pause menu shows it too.
 - **Five story cases** (`CASES` in `cases.js`): the Menagerie on Neon Row, then Iris, Bishop and Wren (the synths who ran, each behind a boss), and the maker in the Spires, with three endings. **The night desk** makes a short case every night (a shot pet, a chrome deal, a missing person) somewhere you can reach.
 - **Eighteen jobs** (`QUESTS` in `quests.js`) from Hale and the people of every hub, and a **warrants board** of named chromers.
 - **Enemies** (`ENEMY` in `enemies.js`): drones, sentinels, gangers, gunners, bruisers, spider-bots, turrets, shielded corp guards, ferals, Meridian enforcers, and six bosses: the Warden, the Gutter King, the Old Mayor, the Foreman, the Root and Halden. A suspect who runs is a fugitive.
@@ -61,7 +62,14 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/cases.js` | Cases (`CASES`, `Cases`), the night desk, ranks, the baseline test, the photo enhancer |
 | `js/world.js` | The level builder and `World` |
 | `js/levels.js` | Home, the precinct, the Stack and street level; `cityLayers` |
-| `js/gen.js` | Generated districts (`THEMES`, `BLOCKS`, `buildPlace`), Old Town, the Works, the Bowels, the Spires, and `Travel` |
+| `js/kit.js` | The architect's kit: shophouses, capsule towers, townhouses, temples, shrine gates, pagodas, glass towers, shanty stacks, slab blocks, theatres, bathhouses, arcades, shopfronts, trees, fifteen kinds of stall; and `district()`, the frame every place is built in |
+| `js/travel.js` | `Travel` (what's open and how you get there), boss arenas, key doors, locals' lines |
+| `js/d_high.js` | Up high: Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge, the Arcology Gardens, the Spires |
+| `js/d_street.js` | Street level: the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley, Clinic Row |
+| `js/d_under.js` | The undercity: the Main Drain, Boiler House Nine, Substation Seven, the Waterworks |
+| `js/d_old.js` | Old Town and its districts |
+| `js/d_works.js` | The Works and its districts |
+| `js/d_deep.js` | The Bowels and its districts |
 | `js/things.js` | Props in play: looks, yields, prompts, uses |
 | `js/game.js` | `Game`: state and rules; programs |
 | `js/save.js` | localStorage save and load |
@@ -72,6 +80,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/hack.js` | Jacking in |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
 | `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |
+| `js/worldmap.js` | The city map: the city in cross-section, every place at its depth; travel from it |
 | `js/dev.js` | Dev settings: switches and cheats for testing, kept in this browser only |
 | `js/flight.js` | Flying: the spinner's destinations, cabs, the flight through the city |
 | `js/skyline.js` | The city behind: layered towers, clouds, giant holograms, the monorail |

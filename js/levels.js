@@ -35,6 +35,7 @@ function crowd(L, n, x0, x1, y, seed) {
 // the city behind, seen from the Stack and through windows above it: three
 // layers of towers, holograms between them, the monorail
 function cityLayers(L) {
+  L.layersKey = 'city';
   // ---- the city behind: three layers of towers, nearer ones bigger, warmer
   // and quicker to move; the sky and its clouds go with the farthest
   L.layers = [
@@ -71,7 +72,7 @@ const ELEVATOR = [
 
 // ---- home: your apartment on floor 31, the hall, the elevator --------------------
 LEVELS.home = {
-  name: 'Floor 31', depth: '+40 m', tier: 1, hub: true,
+  name: 'Floor 31', depth: '+40 m', tier: 1, hub: true, metres: 40, mapX: 250, label: 'Home', blurb: 'Your apartment on floor 31, the hall, the elevator, your spinner on the pad.',
   make() {
     const L = newLevel('home', 'Floor 31', 1940, 262);
     const G = 226, CEIL = 104, APT = 384, EL = 1470, IN = 1520;
@@ -152,7 +153,7 @@ LEVELS.home = {
 
 // ---- Precinct 9: a pad on the tower's side, the lobby, cells, the lieutenant, the armoury
 LEVELS.precinct = {
-  name: 'Precinct 9', depth: '+120 m', tier: 1, hub: true,
+  name: 'Precinct 9', depth: '+120 m', tier: 1, hub: true, metres: 120, mapX: 640, label: 'Police', blurb: 'Lieutenant Hale\'s cases and the night desk; Quartermaster Ito\'s gadgets.',
   make() {
     const L = newLevel('precinct', 'Precinct 9', 1560, 262);
     const G = 226, CEIL = 100, IN = 420;
@@ -208,7 +209,7 @@ LEVELS.precinct = {
 
 // ---- L1: the Stack ------------------------------------------------------------
 LEVELS.stack = {
-  name: 'The Stack', depth: '0 m', tier: 1, hub: true,
+  name: 'The Stack', depth: '0 m', tier: 1, hub: true, metres: 0, mapX: 200, label: 'Your block', blurb: 'The market under your block: Mama Ruiz\'s noodles, Kit, Mags the fabricator, Juno\'s bar.',
   make() {
     const L = newLevel('stack', 'The Stack', 2560, 690);
     const G = 640, MID = 500, UP = 360, YARD = 2200;
@@ -366,7 +367,7 @@ LEVELS.stack = {
 
 // ---- L2: street level -----------------------------------------------------------
 LEVELS.street = {
-  name: 'Street level', depth: '−60 m', tier: 2, hub: true,
+  name: 'Street level', depth: '−60 m', tier: 2, hub: true, metres: -60, mapX: 260, label: 'Under your block', blurb: 'Under the overpasses: Ozu\'s fence, the back-alley clinic, gang turf, and the old subway down to Old Town.',
   make() {
     const L = newLevel('street', 'Street level', 2400, 500);
     const G = 452;
@@ -442,7 +443,9 @@ LEVELS.street = {
     L.critter('rat', 0, 2300, G, 4); L.litter(0, 2380, G, 10);
     L.vents.push({ x: 820, y: G, kind: 'steam' }, { x: 1360, y: G, kind: 'steam' }, { x: 2040, y: G, kind: 'steam' });
     for (const x of [80, 230, 470, 760, 1010, 1330, 1520, 1890, 2150]) L.drips.push({ x, y0: 162, y1: G });
-    L.spawns = { shaft: [128, G], lift: [300, G], elevator: [350, G], subway: [2300, G] }; L.ground = G;
+    // a manhole down into the undercity
+    L.prop('transit', 460, G, { mode: 'manhole', label: 'manhole' }); L.vents.push({ x: 460, y: G - 2, kind: 'steam' });
+    L.spawns = { shaft: [128, G], lift: [300, G], elevator: [350, G], subway: [2300, G], manhole: [470, G] }; L.ground = G;
     L.ambient = [0.15, 0.12, 0.2];
     L.wet.push({ y: G + 1, x0: 0, x1: L.w, depth: 24, k: 0.45 });
     L.rain = 0;
