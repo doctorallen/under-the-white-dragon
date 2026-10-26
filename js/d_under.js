@@ -292,7 +292,7 @@ function unGenerator(P, x0, G, o = {}) {
   P.block(x0 + w - 30, top - 26, x0 + w - 6, top, ramp, { base: 0.5 }); unGauge(P, x0 + w - 18, top - 13, 6, 0.6);
 }
 addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under the city: transformers humming behind the fence, busbars, cable trays, a hall of generators, and the engineers who keep the lights on.', 'Substation', () => district({
-  id: 'd_substation', name: 'Substation Seven', tier: 2, W: 2600, sky: false, transit: 'hatch', crowd: 2, amb: [0.16, 0.2, 0.24], floor: MAT.concrete,
+  id: 'd_substation', name: 'Substation Seven', tier: 2, W: 2600, sky: false, transit: 'hatch', crowd: 2, amb: [0.24, 0.27, 0.32], floor: MAT.concrete,
   local: { name: 'Lineman Bex', lines: ['Don\'t touch anything that hums. Everything hums.', 'Half the Stack\'s lights run through that yard. When it trips, people riot.', 'The arcing\'s normal. Mostly. Stand back from the blue.'], look: { skin: SKINS[1], hair: 'helmet', armor: '#ffd040', visor: '#2a2a2a', top: '#2a4a6a', legs: '#2a2a2a' } },
   build(L, G) {
     const W = L.w;
@@ -300,8 +300,8 @@ addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under t
     L.paint(0, 0, W, G, (P) => {
       P.block(0, 0, W, G, MAT.concreteD, { base: 0.36, panels: [80, 60], drips: 0.12, dripLen: 40, lip: 0 });
       for (let x = 0; x < W; x += 160) P.block(x, 0, x + 18, G, MAT.concrete, { base: 0.42, lip: 0 });
-      P.block(0, 150, W, 172, MAT.concrete, { base: 0.45 });
-      for (const y of [184, 214, G - 120]) unTray(P, 0, W, y);
+      P.block(0, G - 200, W, G - 182, MAT.concrete, { base: 0.45 });
+      for (const y of [G - 176, G - 120]) unTray(P, 0, W, y);
       for (let x = 20; x < W; x += 3) P.put(x, G - 2, (x >> 3) % 2 ? [220, 170, 30] : [24, 22, 18]);
     });
     // the transformer yard: four behind a fence, the gantry and busbars over them
@@ -331,10 +331,96 @@ addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under t
     for (const x of [2450, 2475, 2500, 2525, 2550]) L.prop('rack', x, G, { label: 'switchgear cabinet' });
     L.prop('locker', 2590, G, { tier: 2, label: 'fuse locker' });
     L.prop('ac', 1360, G, { label: 'cooling fan' }); L.prop('junk', 2100, G, { label: 'burnt-out switchgear' });
-    for (const x of [200, 700, 1250, 2000, 2440]) L.tube(x, 176, 26, '#e8f4ff', 0.75);
+    for (const x of [200, 700, 1250, 2000, 2440]) L.tube(x, G - 181, 26, '#e8f4ff', 0.8);
     for (const x of [680, 1900]) L.prop('deco', x, G, { art: () => unFrontPipe(200, x), id: 'unfp' + x, front: 1 });
     kFoes(L, G, [['sentinel', 700, 400, 1200, G - 80], ['drone', 1250, 1000, 1350], ['spider', 1700, 1420, 2040, G - 120], ['turret', 2110, 2000, 2400, G - 100], ['gunner', 2470, 2420, 2590]]);
     L.spots.push([200, G], [450, G], [700, G], [950, G], [1200, G], [1550, G], [1950, G], [2260, G], [2500, G]);
     L.critter('rat', 200, W - 100, G, 2);
+  },
+}));
+
+// ---- The Waterworks -------------------------------------------------------------------
+// a beam pump: a tall cylinder, a rod up to a rocking beam, the flywheel
+function unBeamPump(P, x0, G, o = {}) {
+  const red = R(['#1a0806', '#4a140e', '#7a2418', '#d85a3a']), green = UNMAT.green, cx = x0 + 40, top = G - 200;
+  P.block(x0 - 10, G - 20, x0 + 150, G, KMAT.stone, { base: 0.5, panels: [20, 10] });
+  P.area(x0 + 20, G - 140, x0 + 60, G - 20, green, (x, y) => 0.7 - Math.abs((x - x0 - 20) / 40 - 0.3) * 1.1 + ((G - 20 - y) % 30 < 2 ? 0.15 : 0));
+  P.block(x0 + 16, G - 146, x0 + 64, G - 138, KMAT.gold, { base: 0.5 }); P.block(x0 + 16, G - 26, x0 + 64, G - 20, KMAT.gold, { base: 0.5 });
+  for (let y = top + 10; y < G - 146; y++) { P.put(cx - 1, y, tone(MAT.chrome, 0.75)); P.put(cx, y, tone(MAT.chrome, 0.45)); P.put(cx + 1, y, tone(MAT.chrome, 0.2)); }
+  // the beam on its pillar
+  P.block(x0 + 84, top + 6, x0 + 100, G - 20, red, { base: 0.45, panels: [16, 24] });
+  P.area(x0 + 20, top - 4, x0 + 150, top + 12, red, (x, y) => 0.62 - Math.abs(y - top - 4) / 12, { inside: (x, y) => Math.abs(y - top - 4 - (x - x0 - 92) * (o.tilt || 0.05)) < 5 - Math.abs(x - x0 - 92) / 40 });
+  unWheel(P, x0 + 92, top + 4, 5, KMAT.gold, { spokes: 4 });
+  // the flywheel and its crank
+  unWheel(P, x0 + 130, G - 66, 44, red, { spokes: 6, th: 4, rot: o.rot || 0.3 }); for (let y = top + 10; y < G - 66; y++) P.put(x0 + 146 + Math.round((y - top) * 0.04), y, tone(MAT.steel, 0.6));
+}
+// the cistern: still water, columns standing in it in rows, vaults over
+function unCistern(P, x0, x1, G, o = {}) {
+  const wy = G - 30, VY = G - 150;
+  P.area(x0, 0, x1, wy, UNMAT.brickD, (x, y) => 0.2 + (noise(x / 40, y / 30, 3) - 0.5) * 0.1);
+  // the back row of columns, small and dark, then the near row, big
+  for (const [step, cw, base, ramp, off] of [[60, 8, 0.25, KMAT.stone, 30], [120, 16, 0.45, KMAT.stone, 0]]) {
+    for (let cx = x0 + off; cx < x1; cx += step) {
+      P.area(cx - cw / 2, VY + 20, cx + cw / 2, wy, ramp, (x, y) => base + 0.25 - Math.abs((x - cx) / cw + 0.15) * 0.6 + ((y - VY) % 26 < 2 ? 0.1 : 0) - (y > wy - 10 ? 0.1 : 0));
+      P.block(cx - cw / 2 - 3, VY + 14, cx + cw / 2 + 3, VY + 20, ramp, { base: base + 0.15 });
+      // the vault from this column to the next
+      const r = step / 2; P.area(cx, VY - r, cx + step, VY + 16, UNMAT.brick, (x, y) => base + 0.1 + (Math.floor(Math.atan2(VY + 16 - y, x - cx - r) * 10) % 2 ? 0.06 : -0.04), { inside: (x, y) => { const d = Math.hypot(x - cx - r, y - VY - 16); return y <= VY + 16 && d >= r - (cw > 10 ? 6 : 3) && d <= r; } });
+    }
+  }
+  // the water: still, a sheen, the columns' reflections
+  P.area(x0, wy, x1, G, UNMAT.water, (x, y) => 0.3 + (noise(x / 30, y / 2, 61) - 0.5) * 0.2 + (y < wy + 2 ? 0.35 : 0));
+  for (let cx = x0; cx < x1; cx += 120) for (let y = wy + 2; y < G; y++) for (let i = -7; i <= 7; i++) if (hash(cx + i, y, 2) < 0.5) P.tint(cx + i + Math.round(Math.sin(y) * 1), y, [120, 120, 110], 0.18);
+}
+addDistrict('d_waterworks', 'The Waterworks', 2, -122, 900, 'Where the city\'s water is pumped and kept: old beam engines, a cistern of columns standing in still water, filter beds, a wall of gauges.', 'Waterworks', () => district({
+  id: 'd_waterworks', name: 'The Waterworks', tier: 2, W: 2700, sky: false, transit: 'hatch', crowd: 2, amb: [0.2, 0.24, 0.27], floor: KMAT.stone,
+  local: { name: 'Keeper Ines', lines: ['Two million people drink what comes through here. Most of it\'s even water.', 'Don\'t lean on the rails in the cistern. The water\'s deeper than the street is high.', 'Something swims in there. I\'ve stopped asking what.'], look: { skin: SKINS[3], hair: 'bun', hairCol: '#2a1a14', top: '#2a4a5a', coat: 'long', legs: '#2a2a30' } },
+  build(L, G) {
+    const W = L.w, CX0 = 760, CX1 = 2000;
+    // the pump house: brick walls, tall arched windows into dark, two beam pumps
+    L.paint(0, 0, CX0, G, (P) => {
+      unBrick(P, 0, 0, CX0, G, UNMAT.brickY, { seed: 51, base: 0.36, wet: false });
+      for (let x = 30; x < CX0; x += 100) { const f = unArchIn(x + 20, G - 60, 40, 120); P.area(x, G - 180, x + 40, G - 60, UNMAT.water, (xx, y) => 0.15 + (y - G + 180) / 600, { inside: f }); }
+      P.area(0, G - 50, CX0, G, UNMAT.tile, (x, y) => 0.42 + ((x % 8 === 0 || (y - G + 50) % 8 === 0) ? -0.2 : 0));
+      unBeamPump(P, 120, G, { tilt: 0.06, rot: 0.2 }); unBeamPump(P, 420, G, { tilt: -0.05, rot: 1.1 });
+      pipe(P, 0, G - 44, CX0, G - 34, MAT.copper, { joints: 30 });
+    });
+    for (const x of [200, 500]) L.light(x, G - 70, 110, [1, 0.8, 0.55], 0.7);
+    L.walk(80, 700, G - 112, 4, MAT.steelD); L.stairs(60, G, 150, G - 112); L.ladder(690, G - 112, G);
+    L.prop('locker', 360, G - 112, { tier: 2, label: 'keeper\'s locker' }); L.spots.push([300, G - 112], [600, G - 112]);
+    L.prop('ac', 330, G, { label: 'pump motor' }); L.prop('junk', 640, G, { label: 'old pump parts' });
+    // the cistern: a walkway over the water, columns going off into the dark
+    L.paint(CX0, 0, CX1, G, (P) => unCistern(P, CX0, CX1, G));
+    L.paint(CX0, G - 10, CX1, L.h, (P) => {
+      for (let x = CX0; x < CX1; x++) for (let y = G; y < G + 4; y++) P.put(x, y, (x + y) % 3 === 0 ? [20, 22, 24] : tone(MAT.steel, 0.5 - (y - G) * 0.08));
+      P.area(CX0, G + 4, CX1, L.h, UNMAT.water, (x, y) => 0.28 + (noise(x / 24, y / 2, 63) - 0.5) * 0.22 + (y < G + 6 ? 0.25 : 0));
+      railing(P, CX0, CX1, G, MAT.steel, { h: 9, step: 6 });
+    });
+    L.wet.push({ y: G + 4, x0: CX0, x1: CX1, depth: 40, k: 0.65 });
+    for (let x = CX0 + 60; x < CX1; x += 240) { unLamp(L, x, G - 110, [1, 0.85, 0.6], 0.8, { r: 110 }); L.drips.push({ x: x + 40, y0: G - 150, y1: G - 30 }); }
+    L.walk(1180, 1560, G - 120, 4, MAT.steelD); L.ladder(1190, G - 120, G); L.ladder(1550, G - 120, G);
+    L.prop('locker', 1480, G - 120, { tier: 2, label: 'survey locker' }); L.spots.push([1350, G - 120]);
+    // a rowing boat moored behind the rail, a sign about the depth
+    L.paint(1640, G - 44, 1740, G - 20, (P) => { P.area(1650, G - 34, 1730, G - 24, KMAT.plywood, (x, y) => 0.55 - (y - G + 34) / 16, { inside: (x, y) => y < G - 24 - Math.max(0, Math.abs(x - 1690) - 30) * 0.3 }); kH(P, 1650, 1730, G - 34, tone(KMAT.plywood, 0.8)); });
+    L.paint(900, G - 70, 960, G - 50, (P) => unSign(P, 902, G - 66, 11, { seed: 71, bg: '#7a1a1a' }));
+    // the filter beds: tanks of sand and gravel, water on top, pipes between
+    L.paint(CX1, 0, 2420, G, (P) => {
+      P.block(CX1, 0, 2420, G, MAT.concreteD, { base: 0.34, panels: [60, 50], lip: 0 });
+      for (let k = 0; k < 3; k++) { const x0 = CX1 + 20 + k * 134, x1 = x0 + 120; P.block(x0 - 4, G - 64, x1 + 4, G, MAT.concrete, { base: 0.48 }); for (let y = G - 60; y < G - 4; y++) for (let x = x0; x < x1; x++) P.put(x, y, y < G - 52 ? tone(UNMAT.water, 0.45 + (y === G - 60 ? 0.3 : 0)) : y < G - 36 ? tone(KMAT.cream, 0.4 + hash(x, y, 1) * 0.3) : y < G - 20 ? tone(KMAT.stone, 0.3 + hash(x, y, 2) * 0.3) : tone(KMAT.stone, 0.15 + hash(x >> 1, y >> 1, 3) * 0.3)); pipe(P, x1, G - 90, x1 + 14, G - 30, MAT.copper, { joints: 12 }); unWheel(P, x1 + 7, G - 96, 6, R(['#2a0806', '#6a1a10', '#a82a1a', '#e85a3a']), { spokes: 4 }); }
+      pipe(P, CX1, G - 116, 2420, G - 104, MAT.copper, { joints: 34 });
+    });
+    for (const x of [2080, 2214, 2348]) L.tube(x, G - 130, 24, '#e8f8ff', 0.7);
+    // the gauge wall: water levels in glass, big dials
+    L.paint(2420, 0, W, G, (P) => {
+      P.block(2420, 0, W, G, UNMAT.green, { base: 0.36, panels: [50, 40], lip: 0 });
+      for (let k = 0; k < 6; k++) { const x = 2440 + k * 22, lv = 0.3 + hash(k, 4, 9) * 0.6; P.block(x - 3, G - 150, x + 5, G - 50, MAT.chrome, { base: 0.55 }); for (let y = G - 146; y < G - 54; y++) P.put(x + 1, y, y > G - 54 - lv * 92 ? [60, 180, 230] : [20, 30, 34], y > G - 54 - lv * 92 ? 0.6 : 0); }
+      for (let k = 0; k < 4; k++) unGauge(P, 2460 + k * 36, G - 30, 9, hash(k, 6, 1));
+    });
+    L.light(2560, G - 90, 120, [0.4, 0.8, 1], 0.7);
+    L.prop('vending', 2400, G, { look: { col: '#3af0e0', body: '#2a4a5a' }, label: 'vending machine' }); L.light(2400, G - 14, 34, [0.3, 0.9, 1], 0.6);
+    L.prop('locker', 2650, G, { tier: 2, label: 'keeper\'s locker' }); L.prop('wreck', 2300, G, { label: 'dead survey drone' });
+    L.npc({ name: 'Pump Hand Joss', look: { skin: SKINS[2], hair: 'cap', capCol: '#2a4a6a', top: '#3a4a5a', apron: '#2a2a2a', legs: '#2a2a2a' }, x: 2560, y: G, face: -1, sched: [[0, 24, 2560, 'stand']], lines: ['Levels are down three percent. Somebody upstream is stealing water. Again.', 'The engines are a hundred years old. Still the best thing down here.'] });
+    kFoes(L, G, [['spider', 450, 100, 700, G - 112], ['feral', 1100, 900, 1350], ['feral', 1700, 1500, 1950], ['drone', 1400, 1200, 1600], ['gunner', 2200, 2050, 2380]]);
+    L.spots.push([250, G], [600, G], [900, G], [1200, G], [1500, G], [1850, G], [2150, G], [2500, G]);
+    L.critter('rat', 200, 750, G, 2); L.critter('rat', 2000, W - 100, G, 1);
   },
 }));

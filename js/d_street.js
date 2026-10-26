@@ -24,14 +24,16 @@ function stPier(P, x, w, y0, G, seed) {
 }
 // a quay: timber planks on top, piles going down into black water between
 function stQuay(P, x0, x1, G, H) {
-  P.area(x0, G, x1, G + 5, KMAT.plywood, (x, y) => 0.5 + ((x - x0) % 9 === 0 ? -0.25 : 0) + (y === G ? 0.25 : 0) + (noise(x / 5, y, 4) - 0.5) * 0.2);
-  for (let x = x0; x < x1; x++) for (let y = G + 5; y < H; y++) P.put(x, y, tone(KMAT.water, 0.2 + (noise(x / 14, y / 3, 61) - 0.5) * 0.15));
-  for (let x = x0 + 6; x < x1 - 4; x += 22) P.block(x, G + 5, x + 5, H, KMAT.darkwood, { base: 0.42, lip: 0 });
-  for (let x = x0; x < x1; x++) P.put(x, G + 6, tone(KMAT.darkwood, 0.15));
+  P.area(x0, G, x1, G + 5, KMAT.plywood, (x, y) => 0.62 + ((x - x0) % 9 === 0 ? -0.35 : 0) + (y === G ? 0.25 : 0) + (noise(x / 5, y, 4) - 0.5) * 0.2);
+  P.block(x0, G + 5, x1, G + 8, KMAT.darkwood, { base: 0.45, lip: 0 });
+  for (let x = x0; x < x1; x++) for (let y = G + 8; y < H; y++) P.put(x, y, tone(KMAT.water, 0.22 + (noise(x / 14, y / 3, 61) - 0.5) * 0.18 + (y > G + 26 && (x * 7 + y * 13) % 61 === 0 ? 0.4 : 0)));
+  for (let x = x0 + 6; x < x1 - 4; x += 22) P.block(x, G + 8, x + 5, H, KMAT.darkwood, { base: 0.42, lip: 0 });
+  for (let x = x0; x < x1; x++) P.put(x, G + 26, tone(KMAT.water, 0.6));
 }
 // open water under a gangway: a thin deck with rope rails, the canal below
 function stGangway(P, x0, x1, G, H) {
-  for (let x = x0; x < x1; x++) for (let y = G + 3; y < H; y++) P.put(x, y, tone(KMAT.water, 0.25 + (noise(x / 20, y / 2, 61) - 0.5) * 0.25 + ((x * 7 + y * 13) % 53 === 0 ? 0.4 : 0)));
+  for (let x = x0; x < x1; x++) for (let y = G + 3; y < H; y++) P.put(x, y, tone(KMAT.water, 0.3 + (noise(x / 20, y / 2, 61) - 0.5) * 0.3 + ((x * 7 + y * 13) % 37 === 0 ? 0.5 : 0) + (noise(x / 6, y / 1.5, 62) > 0.72 ? 0.25 : 0)));
+  for (const px of [x0 + 2, x1 - 6]) P.block(px, G - 2, px + 4, H, KMAT.darkwood, { base: 0.5, lip: 0 });
   P.area(x0, G, x1, G + 3, KMAT.plywood, (x, y) => 0.55 + ((x - x0) % 5 === 0 ? -0.3 : 0));
   for (let x = x0; x < x1; x += 30) { for (let y = G - 10; y < G; y++) P.put(x, y, tone(KMAT.darkwood, 0.6)); }
   cable(P, x0, G - 10, x1, G - 10, 4, '#7a6a4a'); cable(P, x0, G - 5, x1, G - 5, 3, '#5a4a34');
@@ -82,7 +84,8 @@ function stWarehouse(P, x0, x1, G, h, num, col) {
   const top = G - h;
   corrugated(P, x0, top, x1, G, KMAT.corrBlue);
   P.area(x0 - 6, top - 20, x1 + 6, top + 2, MAT.rust, (x, y) => 0.5 + ((x - x0) % 3 === 0 ? 0.15 : 0) - (y - top + 20) / 40, { inside: (x, y) => y >= top - 20 + Math.abs(x - (x0 + x1) / 2) / ((x1 - x0) / 2 + 6) * 20 });
-  const s = String(num); for (let i = 0; i < s.length; i++) for (const [a, b] of GLYPHS[(s.charCodeAt(i) * 3) % GLYPHS.length]) kFill(P, x0 + 20 + i * 22 + a * 6, top + 14 + b * 6, x0 + 26 + i * 22 + a * 6, top + 20 + b * 6, col || '#e8d8b0');
+  stNumber(P, x0 + 24, top + 16, num, 8, col || '#e8d8b0');
+  for (let k = 0; k < 40; k++) P.tint(x0 + 20 + hash(k, 1, 7) * 110, top + 14 + hash(k, 2, 7) * 44, [20, 30, 40], 0.5);
   const dx = x1 - 110; P.area(dx, G - 56, dx + 70, G, rp('#7a7a7a', 7), (x, y) => ((y - G + 56) % 3 === 0 ? 0.25 : 0.55) - (x - dx) / 300);
   P.block(dx - 3, G - 60, dx + 73, G - 56, MAT.steelD, { base: 0.5 });
   for (let x = dx; x < dx + 70; x++) for (let y = G - 5; y < G; y++) P.put(x, y, ((x + y) >> 2) % 2 ? [220, 170, 40] : [26, 22, 18]);
@@ -93,11 +96,12 @@ function stGarage(P, x0, x1, G, o = {}) {
   P.block(x0, G - h - 10, x1, G, o.wall || MAT.brickD, { base: 0.38, drips: 0.2, dripLen: 20 });
   kFill(P, x0 + 8, G - h, x1 - 8, G, '#141210');
   P.area(x0 + 8, G - h, x1 - 8, G - h + (o.open || 22), rp('#6a6a70', 7), (x, y) => ((y - G + h) % 3 === 0 ? 0.25 : 0.55));
-  kFill(P, x0 + 10, G - h + (o.open || 22), x1 - 10, G, '#2a2620', 0.05);
+  for (let x = x0 + 10; x < x1 - 10; x++) for (let y = G - h + (o.open || 22); y < G; y++) P.put(x, y, mixRgb([110, 88, 60], [40, 32, 26], (y - G + h) / h), 0.12);
+  kFill(P, x0 + 20, G - h + (o.open || 22) + 1, x1 - 20, G - h + (o.open || 22) + 2, '#fff0c8', 0.9);
   for (let x = x0 + 14; x < x1 - 14; x += 6) { P.put(x, G - h + (o.open || 22) + 4, tone(MAT.steel, 0.6)); P.put(x + 1, G - h + (o.open || 22) + 6, tone(MAT.copper, 0.6)); }
   // the lift posts and the car on it, wheels off
   const ly = G - 22; for (const px of [x0 + 18, x1 - 22]) P.block(px, ly, px + 4, G, rp('#c8a020', 6), { base: 0.5 }); P.block(x0 + 16, ly - 2, x1 - 16, ly, MAT.steelD, { base: 0.5 });
-  P.area(x0 + 22, ly - 14, x1 - 22, ly - 2, rp(o.car || '#4a2a3a', 7), (x, y) => 0.6 - (y - ly + 14) / 20, { inside: (x, y) => y > ly - 14 + (Math.abs(x - (x0 + x1) / 2) > (w - 50) * 0.3 ? 5 : 0) });
+  P.area(x0 + 22, ly - 14, x1 - 22, ly - 2, rp(o.car || '#4a2a3a', 7), (x, y) => 0.85 - (y - ly + 14) / 20 + ((x + y) % 11 === 0 ? 0.2 : 0), { inside: (x, y) => y > ly - 14 + (Math.abs(x - (x0 + x1) / 2) > (w - 50) * 0.3 ? 5 : 0) });
   for (const wx of [x0 + 30, x1 - 34]) for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) if (Math.hypot(i, j) < 3.5) P.put(wx + i, ly - 1 + j, [10, 10, 12]);
   P.put(x0 + 24, ly - 8, [255, 200, 120], 0.7);
   if (o.sparks) for (let k = 0; k < 12; k++) P.put((x0 + x1) / 2 + hash(k, 1, x0) * 10 - 5, ly + 2 + hash(k, 2, x0) * 8, [255, 220, 120], 1);
@@ -129,42 +133,58 @@ function stMagnetCrane(P, x, G, o = {}) {
   P.put(bx, by - 2, [255, 40, 40], 1);
 }
 
+// real digits, 3 by 5, scaled: for painted numbers that must read
+const ST_DIGITS = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001010010010', '111101111101111', '111101111001111'];
+function stNumber(P, x, y, num, sc, col, glow = 0) { const c = col3(col), s = String(num); for (let i = 0; i < s.length; i++) { const d = ST_DIGITS[+s[i]]; if (!d) continue; for (let k = 0; k < 15; k++) if (d[k] === '1') kFill(P, x + i * 4 * sc + (k % 3) * sc, y + Math.floor(k / 3) * sc, x + i * 4 * sc + (k % 3 + 1) * sc, y + (Math.floor(k / 3) + 1) * sc, c, glow); } }
+// a clinic's waiting room behind its glass, painted over the shopfront's bright
+// window so it reads as a room: dim light, chairs, someone waiting
+function stWait(L, x0, x1, G, o = {}) {
+  const gh = o.gh || 42, mid = Math.round((x0 + x1) / 2), a = x0 + 7, b = mid - 2, top = G - gh + 8;
+  L.paint(a, top, b, G, (P) => {
+    for (let x = a; x < b; x++) for (let y = top; y < G; y++) P.put(x, y, mixRgb(col3(o.grime ? '#3a5048' : '#7a9aa0'), [20, 30, 34], (y - top) / (G - top) * 0.5 + (o.grime ? hash(x >> 1, y >> 1, 7) * 0.2 : 0)), o.grime ? 0.05 : 0.1);
+    kFill(P, a + 2, top + 2, b - 2, top + 4, o.grime ? '#9ad0b0' : '#e8f8ff', 0.6);
+    for (let x = a + 3; x < b - 6; x += 9) { kFill(P, x, G - 9, x + 6, G - 7, '#2a3a40'); kFill(P, x, G - 15, x + 1, G - 7, '#2a3a40'); kV(P, x + 1, G - 7, G, '#1a2428'); kV(P, x + 5, G - 7, G, '#1a2428'); }
+    if (b - a > 14) { const fx = a + Math.round((b - a) * 0.55); kFill(P, fx, G - 20, fx + 4, G - 9, o.grime ? '#2a1a1a' : '#3a3040'); kFill(P, fx, G - 24, fx + 4, G - 20, '#6a4a3a'); }
+    for (let y = top; y < G; y += 2) if (hash(y, a, 3) < 0.15) P.put(a + Math.round(hash(y, 1, a) * (b - a)), y, [230, 250, 255], 0.3);
+  });
+}
+
 // ---- Overpass Market: a market under the highway decks ------------------------
 addDistrict('d_overpass', 'Overpass Market', 2, -40, 300, 'A market packed under the highway decks: dozens of stalls, a mechanic, a salvage buyer.', 'Market under the decks', () => district({
   id: 'd_overpass', name: 'Overpass Market', tier: 2, W: 2700, crowd: 14, amb: [0.17, 0.15, 0.2], layerDy: 0,
   local: { name: 'Porter', lines: ['The deck shakes every time a freight hauler goes over. You get used to it.', 'Everything up there sells down here, a week later, cheaper.', 'Vance runs the stalls past the third pier. Pay him or pack up.'], look: { hair: 'cap', capCol: '#5a4a1a', top: '#4a3a2a', coat: 'jacket' } },
   build(L, G) {
-    const DY = G - 160, piers = [190, 620, 1050, 1480, 1910, 2340];
+    const DY = G - 128, piers = [185, 615, 1045, 1475, 1905, 2335];
     // the far deck, higher, behind; then the near deck and its piers
-    L.paint(700, G - 270, 2100, G, (P) => { stDeck(P, 700, 2100, G - 262, 14); for (const px of [900, 1300, 1700]) P.block(px, G - 248, px + 30, DY, KMAT.concreteL, { base: 0.28, lip: 0 }); });
-    L.paint(140, DY - 44, 2700, DY + 30, (P) => stDeck(P, 140, 2700, DY, 22));
-    for (const px of piers) L.paint(px - 10, DY, px + 60, G, (P) => stPier(P, px, 50, DY + 22, G, px));
+    L.paint(600, G - 240, 2200, G, (P) => { stDeck(P, 600, 2200, G - 200, 14); for (const px of [820, 1260, 1700, 2100]) P.block(px, G - 186, px + 36, DY, KMAT.concreteL, { base: 0.26, lip: 0, panels: [36, 30] }); for (let x = 640; x < 2200; x += 90) P.put(x, G - 206, [255, 230, 170], 0.8); });
+    L.paint(140, DY - 44, 2700, DY + 30, (P) => stDeck(P, 140, 2700, DY, 24));
+    for (const px of piers) L.paint(px - 10, DY, px + 70, G, (P) => stPier(P, px, 60, DY + 24, G, px));
     L.walk(140, 2700, DY, 0, MAT.concrete, { rail: false });
     for (const px of [620, 1910]) L.ladder(px + 44, DY, G);
     for (const [x, c] of [[400, '#3a3a4a'], [980, '#6a2a2a'], [1700, '#d8d8e0'], [2200, '#2a4a3a']]) { L.prop('deco', x, DY, { art: () => car({ col: c }), id: 'ovcar' + x }); L.light(x + 30, DY - 14, 30, [1, 0.95, 0.8], 0.5); L.light(x - 30, DY - 14, 20, [1, 0.2, 0.2], 0.5); }
     for (let x = 240; x < 2700; x += 160) L.light(x - 4, DY - 40, 70, [1, 0.85, 0.6], 0.5);
-    L.dry.push([140, DY + 22, 2700, G]);
+    L.dry.push([140, DY + 24, 2700, G]);
     // tubes hung under the deck, string lights between the piers
-    for (let x = 260; x < 2650; x += 110) L.tube(x, DY + 26, 26, x % 220 < 110 ? '#e8f4ff' : '#ffe8c8', 0.6);
-    for (let i = 0; i + 1 < piers.length; i++) bLanterns(L, piers[i] + 50, piers[i + 1], DY + 40, [['#ff3a2a', '#ffb040'], ['#3af0e0', '#ff4ab0'], ['#ffd040', '#ff8a3a']][i % 3], { sag: 10, step: 18 });
+    for (let x = 260; x < 2650; x += 110) L.tube(x, DY + 28, 26, x % 220 < 110 ? '#e8f4ff' : '#ffe8c8', 0.6);
+    for (let i = 0; i + 1 < piers.length; i++) bLanterns(L, piers[i] + 60, piers[i + 1], DY + 40, [['#ff3a2a', '#ffb040'], ['#3af0e0', '#ff4ab0'], ['#ffd040', '#ff8a3a']][i % 3], { sag: 10, step: 18 });
     // bay 1: food
     kStallAt(L, 290, G, 'ramen'); kStallAt(L, 360, G, 'fish'); kStallAt(L, 430, G, 'fruit', { col: '#c83a2a' });
     kStallAt(L, 510, G, 'parts', { col: '#2a3a5a', npc: { name: 'Hollis', role: 'vendor', rate: 1.15, lines: ['Salvage? I pay over the odds. Under the deck, everything\'s over the odds.', 'Vance takes a cut of every stall. Not mine. Not yet.'] } });
     L.sign(300, DY + 36, 7, '#ffd040', { r: 60, seed: 3 });
     // bay 2: a shophouse squeezed under the deck, dumplings, tea, books
-    bShophouse(L, 680, 800, G, { floors: 2, wall: KMAT.mint, shops: [['noren', '#ffd040']], roof: 'flat', balcony: false, seed: 201, gh: 42 });
+    bShophouse(L, 680, 800, G, { floors: 1, wall: KMAT.mint, shops: [['noren', '#ffd040']], roof: 'flat', balcony: false, seed: 201, gh: 42 });
     kStallAt(L, 840, G, 'dumpling'); kStallAt(L, 910, G, 'tea', { col: '#3a6a2a' }); kStallAt(L, 985, G, 'books');
     // bay 3: the mechanic's garage, a car on the lift
     L.paint(1100, G - 80, 1300, G, (P) => stGarage(P, 1100, 1300, G, { h: 58, car: '#2a4a6a', sparks: true, wall: KMAT.concreteL }));
-    L.sign(1150, G - 76, 8, '#ff8a3a', { r: 60, seed: 4 }); L.light(1200, G - 30, 80, [1, 0.8, 0.55], 0.75);
+    L.sign(1150, G - 76, 8, '#ff8a3a', { r: 60, seed: 4 }); L.light(1200, G - 30, 100, [1, 0.8, 0.55], 0.95);
     L.npc({ name: 'Mechanic Ana', look: { skin: SKINS[3], hair: 'bun', hairCol: '#2a1a14', top: '#3a4a5a', apron: '#2a2a2a', legs: '#2a2a2a', goggles: '#ffb040', hands: { fx: 26, fy: 38 } }, x: 1230, y: G, face: -1, sched: [[0, 24, 1230, 'work']], behind: true, lines: ['Ground cars, spinners, fridges. If it has a motor I\'ll fix it.', 'Somebody brought me a dog to fix once. A synth dog. It bit me.'] });
     kStallAt(L, 1340, G, 'skewers'); kStallAt(L, 1410, G, 'masks', { col: '#2a5a8a' });
     // bay 4: the thick of it
     kStallAt(L, 1550, G, 'flowers'); kStallAt(L, 1620, G, 'herbs'); kStallAt(L, 1690, G, 'parts', { col: '#5a2a5a' }); kStallAt(L, 1760, G, 'robot', { col: '#ffd040' }); kStallAt(L, 1835, G, 'med');
     L.prop('vending', 1880, G, { look: { col: '#ffd040', body: '#5a4a1a' }, label: 'vending machine' }); L.light(1880, G - 14, 30, [1, 0.85, 0.3], 0.6);
     // bay 5: a pawnshop under a stair up to a hung gantry, crates
-    bShophouse(L, 1970, 2100, G, { floors: 2, wall: MAT.brickD, shops: [['pawn', '#ffb040']], roof: 'flat', balcony: false, seed: 202 });
-    L.stairs(2110, G, 2190, G - 70); L.walk(2110, 2330, G - 70, 4, MAT.steelD); L.paint(2110, DY + 22, 2330, G - 70, (P) => { for (const x of [2140, 2240, 2320]) for (let y = DY + 22; y < G - 70; y++) P.put(x, y, tone(MAT.steel, 0.4)); });
+    bShophouse(L, 1970, 2100, G, { floors: 1, wall: MAT.brickD, shops: [['pawn', '#ffb040']], roof: 'flat', balcony: false, seed: 202 });
+    L.stairs(2110, G, 2190, G - 70); L.walk(2110, 2330, G - 70, 4, MAT.steelD); L.paint(2110, DY + 24, 2330, G - 70, (P) => { for (const x of [2140, 2240, 2320]) for (let y = DY + 22; y < G - 70; y++) P.put(x, y, tone(MAT.steel, 0.4)); });
     L.prop('locker', 2290, G - 70, { tier: 2, label: 'locker' }); L.prop('ac', 2210, G - 70, { label: 'air conditioner' });
     for (const [x, c] of [[2160, '#3a4a5a'], [2176, '#5a4a2a'], [2168, '#4a5a3a']]) L.prop('deco', x, x === 2168 ? G - 10 : G, { art: DECO.crate({ col: c, w: 14, h: 10 }), id: 'ovcr' + x });
     kStallAt(L, 2240, G, 'yakitori');
@@ -183,14 +203,18 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
   local: { name: 'Dock worker', lines: LOCAL_LINES.docks, look: { hair: 'cap', capCol: '#c8a020', top: '#d86a20', coat: 'jacket', legs: '#2a2a3a' } },
   build(L, G) {
     const H = L.h, waters = [[560, 760], [1290, 1520], [2210, 2500]];
+    // far out on the water, behind: ships' lights, a breakwater
+    L.paint(0, G - 60, L.w, G, (P) => { for (let xx = 0; xx < L.w; xx++) for (let y = G - 26; y < G; y++) P.put(xx, y, tone(KMAT.water, 0.18 + (y - G + 26) / 80 + ((xx * 13 + y * 7) % 97 === 0 ? 0.4 : 0))); P.block(0, G - 30, L.w, G - 26, KMAT.concreteL, { base: 0.25, lip: 0.4 });
+      for (const [sx, sw] of [[300, 120], [1100, 200], [1900, 90], [2450, 160]]) { P.block(sx, G - 44, sx + sw, G - 30, MAT.steelD, { base: 0.25 }); P.block(sx + sw * 0.6, G - 56, sx + sw * 0.85, G - 44, MAT.steelD, { base: 0.3 }); for (let k = 0; k < sw; k += 7) P.put(sx + k, G - 40, [255, 220, 150], 0.7); P.put(sx + sw * 0.7, G - 60, [255, 60, 60], 1); } });
+    // the boats moored in the gaps, behind the gangways
+    L.paint(570, G - 50, 750, G + 6, (P) => stBoat(P, 590, 730, G, { col: '#3a2a1a', cabin: 0.3, ch: 14, mast: 18, free: 10, stripe: '#c83a2a' }));
+    L.paint(1280, G - 90, 1540, G + 6, (P) => stBoat(P, 1296, 1516, G, { col: '#1a2a3a', cabin: 0.45, ch: 24, mast: 34, free: 22, stripe: '#e8e0d0' }));
+    L.paint(2210, G - 40, 2400, G + 6, (P) => stBoat(P, 2230, 2330, G, { col: '#4a3a1a', cabin: 0.35, ch: 10, mast: 12, free: 6, stripe: '#3a8a5a' }));
     // the quays and the water between them
     let x = 0;
-    for (const [a, b] of waters) { L.paint(x, G, a, H, (P) => stQuay(P, x, a, G, H)); L.paint(a, G - 12, b, H, (P) => stGangway(P, a, b, G, H)); L.wet.push({ y: G + 4, x0: a, x1: b, depth: 30, k: 0.6 }); x = b; }
+    for (const [a, b] of waters) { const qx = x; L.paint(qx, G, a, H, (P) => stQuay(P, qx, a, G, H)); L.paint(a, G - 12, b, H, (P) => stGangway(P, a, b, G, H)); L.wet.push({ y: G + 4, x0: a, x1: b, depth: 30, k: 0.6 }); x = b; }
     L.paint(x, G, L.w, H, (P) => stQuay(P, x, L.w, G, H));
-    L.wet.push({ y: G + 1, x0: 0, x1: L.w, depth: 14, k: 0.25 });
-    // far out on the water, behind: ships' lights, a breakwater
-    L.paint(0, G - 40, L.w, G, (P) => { for (let xx = 0; xx < L.w; xx++) for (let y = G - 26; y < G; y++) P.put(xx, y, tone(KMAT.water, 0.18 + (y - G + 26) / 80 + ((xx * 13 + y * 7) % 97 === 0 ? 0.4 : 0))); P.block(0, G - 30, L.w, G - 26, KMAT.concreteL, { base: 0.25, lip: 0.4 });
-      for (const [sx, sw] of [[300, 120], [1100, 200], [1900, 90], [2450, 160]]) { P.block(sx, G - 44, sx + sw, G - 30, MAT.steelD, { base: 0.25 }); P.block(sx + sw * 0.6, G - 56, sx + sw * 0.85, G - 44, MAT.steelD, { base: 0.3 }); for (let k = 0; k < sw; k += 7) P.put(sx + k, G - 40, [255, 220, 150], 0.7); P.put(sx + sw * 0.7, G - 60, [255, 60, 60], 1); } });
+    L.wet.push({ y: G + 26, x0: 0, x1: L.w, depth: 14, k: 0.3 });
     // the fish market: a shed roof on posts over the stalls
     L.paint(180, G - 110, 550, G, (P) => { P.area(170, G - 104, 560, G - 88, MAT.rust, (xx, y) => 0.5 + ((xx - 170) % 3 === 0 ? 0.15 : 0) - (y - G + 104) / 30, { inside: (xx, y) => y >= G - 104 + Math.abs(xx - 365) / 195 * 8 }); for (const px of [186, 300, 420, 540]) P.block(px, G - 90, px + 4, G, MAT.steelD, { base: 0.5, lip: 0 }); for (const bx of [240, 360, 480]) { kV(P, bx, G - 88, G - 78, '#222'); kFill(P, bx - 2, G - 78, bx + 2, G - 75, '#fff4d0', 1); } });
     L.sign(330, G - 120, 9, '#3af0e0', { r: 70, seed: 21 });
@@ -199,11 +223,10 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     kStallAt(L, 330, G, 'fish'); kStallAt(L, 420, G, 'fish', { npc: false }); kStallAt(L, 500, G, 'ramen');
     L.paint(520, G - 10, 560, G, (P) => { stBollard(P, 540, G, 20); });
     // the first water: a gangway, a skiff moored under it
-    L.paint(570, G - 40, 750, G + 30, (P) => stBoat(P, 600, 720, G + 14, { col: '#3a2a1a', cabin: 0.3, ch: 12, mast: 14, free: 4, stripe: '#c83a2a' }));
-    L.light(680, G - 10, 50, [1, 0.9, 0.7], 0.5);
+    L.light(660, G - 24, 50, [1, 0.9, 0.7], 0.5);
     // the container yard under the gantry crane
-    L.paint(760, G - 260, 1290, G, (P) => {
-      stGantry(P, 790, 1240, G, G - 230, { cab: 900, hook: 1120, hookY: G - 150, load: '#2a6a8a' });
+    L.paint(740, G - 200, 1290, G, (P) => {
+      stGantry(P, 790, 1240, G, G - 172, { cab: 900, hook: 1120, hookY: G - 128, load: '#2a6a8a' });
       stBox(P, 820, G - 22, 90, 22, '#a83a2a', 'MRD 0031'); stBox(P, 920, G - 22, 90, 22, '#2a5a8a', 'TKS 8810'); stBox(P, 830, G - 44, 90, 22, '#3a7a4a', 'MRD 2290'); stBox(P, 925, G - 44, 90, 22, '#c88a20', 'HNJ 4417'); stBox(P, 875, G - 66, 90, 22, '#6a3a6a', 'MRD 9902');
       stBox(P, 1060, G - 22, 90, 22, '#5a5a62', 'KSL 1180'); stBox(P, 1150, G - 22, 90, 22, '#a85a2a'); stBox(P, 1100, G - 44, 90, 22, '#2a4a7a', 'MRD 7713');
     });
@@ -212,12 +235,11 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     L.stairs(770, G, 820, G - 22, MAT.steel); L.stairs(1240, G - 22, 1280, G, MAT.steel);
     L.walk(820, 1010, G - 22, 0, MAT.steel, { rail: false }); L.walk(1010, 1240, G - 22, 0, MAT.steel, { rail: false });
     L.ladder(1050, G - 44, G - 22); L.ladder(870, G - 66, G - 44);
-    L.light(900, G - 200, 70, [1, 0.85, 0.5], 0.7); L.light(1120, G - 100, 60, [1, 0.9, 0.7], 0.5);
+    L.light(900, G - 150, 80, [1, 0.85, 0.5], 0.8); L.light(1120, G - 90, 70, [1, 0.9, 0.7], 0.6); L.lamp(812, G - 22, 60, '#fff0d0', 1); L.lamp(1050, G - 22, 60, '#fff0d0', 1);
     L.prop('locker', 920, G - 66, { tier: 2, label: 'container locker' }); L.spots.push([920, G - 66], [1140, G - 44]);
     // the quay edge, the barge moored in the second water
     L.paint(1240, G - 12, 1300, G, (P) => { stBollard(P, 1260, G, 30); stBollard(P, 1285, G, 0); });
-    L.paint(1280, G - 70, 1540, G + 30, (P) => stBoat(P, 1300, 1510, G + 14, { col: '#1a2a3a', cabin: 0.45, ch: 24, mast: 30, free: 18, stripe: '#e8e0d0' }));
-    L.light(1400, G - 30, 80, [1, 0.85, 0.6], 0.6); L.light(1470, G - 60, 30, [1, 0.95, 0.85], 0.6);
+    L.light(1400, G - 40, 80, [1, 0.85, 0.6], 0.6); L.light(1470, G - 80, 30, [1, 0.95, 0.85], 0.6);
     // Warehouse Seven, its loading dock, a stair up its side to a gantry
     L.paint(1520, G - 160, 1960, G, (P) => stWarehouse(P, 1540, 1950, G, 130, 7, '#e8d8b0'));
     L.light(1880, G - 30, 80, [1, 0.8, 0.45], 0.7); L.tube(1850, G - 66, 40, '#ffe8c0', 0.6);
@@ -239,7 +261,7 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     L.prop('car', 2590, G, { look: { col: '#2a2a2a', under: '#ffb040' }, label: 'dock truck' }); L.prop('junk', 2560, G, { label: 'junk pile' });
     L.prop('locker', 2760, G, { tier: 2, label: 'locker' });
     L.lamp(1270, G, 70, '#ffd8a8', 0.9); L.lamp(2000, G, 70, '#ffd8a8', 0.9); L.lamp(2540, G, 70, '#c8e0ff', 0.9);
-    kFoes(L, G, [['gang', 1150, 1060, 1240], ['gunner', 1700, 1560, 1760, G - 96], ['bruiser', 1880, 1780, 1960], ['gunner', 2370, 2220, 2500], ['gang', 2650, 2540, 2760], ['drone', 960, 820, 1100, G - 120]]);
+    kFoes(L, G, [['gang', 1150, 1060, 1240], ['gunner', 1700, 1560, 1760, G - 96], ['bruiser', 1880, 1780, 1960], ['gunner', 2370, 2220, 2500], ['gang', 2650, 2540, 2760], ['drone', 960, 820, 1100, G - 110]]);
     L.spots.push([350, G], [650, G], [1000, G - 22], [1390, G], [1600, G], [1850, G], [2050, G], [2350, G], [2600, G]);
     L.critter('rat', 200, 2700, G, 3); L.litter(300, 2700, G, 4);
   },

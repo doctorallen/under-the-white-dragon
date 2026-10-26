@@ -162,7 +162,7 @@ addDistrict('d_kessler', 'Kessler Blocks', 1, 50, 230, 'A housing estate up high
   build(L, G) {
     // block 14: a long slab, galleries of doors, the lift shaft at its end
     bDanchi(L, 180, 560, G, { floors: 7, number: 14, seed: 201 });
-    L.walk(204, 560, G - 60, 4, KMAT.concreteL, { rail: false }); L.stairs(564, G, 640, G - 60); L.spots.push([400, G - 60]);
+    L.walk(204, 560, G - 60, 4, KMAT.concreteL, { rail: false }); L.stairs(640, G, 560, G - 60); L.spots.push([400, G - 60]);
     for (const x of [260, 360, 460]) L.prop('deco', x, G - 60, { art: DECO.door({ col: ['#5a4a3a', '#3a4a5a', '#4a3a4a'][x % 3], light: '#ffd8a0' }), id: 'kbd' + x });
     L.prop('locker', 520, G - 60, { tier: 1, label: 'locker' });
     // the corner shop and the noodle bar at the foot of the flats
@@ -334,7 +334,7 @@ addDistrict('d_gardens', 'Arcology Gardens', 1, 110, 660, 'The arcology\'s terra
     // bamboo grove, then the pavilion and the temple on the upper terrace
     for (const x of [1660, 1700, 1740]) bTree(L, x, G, 'bamboo', { h: 80 + (x % 3) * 8 });
     L.paint(1780, G - 60, 2380, G, (P) => { P.block(1780, G - 30, 2380, G, KMAT.stone, { base: 0.45, panels: [24, 10] }); kGrass(P, 1780, 2380, G - 30, { seed: 9 }); });
-    L.solid(1780, G - 30, 2380, G); L.stairs(1760, G, 1800, G - 30, KMAT.stone);
+    L.solid(1796, G - 30, 2380, G); L.stairs(1756, G, 1796, G - 30, KMAT.stone);
     bTemple(L, 1820, 1980, G - 30, { h: 40, base: 8, roofH: 22, steps: false, lit: true });
     bPagoda(L, 2060, G - 30, { tiers: 3, w: 50, th: 26 });
     bTree(L, 2150, G - 30, 'sakura', { h: 70 }); bToro(L, 2210, G - 30);
@@ -360,11 +360,11 @@ function hiCloudLayers(L) {
       P.area(0, 0, 900, 280, R(['#020208', '#06081a', '#10163a', '#2a2a5a', '#5a4a7a'], 12, 0.3, 0.3), (x, y) => 0.08 + Math.pow(y / 280, 1.6) * 0.75, { jit: 0.3 });
       for (let k = 0; k < 200; k++) { const x = hash(k, 1, 77) * 900, y = hash(k, 2, 77) * 160; P.put(x, y, hash(k, 3, 77) < 0.2 ? [255, 240, 220] : [150, 160, 210], hash(k, 3, 77) < 0.2 ? 0.8 : 0.3); }
       for (const [x, h, w] of [[120, 70, 8], [330, 50, 6], [560, 90, 10], [770, 60, 7]]) { P.block(x, 190 - h, x + w, 200, R(['#0a0c16', '#161a2a', '#2a3046', '#5a6a8a']), { base: 0.35 }); for (let y = 190 - h - 24; y < 190 - h; y++) P.put(x + (w >> 1), y, [90, 100, 130]); P.put(x + (w >> 1), 190 - h - 25, [255, 60, 70], 1); for (let y = 190 - h + 6; y < 196; y += 6) if (hash(x, y, 5) < 0.6) P.put(x + 2 + (y % 3), y, [255, 220, 160], 0.6); }
-      cloudBands(P, 0, 900, 186, 280, R(['#2a2440', '#4a3e62', '#7a6a90', '#c8a8c8'], 9, 0.3, 0.2), 13);
+      cloudBands(P, 0, 900, 150, 280, R(['#2a2440', '#4a3e62', '#7a6a90', '#c8a8c8'], 9, 0.3, 0.2), 13);
     } },
     { f: 0.2, fy: 0.16, w: 1300, h: 300, paint(P) {
       for (const [x, h, w] of [[200, 150, 18], [620, 180, 24], [1010, 130, 16]]) { P.block(x, 230 - h, x + w, 300, R(['#0e1020', '#1c2238', '#30385a', '#7a8ab0']), { base: 0.38, panels: [w, 12] }); for (let y = 230 - h + 4; y < 250; y += 6) for (let i = 3; i < w - 2; i += 4) if (hash(i + x, y, 3) < 0.4) P.put(x + i, y, [255, 214, 150], 0.5); P.put(x + (w >> 1), 230 - h - 1, [255, 60, 70], 1); }
-      cloudBands(P, 0, 1300, 214, 300, R(['#3a3050', '#6a5a80', '#a890b0', '#f0d0e0'], 9, 0.3, 0.2), 29);
+      cloudBands(P, 0, 1300, 178, 300, R(['#3a3050', '#6a5a80', '#a890b0', '#f0d0e0'], 9, 0.3, 0.2), 29);
     } },
   ];
 }
@@ -415,7 +415,7 @@ LEVELS.spires = { name: 'The Spires', depth: '+300 m', metres: 300, mapX: 520, t
         P.block(2400, G - 60, 3300, G, KMAT.plaster, { base: 0.62, panels: [50, 60] }); kH(P, 2400, 3300, G - 60, tone(KMAT.gold, 0.8), 0.2);
         for (let k = 0; k < 40; k++) { const a = k / 40 * Math.PI * 2; P.put(2850 + Math.cos(a) * 30, G - 150 + Math.sin(a) * 6, [255, 230, 170], 1); P.put(2850 + Math.cos(a) * 20, G - 138 + Math.sin(a) * 4, [255, 230, 170], 1); }
         kV(P, 2850, 60, G - 156, tone(KMAT.gold, 0.6));
-        cloudBands(P, 2420, 3280, G - 110, G - 62, R(['#3a3050', '#6a5a80', '#a890b0', '#f0d0e0'], 9, 0.3, 0.2), 31);
+        for (let x = 2420; x < 3280; x++) for (let y = G - 90; y < G - 60; y++) P.put(x, y, mixRgb([20, 18, 40], [140, 100, 140], (y - G + 90) / 30 * 0.8 + (noise(x / 20, y / 4, 5) - 0.5) * 0.2), 0.05);
       });
       L.light(2850, G - 140, 260, [1, 0.88, 0.65], 0.9);
       for (const x of [2470, 3220]) { bTree(L, x, G, 'street', { h: 64 }); }

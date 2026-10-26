@@ -11,7 +11,7 @@ const OT_BACK = R(['#07070a', '#0e0e14', '#18181f', '#34343e']);
 // the frame every Old Town place shares: a dim back wall with older roofs in
 // it, the slab overhead with its beams, the great columns, drips from above
 function otBack(L, G, o = {}) {
-  const W = L.w, seed = o.seed || 7, CE = o.ceil || G - 176, cols = o.cols || 430;
+  const W = L.w, seed = o.seed || 7, CE = o.ceil || G - 150, cols = o.cols || 430;
   L.paint(0, CE, W, G, (P) => {
     P.area(0, CE, W, G, o.back || OT_BACK, (x, y) => 0.22 + (noise(x / 90, y / 50, seed) - 0.5) * 0.14 + (y - CE) / (G - CE) * 0.1);
     // far roofs of the drowned city, a few windows still lit
@@ -27,10 +27,13 @@ function otBack(L, G, o = {}) {
   L.paint(0, CE, W, CE + 18, (P) => { for (let x = 0; x < W; x += 70) girder(P, x, CE, x + 70, CE + 12, MAT.steelD, { step: 14 }); pipe(P, 0, CE + 13, W, CE + 18, MAT.rust, { joints: 60 }); });
   // the columns: the new city standing on the old one
   for (let x = o.col0 || 360; x < W - 40; x += cols) L.paint(x - 10, CE, x + 56, G, (P) => {
-    P.block(x, CE, x + 46, G, OT_CON, { base: 0.36, lip: 0, panels: [46, 40], drips: 0.3, dripLen: 70, seed: x });
+    P.block(x, CE, x + 46, G, OT_CON, { base: 0.5, lip: 0, panels: [46, 40], drips: 0.3, dripLen: 70, seed: x });
+    for (let y = CE + 40; y < G - 20; y += 3) if (hash(x, y, seed) < 0.5) P.put(x + 3 + Math.floor(hash(x, y, 2) * 40), y, [90, 140, 60]);
     P.block(x - 8, CE + 18, x + 54, CE + 30, OT_CON, { base: 0.48 });
     for (let k = 0; k < 6; k++) P.put(x + 6 + k * 6, G - 70 - (k % 3) * 9, [255, 150, 60], 0.3);
   });
+  // work lamps hung from the beams, sodium-orange, swinging over the old roofs
+  if (o.lamps !== false) for (let x = 200; x < W; x += 340) { L.paint(x - 4, CE + 12, x + 5, CE + 30, (P) => { kV(P, x, CE + 12, CE + 24, '#1a1a1e'); kFill(P, x - 3, CE + 24, x + 4, CE + 27, tone(MAT.steelD, 0.5)); kH(P, x - 2, x + 3, CE + 27, [255, 190, 110], 1); }); L.light(x, CE + 30, 120, [1, 0.7, 0.4], 0.55, 1.3); }
   for (let x = 120; x < W; x += 260) L.drips.push({ x: x + Math.floor(hash(x, 5, seed) * 80), y0: CE + 16, y1: G });
   L.dry.push([0, 0, W, L.h]);
 }
@@ -75,7 +78,7 @@ function otTiles(P, x0, y0, x1, y1, seed, band = '#2a6a5a') {
 // ---- Old Town: the hub. The subway platform, an old street, a canal, a
 // temple, Ferrin's stall, and the Mayor's hall at the east end
 LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', metres: -140, tier: 3, hub: true, mapX: 500, label: 'The first city', blurb: 'The first city, sunk under the new one: canals, temples, lanterns, and the Old Mayor who runs it.', make: () => district({
-  id: 'oldtown', name: 'Old Town', tier: 3, W: 3400, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.18, 0.15, 0.17], crowd: 6, crowdTo: 2300,
+  id: 'oldtown', name: 'Old Town', tier: 3, W: 3400, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.21, 0.18, 0.19], crowd: 6, crowdTo: 2300,
   local: { name: 'Old-timer', lines: LOCAL_LINES.flood, look: { hair: 'long', hairCol: '#c8c8c8', top: '#4a3a2a', coat: 'long' } },
   build(L, G) {
     L.spawns.subway = [140, G];
@@ -116,6 +119,14 @@ LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', metres: -140, tier: 3, hub
     // the Mayor's hall and his lift
     arena(L, 2400, 3260, G, 'hall'); L.enemy('mayor', 2860, G, { arena: [2420, 3240] });
     keyDoor(L, 3330, G, 'mayorkey', 'lift', 'The Mayor\'s lift, down to the Works');
+    // inside the hall: gold screens painted with pines, a dais, red banners, lanterns
+    L.paint(2420, G - 140, 3240, G, (P) => {
+      for (let x = 2470; x < 3200; x += 40) { P.block(x, G - 96, x + 38, G - 30, KMAT.gold, { base: 0.52, lip: 0.5 }); kV(P, x, G - 96, G - 30, tone(KMAT.darkwood, 0.3)); for (let k = 0; k < 14; k++) P.put(x + 4 + hash(k, 1, x) * 30, G - 50 - hash(k, 2, x) * 30, tone(KMAT.moss, 0.3 + hash(k, 3, x) * 0.4)); }
+      P.block(2760, G - 14, 2960, G, KMAT.lacquer, { base: 0.5 }); P.block(2780, G - 22, 2940, G - 14, KMAT.lacquer, { base: 0.58 });
+      for (const bx of [2500, 2700, 3020, 3180]) { P.area(bx, G - 136, bx + 18, G - 60, KMAT.lacquer, (x, y) => 0.5 - (x - bx) / 50, { inside: (x, y) => y < G - 64 - Math.abs(x - bx - 9) * 0.4 }); for (const [a, b] of GLYPHS[bx % GLYPHS.length]) P.put(bx + 8 + a, G - 120 + b * 2, tone(KMAT.gold, 0.9), 0.3); }
+    });
+    bLanterns(L, 2420, 3240, G - 132, ['#ff3a2a', '#ffb040'], { step: 26, sag: 8 });
+    L.light(2860, G - 60, 220, [1, 0.6, 0.3], 0.6);
     // trouble, things to strip, lockers
     kFoes(L, G, [['spider', 760, 650, 860], ['gang', 1600, 1500, 1700], ['gunner', 2100, 2020, 2200], ['feral', 2260, 2160, 2370]]);
     L.prop('locker', 1150, G, { tier: 3, label: 'locker' }); L.prop('locker', 1840, G, { tier: 3, label: 'locker' });
@@ -132,7 +143,7 @@ addDistrict('d_arcade', 'Flooded Arcade', 3, -150, 300, 'A covered shopping stre
   local: { name: 'Shopkeeper', lines: ['Forty years I kept this shop. The water came in the night, and I kept it anyway.', 'Wade, don\'t swim. The deep channels have things in them.', 'Somebody came through with a cut wrist. Bought a bandage. Paid in clean money.'], look: { hair: 'bald', top: '#4a4a3a', apron: '#2a2a1a' } },
   build(L, G) {
     otBack(L, G, { seed: 41, col0: 900, cols: 900 });
-    const RF = G - 150;
+    const RF = G - 136;
     // the arcade roof: iron arches, panes of glass, some broken through
     L.paint(150, RF - 30, 2500, RF + 12, (P) => {
       for (let x = 150; x < 2500; x++) for (let y = RF - 22; y < RF; y++) { const k = (x - 150) % 100, a = Math.abs(k - 50) / 50, top = RF - 22 + a * a * 18; if (y < top) continue; const broken = noise(x / 14, y / 6, 4) > 0.7; if (!broken) P.put(x, y, mixRgb([40, 70, 80], [120, 170, 180], (y - top) / 22 + ((x + y) % 11 === 0 ? 0.3 : 0)), 0.05); }
@@ -169,14 +180,14 @@ addDistrict('d_arcade', 'Flooded Arcade', 3, -150, 300, 'A covered shopping stre
 // knee: pillars in the water, rows of pews going under, candles, a bell tower,
 // and a graveyard of stone lanterns on the rise outside
 addDistrict('d_chapel', 'Drowned Chapel', 3, -165, 560, 'The old city\'s great hall of worship, flooded to the knee: candles, pillars, a bell tower, a field of graves.', 'Flooded chapel', () => district({
-  id: 'd_chapel', name: 'Drowned Chapel', tier: 3, W: 2500, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.15, 0.14, 0.18], crowd: 2,
+  id: 'd_chapel', name: 'Drowned Chapel', tier: 3, W: 2500, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.19, 0.18, 0.23], crowd: 2,
   local: { name: 'Keeper', lines: ['I light the candles. Somebody has to.', 'They prayed for the water to stop. It stopped at the knee. That\'s a sort of answer.', 'The bell still rings when the trains go over. Seven times a night.'], look: { hair: 'bald', top: '#2a2a3a', coat: 'long', legs: '#1a1a24' } },
   build(L, G) {
     otBack(L, G, { seed: 51, col0: 300, cols: 2000 });
     // the graveyard on the rise: stone lanterns, markers, a dead tree, a gate
     L.paint(200, G - 40, 560, G, (P) => { for (let x = 230; x < 540; x += 22) otGrave(P, x, G, 51); });
     for (const x of [260, 360, 460]) bToro(L, x, G);
-    bTree(L, 330, G, 'dead', { h: 80 }); bTorii(L, 500, 560, G, 60, { ramp: KMAT.stone });
+    bTree(L, 330, G, 'dead', { h: 80 }); bTorii(L, 500, 560, G, 60, { ramp: KMAT.stone }); otCandles(L, 240, 320, G - 2, 4); otCandles(L, 400, 470, G - 2, 3);
     // the great hall: tall walls, arched windows of coloured glass
     const H0 = 580, H1 = 1760, TOP = G - 168;
     L.paint(H0, TOP - 20, H1, G, (P) => {
@@ -214,7 +225,7 @@ addDistrict('d_chapel', 'Drowned Chapel', 3, -165, 560, 'The old city\'s great h
     L.walk(2086, 2174, G - 90, 5, KMAT.darkwood); L.ladder(2100, G - 90, G); L.spots.push([2140, G - 90]);
     L.light(2130, G - 120, 60, [1, 0.6, 0.3], 0.5, 1, { mode: 'fire', seed: 21 });
     // more graves past the tower
-    L.paint(2220, G - 40, 2480, G, (P) => { for (let x = 2240; x < 2470; x += 20) otGrave(P, x, G, 53); });
+    L.paint(2220, G - 40, 2480, G, (P) => { for (let x = 2240; x < 2470; x += 20) otGrave(P, x, G, 53); }); otCandles(L, 2340, 2400, G - 2, 4);
     bToro(L, 2300, G); bToro(L, 2420, G);
     // things that come out of the water
     kFoes(L, G, [['feral', 900, 700, 1050], ['feral', 1400, 1260, 1700], ['spider', 1900, 1790, 2020], ['gunner', 2350, 2230, 2470]]);
@@ -287,7 +298,7 @@ addDistrict('d_cistern', 'Cistern Market', 3, -175, 420, 'A floating market in t
   id: 'd_cistern', name: 'Cistern Market', tier: 3, W: 2600, sky: false, transit: 'subway', floor: MAT.wood, amb: [0.16, 0.14, 0.15], crowd: 6,
   local: { name: 'Boatwoman', lines: ['Everything floats down here eventually. I sell it.', 'Mind the boards. The water\'s deeper than the columns are tall.', 'Lanterns are free. Light costs.'], look: { hair: 'bun', top: '#3a5a5a', coat: 'jacket' } },
   build(L, G) {
-    const CE = G - 170, VB = R(['#140c0a', '#2a1810', '#442818', '#8a5a38']);
+    const CE = G - 160, VB = R(['#140c0a', '#2a1810', '#442818', '#8a5a38']);
     L.dry.push([0, 0, L.w, L.h]);
     // the vault: brick arches springing from column to column
     L.paint(0, 0, L.w, G, (P) => {
