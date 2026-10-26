@@ -3,13 +3,15 @@
 // The HUD (DOM over the canvas): health, RAM, money, the time and place, the
 // prompt for Use, toasts, a boss's bar, what people say over their heads;
 // and the panels: your inventory (gear, items, ware, jobs), your bed, the
-// elevator, a vendor, the fixer's jobs, the ripperdoc, the pause menu.
+// elevator, a vendor, the lieutenant's cases, the quartermaster, the
+// fabricator, the spinner, the pause menu.
 // ---------------------------------------------------------------------------
 const Hud = {
   open: null, who: null, last: {}, tab: 'gear', slot: 'outer', pick: null,
   init() {
     $('bPack').onclick = () => this.toggle('pack');
     $('bMenu').onclick = () => this.toggle('pause');
+    $('bCab').onclick = () => this.toggle('cab');
     $('panelClose').onclick = () => this.toggle(null);
     this.refresh();
   },
@@ -53,6 +55,15 @@ const Hud = {
   },
   items(o, cls = '') { return SALVAGE_ORDER.filter((k) => o[k]).map((k) => `<span class="item ${cls}"><i style="background:${SALVAGE[k].col[1]}"></i>${SALVAGE[k].name} <b>${o[k]}</b></span>`).join('') || '<span class="dim">Nothing.</span>'; },
   cost(c) { return Object.keys(c).map((k) => { const ok = k === 'cr' ? Game.s.cr >= c.cr : (Game.s.pack[k] || 0) >= c[k]; return `<span class="need ${ok ? 'ok' : ''}">${k === 'cr' ? c.cr + ' cr' : `<img class="ico" src="${this.icon(k)}" alt="">${c[k]} ${SALVAGE[k].name.toLowerCase()}`}${k !== 'cr' && !ok ? ` <i class="have">(${Game.s.pack[k] || 0})</i>` : ''}</span>`; }).join(' '); },
+  // a gadget's picture: the detective using it, cropped
+  gadgetIcon(g) {
+    const key = 'g:' + g; if (this.thumbs[key]) return this.thumbs[key];
+    const o = Object.assign({}, RUNNER, { seed: 5, pose: 'stand', blaster: false }), crop = { scanner: [13, 12, 16, 14], jets: [12, 40, 20, 12], cutter: [22, 22, 22, 16] }[g];
+    if (g === 'scanner') o.goggles = '#3af0e0'; if (g === 'jets') Object.assign(o, { jets: true, pose: 'jump', hands: POSE_HANDS.jump }); if (g === 'cutter') Object.assign(o, { pose: 'cut', cutter: true, hands: POSE_HANDS.cut });
+    const sp = person(o), [sx, sy, sw, sh] = crop, [c, gg] = canvasOf(48, 48), k = 48 / Math.max(sw, sh);
+    gg.drawImage(sp.c, sx, sy, sw, sh, (48 - sw * k) / 2, (48 - sh * k) / 2, sw * k, sh * k); if (sp.e) { gg.globalAlpha = 0.6; gg.drawImage(sp.e, sx, sy, sw, sh, (48 - sw * k) / 2, (48 - sh * k) / 2, sw * k, sh * k); }
+    return (this.thumbs[key] = c.toDataURL());
+  },
   // salvage icons, as images (made once)
   icons: {},
   icon(k) { if (this.icons[k]) return this.icons[k]; const sp = salvageIcon(k), [c, g] = canvasOf(48, 48); g.drawImage(sp.c, 0, 0, 48, 48); return (this.icons[k] = c.toDataURL()); },
@@ -122,7 +133,7 @@ const Hud = {
       // what you carry, in four tabs: gear on a figure of you, items, ware and programs, jobs
       title.textContent = 'Inventory';
       const tab = this.tab || 'gear';
-      h += '<nav class="tabs">' + [['gear', 'Gear'], ['items', 'Items'], ['ware', 'Ware'], ['jobs', 'Jobs']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
+      h += '<nav class="tabs">' + [['gear', 'Gear'], ['items', 'Items'], ['ware', 'Gadgets'], ['jobs', 'Cases']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
       if (tab === 'gear') {
         const slot = (k) => { const g = Game.worn(k), spare = Object.keys(s.gear.owned).some((id) => GEAR[id].slot === k && s.gear.on[k] !== id); return `<button class="slot ${g ? 'r-' + g.rarity : 'empty'} ${this.slot === k ? 'sel' : ''}" data-slot="${k}">${g ? `<img src="${this.thumb(s.gear.on[k])}" alt="">` : '<span class="noimg"></span>'}<span><small>${SLOTS[k]}${spare ? ' <i class="new">+</i>' : ''}</small><b>${g ? Game.gearName(s.gear.on[k]) : 'Empty'}</b></span></button>`; };
         const W = Game.weapon();
@@ -140,10 +151,10 @@ const Hud = {
         const worth = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0) * SALVAGE[k].price, 0);
         h += `<p class="sub">${s.cr} cr · ${Game.packCount()} pieces of salvage, worth about ${worth} cr to Kit. Whatever you pick up is yours to keep.</p>` + this.tiles(s.pack, (k) => `<small>${SALVAGE[k].price} cr each at Kit's</small>`);
       } else if (tab === 'ware') {
-        h += `<h3>Cyberware · neural load ${Game.neuralLoad()} of ${Game.neuralCap()}</h3><div class="rows">` + ['Optics', 'Legs', 'Arms'].map((sl) => { const m = MOD_ORDER.find((q) => MODS[q].slot === sl && s.mods.on[q]); return `<div class="row"><div><b>${sl}: ${m ? MODS[m].name : '<span class="dim">empty</span>'}</b><small>${m ? MODS[m].note : 'Doc Vasquez on the Stack fits ware.'}</small></div>${m ? '<span class="tag">load ' + MODS[m].load + '</span>' : ''}</div>`; }).join('') + '</div>';
+        h += `<h3>Gadgets</h3><div class="tiles">` + GADGET_ORDER.map((g) => `<div class="tile ${s.gadgets[g] ? '' : 'off'}" style="--r:#3af0e0"><img src="${this.gadgetIcon(g)}" alt=""><b>${GADGETS[g].name}</b><small>${s.gadgets[g] ? GADGETS[g].note : 'Quartermaster Ito at the precinct builds these.'}</small></div>`).join('') + '</div>';
         h += `<h3>Programs · RAM ${s.ram} of ${T.ram.max}</h3><div class="rows">` + (PROGRAM_ORDER.filter((p) => s.programs[p]).map((p) => `<div class="row"><div><b>${PROGRAMS[p].name}</b><small>${PROGRAMS[p].ram} RAM · ${PROGRAMS[p].note}</small></div><button data-prog="${p}" ${s.prog === p ? 'disabled' : ''}>${s.prog === p ? 'Selected' : 'Select'}</button></div>`).join('') || '<p class="dim">No programs yet. Jack into data nodes to find them.</p>') + '</div>';
       } else {
-        h += `<div class="rows">` + (JOBS.filter((j) => s.jobs.taken[j.id] && !s.jobs.done[j.id]).map((j) => `<div class="row"><div><b>${j.title}</b><small>${j.text}</small></div><span class="tag">${Game.jobReady(j) ? 'ready' : ''}</span></div>`).join('') || '<p class="dim">No work on. Juno at the bar on the Stack has some.</p>') + '</div>';
+        h += `<div class="rows">` + (JOBS.filter((j) => s.jobs.taken[j.id] && !s.jobs.done[j.id]).map((j) => `<div class="row"><div><b>${j.title}</b><small>${j.text}</small></div><span class="tag">${Game.jobReady(j) ? 'ready' : ''}</span></div>`).join('') || '<p class="dim">No open cases. Lieutenant Hale at the precinct has some.</p>') + '</div>';
         const story = JOBS.filter((j) => s.jobs.done[j.id] && j.story);
         if (story.length) h += '<h3>Case notes</h3>' + story.map((j) => `<p class="sub">${j.story}</p>`).join('');
       }
@@ -153,6 +164,13 @@ const Hud = {
     } else if (which === 'elevator') {
       title.textContent = 'Elevator';
       h += `<p class="sub">A lift cage that groans. Buttons for the floors you know.</p><div class="rows">` + ELEVATOR.map((f) => { const here = World.L.id === f.level, known = !f.needs || Game.flag(f.needs); return `<div class="row ${known ? '' : 'passed'}"><div><b>${f.name}</b><small>${known ? f.note : 'The button is dead. You haven\'t found a way there yet.'}</small></div>${here ? '<span class="tag">you\'re here</span>' : `<button data-floor="${f.level}" ${known ? '' : 'disabled'}>Go</button>`}</div>`; }).join('') + '</div>';
+    } else if (which === 'spinner') {
+      title.textContent = 'Your spinner';
+      h += `<p class="sub">Precinct issue, nine years old, still fast. Where to?</p><div class="rows">` + Flight.PLACES.filter((f) => f.level !== World.L.id).map((f) => { const known = !f.needs || Game.flag(f.needs); return `<div class="row ${known ? '' : 'passed'}"><div><b>${f.name}</b><small>${known ? f.note : 'You don\'t know a way in there yet.'}</small></div><button data-fly="${f.level}:${f.spawn}" class="go" ${known ? '' : 'disabled'}>Fly</button></div>`; }).join('') + '</div>';
+    } else if (which === 'cab') {
+      const fare = Flight.cabFare(), home = World.L.id === 'home';
+      title.textContent = 'Call a cab';
+      h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down on your pad.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>Call a cab · ${fare} cr</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
     } else if (which === 'fab') {
       title.textContent = 'Mags · fabricator';
       h += this.fab();
@@ -164,30 +182,30 @@ const Hud = {
       const shop = n && SHOP[n.def.name];
       if (shop) h += `<h3>Gear for sale · you have ${s.cr} cr</h3><div class="cards">` + Object.keys(shop).map((id) => this.gearCard(id, s.gear.owned[id] ? '<span class="tag">yours</span>' : `<button data-buygear="${id}" ${s.cr >= shop[id] ? '' : 'disabled'}>${shop[id]} cr</button>`)).join('') + '</div>';
     } else if (which === 'fixer') {
-      title.textContent = 'Juno';
-      h += `<p class="sub">"${Actors.npcs.find((q) => q.def.role === 'fixer')?.def.lines[s.jobs.done.coolant ? 1 : 0] || ''}"</p><div class="rows">`;
+      const n = this.who;
+      title.textContent = n ? n.def.name : 'Cases';
+      h += `<p class="sub">"${n ? n.def.lines[Math.min(n.def.lines.length - 1, Object.keys(s.jobs.done).length ? 1 : 0)] : ''}"</p><div class="rows">`;
       for (const j of JOBS) {
         const st = Game.jobState(j); if (st === 'locked') continue;
-        const btn = st === 'open' ? `<button data-take="${j.id}">Take it</button>` : st === 'ready' ? `<button data-finish="${j.id}">Hand it over</button>` : st === 'done' ? '<span class="tag">done</span>' : `<span class="tag">${j.kills ? (s.jobs.kills[j.id + ':' + Object.keys(j.kills)[0]] || 0) + ' of ' + Object.values(j.kills)[0] : 'on it'}</span>`;
-        const rw = [j.reward.cr ? j.reward.cr + ' cr' : '', j.reward.chips ? j.reward.chips + ' chips' : '', j.reward.booster ? 'a neural booster' : ''].filter(Boolean).join(', ');
+        const btn = st === 'open' ? `<button data-take="${j.id}">Take the case</button>` : st === 'ready' ? `<button data-finish="${j.id}" class="go">Report</button>` : st === 'done' ? '<span class="tag">closed</span>' : `<span class="tag">${j.kills ? (s.jobs.kills[j.id + ':' + Object.keys(j.kills)[0]] || 0) + ' of ' + Object.values(j.kills)[0] : 'open'}</span>`;
+        const rw = [j.reward.cr ? j.reward.cr + ' cr' : '', j.reward.chips ? j.reward.chips + ' chips' : '', j.reward.gear ? GEAR[j.reward.gear].name.toLowerCase() : ''].filter(Boolean).join(', ');
         h += `<div class="row ${st === 'done' ? 'passed' : ''}"><div><b>${j.title}</b><small>${j.text}</small><small class="gold">Pays ${rw}</small></div>${btn}</div>`;
       }
       h += '</div>';
-      if (JOBS.every((j) => s.jobs.done[j.id])) h += '<p class="sub">"Your woman went down the old subway, and she wasn\'t alone. People down there say the synths are looking for whoever made them. Nobody up here made them, detective. When the subway opens, I\'ll have more."</p>';
-    } else if (which === 'doc') {
-      title.textContent = 'Doc Vasquez';
-      h += `<p class="sub">Neural load ${Game.neuralLoad()} of ${Game.neuralCap()}. Ware costs parts and money to build; fitting and removing is free.</p><div class="rows">`;
-      for (const m of MOD_ORDER) {
-        const M = MODS[m], owned = s.mods.owned[m], on = s.mods.on[m];
-        const btn = !owned ? `<button data-buy="${m}" ${Game.canPay(M.cost) ? '' : 'disabled'}>Build and fit</button>` : on ? `<button data-off="${m}">Remove</button>` : `<button data-on="${m}" ${Game.neuralLoad() + M.load <= Game.neuralCap() ? '' : 'disabled'}>Fit</button>`;
-        h += `<div class="row"><div><b>${M.name}</b><small>${M.slot} · load ${M.load} · ${M.note}</small>${owned ? '' : `<small>${this.cost(M.cost)}</small>`}</div>${btn}</div>`;
+      if (JOBS.every((j) => s.jobs.done[j.id])) h += '<p class="sub">"Your woman went down the old subway, and she wasn\'t alone. Word is the synths are looking for whoever made them. Nobody up here made them, detective. When the subway opens, you go down after them."</p>';
+    } else if (which === 'qm') {
+      title.textContent = 'Quartermaster Ito';
+      h += `<p class="sub">"Chrome's for criminals. You get tools. Bring me parts and the precinct covers the rest of the paperwork, not the money." · you have <b class="cr">${s.cr} cr</b></p><div class="cards">`;
+      for (const g of GADGET_ORDER) {
+        const G = GADGETS[g], owned = s.gadgets[g], f = Game.shortfall(G.cost);
+        h += `<div class="card" style="--r:#3af0e0"><img src="${this.gadgetIcon(g)}" alt=""><div class="cardtext"><b>${G.name}</b><small class="rar">Gadget · ${G.kind}</small><small>${G.note}</small></div>${owned ? '<span class="tag">yours</span>' : `<div class="pay">${this.cost(G.cost)}${f.extra ? `<small class="buy">+ ${f.extra} cr for the parts you're missing</small>` : ''}<button data-gadget="${g}" class="go" ${s.cr >= f.total ? '' : 'disabled'}>Build · ${f.total} cr</button></div>`}</div>`;
       }
       h += '</div>';
     } else if (which === 'pause') {
       title.textContent = 'Downlevel';
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
-        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Pack</b> I.</p>
-        <p>You\'re a detective with the Stack precinct, tracing four synths who ran from the Spires and went down. Juno at the bar sells leads for favours. Strip machines for parts, sell them, or take them to the ripperdoc for ware. Jack into data nodes for programs. The way down is in the service yard at the east end of the Stack, past the Warden.</p></div>
+        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Gear</b> I.</p>
+        <p>You\'re a detective with the precinct, tracing four synths who ran from the Spires and went down, and hunting the illegal chrome on the way. Lieutenant Hale at the precinct gives out cases; the quartermaster there builds gadgets. Your spinner is on the pad at the end of your hall. Strip machines for parts, sell them, or take them to Mags in the Stack\'s market for gear. Jack into data nodes for programs. The way down is in the service yard at the east end of the Stack, past the Warden. Anywhere, a cab takes you home for a fare.</p></div>
         <div class="buttons"><button data-act="resume">Resume</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
@@ -196,6 +214,7 @@ const Hud = {
     const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(((8 - h0) + 24) % 24 || 24); Actors.load(); Game.toast('You sleep. Morning, or what passes for it. You wake healed, your RAM full.', 'good'); this.toggle(null); this.refresh(); Save.write(); },
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
+      cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'home' || !Game.pay({ cr: fare })) return; Flight.start('home', 'pad', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     body.querySelectorAll('button[data-tab]').forEach((b) => (b.onclick = () => { this.tab = b.dataset.tab; this.panel('pack'); }));
@@ -209,14 +228,13 @@ const Hud = {
     body.querySelectorAll('button[data-upgrade]').forEach((b) => (b.onclick = () => { Game.upgrade(b.dataset.upgrade); this.refresh(); }));
     body.querySelectorAll('button[data-break]').forEach((b) => (b.onclick = () => { Game.breakDown(b.dataset.break); this.refresh(); }));
     body.querySelectorAll('button[data-part]').forEach((b) => (b.onclick = () => { const [k, n] = b.dataset.part.split(':'); Game.buyPart(k, +n); this.refresh(); }));
+    body.querySelectorAll('button[data-fly]').forEach((b) => (b.onclick = () => { const [l, sp] = b.dataset.fly.split(':'); Flight.start(l, sp, false); }));
     body.querySelectorAll('button[data-floor]').forEach((b) => (b.onclick = () => { this.toggle(null); Game.go(b.dataset.floor, 'elevator'); }));
     const dc = $('dollcv'); if (dc) { const g = dc.getContext('2d'), sp = RunnerArt.get('stand', false); g.imageSmoothingEnabled = false; g.clearRect(0, 0, dc.width, dc.height); g.drawImage(sp.c, (dc.width - sp.w * 3) / 2, dc.height - sp.h * 3, sp.w * 3, sp.h * 3); if (sp.e) { g.globalCompositeOperation = 'lighter'; g.drawImage(sp.e, (dc.width - sp.w * 3) / 2, dc.height - sp.h * 3, sp.w * 3, sp.h * 3); g.globalCompositeOperation = 'source-over'; } }
     body.querySelectorAll('button[data-prog]').forEach((b) => (b.onclick = () => { s.prog = b.dataset.prog; this.refresh(); }));
     body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = (this.who && this.who.def.rate) || 1, n = s.pack[k] || 0; s.cr += Math.round(n * SALVAGE[k].price * rate); s.pack[k] = 0; this.refresh(); }));
     body.querySelectorAll('button[data-take]').forEach((b) => (b.onclick = () => Game.takeJob(JOBS.find((j) => j.id === b.dataset.take))));
     body.querySelectorAll('button[data-finish]').forEach((b) => (b.onclick = () => Game.finishJob(JOBS.find((j) => j.id === b.dataset.finish))));
-    body.querySelectorAll('button[data-buy]').forEach((b) => (b.onclick = () => { const m = b.dataset.buy; if (!Game.pay(MODS[m].cost)) return; s.mods.owned[m] = true; if (Game.neuralLoad() + MODS[m].load <= Game.neuralCap()) { s.mods.on[m] = true; Game.toast(MODS[m].name + ' fitted. ' + MODS[m].note, 'good'); } else Game.toast(MODS[m].name + ' built, but your nervous system is full. Remove something to fit it.', 'warn'); RunnerArt.cache.clear(); this.refresh(); Save.write(); }));
-    body.querySelectorAll('button[data-on]').forEach((b) => (b.onclick = () => { s.mods.on[b.dataset.on] = true; RunnerArt.cache.clear(); this.refresh(); Save.write(); }));
-    body.querySelectorAll('button[data-off]').forEach((b) => (b.onclick = () => { s.mods.on[b.dataset.off] = false; RunnerArt.cache.clear(); this.refresh(); Save.write(); }));
+    body.querySelectorAll('button[data-gadget]').forEach((b) => (b.onclick = () => { const g = b.dataset.gadget; if (s.gadgets[g] || !Game.payBuying(GADGETS[g].cost)) return; s.gadgets[g] = 1; Game.toast(GADGETS[g].name + '. ' + GADGETS[g].note, 'good'); RunnerArt.cache.clear(); this.refresh(); Save.write(); }));
   },
 };

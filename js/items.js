@@ -12,13 +12,14 @@ const SALVAGE = {
 };
 const SALVAGE_ORDER = Object.keys(SALVAGE);
 
-// Mods: one per slot. load: how much of your nervous system it takes.
-const MODS = {
-  lowlight: { slot: 'Optics', name: 'Lowlight optics', load: 1, cost: { cr: 80, glass: 2, chips: 1 }, note: 'See in the dark, and see the salvage hidden in walls.' },
-  spring: { slot: 'Legs', name: 'Spring legs', load: 2, cost: { cr: 140, alloy: 4, coolant: 2 }, note: 'A second jump in the air.' },
-  mantis: { slot: 'Arms', name: 'Mantis blades', load: 3, cost: { cr: 220, alloy: 4, chips: 2, wire: 3 }, note: 'Twice the damage. Cuts reinforced shutters, and cuts everything faster.' },
+// Gadgets: implants are illegal in this city, so a detective carries tools
+// instead. The precinct's quartermaster builds them; once yours, they work.
+const GADGETS = {
+  scanner: { name: 'Spectral lenses', kind: 'Goggles', cost: { cr: 80, glass: 2, chips: 1 }, note: 'See in the dark, and see the salvage hidden in walls.' },
+  jets: { name: 'Jump jets', kind: 'Boots', cost: { cr: 140, alloy: 4, coolant: 2 }, note: 'Thrusters on your heels: a second jump in the air.' },
+  cutter: { name: 'Plasma cutter', kind: 'Tool', cost: { cr: 220, alloy: 4, chips: 2, wire: 3 }, note: 'Cuts reinforced shutters, and cuts everything faster. A blow with it hits much harder.' },
 };
-const MOD_ORDER = Object.keys(MODS);
+const GADGET_ORDER = Object.keys(GADGETS);
 
 // Programs: on the deck, run for RAM.
 const PROGRAMS = {
@@ -28,12 +29,12 @@ const PROGRAMS = {
 };
 const PROGRAM_ORDER = Object.keys(PROGRAMS);
 
-// Jobs from Juno, the fixer at the bar on the Stack: she trades in leads,
-// and leads cost favours.
+// Cases from Lieutenant Hale at the precinct. Implants are illegal; the
+// precinct hunts the chrome, and the four synths.
 const JOBS = [
-  { id: 'coolant', title: 'Cold hands', text: 'Leads cost, detective. Bring me three coolant. The cars down on street level are full of it, if you can get down there.', need: { coolant: 3 }, reward: { cr: 150 } },
-  { id: 'drones', title: 'Clear the walkway', text: 'Block drones keep buzzing my customers on the upper walkway. Take down four of them.', kills: { drone: 4 }, reward: { cr: 120, chips: 1, gear: 'shades' } },
-  { id: 'clinic', title: 'House call', after: ['coolant', 'drones'], text: 'One of your synths came through a back-alley clinic on street level two nights ago. Its terminal remembers. Jack in and bring me the record.', story: 'The record: a woman, no ID, paid cash to have a serial cut out of her wrist. She asked the way to the subway.', flag: 'clinicData', reward: { cr: 200, booster: true, gear: 'tracer' } },
+  { id: 'drones', title: 'Clear the walkway', text: 'Somebody\'s hacked the block drones on the Stack\'s upper walkway and they\'re buzzing civilians. Take down four.', kills: { drone: 4 }, reward: { cr: 120, chips: 1, gear: 'shades' } },
+  { id: 'chrome', title: 'Chrome warrant', text: 'The gang on street level runs illegal implants out of their turf. Anyone carrying chrome is under arrest, or under the ground. Bring three of them down.', kills: { gang: 3 }, reward: { cr: 180, gear: 'armtrench' } },
+  { id: 'clinic', title: 'House call', after: ['drones', 'chrome'], text: 'One of your synths came through a back-alley chop clinic on street level two nights ago. Its terminal remembers. Jack in and bring me the record.', story: 'The record: a woman, no ID, paid cash to have a serial cut out of her wrist. She asked the way to the subway.', flag: 'clinicData', reward: { cr: 200, gear: 'tracer' } },
 ];
 
 // Gear: what you wear and carry, slot by slot. Rarity is the colour of its
@@ -82,7 +83,7 @@ const GEAR_START = { head: 'fedora', outer: 'trench', inner: 'shirt', legs: 'sla
 // what the vendors sell, and for how much
 const SHOP = {
   Kit: { beanie: 30, mask: 90, bomber: 160, cargo: 110 },
-  Ozu: { heavy: 380, ballistic: 300, plated: 240, grips: 320, armtrench: 420, katana: 600 },
+  Ozu: { heavy: 380, ballistic: 300, plated: 240, grips: 320, katana: 600 },
 };
 
 // The fabricator: Mags, at her stall in the Stack's market, makes gear from

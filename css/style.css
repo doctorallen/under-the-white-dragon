@@ -172,3 +172,6 @@ img.rowico { width: 32px; height: 32px; image-rendering: pixelated; flex: none; 
 .pay small.buy { color: var(--sodium); font-size: 12px; }
 b.cr { color: var(--sodium); font-weight: 500; }
 .pips { color: var(--sodium); letter-spacing: 2px; }
+.tile.off { opacity: 0.45; }
+#hud.flying > *:not(#toasts) { visibility: hidden; }
+body:has(#hud.flying) #pads, body:has(#hud.flying) #stick { visibility: hidden; }

@@ -1,16 +1,18 @@
 'use strict';
 // The game played headlessly in Chrome, sideways on a phone and on a desktop:
 // it boots without an error in the apartment (the desktop run without
-// WebGL2, so the 2D path is played too); the runner walks the hall to the
-// elevator and rides it down to the Stack; a vending machine is stripped
-// for parts; Kit's and Juno's panels open and a job is taken; the stairs
-// carry the runner up to both walkways; the data node gives Breach; the
-// strike downs a drone; the grate into the service yard is cut; the Warden
-// falls and drops its helmet, which is worn from the Gear tab; the hatch is
-// breached and the shaft leads down to street level; a car there gives
-// coolant; the ripperdoc fits ware; the elevator there goes home; a reload
-// brings it all back. Screenshots go to test/out. Chrome comes from $CHROME
-// (puppeteer-core), or, where that isn't installed, playwright's Chromium.
+// WebGL2, so the 2D path is played too); the spinner on the pad flies to the
+// precinct, where Lieutenant Hale gives a case and the quartermaster builds
+// spectral lenses; a cab flies home; the elevator goes down to the Stack; a
+// vending machine is stripped for parts; Kit's panel opens; Mags makes a
+// mask, buying the glass that's missing; the stairs carry the runner up to
+// both walkways; the data node gives Breach; the strike downs a drone; the
+// grate into the service yard is cut; the Warden falls and drops its helmet,
+// which is worn from the Gear tab; the hatch is breached and the shaft leads
+// down to street level; a car there gives coolant; a ganger downed stays
+// down; the elevator there goes home; a reload brings it all back.
+// Screenshots go to test/out. Chrome comes from $CHROME (puppeteer-core), or,
+// where that isn't installed, playwright's Chromium.
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), OUT = path.join(__dirname, 'out');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
@@ -70,6 +72,18 @@ async function run(B, url, vp, name, failures) {
   if (st.level !== 'home' || Math.abs(st.x - 116) > 40) fail('the runner does not start by the bed ' + JSON.stringify(st));
   if (!st.frame) fail('the loop is not running');
   await shot('home');
+  // out to the pad and the spinner, up to the precinct
+  const fly = await E(() => { T_.walkTo(1760); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-fly="precinct:pad"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
+  if (fly.o !== 'spinner' || !fly.on || fly.level !== 'precinct') fail('the spinner did not fly to the precinct ' + JSON.stringify(fly));
+  await shot('precinct');
+  // Hale's case, and the quartermaster's lenses
+  const hale = await E(() => { T_.walkTo(1130); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-take="drones"]'); if (b) b.click(); Hud.toggle(null); return { o, taken: !!Game.s.jobs.taken.drones }; });
+  if (hale.o !== 'fixer' || !hale.taken) fail('Hale\'s cases did not open or the case was not taken ' + JSON.stringify(hale));
+  const qm = await E(() => { Object.assign(Game.s.pack, { glass: 2, chips: 1 }); Game.s.cr += 80; T_.walkTo(1400); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-gadget="scanner"]'); if (b) b.click(); Hud.toggle(null); return { o, has: Game.has('scanner') }; });
+  if (qm.o !== 'qm' || !qm.has) fail('the quartermaster did not build the lenses ' + JSON.stringify(qm));
+  // a cab home
+  const cab = await E(() => { Game.s.cr += 30; const c0 = Game.s.cr; Hud.toggle('cab'); const b = document.querySelector('button[data-act="cab"]'); if (b) b.click(); T_.run({}, 330); return { level: Game.s.level, paid: c0 - Game.s.cr, x: Math.round(Player.x) }; });
+  if (cab.level !== 'home' || cab.paid !== 30) fail('the cab did not take the runner home ' + JSON.stringify(cab));
   // down the hall to the elevator, and down to the Stack
   const lift = await E(() => { T_.walkTo(1470); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-floor="stack"]'); if (b) b.click(); T_.run({}, 90); return { o, level: Game.s.level, x: Math.round(Player.x) }; });
   if (lift.o !== 'elevator' || lift.level !== 'stack' || Math.abs(lift.x - 158) > 20) fail('the elevator did not take the runner down to the Stack ' + JSON.stringify(lift));
@@ -77,11 +91,9 @@ async function run(B, url, vp, name, failures) {
   // a vending machine, stripped
   const strip = await E(() => { T_.walkTo(966); T_.hold(200); return { done: World.props.find((p) => p.kind === 'vending').done, pack: Game.packCount(), cr: Game.s.cr }; });
   if (!strip.done || !strip.pack) fail('stripping the vending machine gave nothing ' + JSON.stringify(strip));
-  // Kit, then Juno and a job
+  // Kit
   const kit = await E(() => { T_.walkTo(1110); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });
   if (kit !== 'vendor') fail('Kit\'s trade panel did not open (' + kit + ')');
-  const juno = await E(() => { T_.walkTo(1416); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-take="drones"]'); if (b) b.click(); Hud.toggle(null); return { o, taken: !!Game.s.jobs.taken.drones }; });
-  if (juno.o !== 'fixer' || !juno.taken) fail('Juno\'s jobs did not open or the job was not taken ' + JSON.stringify(juno));
   await shot('market');
   // Mags makes a filter mask, buying the glass that's missing
   const fab = await E(() => { Game.s.cr += 100; Game.s.pack.glass = 0; Game.s.pack.wire = (Game.s.pack.wire || 0) + 1; T_.walkTo(1215); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-make="mask"]'); if (b) b.click(); Hud.toggle(null); return { o, mask: !!Game.s.gear.owned.mask }; });
@@ -115,17 +127,14 @@ async function run(B, url, vp, name, failures) {
   // a ganger downed stays down
   const body = await E(() => { const e = Actors.enemies.find((q) => q.type === 'gang'); Actors.damage(e, 999, 1); T_.run({}, 30); return Actors.bodies.length; });
   if (body !== 1) fail('the ganger left no body (' + body + ')');
-  // the ripperdoc fits lowlight optics (paid for here)
-  const ware = await E(() => { Object.assign(Game.s.pack, { glass: 3, chips: 2 }); Game.s.cr += 100; Hud.toggle('doc'); const b = document.querySelector('button[data-buy="lowlight"]'); if (b) b.click(); Hud.toggle(null); return Game.has('lowlight'); });
-  if (!ware) fail('the ripperdoc did not fit lowlight optics');
-  await shot('lowlight');
+  await shot('street2');
   // the elevator on street level goes home
   const home = await E(() => { T_.walkTo(350); T_.tap('useHit'); const b = document.querySelector('button[data-floor="home"]'); if (b) b.click(); T_.run({}, 90); return Game.s.level; });
   if (home !== 'home') fail('the street elevator did not go home (' + home + ')');
   // a reload brings it back
-  const before = await E(() => { Save.write(); return JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.mods.on, w: Game.s.flags.warden, g: Game.s.gear.on }); });
+  const before = await E(() => { Save.write(); return JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.gadgets, w: Game.s.flags.warden, g: Game.s.gear.on }); });
   await page.reload(); for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.Downlevel)); i++) await sleep(200);
-  const after = await E(() => JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.mods.on, w: Game.s.flags.warden, g: Game.s.gear.on }));
+  const after = await E(() => JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.gadgets, w: Game.s.flags.warden, g: Game.s.gear.on }));
   if (before !== after) fail('the save did not come back: ' + before + ' / ' + after);
   if (errors.length) fail('errors: ' + errors.slice(0, 5).join(' | '));
 }

@@ -15,12 +15,11 @@ const T = {
   // bolts: seconds per shot back, speed, life, aim range; each gun's damage,
   // shots and cycle are in GEAR (items.js)
   blaster: { recharge: 0.8, speed: 300, life: 0.9, range: 200 },
-  // a blow: bare-handed damage, or the melee weapon's; mantis blades add theirs
-  strike: { reach: 20, dmg: 12, mantis: 14, cd: 0.32, knock: 120 },
-  // cutting things open: seconds at tier 1; the mantis arms are quicker
-  cut: { speedMantis: 1.7 },
+  // a blow: bare-handed damage, or the melee weapon's; the plasma cutter adds its own
+  strike: { reach: 20, dmg: 12, cutter: 14, cd: 0.32, knock: 120 },
+  // cutting things open: the plasma cutter is quicker
+  cut: { speedCutter: 1.7 },
   ram: { max: 3, regen: 7 },
-  neural: { base: 5, booster: 1 },
   day: { length: 1200, start: 20.5 }, // seconds in a day; the clock starts at 20:30
   light: { lamp: 70, lowlight: 0.34 },
 };

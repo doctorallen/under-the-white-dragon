@@ -11,16 +11,15 @@ const Game = {
   fresh() {
     return {
       v: 3, level: 'home', spawn: 'bed', px: 0, py: 0, hp: T.player.hp, cr: 40, ram: T.ram.max,
-      pack: {}, gear: { owned: Object.fromEntries(Object.values(GEAR_START).map((g) => [g, 1])), on: Object.assign({}, GEAR_START), lvl: {} }, mods: { owned: {}, on: {} }, programs: {}, prog: null,
+      pack: {}, gadgets: {}, gear: { owned: Object.fromEntries(Object.values(GEAR_START).map((g) => [g, 1])), on: Object.assign({}, GEAR_START), lvl: {} }, programs: {}, prog: null,
       done: {}, flags: {}, jobs: { taken: {}, done: {}, kills: {} }, time: T.day.start, day: 1, deaths: 0,
     };
   },
   // ---- ware ----
-  has(mod) { return !!this.s.mods.on[mod]; },
+  // gadgets: carried, so working
+  has(g) { return !!this.s.gadgets[g]; },
   flag(f) { return !!this.s.flags[f]; },
-  neuralCap() { return T.neural.base + (this.s.flags.booster ? T.neural.booster : 0); },
-  neuralLoad() { let n = 0; for (const m in this.s.mods.on) if (this.s.mods.on[m]) n += MODS[m].load; return n; },
-  stage() { return { eye: this.has('lowlight'), legs: this.has('spring'), arm: this.has('mantis') }; },
+  stage() { return { eye: this.has('scanner'), legs: this.has('jets'), arm: this.has('cutter') }; },
   // ---- what you carry: no limit, and once it's yours it stays yours ----
   packCount() { let n = 0; for (const k in this.s.pack) n += this.s.pack[k]; return n; },
   give(item, n) { if (n <= 0) return 0; this.s.pack[item] = (this.s.pack[item] || 0) + n; this.checkJobs(); Hud.refresh(); return n; },
@@ -39,7 +38,7 @@ const Game = {
   armor() { let a = 0; for (const k in this.s.gear.on) { const id = this.s.gear.on[k]; if (GEAR[id] && GEAR[id].armor) a += this.stat(id, 'armor'); } return a; },
   perk(name) { let v = 0; for (const k in this.s.gear.on) { const g = GEAR[this.s.gear.on[k]]; if (g && g.perk && g.perk[name]) v += g.perk[name]; } return v; },
   weapon() { const id = this.s.gear.on.ranged || 'blaster'; return Object.assign({}, GEAR[id], { dmg: this.stat(id, 'dmg') }); },
-  strikeDmg() { const id = this.s.gear.on.melee; return (id ? this.stat(id, 'strike') : T.strike.dmg) + (this.has('mantis') ? T.strike.mantis : 0); },
+  strikeDmg() { const id = this.s.gear.on.melee; return (id ? this.stat(id, 'strike') : T.strike.dmg) + (this.has('cutter') ? T.strike.cutter : 0); },
   // ---- the fabricator: parts you're short of can be bought from her as you pay ----
   shortfall(cost) {
     const missing = {}; let extra = 0;
@@ -94,13 +93,12 @@ const Game = {
     if (r.cr) { this.s.cr += r.cr; got.push(r.cr + ' cr'); }
     if (r.chips) { this.give('chips', r.chips); got.push(r.chips + ' chips'); }
     if (r.gear && this.giveGear(r.gear)) got.push(GEAR[r.gear].name.toLowerCase());
-    if (r.booster) { this.s.flags.booster = true; got.push('a neural booster: your nervous system takes one more point of ware'); }
     this.toast('Job done: ' + j.title + '. ' + got.join(', ') + '.', 'good');
     if (j.story) setTimeout(() => this.toast(j.story, 'good'), 2500);
     Hud.refresh(); Save.write();
   },
-  kill(type) { for (const j of JOBS) if (j.kills && j.kills[type] && this.s.jobs.taken[j.id] && !this.s.jobs.done[j.id]) { const k = j.id + ':' + type; this.s.jobs.kills[k] = (this.s.jobs.kills[k] || 0) + 1; if (this.s.jobs.kills[k] === j.kills[type]) this.toast(j.title + ': done. Go and see Juno.', 'good'); } },
-  checkJobs() { for (const j of JOBS) if (this.s.jobs.taken[j.id] && !this.s.jobs.done[j.id] && !this.s.jobs['said:' + j.id] && this.jobReady(j)) { this.s.jobs['said:' + j.id] = true; this.toast(j.title + ': you have what Juno wants.', 'good'); } },
+  kill(type) { for (const j of JOBS) if (j.kills && j.kills[type] && this.s.jobs.taken[j.id] && !this.s.jobs.done[j.id]) { const k = j.id + ':' + type; this.s.jobs.kills[k] = (this.s.jobs.kills[k] || 0) + 1; if (this.s.jobs.kills[k] === j.kills[type]) this.toast(j.title + ': done. Report to Lieutenant Hale at the precinct.', 'good'); } },
+  checkJobs() { for (const j of JOBS) if (this.s.jobs.taken[j.id] && !this.s.jobs.done[j.id] && !this.s.jobs['said:' + j.id] && this.jobReady(j)) { this.s.jobs['said:' + j.id] = true; this.toast(j.title + ': you have what the lieutenant wants.', 'good'); } },
   // ---- the clock ----
   hour() { return this.s.time % 24; },
   clock() { const h = Math.floor(this.hour()), m = Math.floor((this.hour() % 1) * 60); return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'); },

@@ -65,7 +65,7 @@ function cityLayers(L) {
 // the elevator's floors; one you haven't reached yet has a dead button
 const ELEVATOR = [
   { level: 'home', name: 'Floor 31 · home', note: 'Your apartment, at the end of the hall.' },
-  { level: 'stack', name: 'The Stack', note: 'The market, Juno\'s bar, the clinic, the walkways.' },
+  { level: 'stack', name: 'The Stack', note: 'The market, Mags\'s stall, Juno\'s bar, the walkways.' },
   { level: 'street', name: 'Street level', note: 'Under the overpasses, where the rain doesn\'t reach.', needs: 'been:street' },
 ];
 
@@ -73,15 +73,17 @@ const ELEVATOR = [
 LEVELS.home = {
   name: 'Floor 31', depth: '+40 m',
   make() {
-    const L = newLevel('home', 'Floor 31', 1520, 262);
-    const G = 226, CEIL = 104, APT = 384, EL = 1470;
+    const L = newLevel('home', 'Floor 31', 1940, 262);
+    const G = 226, CEIL = 104, APT = 384, EL = 1470, IN = 1520;
     cityLayers(L); L.layerDy = 70; // high up: the window looks across at the towers' upper floors
     const WIN = [[44, 130, 214, 200], [1086, 140, 1176, 196]];
     const plaster = R(['#1e1618', '#2e2226', '#443236', '#6a5050', '#9a7a70']), hallWall = R(['#141a1a', '#1e2828', '#2c3a38', '#4a5e58', '#7a948a']);
     // the floor, the ceiling slab and the building above it, the end walls
     L.floor(0, L.w, G, 36, MAT.concrete, { drips: 0, base: 0.4 });
-    L.block(0, 0, L.w, CEIL, MAT.concreteD, { base: 0.3, lip: 0, panels: [64, 40], drips: 0.08, dripLen: 10 });
-    L.wall(0, CEIL, 12, G, MAT.concreteD, { base: 0.35 }); L.wall(L.w - 12, CEIL, L.w, G, MAT.concreteD, { base: 0.35 });
+    L.block(0, 0, IN, CEIL, MAT.concreteD, { base: 0.3, lip: 0, panels: [64, 40], drips: 0.08, dripLen: 10 });
+    L.wall(0, CEIL, 12, G, MAT.concreteD, { base: 0.35 });
+    // the end of the hall: a door out to the landing pad
+    L.block(IN - 12, CEIL, IN, G - 40, MAT.concreteD, { base: 0.35 }); L.paint(IN - 12, G - 40, IN, G, (P) => { for (let y = G - 40; y < G; y++) for (let x = IN - 12; x < IN; x++) P.put(x, y, tone(MAT.steelD, x < IN - 10 || x > IN - 3 ? 0.6 : 0.12)); });
     // ---- the apartment: plaster walls round a big window on the city
     L.paint(12, CEIL, APT, G, (P) => {
       const inWin = (x, y) => WIN.some(([a, b, c, d]) => x >= a && x < c && y >= b && y < d);
@@ -128,14 +130,78 @@ LEVELS.home = {
     L.ad(744, 140, 40, 16, 'marquee', ['#3af0e0', '#e8e8f0']);
     L.prop('elevator', EL, G, { level: 'home' }); L.light(EL, G - 40, 46, [1, 0.75, 0.4], 0.6);
     L.litter(400, 1440, G, 3); L.critter('cat', 420, 1400, G, 1);
+    // ---- the landing pad: open to the city and the rain, your spinner on it
+    L.paint(IN, G - 4, L.w, G, (P) => { for (let x = IN; x < L.w; x++) for (let y = G - 4; y < G; y++) if ((x - IN) % 24 < 12 && y === G - 1) P.put(x, y, [200, 170, 60], 0.15); });
+    L.paint(L.w - 30, G - 22, L.w, G, (P) => railing(P, L.w - 30, L.w, G, MAT.steel));
+    L.paint(1640, CEIL + 20, 1650, G - 4, (P) => { for (let y = CEIL + 20; y < G - 4; y++) { P.put(1644, y, tone(MAT.steelD, 0.6)); P.put(1645, y, tone(MAT.steelD, 0.3)); } });
+    for (const x of [1560, 1700, 1840]) L.light(x, G - 2, 26, [1, 0.3, 0.2], 0.7, 1, { mode: 'bad', seed: x });
+    L.sign(1630, CEIL + 8, 3, '#3af0e0', { r: 50 });
+    L.prop('spinner', 1760, G, { label: 'your spinner' }); L.light(1760, G + 2, 50, [0.3, 0.9, 1], 0.6, 2.5);
+    L.wet.push({ y: G + 1, x0: IN, x1: L.w, depth: 20, k: 0.4 });
     // the neighbours
     L.npc({ name: 'Mrs Okafor', look: { skin: SKINS[5], hair: 'bun', hairCol: '#c8c8c8', top: '#6a3a5a', coat: 'long', legs: '#2a2030', tall: 0.9 }, x: 700, y: G, face: -1, sched: [[0, 2, 700, 'stand'], [2, 9, 700, 'away'], [9, 24, 700, 'stand']], lines: ['Detective. You\'re out late again. Eat something.', 'The lift was stuck between floors for an hour today. I sang to it.', 'Those people in 3107 fight every night. Don\'t you go knocking, it\'s not police business.', 'You look like my son. He went down to the Works.'] });
     L.npc({ name: 'Tam', look: { skin: SKINS[2], hair: 'cap', capCol: '#ff4ab0', top: '#3a5a8a', legs: '#2a2a34', tall: 0.72 }, x: 980, y: G, sched: [[0, 1, 980, 'wander'], [1, 14, 980, 'away'], [14, 24, 980, 'wander']], lines: ['Is that a real blaster? Can I hold it? No? Okay.', 'My mum says detectives are just cops with sad coats.', 'I saw a synth once. It looked like a lady. It was nice to me.'] });
-    L.npc({ name: 'Rook\'s brother', look: { skin: SKINS[1], hair: 'undercut', hairCol: '#3af0e0', top: '#2a2a2a', coat: 'jacket', legs: '#1a1a24', cyArm: true, acc: '#3af0e0' }, x: 1110, y: G, face: -1, sched: [[0, 24, 1110, 'stand']], smoke: true, lines: ['Window\'s the only place on this floor you can smoke without the alarm going.', 'You want the elevator, it\'s at the end. Kick it if it sulks.'] });
+    L.npc({ name: 'Rook\'s brother', look: { skin: SKINS[1], hair: 'undercut', hairCol: '#3af0e0', top: '#2a2a2a', coat: 'jacket', legs: '#1a1a24', cyArm: true, acc: '#3af0e0' }, x: 1110, y: G, face: -1, sched: [[0, 24, 1110, 'stand']], smoke: true, lines: ['Window\'s the only place on this floor you can smoke without the alarm going.', 'Don\'t look at the arm, detective. It was my grandad\'s. From before the law.', 'You want the elevator, it\'s at the end. Kick it if it sulks.'] });
     // spawns, light, no weather indoors
-    L.spawns = { bed: [116, G], elevator: [EL, G] };
-    L.ambient = (x, y) => WIN.some(([a, b, c, d]) => x >= a && x < c && y >= b && y < d) ? [0.72, 0.78, 0.88] : x < APT ? [0.34, 0.28, 0.3] : [0.3, 0.32, 0.32];
-    L.rain = 0; L.dry = [[0, 0, L.w, L.h]];
+    L.spawns = { bed: [116, G], elevator: [EL, G], pad: [1650, G] };
+    L.ambient = (x, y) => WIN.some(([a, b, c, d]) => x >= a && x < c && y >= b && y < d) ? [0.72, 0.78, 0.88] : x < APT ? [0.34, 0.28, 0.3] : x < IN ? [0.3, 0.32, 0.32] : [0.4, 0.44, 0.54];
+    L.rain = 1; L.dry = [[0, 0, IN, L.h]];
+    return L;
+  },
+};
+
+// ---- Precinct 9: a pad on the tower's side, the lobby, cells, the lieutenant, the armoury
+LEVELS.precinct = {
+  name: 'Precinct 9', depth: '+120 m',
+  make() {
+    const L = newLevel('precinct', 'Precinct 9', 1560, 262);
+    const G = 226, CEIL = 100, IN = 420;
+    cityLayers(L); L.layerDy = 110;
+    const wall = R(['#10141c', '#182030', '#243044', '#3a4a64', '#6a7e9a']), tile = R(['#0c0e14', '#14181f', '#1e242e', '#2e3644']);
+    L.floor(0, L.w, G, 36, MAT.concrete, { drips: 0, base: 0.42 });
+    // the pad, outside, and the precinct's wall with its door
+    L.paint(0, G - 4, IN, G, (P) => { for (let x = 0; x < IN; x++) if (x % 24 < 12) P.put(x, G - 1, [60, 120, 255], 0.2); });
+    L.paint(0, G - 22, 30, G, (P) => railing(P, 0, 30, G, MAT.steel));
+    for (const x of [60, 200, 340]) L.light(x, G - 2, 26, [0.3, 0.5, 1], 0.7, 1, { mode: 'bad', seed: x });
+    L.prop('spinner', 200, G, { label: 'your spinner' }); L.light(200, G + 2, 50, [0.3, 0.9, 1], 0.6, 2.5);
+    L.wet.push({ y: G + 1, x0: 0, x1: IN, depth: 20, k: 0.4 });
+    L.block(IN, 0, L.w, CEIL, MAT.concreteD, { base: 0.3, lip: 0, panels: [80, 50] });
+    L.block(IN, CEIL, IN + 12, G - 40, MAT.concreteD, { base: 0.35 });
+    L.sign(IN + 20, 30, 9, '#3a8aff', { r: 80, seed: 9 }); L.sign(IN + 20, 50, 9, '#e8e8f0', { r: 40, seed: 19 });
+    L.wall(L.w - 12, CEIL, L.w, G, MAT.concreteD, { base: 0.35 });
+    // inside: a long wall of blue-grey panels, a dado of dark tile
+    L.paint(IN + 12, CEIL, L.w - 12, G, (P) => {
+      P.area(IN + 12, CEIL, L.w - 12, G, wall, blockV(IN + 12, CEIL, L.w - 12, G, { base: 0.38, lip: 0, panels: [40, 30] }));
+      for (let x = IN + 12; x < L.w - 12; x++) for (let y = G - 30; y < G; y++) P.put(x, y, tone(tile, 0.35 + hash(x >> 3, y >> 3, 6) * 0.25));
+      // the emblem over the desk: a seven-pointed star in lit tube
+      for (let k = 0; k < 7; k++) { const a0 = -Math.PI / 2 + k * Math.PI * 2 / 7, a1 = a0 + Math.PI * 4 / 7; for (let q = 0; q <= 1; q += 0.02) { const x = 560 + (Math.cos(a0) * (1 - q) + Math.cos(a1) * q) * 16, y = 146 + (Math.sin(a0) * (1 - q) + Math.sin(a1) * q) * 16; P.put(Math.round(x), Math.round(y), [110, 170, 255], 1); } }
+      for (let a = 0; a < Math.PI * 2; a += 0.03) P.put(Math.round(560 + Math.cos(a) * 20), Math.round(146 + Math.sin(a) * 20), [60, 100, 200], 0.6);
+      // a wanted board: the chrome the precinct is after, faces in a grid
+      P.block(650, 130, 760, 190, MAT.steelD, { base: 0.4 });
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) { const x = 656 + i * 26, y = 136 + j * 27; P.block(x, y, x + 20, y + 22, R(['#c8c0a8', '#e8e0c8']), { base: 0.6, lip: 0 }); P.block(x + 6, y + 4, x + 14, y + 14, R(['#3a3030', '#5a4840']), { base: 0.5, lip: 0 }); P.put(x + 10, y + 8, [255, 60, 80], 1); P.block(x + 3, y + 17, x + 17, y + 19, R(['#8a2020', '#a83030']), { base: 0.6, lip: 0 }); }
+      // the cells: bars, and the dark behind them
+      P.block(800, 120, 960, G, R(['#06060a', '#0e0e14', '#16161e']), { base: 0.3, lip: 0 });
+      // the lieutenant's office: a glass wall and a door
+      for (let y = 120; y < G; y++) for (let x = 1010; x < 1200; x++) if (y < 130 || y > G - 34 || x < 1014 || x > 1196 || (x - 1010) % 48 < 2) P.put(x, y, tone(MAT.steelD, 0.45)); else if ((x + y) % 23 === 0) P.put(x, y, [140, 200, 255], 0.2);
+      // the armoury: racks of gear behind a counter
+      P.block(1260, 120, 1530, 190, MAT.steelD, { base: 0.35 });
+      for (let k = 0; k < 9; k++) { const x = 1272 + k * 28; P.block(x, 130, x + 4, 180, MAT.steel, { base: 0.5 }); P.block(x + 8, 136, x + 22, 140, MAT.steelD, { base: 0.6 }); P.put(x + 20, 138, k % 3 ? [58, 240, 224] : [255, 176, 64], 1); P.block(x + 8, 156, x + 22, 160, MAT.steelD, { base: 0.6 }); }
+    });
+    for (const x of [500, 640, 780, 900, 1060, 1160, 1300, 1440]) L.tube(x, CEIL + 4, 24, '#e0ecff', 0.75);
+    L.light(560, 140, 70, [0.4, 0.6, 1], 0.7); L.light(880, 180, 50, [0.6, 0.6, 0.8], 0.3);
+    // the cell's bars stand in front of whoever's inside
+    L.prop('deco', 880, G, { art: () => { const S = new Spr(161, 107, 420); S.ax = 80; S.ay = 106; for (let x = 4; x < 160; x += 6) for (let y = 0; y < 107; y++) { S.px(x, y, tone(MAT.steel, 0.6)); S.px(x + 1, y, tone(MAT.steel, 0.3)); } for (let x = 0; x < 161; x++) { S.px(x, 0, tone(MAT.steel, 0.75)); S.px(x, 50, tone(MAT.steel, 0.55)); } return S.done(); }, id: 'cellbars', front: 107 });
+    L.prop('deco', 560, G, { art: () => desk({}), id: 'pdesk' }); L.prop('deco', 470, G, { art: () => bench(), id: 'pb1' }); L.prop('deco', 610, G, { art: () => bench(), id: 'pb2' });
+    L.prop('deco', 1110, G, { art: () => desk({ col: '#3a3028' }), id: 'ltdesk' }); L.light(1110, 190, 50, [1, 0.85, 0.6], 0.6);
+    L.prop('deco', 1400, G, { art: () => desk({ col: '#2a2e38' }), id: 'qmdesk' });
+    const N = (d) => L.npc(d);
+    N({ name: 'Sergeant Oyelaran', look: { skin: SKINS[4], hair: 'short', hairCol: '#1a1a1a', top: '#1e2a44', legs: '#1a2030', tall: 1.05, wide: 1, hands: { fx: 26, fy: 38 } }, x: 560, y: G, face: -1, sched: [[0, 24, 560, 'work']], behind: true, lines: ['Hale\'s in her office. Knock first. She hates that you won\'t.', 'Booked six chromers tonight. Six. The cells smell like hot metal.', 'Your spinner\'s due a service. It\'s been due since you got it.'] });
+    N({ name: 'Prisoner', look: { skin: SKINS[1], hair: 'mohawk', hairCol: '#ff4ab0', hairGlow: true, top: '#2a1a1e', legs: '#1a1a1e', cyArm: 'both', acc: '#ff4ab0', eye: '#ff4ab0' }, x: 880, y: G, face: -1, sched: [[0, 24, 880, 'stand']], lines: ['It\'s my arm. Mine. You can\'t arrest an arm.', 'Six months for a bit of chrome. Synths walk around free and I\'m in here.', 'You think you\'re clean, detective? Everyone up top\'s got something in them.'] });
+    N({ name: 'Lieutenant Hale', role: 'fixer', look: { skin: SKINS[2], hair: 'bob', hairCol: '#c8c8c8', top: '#2a2e3a', coat: 'long', legs: '#1a1a24', collar: true }, x: 1130, y: G, face: -1, sched: [[0, 24, 1130, 'stand']], lines: ['Four synths, detective. And the city\'s full of illegal chrome while you look. Do both.', 'Good work. There\'s more. There\'s always more.'] });
+    N({ name: 'Quartermaster Ito', role: 'qm', look: { skin: SKINS[0], hair: 'bald', top: '#3a4030', apron: '#2a2e24', legs: '#2a2a24', shades: '#ffb040', hands: { fx: 26, fy: 38 } }, x: 1400, y: G, sched: [[0, 24, 1400, 'work']], behind: true, lines: ['Tools, not chrome.'] });
+    L.spawns = { pad: [300, G] };
+    L.ambient = (x) => x < IN ? [0.42, 0.46, 0.58] : [0.3, 0.33, 0.4];
+    L.rain = 1; L.dry = [[IN, 0, L.w, L.h]];
     return L;
   },
 };
@@ -266,8 +332,8 @@ LEVELS.stack = {
     N({ name: 'Mama Ruiz', role: 'noodles', look: { skin: SKINS[4], hair: 'bun', hairCol: '#2a2020', top: '#e8e0d0', apron: '#3a3a3a', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 880, y: G, sched: [[0, 24, 880, 'work']], lines: ['Detective. Noodles. Twelve. Sit.', 'You look like you need a bowl and a week of sleep.', 'Rain\'s been going since Tuesday. Year before last.'], behind: true });
     N({ name: 'Kit', role: 'vendor', rate: 1, look: { skin: SKINS[2], hair: 'cap', capCol: '#2a5a8a', top: '#4a5a6a', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 1110, y: G, sched: [[0, 24, 1110, 'work']], lines: ['Wire, glass, chips. I buy it all. Don\'t ask where it goes.', 'Strip it, bring it, get paid.'], behind: true });
     N({ name: 'Mags', role: 'fab', look: { skin: SKINS[3], hair: 'undercut', hairCol: '#ffb040', top: '#3a3028', apron: '#5a4a3a', legs: '#2a2420', cyArm: true, acc: '#ffb040', shades: '#ffb040', hands: { fx: 26, fy: 38 } }, x: 1215, y: G, sched: [[0, 24, 1215, 'work']], lines: ['Parts and money. I make the rest.'], behind: true });
-    N({ name: 'Doc Vasquez', role: 'doc', look: { skin: SKINS[0], hair: 'bald', top: '#e0e8e8', coat: 'long', legs: '#3a4a4a', cyArm: 'both', acc: '#3af0e0', eye: '#3af0e0' }, x: 560, y: G, face: -1, sched: [[0, 24, 560, 'stand']], lines: ['Sit down. Don\'t touch anything that glows.', 'Your nervous system only takes so much. Choose.', 'Synths? On my table I can\'t tell them from you anymore. Only by what they ask for.'] });
-    N({ name: 'Juno', role: 'fixer', look: { skin: SKINS[3], hair: 'bob', hairCol: '#ff4ab0', top: '#2a1a2a', coat: 'long', legs: '#1a1a1e', acc: '#ff4ab0', eye: '#ff4ab0' }, x: 1420, y: G, face: -1, sched: [[0, 24, 1420, 'stand']], lines: ['The precinct sent a tracer. Cute. I have leads; they cost.', 'Everything in this city runs downhill. Money, water, synths.'] });
+    N({ name: 'Doc Vasquez', look: { skin: SKINS[0], hair: 'bald', top: '#e0e8e8', coat: 'long', legs: '#3a4a4a', cyArm: 'both', acc: '#3af0e0', eye: '#3af0e0' }, x: 560, y: G, face: -1, sched: [[0, 24, 560, 'stand']], lines: ['Detective. I set bones and stitch cuts. That\'s all this is.', 'The arms? Old. From before the law. I have a permit somewhere.', 'Synths? On my table I couldn\'t tell them from you. Only by what they ask for.', 'Go and arrest somebody with real chrome. The gangs downstairs are full of it.'] });
+    N({ name: 'Juno', look: { skin: SKINS[3], hair: 'bob', hairCol: '#ff4ab0', top: '#2a1a2a', coat: 'long', legs: '#1a1a1e', acc: '#ff4ab0', eye: '#ff4ab0' }, x: 1420, y: G, face: -1, sched: [[0, 24, 1420, 'stand']], lines: ['A cop at my bar. Drink or go.', 'Everything in this city runs downhill. Money, water, synths.', 'The chrome comes up from street level. Ask Hale, she knows more than she tells.', 'Your synth girl drank here. Water. Tipped like she didn\'t need money.'] });
     N({ name: 'Ines', look: { skin: SKINS[1], hair: 'short', top: '#3a5a7a', legs: '#2a2a3a' }, x: 868, y: G, sched: [[19, 23, 868, 'sit'], [23, 24, 1560, 'away'], [0, 7, 1560, 'away'], [7, 19, 760, 'wander']], lines: ['Night shift at the plant. Third this week.', 'Mama\'s broth is the only warm thing on this level.'] });
     N({ name: 'Teo', smoke: true, look: { skin: SKINS[3], hair: 'mohawk', hairCol: '#ff4ab0', hairGlow: true, top: '#1a1a1a', legs: '#2a1a2a', cyArm: true, acc: '#ff4ab0' }, x: 904, y: G, face: -1, sched: [[20, 24, 904, 'sit'], [0, 3, 904, 'sit'], [3, 20, 1320, 'wander']], lines: ['You\'re the tracer? Don\'t look at me, I\'m all meat. Mostly.', 'Chrome arm\'s from Vasquez. Still itches.', 'Don\'t go in the yard. The Warden doesn\'t do warnings.'] });
     N({ name: 'Mr. Hale', look: { skin: SKINS[0], hair: 'short', hairCol: '#3a2a20', top: '#2a2a2a', coat: 'long', shirt: '#d8d8d8', legs: '#1a1a1e', umbrella: '#2a3a5a', umbrellaGlow: '#3af0e0' }, x: 1700, y: MID, sched: [[6, 9, 1180, 'wander'], [9, 18, 2020, 'away'], [18, 22, 1660, 'wander'], [22, 24, 1660, 'away'], [0, 6, 1660, 'away']], lines: ['Twenty-two years in accounts. Never once been below the market.', 'They say the lift in the yard used to go all the way down.'] });

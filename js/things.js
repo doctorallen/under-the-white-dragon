@@ -9,7 +9,7 @@ const PROP_ART = {
   vending: (p) => vending(p.look || {}), ac: () => acUnit(), rack: (p) => rack({ h: 40, seed: p.x, warn: true }), car: (p) => car(p.look || {}),
   junk: (p) => junk({ seed: p.x % 7 }), wreck: () => wreck(), cache: () => { const S = new Spr(16, 12, 81); S.ax = 8; S.ay = 11; S.box(0, 0, 15, 11, MAT.concreteD, { lo: 1, hi: 5 }); for (let x = 2; x < 14; x += 3) S.px(x, 5, '#a85ad8', true); return S.done(); },
   grate: (p) => grate({ w: p.w || 12, h: p.h || 32 }), heavy: (p) => heavyShutter({ w: p.w || 30, h: p.h || 32 }), hatch: (p) => hatch({ w: p.w || 26, h: p.h || 34, stripe: true }),
-  node: (p) => node({ col: p.col }), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), closet: () => closet(), elevator: (p) => elevator({ at: ELEVATOR.findIndex((f) => f.level === p.level) }), exit: () => null, deco: (p) => p.art(),
+  node: (p) => node({ col: p.col }), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), closet: () => closet(), elevator: (p) => elevator({ at: ELEVATOR.findIndex((f) => f.level === p.level) }), exit: () => null, deco: (p) => p.art(),
   sealed: (p) => hatch({ w: 40, h: 40, col: '#3a3a40', lock: '#ffb040', stripe: true }),
 };
 // what each kind gives when stripped: [item, min, max]
@@ -41,10 +41,10 @@ const Props = {
   // can Use reach it, and what would it do (a prompt), or null
   prompt(p) {
     if (p.kind === 'deco') return null;
-    if (p.kind === 'cache' && !Game.has('lowlight')) return null;
+    if (p.kind === 'cache' && !Game.has('scanner')) return null;
     if (YIELDS[p.kind]) return p.done ? null : { verb: 'Strip', text: 'Strip ' + (p.label || p.kind), hold: STRIP_TIME[p.kind] };
     if (p.kind === 'grate') return p.done ? null : { verb: 'Cut', text: 'Cut the grate', hold: 1.3 };
-    if (p.kind === 'heavy') return p.done ? null : Game.has('mantis') ? { verb: 'Cut', text: 'Cut the shutter', hold: 2.0 } : { verb: 'Cut', text: 'Too heavy for the cutter', tap: true, no: true };
+    if (p.kind === 'heavy') return p.done ? null : Game.has('cutter') ? { verb: 'Cut', text: 'Cut the shutter', hold: 2.0 } : { verb: 'Cut', text: 'Too heavy for a hand cutter: it needs a plasma cutter', tap: true, no: true };
     if (p.kind === 'hatch') {
       if (p.done) return p.to ? { verb: 'Climb', text: p.goLabel || 'Go through', tap: true } : null;
       if (p.needs && !Game.flag(p.needs)) return { verb: 'Locked', text: p.needsLabel || 'Locked', tap: true, no: true };
@@ -54,6 +54,7 @@ const Props = {
     if (p.kind === 'node') return p.done ? null : { verb: 'Hack', text: 'Jack in', tap: true };
     if (p.kind === 'lift') return Game.s.flags.lift ? { verb: 'Ride', text: 'Take the lift ' + (p.dir || ''), tap: true } : { verb: 'Repair', text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
     if (p.kind === 'bed') return { verb: 'Sleep', text: 'Your bed', tap: true };
+    if (p.kind === 'spinner') return { verb: 'Fly', text: 'Your spinner', tap: true };
     if (p.kind === 'closet') return { verb: 'Gear', text: 'Your closet: change what you wear', tap: true };
     if (p.kind === 'elevator') return { verb: 'Call', text: 'Call the elevator', tap: true };
     if (p.kind === 'exit') return { verb: 'Climb', text: p.label || 'Climb', tap: true };
@@ -83,6 +84,7 @@ const Props = {
       Game.go(p.to[0], p.to[1]); return;
     }
     if (p.kind === 'bed') { Hud.toggle('bed'); return; }
+    if (p.kind === 'spinner') { Hud.toggle('spinner'); return; }
     if (p.kind === 'closet') { Hud.tab = 'gear'; Hud.toggle('pack'); return; }
     if (p.kind === 'elevator') { Hud.toggle('elevator'); return; }
     if (p.kind === 'exit') { Game.go(p.to[0], p.to[1]); return; }

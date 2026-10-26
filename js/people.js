@@ -38,6 +38,7 @@ function person(o = {}) {
     if (o.kneePad) S.cap(kx - 0.3, ky - 0.6, kx + 0.6, ky + 0.6, 1.4, 1.2, back ? dark(rp(o.kneePad, 5)) : rp(o.kneePad, 5));
     if (o.pockets && pose !== 'sit') S.cap(kx - 0.6 - dx * 0.15, ky - 3, kx - 0.4 - dx * 0.12, ky - 1.4, 1.2, 1.1, back ? dark(dark(legs)) : dark(legs));
     const B = back ? dark(boots) : boots;
+    if (o.jets && !back) { S.cap(ax - 1.6, ay - 1.4, ax - 1.6, ay + 0.2, 1, 1, MAT.steelD); S.px(ax - 2.4, ay + 0.8, '#ffb040', true); }
     S.cap(ax - 0.5, ay + 0.1, ax + 2.8, ay + 0.5, 1.7, 1.35, B, { bias: 0.05 });
     for (let x = Math.round(ax - 1.5); x <= Math.round(ax + 3.5); x++) if (S.get(x, Math.round(ay + 1.6))) S.px(x, ay + 1.6, o.soles ? (back ? dark([col3(o.soles)])[0] : col3(o.soles)) : B[0], !!o.soles && !back);
   };
@@ -102,6 +103,8 @@ function person(o = {}) {
   if (o.eye) { const ec = col3(o.eye); for (let x = 2; x < 6; x++) S.px(cx + x, head - 0.3, mixRgb(ec, [255, 255, 255], x === 3 ? 0.55 : 0.1), true); S.px(cx + 1, head - 0.3, chrome[3]); S.px(cx + 1, head + 0.6, chrome[2]); }
   // a hat over the hair: a fedora's crown, its band, a brim wide of the face
   if (o.hat === 'fedora') { const hc = rp(o.hatCol || '#3a3028', 6); S.cap(cx - 1.2, head - 3.4, cx + 2.6, head - 3.8, 3, 2, hc); for (let x = -5; x <= 7; x++) S.px(cx + x, head - 2 + (x > 4 || x < -3 ? 0.6 : 0), hc[x < 0 ? 1 : 2]); for (let x = -2; x <= 4; x++) S.px(cx + x, head - 2.9, hc[0]); }
+  // goggles: over the eyes, or pushed up on the forehead if the face is taken
+  if (o.goggles) { const gc = col3(o.goggles), up = o.shades || o.mask, gy = up ? head - 3.2 : head - 0.4; for (let x = -2; x < 6; x++) S.px(cx + x, gy + (up ? 0 : 0.6), '#1a1a20'); for (const lx of [2, 4]) { S.px(cx + lx, gy, gc, true); S.px(cx + lx + 1, gy, mixRgb(gc, [255, 255, 255], 0.4), true); } }
   // a visor band across the eyes, lit
   if (o.shades) { const vc = col3(o.shades); for (let x = 1; x < 6; x++) S.px(cx + x, head - 0.3, mixRgb(vc, [255, 255, 255], x === 4 ? 0.6 : 0.05), true); S.px(cx, head - 0.3, '#14141a'); }
   if (o.mask) for (let x = 1; x < 6; x++) for (let y = 1; y < 3; y++) S.px(cx + x, head + y + 0.5, rp(o.mask, 4)[y]);

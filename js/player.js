@@ -24,12 +24,12 @@ const RunnerArt = {
       for (const slot of SLOT_ORDER) { const g = Game.worn(slot); if (g && g.look) Object.assign(o, g.look); }
       if (!Game.worn('outer') && o.shirt) o.top = o.shirt;
       const mel = Game.worn('melee');
-      if (st.eye) o.eye = '#3af0e0';
-      if (st.legs) o.cyLegs = true;
+      // gadgets show: goggles, heel jets, the cutter's plasma in a blow
+      if (st.eye) o.goggles = '#3af0e0';
+      if (st.legs) o.jets = true;
       if (pose === 'cut') { o.cutter = true; o.blaster = false; }
       if (pose === 'shot') o.muzzle = true;
-      if (st.arm) o.cyArm = true;
-      if (pose === 'strike' && (st.arm || mel)) { o.blade = mel ? mel.look.bladeCol : '#3af0e0'; o.blaster = false; o.sheath = null; }
+      if (pose === 'strike' && (st.arm || mel)) { o.blade = mel ? mel.look.bladeCol : '#ffb040'; o.blaster = false; o.sheath = null; }
       s = person(o); if (left) s = flipSprite(s);
       this.cache.set(k, s);
     }
@@ -81,7 +81,7 @@ const Player = {
       const onWay = this.ground && !World.hits(this.x - 4, this.y, this.x + 4, this.y + 2) && World.way(this.x, this.y - 1, this.y + 1) !== null;
       if (ay > 0.5 && onWay) { this.drop = 0.25; this.ground = false; this.y += 1; }
       else if (this.coyote > 0) { this.vy = -P.jump; this.coyote = 0; this.ground = false; this.jumps = 1; }
-      else if (Game.has('spring') && this.jumps < 2) { this.vy = -P.doubleJump; this.jumps = 2; Fx.burst(this.x, this.y, [58, 240, 224], 6); }
+      else if (Game.has('jets') && this.jumps < 2) { this.vy = -P.doubleJump; this.jumps = 2; Fx.burst(this.x, this.y, [58, 240, 224], 6); }
     }
     this.vy = Math.min(this.vy + P.gravity * dt, P.maxFall);
     if (!Input.jump && this.vy < -70) this.vy += P.gravity * dt * 0.9;
@@ -163,7 +163,7 @@ const Player = {
     if (this.hold) {
       if (!Input.use || !best || best.p !== this.hold.p) { this.hold = null; }
       else {
-        const sp = Game.has('mantis') ? T.cut.speedMantis : 1, t0 = this.hold.t;
+        const sp = Game.has('cutter') ? T.cut.speedCutter : 1, t0 = this.hold.t;
         this.hold.t += dt * sp; this.face = Math.sign(this.hold.p.x - this.x) || this.face;
         if (Math.floor(this.hold.t * 8) !== Math.floor(t0 * 8)) Fx.sparks(this.x + this.face * 12, this.y - 16, 2);
         if (this.hold.t >= this.hold.need) { const p = this.hold.p; this.hold = null; Props.use(p); }

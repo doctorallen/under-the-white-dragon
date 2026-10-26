@@ -8,9 +8,9 @@
 const NPC_ROLE = {
   noodles: { verb: 'Eat', prompt: () => 'Noodles · 12 cr', use: (n) => { if (Game.s.hp >= T.player.hp) { Actors.say(n, 'You\'re fine. Come back hungry.'); return; } if (!Game.pay({ cr: 12 })) { Actors.say(n, 'Twelve. You don\'t have twelve.'); return; } Game.s.hp = Math.min(T.player.hp, Game.s.hp + 50); Hud.refresh(); Actors.say(n, 'Eat. Slowly.'); } },
   vendor: { verb: 'Trade', prompt: (n) => 'Trade with ' + n.def.name, use: (n) => Hud.toggle('vendor', n) },
-  fixer: { verb: 'Jobs', prompt: () => 'Talk to Juno', use: (n) => Hud.toggle('fixer', n) },
+  fixer: { verb: 'Cases', prompt: (n) => 'Talk to ' + n.def.name, use: (n) => Hud.toggle('fixer', n) },
+  qm: { verb: 'Gadgets', prompt: () => 'The quartermaster', use: (n) => Hud.toggle('qm', n) },
   fab: { verb: 'Craft', prompt: () => 'Mags · make, upgrade, break down', use: (n) => Hud.toggle('fab', n) },
-  doc: { verb: 'Mods', prompt: () => 'See the ripperdoc', use: (n) => Hud.toggle('doc', n) },
 };
 const GANG_LOOKS = [
   { skin: SKINS[5], hair: 'mohawk', hairCol: '#3af0e0', hairGlow: true, top: '#1a1a1e', legs: '#2a1a1e', cyArm: true, blade: '#3af0e0', acc: '#3af0e0', wide: 1 },

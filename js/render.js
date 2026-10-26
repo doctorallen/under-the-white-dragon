@@ -35,6 +35,7 @@ function render() {
   g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
   g.fillStyle = '#08060c'; g.fillRect(0, 0, w, h);
   gg.globalCompositeOperation = 'source-over'; gg.fillStyle = '#000'; gg.fillRect(0, 0, w, h);
+  if (Flight.on) { Flight.draw(g, gg, w, h); finishFrame([]); return; }
   // the far layer
   if (World.far) { const F = World.far, fx = -Math.round(cx * F.f), fy = -Math.round(cy * F.fy); g.drawImage(F.c, fx, fy); if (F.e) gg.drawImage(F.e, fx, fy); }
   // the layers of the city behind, back to front: each hides the glow of
@@ -122,6 +123,11 @@ function render() {
   // the wet strips in view (view px)
   const wets = [];
   for (const wt of L.wet) { const y0 = wt.y - cy, x0 = Math.max(0, wt.x0 - cx), x1 = Math.min(w, wt.x1 - cx); if (y0 >= 0 && y0 <= h && x1 > x0) wets.push({ x0, y0, x1, depth: wt.depth, k: wt.k }); }
+  finishFrame(wets);
+}
+// the frame's finish: glow, bloom, reflections, the fade, scaled up
+function finishFrame(wets) {
+  const V = View, g = V.lg, w = V.w, h = V.h;
   if (GL.ok) { GL.frame(V.low, V.gl, wets, Game.fade); return; }
   // ---- without WebGL2: glow, bloom, reflections and the fade in 2D
   g.globalCompositeOperation = 'lighter'; g.drawImage(V.gl, 0, 0);
@@ -195,7 +201,7 @@ function lightMap(cx, cy) {
   for (const b of Actors.bolts) lights.push({ x: b.x, y: b.y, r: 30, c: b.c.map((q) => q / 255), k: 0.5, flat: 1 });
   if (Game.flash) lights.push({ x: Game.flash.x, y: Game.flash.y, r: 60, c: [1, 0.75, 0.4], k: 1, flat: 1 });
   for (const e of Actors.enemies) if (e.type === 'warden') lights.push({ x: e.x + e.face * 20, y: e.y - 50, r: 50, c: [1, 0.25, 0.3], k: 0.5, flat: 1 });
-  const low = Game.has('lowlight') ? T.light.lowlight : 0, amb = L.ambient;
+  const low = Game.has('scanner') ? T.light.lowlight : 0, amb = L.ambient;
   const row = [];
   for (let j = 0; j < lh; j++) {
     const wy = (gy0 + j) * LC + LC / 2;

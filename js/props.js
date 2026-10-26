@@ -269,3 +269,32 @@ function salvageIcon(k) {
   if (k === 'chips') { S.box(3, 3, 12, 12, ['#14101c', '#241a30', '#3a2a4a'], { lo: 0, hi: 2 }); for (let i = 4; i < 12; i += 2) { S.px(i, 1, MAT.chrome[4]); S.px(i, 14, MAT.chrome[4]); S.px(1, i, MAT.chrome[4]); S.px(14, i, MAT.chrome[4]); } S.box(6, 6, 9, 9, rp(C[1], 4), { glow: true }); }
   S.ax = 8; S.ay = 15; return S.done();
 }
+
+// ---- spinners: a police car that flies, and a cab ----------------------------
+// a long low wedge on thrusters, a canopy, lights; facing right, at rest on
+// its skids (anchored at the bottom middle)
+function spinner(o = {}) {
+  const W = 66, H = 26, S = new Spr(W, H, o.cab ? 401 : 400); S.ax = W / 2; S.ay = H - 1;
+  const body = rp(o.col || (o.cab ? '#c8a020' : '#2a3448'), 7), dark = rp('#14141c', 5);
+  S.shape([[3, 14], [14, 9], [44, 7], [60, 11], [64, 15], [62, 19], [8, 20], [2, 18]], body, { down: 0.35 });
+  S.shape([[20, 9], [28, 3], [44, 3], [50, 8]], ['#0a1420', '#1a3448', '#3a6a88', '#8ac0d8'], { down: 0.2 }); // the canopy
+  for (let x = 30; x < 44; x++) S.px(x, 4, '#c8f0ff', x % 3 === 0);
+  for (let x = 6; x < 60; x++) S.px(x, 15, body[5]);
+  S.box(10, 19, 22, 21, dark, { lo: 0, hi: 3 }); S.box(42, 19, 54, 21, dark, { lo: 0, hi: 3 }); // thruster pods
+  for (let x = 11; x < 22; x++) S.px(x, 22, '#3af0e0', true); for (let x = 43; x < 54; x++) S.px(x, 22, '#3af0e0', true);
+  S.box(12, 23, 14, 25, dark); S.box(50, 23, 52, 25, dark); S.limb(8, 25, 56, 25, 1, MAT.steelD); // skids
+  S.px(63, 14, '#fff8e0', true); S.px(62, 13, '#fff8e0', true); S.px(3, 16, '#ff3040', true); // head and tail lights
+  if (o.cab) { S.box(32, 0, 40, 2, rp('#ffd040', 4), { glow: true }); for (let x = 8; x < 58; x += 4) S.px(x, 17, '#1a1a1a'); }
+  else { S.px(30, 2, '#ff3040', true); S.px(31, 2, '#ff3040', true); S.px(42, 2, '#3a8aff', true); S.px(43, 2, '#3a8aff', true); for (let x = 16; x < 40; x += 2) S.px(x, 13, '#e8e8f0'); }
+  return S.done();
+}
+// a desk with a terminal, from the front
+function desk(o = {}) {
+  const W = 40, H = 24, S = new Spr(W, H, 410); S.ax = W / 2; S.ay = H - 1;
+  panel(S, 0, 10, W - 1, H - 1, rp(o.col || '#3a3e48', 6), { a: 0.55, b: 0.4 }); panel(S, 0, 9, W - 1, 11, rp('#6a6e78', 6), { a: 0.75, b: 0.6 });
+  panel(S, 22, 0, 34, 8, MAT.steelD); for (let y = 2; y < 7; y++) for (let x = 24; x < 33; x++) S.px(x, y, (y % 2 && hash(x, y, 2) > 0.4) ? '#3af0e0' : '#0a2a2a', true);
+  S.box(8, 7, 14, 9, rp('#c8c0a8', 4)); S.px(5, 8, '#ffd040');
+  return S.done();
+}
+// a bench
+function bench() { const S = new Spr(30, 10, 411); S.ax = 15; S.ay = 9; panel(S, 0, 3, 29, 5, MAT.steel, { a: 0.7, b: 0.5 }); for (const x of [3, 26]) S.limb(x, 5, x, 9, 1, MAT.steelD); panel(S, 0, 0, 29, 1, MAT.steelD); return S.done(); }
