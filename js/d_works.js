@@ -20,14 +20,16 @@ function wkRivets(P, x0, x1, y, ramp, step = 5) { for (let x = x0; x < x1; x += 
 // the hall behind everything: a ceiling slab with girders, a back wall in
 // panels, columns holding up the city, big pipes along the wall
 function wkHall(L, W, G, o = {}) {
-  const wall = o.wall || MAT.steelD, ceil = o.ceil || MAT.concreteD, top = o.top || 50, seed = o.seed || 7;
+  const wall = o.wall || MAT.steelD, ceil = o.ceil || MAT.concreteD, top = o.top || 110, seed = o.seed || 7;
   L.block(0, 0, W, top, ceil, { base: 0.24, lip: 0, panels: [80, 24], drips: 0.12, dripLen: 14 });
   L.paint(0, top, W, G, (P) => {
-    P.area(0, top, W, G, wall, (x, y) => 0.2 + (noise(x / 90, y / 50, seed) - 0.5) * 0.12 + ((x % (o.pw || 48)) < 1 || ((y - top) % (o.ph || 36)) < 1 ? -0.08 : 0) + (y - top) / (G - top) * 0.06);
+    P.area(0, top, W, G, wall, (x, y) => 0.3 + (noise(x / 90, y / 50, seed) - 0.5) * 0.12 + ((x % (o.pw || 48)) < 1 || ((y - top) % (o.ph || 36)) < 1 ? -0.08 : 0) + (y - top) / (G - top) * 0.06);
     for (let x = 0; x < W; x += 54) girder(P, x, top, x + 54, top + 12, MAT.steelD, { step: 12 });
     for (let x = o.col0 || 120; x < W; x += o.colStep || 360) { P.block(x, top + 12, x + 22, G, o.colRamp || MAT.concreteD, { base: 0.3, lip: 0, panels: [22, 40], drips: 0.2, dripLen: 30 }); wkRivets(P, x + 2, x + 20, top + 20, MAT.steel, 4); }
     if (o.pipes !== false) { pipe(P, 0, top + 30, W, top + 44, o.pipeRamp || MAT.rust, { joints: 60 }); pipe(P, 0, top + 50, W, top + 57, MAT.steel, { joints: 44 }); }
+    for (let x = (o.col0 || 120) + 11; x < W; x += o.colStep || 360) { P.block(x - 6, G - 132, x + 6, G - 124, MAT.steelD, { base: 0.5 }); for (let i = -4; i <= 4; i++) P.put(x + i, G - 123, col3(o.lamp || '#ffb050'), 1); }
   });
+  for (let x = (o.col0 || 120) + 11; x < W; x += o.colStep || 360) L.light(x, G - 110, 130, col3(o.lamp || '#ffb050').map((q) => q / 255), 0.75, 1.1);
 }
 // a sodium lamp hung from the ceiling on a chain
 function wkHangLamp(L, x, y0, y1, col = '#ffb050', k = 0.85) {
@@ -81,13 +83,16 @@ function wkPump(P, cx, G, o = {}) {
 }
 // a furnace: a brick kiln, an arched mouth roaring, a flue up into the dark
 function wkFurnace(P, x0, x1, G, o = {}) {
-  const w = x1 - x0, cx = Math.round((x0 + x1) / 2), top = G - (o.h || 130), mw = w * 0.32, my = G - 30;
+  const w = x1 - x0, cx = Math.round((x0 + x1) / 2), top = G - (o.h || 130), mw = Math.round(w * 0.2), my = G - 22;
   P.block(cx - w * 0.18, 40, cx + w * 0.18, top, MAT.brickD, { base: 0.36, bands: 6, drips: 0.2, dripLen: 30 });
   P.block(x0, top, x1, G, MAT.brick, { base: 0.42, bands: 5, seed: x0 });
   P.block(x0 - 4, top - 6, x1 + 4, top, MAT.steelD, { base: 0.5 }); wkRivets(P, x0, x1, top - 4, MAT.steel, 6);
   for (const sx of [x0 + 6, x1 - 12]) P.block(sx, top + 4, sx + 6, G, MAT.steelD, { base: 0.45, lip: 0 });
   // the mouth: white at the heart, yellow, orange at the edge
-  P.area(cx - mw, my - mw * 1.1, cx + mw, G, R(['#3a0800', '#a82a04', '#ff7a10', '#ffd040', '#fff4c8'], 9, 0.3, 0.2), (x, y) => { const d = Math.hypot((x - cx) / mw, (y - G) / (mw * 1.6)); return 1.05 - d * 0.8 + (noise(x / 4, y / 3, x0) - 0.5) * 0.35; }, { inside: (x, y) => y > my - mw * 1.1 && Math.abs(x - cx) < mw && (y > my - mw * 0.4 || Math.hypot(x - cx, y - (my - mw * 0.4)) < mw), glow: 0.9 });
+  P.area(cx - mw, my - mw * 1.1, cx + mw, G, R(['#3a0800', '#a82a04', '#ff7a10', '#ffd040', '#fff4c8'], 9, 0.3, 0.2), (x, y) => { const d = Math.hypot((x - cx) / mw, (y - G) / (mw * 1.6)); return 1.0 - d * 0.85 + (noise(x / 4, y / 3, x0) - 0.5) * 0.35; }, { inside: (x, y) => y > my - mw * 1.1 && Math.abs(x - cx) < mw && (y > my - mw * 0.4 || Math.hypot(x - cx, y - (my - mw * 0.4)) < mw), glow: 0.6 });
+  for (let x = cx - mw + 3; x < cx + mw; x += 5) for (let y = Math.round(my - mw * 1.3); y < G; y++) if (Math.abs(x - cx) < mw && (y > my - mw * 0.4 || Math.hypot(x - cx, y - (my - mw * 0.4)) < mw)) { P.put(x, y, [40, 16, 8]); P.put(x + 1, y, [70, 30, 14]); }
+  P.area(cx - mw - 14, my - mw * 1.6 - 24, cx + mw + 14, my - mw * 1.6, MAT.steelD, (x, y) => 0.5 - (y - my + mw * 1.6 + 24) / 60, { inside: (x, y) => Math.abs(x - cx) < mw + 14 - (my - mw * 1.6 - y) * 0.4 });
+  P.block(cx - mw - 4, G - 6, cx + mw + 4, G, MAT.steelD, { base: 0.5 });
   for (let x = cx - mw - 3; x <= cx + mw + 3; x++) { const yy = my - mw * 0.4 - Math.sqrt(Math.max(0, (mw + 3) ** 2 - (x - cx) ** 2)); P.put(x, yy, tone(MAT.steel, 0.7)); P.put(x, yy + 1, tone(MAT.steelD, 0.3)); }
   wkGauge(P, x0 + 20, top + 20, 5, 0.85); wkGauge(P, x1 - 20, top + 20, 5, 0.9);
 }
@@ -112,10 +117,11 @@ function wkMoulds(P, x0, x1, G, o = {}) {
 // glowing, bubbles, a ladder up the side; o.open for a vat with no lid
 function wkTank(P, x0, x1, G, h, col, o = {}) {
   const c = col3(col), top = G - h, w = x1 - x0, ramp = o.ramp || MAT.steel;
-  P.area(x0, top, x1, G, ramp, (x, y) => { const t = (x - x0) / w; return 0.32 + Math.sin(t * Math.PI) * 0.35 - t * 0.12 + ((y - top) % 24 < 1 ? -0.15 : 0); });
+  P.area(x0, top, x1, G, ramp, (x, y) => { const t = (x - x0) / w; return 0.42 + Math.sin(t * Math.PI) * 0.36 - t * 0.2 + ((y - top) % 24 < 1 ? -0.2 : (y - top) % 24 < 2 ? 0.1 : 0) + (noise(x / 12, y / 30, x0) - 0.5) * 0.1; });
+  for (let x = x0; x < x1; x++) for (let j = 0; j < 40; j++) if (hash(x, j, x0) < 0.15 * (1 - j / 40)) P.tint(x, G - 1 - j, [40, 30, 20], 0.4);
   for (let y = top + 3; y < G; y += 24) wkRivets(P, x0 + 3, x1 - 3, y, ramp, 6);
   P.area(x0 - 2, top - 8, x1 + 2, top + 2, ramp, (x, y) => 0.7 - (y - top + 8) / 14, { inside: (x, y) => y >= top - 8 * Math.sqrt(Math.max(0, 1 - ((x - (x0 + x1) / 2) / (w / 2 + 2)) ** 2)) });
-  const gx = x0 + Math.round(w * 0.3), gw = Math.max(6, Math.round(w * 0.14)), lvl = top + 12 + Math.round(h * (o.level || 0.3));
+  const gx = x0 + Math.round(w * 0.22), gw = Math.max(4, Math.round(w * 0.06)), lvl = top + 12 + Math.round(h * (o.level || 0.3));
   kFill(P, gx - 2, top + 8, gx + gw + 2, G - 10, '#1a1e22');
   for (let y = top + 10; y < G - 12; y++) for (let x = gx; x < gx + gw; x++) { if (y < lvl) P.put(x, y, [18, 26, 30]); else P.put(x, y, mixRgb(c, [255, 255, 255], (x === gx + 1 ? 0.35 : 0) + (hash(x, y, x0) < 0.06 ? 0.5 : 0)), 0.75); }
   if (!o.noLadder) for (let y = top; y < G; y += 4) { P.put(x1 - 8, y, tone(MAT.steel, 0.65)); P.put(x1 - 3, y, tone(MAT.steel, 0.4)); for (let i = 0; i < 6; i++) P.put(x1 - 8 + i, y, tone(MAT.steel, 0.5)); }
@@ -139,7 +145,7 @@ function wkDrum(P, x, G, col, o = {}) {
 function wkServerWall(P, x0, x1, y0, y1, seed) {
   for (let x = x0; x < x1; x += 22) {
     P.block(x, y0, x + 18, y1, MAT.machine, { base: 0.32, lip: 0 });
-    for (let y = y0 + 3; y < y1 - 2; y += 3) { kH(P, x + 2, x + 16, y, tone(MAT.machine, 0.2)); for (let i = 3; i < 15; i += 2) if (hash(x + i, y, seed) < 0.3) P.put(x + i, y + 1, hash(x + i, y, seed + 1) < 0.85 ? [90, 230, 255] : hash(x, y, 5) < 0.5 ? [90, 255, 140] : [255, 170, 60], 0.9); }
+    for (let y = y0 + 3; y < y1 - 2; y += 3) { kH(P, x + 2, x + 16, y, tone(MAT.machine, 0.2)); for (let i = 3; i < 15; i += 2) if (hash(x + i, y, seed) < 0.16) P.put(x + i, y + 1, hash(x + i, y, seed + 1) < 0.85 ? [90, 230, 255] : hash(x, y, 5) < 0.5 ? [90, 255, 140] : [255, 170, 60], 0.9); }
     for (let y = y0; y < y1; y++) { P.put(x + 19, y, [10, 20, 30]); P.put(x + 20, y, mixRgb([40, 110, 160], [10, 20, 30], hash(x, y >> 3, seed) * 0.7), 0.25); P.put(x + 21, y, [10, 20, 30]); }
   }
 }
@@ -150,7 +156,7 @@ function wkDuct(P, x0, y0, x1, y1, ramp = MAT.chrome) { P.area(x0, y0, x1, y1, r
 
 // ---- the Works hub: the workers' floor, the canteen, the Foreman's crane hall
 LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub: true, mapX: 500, label: 'The machine floors', blurb: 'The machine floors under everything: Cookie\'s canteen, the conveyors, the Foreman\'s crane hall and the shaft down to the Bowels.',
-  make: () => district({ id: 'works', name: 'The Works', tier: 4, W: 3400, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.19, 0.16, 0.15], crowd: 3, crowdTo: 2300,
+  make: () => district({ id: 'works', name: 'The Works', tier: 4, W: 3400, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.25, 0.21, 0.19], crowd: 3, crowdTo: 2300,
     local: { name: 'Worker', lines: LOCAL_LINES.works, look: { hair: 'cap', capCol: '#e8b030', top: '#5a4a2a', coat: 'jacket', legs: '#2a2a2a' } },
     build(L, G) {
       L.spawns.lift = [140, G];
@@ -163,7 +169,7 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
       L.paint(540, G - 110, 880, G, (P) => {
         P.block(540, G - 96, 880, G, MAT.tileW, { base: 0.42, panels: [10, 10] });
         P.block(536, G - 104, 884, G - 96, KMAT.ochre, { base: 0.55 });
-        for (let x = 560; x < 860; x += 60) { kFill(P, x, G - 84, x + 44, G - 52, '#ffe0b0', 0.25); for (let y = G - 84; y < G - 52; y++) for (let xx = x; xx < x + 44; xx++) if (hash(xx, y, 9) < 0.3) P.tint(xx, y, [255, 255, 255], 0.4); }
+        for (let x = 560; x < 860; x += 60) { kFill(P, x, G - 84, x + 44, G - 52, '#c8a070', 0.16); for (let y = G - 84; y < G - 52; y++) for (let xx = x; xx < x + 44; xx++) if (hash(xx, y, 9) < 0.3) P.tint(xx, y, [255, 255, 255], 0.4); }
         P.block(600, G - 30, 800, G - 22, MAT.steel, { base: 0.65 }); P.block(604, G - 22, 796, G, MAT.steelD, { base: 0.35, panels: [16, 22] });
         for (let x = 620; x < 790; x += 24) { P.block(x, G - 36, x + 10, G - 30, rp('#e8e0d0', 5), { base: 0.6 }); }
       });
@@ -174,20 +180,20 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
       // the conveyor floor: belts at two heights, crates riding, a crane over it
       L.paint(900, 40, 2300, G, (P) => {
         wkConveyor(P, 920, 1400, G - 30, { G }); wkConveyor(P, 1460, 2280, G - 30, { G });
-        wkCrane(P, 900, 2300, 120, { trolley: 1760, hookY: 230 });
+        wkCrane(P, 900, 2300, G - 215, { trolley: 1760, hookY: G - 110 });
         for (let x = 1000; x < 2260; x += 220) { P.block(x, G - 140, x + 70, G - 34, MAT.steelD, { base: 0.38, panels: [14, 20] }); for (let y = G - 132; y < G - 40; y += 8) for (let xx = x + 6; xx < x + 64; xx += 6) if (hash(xx, y, 2) < 0.25) P.put(xx, y, hash(xx, y, 3) < 0.6 ? [255, 160, 60] : [90, 255, 120], 0.8); wkGauge(P, x + 14, G - 120, 5, hash(x, 3, 1)); wkGauge(P, x + 30, G - 120, 5, hash(x, 4, 1)); }
       });
       // a gantry walk over the belts, ladders up
       L.walk(980, 2260, G - 150, 5, MAT.steel); L.ladder(990, G - 150, G); L.ladder(2240, G - 150, G);
       L.spots.push([1300, G - 150], [1900, G - 150]);
       L.prop('locker', 1700, G - 150, { tier: 4, label: 'tool locker' });
-      for (const x of [1060, 1500, 1980]) wkHangLamp(L, x, 50, 110);
+      for (const x of [1060, 1500, 1980]) wkHangLamp(L, x, 110, 196);
       L.prop('ac', 1180, G, { label: 'blower' }); L.prop('junk', 1420, G, { label: 'scrap bin' }); L.prop('rack', 2120, G, { label: 'control cabinet' });
       L.vents.push({ x: 1440, y: G - 20, kind: 'steam' }, { x: 2290, y: G - 20, kind: 'steam' });
       L.light(1700, G - 60, 160, [1, 0.6, 0.3], 0.7, 1, { mode: 'bad', seed: 17 });
       // the Foreman's crane hall, and the shaft down
       arena(L, 2400, 3260, G, 'crane');
-      L.paint(2400, 60, 3260, G, (P) => { wkCrane(P, 2400, 3260, 92, { trolley: 2700, hookY: 200 }); wkStripes(P, 2420, G - 6, 3240, G - 2); });
+      L.paint(2400, 60, 3260, G, (P) => { wkCrane(P, 2400, 3260, G - 215, { trolley: 2620, hookY: G - 120 }); wkStripes(P, 2420, G - 6, 3240, G - 2); });
       L.enemy('foreman', 2860, G, { arena: [2420, 3240] });
       keyDoor(L, 3330, G, 'workspass', 'lift', 'The shaft down to the Bowels');
       L.paint(3290, G - 70, 3380, G, (P) => wkStripes(P, 3296, G - 62, 3366, G - 56));
@@ -198,7 +204,7 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
 
 // ---- Pump Hall Seven: a cathedral of pumps, pipes as wide as a man, the sump
 addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps that keeps the lower city from drowning: flywheels, pistons, the flooded sump.', 'Pumps and the sump', () => district({
-  id: 'd_pumphall', name: 'Pump Hall Seven', tier: 4, W: 2600, sky: false, transit: 'lift', floor: MAT.concreteD, amb: [0.16, 0.16, 0.17], crowd: 2, crowdTo: 1200,
+  id: 'd_pumphall', name: 'Pump Hall Seven', tier: 4, W: 2600, sky: false, transit: 'lift', floor: MAT.concreteD, amb: [0.22, 0.22, 0.23], crowd: 2, crowdTo: 1200,
   local: { name: 'Pump hand', lines: ['Seven pumps. Six working. The seventh just sounds angry.', 'If the pumps stop, Old Town is a lake by morning.', 'Don\'t lean on the pipes. They\'re hotter than they look.'], look: { hair: 'cap', capCol: '#3a6a8a', top: '#3a4a5a', legs: '#2a2a2a' } },
   build(L, G) {
     wkHall(L, 2600, G, { wall: MAT.machine, ceil: MAT.concreteD, colStep: 300, col0: 200, pipeRamp: MAT.copper, seed: 11 });
@@ -227,13 +233,13 @@ addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps
     // the pump control room up a stair: lit windows over the hall
     L.paint(2200, G - 190, 2560, G, (P) => {
       P.block(2200, G - 180, 2560, G - 100, MAT.steelD, { base: 0.4, panels: [24, 20] });
-      for (let x = 2214; x < 2540; x += 40) { kFill(P, x, G - 168, x + 30, G - 124, '#ffe0a0', 0.25); kFill(P, x + 4, G - 140, x + 26, G - 124, '#3a3428'); }
+      for (let x = 2214; x < 2540; x += 40) { kFill(P, x, G - 168, x + 30, G - 124, '#b08a58', 0.14); kH(P, x, x + 30, G - 150, '#2a2a2a'); kFill(P, x + 4, G - 140, x + 26, G - 124, '#3a3428'); if (hash(x, 4, 4) < 0.5) kFill(P, x + 12, G - 158, x + 16, G - 140, '#1a1410'); }
       for (let x = 2220; x < 2540; x += 50) P.block(x, G - 100, x + 8, G, MAT.steelD, { base: 0.35, lip: 0 });
     });
     L.stairs(2210, G, 2320, G - 100); L.walk(2200, 2560, G - 100, 5, MAT.steel);
     L.spots.push([2450, G - 100]); L.prop('rack', 2500, G - 100, { label: 'control cabinet' });
     L.light(2380, G - 140, 120, [1, 0.8, 0.5], 0.7);
-    for (const x of [600, 1000, 1380, 1950]) wkHangLamp(L, x, 50, 90, '#ffc070', 0.7);
+    for (const x of [600, 1000, 1380, 1950]) wkHangLamp(L, x, 110, 200, '#ffc070', 0.7);
     L.prop('ac', 610, G, { label: 'pump motor' }); L.prop('junk', 1000, G, { label: 'scrap pile' }); L.prop('wreck', 1400, G, { label: 'dead maintenance drone' });
     L.prop('locker', 2380, G, { tier: 4, label: 'locker' });
     kFoes(L, G, [['spider', 980, 860, 1120], ['turret', 1360, 1240, 1480], ['gunner', 2000, 1800, 2150], ['sentinel', 1400, 1300, 1600, G - 220]]);
@@ -244,7 +250,7 @@ addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps
 
 // ---- The Foundry: furnaces, ladles pouring, moulds glowing, the slag heap
 addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go out: ladles of molten metal, moulds glowing on the floor, a slag heap and a crane overhead.', 'Furnaces and molten metal', () => district({
-  id: 'd_foundry', name: 'The Foundry', tier: 4, W: 2400, sky: false, transit: 'lift', floor: MAT.asphalt, amb: [0.2, 0.13, 0.1], crowd: 2, crowdTo: 1100,
+  id: 'd_foundry', name: 'The Foundry', tier: 4, W: 2400, sky: false, transit: 'lift', floor: MAT.asphalt, amb: [0.25, 0.18, 0.15], crowd: 2, crowdTo: 1100,
   local: { name: 'Smelter', lines: ['Two thousand degrees in the ladle. Stand back of the yellow line.', 'We cast the bones of the city here. Beams for the Spires.', 'Lost a glove in the pour once. Hand was still in it.'], look: { hair: 'helmet', armor: '#c8a040', visor: '#ff8a3a', top: '#5a3a2a', apron: '#3a2a1a', legs: '#2a2420' } },
   build(L, G) {
     wkHall(L, 2400, G, { wall: MAT.brickD, colRamp: MAT.brickD, colStep: 420, col0: 340, pipeRamp: MAT.rust, seed: 21 });
@@ -253,9 +259,9 @@ addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go ou
     L.paint(280, 30, 1700, G, (P) => { for (const [a, b] of fur) wkFurnace(P, a, b, G, { h: 140 }); });
     for (const [a, b] of fur) { const c = (a + b) / 2; L.light(c, G - 30, 160, [1, 0.55, 0.2], 1.2, 1, { mode: 'fire', seed: a }); L.vents.push({ x: c, y: 50, kind: 'smoke' }); }
     // the casting floor: a crane carrying a ladle, the pour, moulds
-    L.paint(480, 60, 900, G, (P) => { wkCrane(P, 480, 900, 100, { trolley: 660, hookY: 150 }); wkLadle(P, 660, 180, G); wkMoulds(P, 560, 880, G); });
-    L.light(690, G - 30, 140, [1, 0.6, 0.2], 1.1, 1, { mode: 'fire', seed: 3 }); L.light(660, 190, 70, [1, 0.7, 0.3], 0.8);
-    L.paint(1090, 60, 1500, G, (P) => { wkMoulds(P, 1110, 1480, G); wkCrane(P, 1090, 1500, 100, { trolley: 1380, hookY: 250 }); });
+    L.paint(480, 60, 900, G, (P) => { wkCrane(P, 480, 900, G - 222, { trolley: 660, hookY: G - 160 }); wkLadle(P, 660, G - 120, G); wkMoulds(P, 560, 880, G); });
+    L.light(690, G - 30, 140, [1, 0.6, 0.2], 1.1, 1, { mode: 'fire', seed: 3 }); L.light(660, G - 110, 70, [1, 0.7, 0.3], 0.8);
+    L.paint(1090, 60, 1500, G, (P) => { wkMoulds(P, 1110, 1480, G); wkCrane(P, 1090, 1500, G - 222, { trolley: 1380, hookY: G - 90 }); });
     L.light(1300, G - 10, 160, [1, 0.45, 0.15], 0.8);
     // the slag heap, still smouldering, and a skip of scrap
     L.paint(1720, G - 110, 2080, G, (P) => {
@@ -267,15 +273,15 @@ addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go ou
     // the pattern shop: a raised office over the floor, a stair, lockers
     L.paint(2110, G - 160, 2380, G, (P) => {
       P.block(2110, G - 150, 2380, G - 96, MAT.steelD, { base: 0.4, panels: [30, 18] });
-      for (let x = 2124; x < 2370; x += 46) kFill(P, x, G - 140, x + 34, G - 110, '#ffd090', 0.25);
+      for (let x = 2124; x < 2370; x += 46) { kFill(P, x, G - 140, x + 34, G - 110, '#b08050', 0.15); kV(P, x + 17, G - 140, G - 110, '#2a2420'); if (hash(x, 2, 6) < 0.5) kFill(P, x + 6, G - 132, x + 10, G - 110, '#1a1410'); }
       for (let x = 2120; x < 2370; x += 80) P.block(x, G - 96, x + 8, G, MAT.steelD, { base: 0.35, lip: 0 });
       wkStripes(P, 2110, G - 98, 2380, G - 96);
     });
     L.stairs(2120, G, 2220, G - 96); L.walk(2110, 2380, G - 96, 5, MAT.steel);
     L.prop('locker', 2340, G - 96, { tier: 4, label: 'locker' }); L.spots.push([2280, G - 96]);
     // a gantry over the casting floor
-    L.walk(500, 1480, G - 200, 5, MAT.steel); L.ladder(1470, G - 200, G); L.spots.push([800, G - 200], [1250, G - 200]);
-    L.prop('locker', 1000, G - 200, { tier: 4, label: 'locker' });
+    L.walk(480, 1490, G - 180, 5, MAT.steel); L.ladder(1480, G - 180, G); L.ladder(490, G - 180, G); L.spots.push([800, G - 180], [1250, G - 180]);
+    L.prop('locker', 1000, G - 180, { tier: 4, label: 'locker' });
     L.paint(0, G - 8, 2400, G, (P) => { for (const [a, b] of [[520, 900], [1100, 1490]]) wkStripes(P, a, G - 4, b, G - 2); });
     L.prop('junk', 1740, G, { label: 'scrap skip' }); L.prop('ac', 520, G, { label: 'blower' }); L.prop('wreck', 1120, G, { label: 'burnt-out loader' });
     kFoes(L, G, [['bruiser', 800, 620, 900], ['turret', 1300, 1150, 1450], ['gunner', 1900, 1750, 2080], ['spider', 1100, 1000, 1250]]);
@@ -286,7 +292,7 @@ addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go ou
 
 // ---- The Server Farm: cold blue aisles of racks, ducts, frost, the watch room
 addDistrict('d_servers', 'Server Farm', 4, -300, 820, 'The city\'s thinking, racked floor to ceiling in the cold: blue aisles, ducts breathing frost, a watch room full of screens.', 'Racks in the cold', () => district({
-  id: 'd_servers', name: 'Server Farm', tier: 4, W: 2500, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.13, 0.17, 0.22], crowd: 1, crowdTo: 900,
+  id: 'd_servers', name: 'Server Farm', tier: 4, W: 2500, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.17, 0.21, 0.27], crowd: 1, crowdTo: 900,
   local: { name: 'Night tech', lines: ['Cold enough to keep the racks happy. Not me.', 'Every screen up top is running on something down here.', 'Don\'t touch the blue lights. Don\'t touch anything.'], look: { hair: 'short', top: '#2a3a4a', coat: 'long', legs: '#1a2030', shades: '#3af0e0' } },
   build(L, G) {
     wkHall(L, 2500, G, { wall: KMAT.blackglass, ceil: MAT.steelD, colStep: 500, col0: 460, colRamp: MAT.steelD, pipes: false, seed: 31 });
@@ -323,7 +329,7 @@ addDistrict('d_servers', 'Server Farm', 4, -300, 820, 'The city\'s thinking, rac
 
 // ---- The Coolant Vats: tanks of glowing coolant, open vats, drums, the lab
 addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant is mixed: tanks and open vats glowing green and blue, drums of worse, a lab of people in suits.', 'Tanks of coolant', () => district({
-  id: 'd_vats', name: 'Coolant Vats', tier: 4, W: 2300, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.13, 0.18, 0.16], crowd: 1, crowdTo: 900,
+  id: 'd_vats', name: 'Coolant Vats', tier: 4, W: 2300, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.18, 0.23, 0.21], crowd: 1, crowdTo: 900,
   local: { name: 'Vat hand', lines: ['Don\'t breathe the green. Don\'t touch the blue. Don\'t drink either.', 'Coolant keeps the racks cold and the Works from melting.', 'Somebody\'s been skimming drums. Again.'], look: { hair: 'hood', top: '#c8c840', legs: '#c8c840', mask: '#3a4a3a' } },
   build(L, G) {
     wkHall(L, 2300, G, { wall: MAT.machine, ceil: MAT.concreteD, colStep: 380, col0: 260, pipeRamp: MAT.steel, seed: 41 });
@@ -337,10 +343,10 @@ addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant i
     for (const [a, b, c] of tanks) L.light((a + b) / 2, G - 100, 100, col3(c).map((q) => q / 255), 0.6);
     // the open vats: a walk over them, the glow up into the haze
     L.paint(560, G - 160, 1460, G + 44, (P) => {
-      for (const [a, b, c] of [[580, 860, '#3aff90'], [900, 1180, '#3ad8ff'], [1220, 1440, '#3aff90']]) { P.block(a - 6, G - 2, b + 6, G + 44, MAT.concreteD, { base: 0.4 }); wkVat(P, a, b, G + 4, 36, c); wkStripes(P, a - 6, G - 2, b + 6, G); }
+      for (const [a, b, c] of [[580, 860, '#3aff90'], [900, 1180, '#3ad8ff'], [1220, 1440, '#3aff90']]) { P.block(a - 6, G - 2, b + 6, G + 44, MAT.concreteD, { base: 0.4 }); wkVat(P, a, b, G + 8, 36, c); for (let x = a; x < b; x++) { for (let y = G; y < G + 4; y++) P.put(x, y, (x % 4) ? tone(MAT.steelD, y === G ? 0.75 : 0.35) : [10, 14, 14]); } for (let x = a; x < b; x += 30) for (let y = G + 4; y < G + 44; y++) { P.put(x, y, tone(MAT.steelD, 0.4)); P.put(x + 1, y, tone(MAT.steelD, 0.2)); } railing(P, a - 6, b + 6, G, MAT.steel, { h: 8, step: 6 }); wkStripes(P, a - 6, G - 2, b + 6, G); }
     });
     for (const [x, c] of [[720, [0.3, 1, 0.6]], [1040, [0.3, 0.85, 1]], [1330, [0.3, 1, 0.6]]]) L.light(x, G - 10, 150, c, 0.9);
-    for (const [a, b] of [[580, 860], [900, 1180], [1220, 1440]]) L.wet.push({ y: G + 4, x0: a, x1: b, depth: 30, k: 0.5 });
+    for (const [a, b] of [[580, 860], [900, 1180], [1220, 1440]]) L.wet.push({ y: G + 8, x0: a, x1: b, depth: 30, k: 0.5 });
     L.vents.push({ x: 700, y: G, kind: 'steam' }, { x: 1050, y: G, kind: 'steam' }, { x: 1340, y: G, kind: 'steam' });
     // gantries over the vats
     L.walk(560, 1460, G - 120, 4, MAT.steel); L.stairs(570, G, 660, G - 120); L.spots.push([800, G - 120], [1250, G - 120]);
@@ -350,7 +356,7 @@ addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant i
     // the lab: white panels, a window onto benches, people in suits
     L.paint(1980, G - 140, 2290, G, (P) => {
       P.block(1980, G - 130, 2290, G, KMAT.whitepanel, { base: 0.48, panels: [20, 20] });
-      kFill(P, 2000, G - 110, 2270, G - 50, '#d8fff0', 0.25);
+      kFill(P, 2000, G - 110, 2270, G - 50, '#7ab8a8', 0.12); for (let x = 2000; x < 2270; x += 45) kV(P, x, G - 110, G - 50, '#3a4a4a');
       for (let x = 2010; x < 2260; x += 30) { P.block(x, G - 70, x + 22, G - 50, MAT.steel, { base: 0.6 }); for (let k = 0; k < 3; k++) { const fx = x + 4 + k * 6; for (let j = 0; j < 7; j++) P.put(fx, G - 77 + j, j < 3 ? [230, 240, 240] : col3(['#3aff90', '#3ad8ff', '#ff6a8a'][k]), j >= 3 ? 0.8 : 0); } }
       kFill(P, 2120, G - 40, 2150, G, '#3a4a4a'); kCross(P, 2135, G - 120, 4, '#3aff80');
     });
@@ -358,7 +364,7 @@ addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant i
     for (const [x, n] of [[2040, 'Chemist Orr'], [2220, 'Lab hand']]) L.npc({ name: n, look: { skin: SKINS[x % 6], hair: 'hood', top: '#e8e8d0', legs: '#e8e8d0', mask: '#3a5a5a', tall: 0.95 }, x, y: G, sched: [[0, 24, x, 'work']], lines: n === 'Chemist Orr' ? ['Coolant\'s mostly glycol and a secret. The secret is mostly glycol.', 'The suit isn\'t for show, tracer. Mind your boots.'] : ['Don\'t mind me. Counting drums.', 'Six short. Six short every week.'] });
     L.prop('ac', 1480, G, { label: 'coolant pump' }); L.prop('junk', 1960, G, { label: 'empty drums' }); L.prop('ac', 540, G, { label: 'coolant pump' });
     L.prop('locker', 1990, G, { tier: 4, label: 'locker' });
-    for (const x of [460, 1020, 1700]) wkHangLamp(L, x, 50, 100, '#c8ffd0', 0.6);
+    for (const x of [460, 1020, 1700]) wkHangLamp(L, x, 110, 196, '#c8ffd0', 0.7);
     kFoes(L, G, [['spider', 1000, 900, 1200], ['turret', 1460, 1400, 1600], ['bruiser', 1700, 1600, 1900], ['sentinel', 1000, 700, 1300, G - 190]]);
     L.spots.push([300, G], [470, G], [700, G], [1020, G], [1330, G], [1560, G], [1900, G]);
     L.critter('rat', 200, 2200, G, 1);
