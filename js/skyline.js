@@ -70,12 +70,12 @@ function skylineLayer(P, o) {
     x += w + r.i(o.gmin === undefined ? -4 : o.gmin, o.gmax === undefined ? 10 : o.gmax);
   }
 }
-// clouds in broken bands: lumpy tops caught by the city's light, darker
-// below, with clear sky between
+// clouds in bands: lumpy tops caught by the city's light, darker below,
+// thinning out to clear sky and thickening again, never cut off
 function cloudBands(P, x0, x1, y0, y1, ramp, seed) {
   for (let i = 0, y = y0; y < y1; i++, y += 18) {
     const top = (x) => y + (noise(x / 40, i * 2.3, seed) - 0.5) * 18 + Math.abs(Math.sin(x / (14 + (i % 3) * 5) + i)) * -6;
-    P.area(x0, y - 16, x1, y + 12, ramp, (x, yy) => { const d = yy - top(x); return (d < 1.5 ? 0.75 : 0.5 - Math.min(d, 14) / 14 * 0.35) + (noise(x / 9, yy / 3, seed + i) - 0.5) * 0.1; }, { inside: (x, yy) => noise(x / 70, i * 1.7, seed + 9) > 0.45 && yy >= top(x) && yy < top(x) + 5 + noise(x / 20, i, seed + 5) * 9, jit: 0.4 });
+    P.area(x0, y - 20, x1, y + 30, ramp, (x, yy) => { const d = yy - top(x); return (d < 1.5 ? 0.75 : 0.5 - Math.min(d, 14) / 14 * 0.35) + (noise(x / 9, yy / 3, seed + i) - 0.5) * 0.1; }, { inside: (x, yy) => { const th = (noise(x / 90, i * 1.7, seed + 9) - 0.32) * 26 + noise(x / 20, i, seed + 5) * 5; return th > 0 && yy >= top(x) + Math.max(0, 4 - th) * 0.5 && yy < top(x) + th; }, jit: 0.4 });
   }
 }
 
@@ -94,18 +94,52 @@ const Skyline = {
     const glitchY = hash(Math.floor(t * 3), h.x, 41) < 0.05 ? Math.floor(hash(Math.floor(t * 3), h.x, 42) * h.h) : -99;
     const put = (x, y, k = 1) => { if (y % 2) k *= 0.45; const gx = x + (Math.abs(y - glitchY) < 3 ? 4 : 0); gg.globalAlpha = a * k; gg.fillRect(x0 + Math.round(gx), y0 + Math.round(y), 1, 1); };
     gg.fillStyle = css(c);
-    if (h.kind === 'face') {
-      // a woman's face in profile-on, eyes that blink, lips
-      const cx = h.w / 2, cy = h.h * 0.46, rx = h.w * 0.32, ry = h.h * 0.38;
-      for (let a2 = 0; a2 < Math.PI * 2; a2 += 0.02) { const x = cx + Math.cos(a2) * rx * (1 - Math.max(0, Math.sin(a2)) * 0.18), y = cy + Math.sin(a2) * ry; put(x, y); }
-      for (let x = -rx * 1.1; x <= rx * 1.1; x += 1) { const y = cy - ry * 0.95 + Math.abs(x) * 0.25 - Math.sin(x * 0.3) * 2; put(cx + x, y, 0.8); put(cx + x, y + 2, 0.6); } // hair
-      for (let k = 0; k < h.h * 0.5; k++) { put(cx - rx * 1.05 - Math.sin(k * 0.2) * 2, cy - ry * 0.6 + k, 0.7); put(cx + rx * 1.05 + Math.sin(k * 0.2) * 2, cy - ry * 0.6 + k, 0.7); }
-      const blink = (t % 4.3) < 0.18;
-      for (const ex of [-0.38, 0.38]) { const exx = cx + ex * rx; for (let k = -4; k <= 4; k++) put(exx + k, cy - ry * 0.12 + Math.abs(k) * 0.3 - 1, 0.9); if (!blink) { put(exx, cy - ry * 0.08); put(exx + 1, cy - ry * 0.08); gg.fillStyle = '#ffffff'; put(exx, cy - ry * 0.08 - 1); gg.fillStyle = css(c); } }
-      for (let k = -1; k <= 1; k++) put(cx + k, cy + ry * 0.2, 0.7);
-      const smile = Math.sin(t * 0.6) > 0.7 ? 1 : 0;
-      for (let k = -5; k <= 5; k++) { put(cx + k, cy + ry * 0.48 + Math.abs(k) * 0.12 * (smile ? -1 : 1)); if (Math.abs(k) < 4) put(cx + k, cy + ry * 0.52 + 1, 0.8); }
-      for (let k = 0; k < h.h * 0.22; k++) { put(cx - rx * 0.4, cy + ry + k, 0.5); put(cx + rx * 0.4, cy + ry + k, 0.5); }
+    if (h.kind === 'ad') {
+      // a billboard projected on the air: a frame with corner brackets, a
+      // brand in big glyphs, a product turning in the middle, a price that
+      // blinks and a slogan running along the bottom. Two products in turn.
+      // solid lines and glyphs glow; the faint body of the projection is only
+      // tinted into the picture, or the bloom would turn it into a slab
+      const W = h.w, H = h.h, fill = (x, y, w, hh, k) => { const tgt = k < 0.5 ? g : gg; tgt.fillStyle = css(c); tgt.globalAlpha = k < 0.5 ? k * 0.8 : a * k; tgt.fillRect(x0 + Math.round(x), y0 + Math.round(y), Math.round(w), Math.round(hh)); tgt.globalAlpha = 1; };
+      fill(0, 0, W, H, 0.07);
+      for (let x = 0; x < W; x++) { put(x, 0, x < 10 || x > W - 11 ? 1 : 0.35); put(x, H - 1, x < 10 || x > W - 11 ? 1 : 0.35); }
+      for (let y = 0; y < H; y++) { put(0, y, y < 10 || y > H - 11 ? 1 : 0.35); put(W - 1, y, y < 10 || y > H - 11 ? 1 : 0.35); }
+      const glyphs = (x, y, n, sz, seed, k = 1) => { for (let i = 0; i < n; i++) for (const [gx, gy] of GLYPHS[Math.floor(hash(i, seed, 7) * GLYPHS.length)]) fill(x + (i * 4 + gx) * sz, y + gy * sz, sz, sz, k); };
+      const which = Math.floor(t / 8) % 2, ph = (t % 8) / 8;
+      // the brand, wiping in at the start of each turn
+      const bn = 4, bs = 3, bw = bn * 4 * bs - bs, bx = (W - bw) / 2;
+      gg.save(); gg.beginPath(); gg.rect(x0, y0, x0 + bx + bw * Math.min(1, ph * 6) - x0, H); gg.clip(); glyphs(bx, 8, bn, bs, which * 9 + 3); gg.restore();
+      for (let x = 10; x < W - 10; x++) put(x, 26, 0.5);
+      // the product, turning
+      const cx = W / 2, cy = H * 0.47, turn = Math.cos(t * 1.4), wide = 0.35 + Math.abs(turn) * 0.65;
+      if (which === 0) {
+        // a can: a body, a lit band that slides round, a rim and a ring-pull
+        const rw = 14 * (0.85 + 0.15 * wide), top = cy - 22, bot = cy + 22;
+        fill(cx - rw, top, rw * 2, bot - top, 0.22);
+        for (let y = top; y <= bot; y++) { put(cx - rw, y, 0.9); put(cx + rw, y, 0.9); }
+        for (let a2 = 0; a2 < Math.PI * 2; a2 += 0.06) { put(cx + Math.cos(a2) * rw, top + Math.sin(a2) * 3, 0.9); if (Math.sin(a2) > 0) put(cx + Math.cos(a2) * rw, bot + Math.sin(a2) * 3, 0.9); }
+        // the label: two stripes round it, and the brand's mark turning with the can
+        for (let x = -rw + 1; x < rw; x++) { put(cx + x, cy - 9, 0.6); put(cx + x, cy + 9, 0.6); }
+        const th = t * 1.4, lx = cx + Math.sin(th) * rw * 0.55;
+        if (Math.cos(th) > -0.1) for (const [gx, gy] of GLYPHS[Math.floor(hash(0, 3, 7) * GLYPHS.length)]) fill(lx - 3 + gx * 2 * (0.5 + Math.cos(th) * 0.5), cy - 5 + gy * 2, Math.max(1, 2 * Math.cos(th)), 2, 1);
+        fill(cx - 2, top - 2, 5, 1, 1);
+      } else {
+        // a bottle of scent: a faceted body, a stopper, a drop that falls
+        const rw = 12 * wide, top = cy - 14, bot = cy + 20;
+        fill(cx - rw, top, rw * 2, bot - top, 0.24);
+        for (let y = top; y <= bot; y++) { put(cx - rw, y, 0.9); put(cx + rw, y, 0.9); put(cx - rw * 0.4 * turn, y, 0.45); }
+        for (let x = -rw; x <= rw; x++) { put(cx + x, top, 0.9); put(cx + x, bot, 0.9); }
+        fill(cx - 3, top - 9, 7, 8, 0.6); for (let x = -5; x <= 5; x++) put(cx + x, top - 10, 0.9);
+        const dy = ((t * 30) % 40); put(cx + rw + 4, top + dy, 1); put(cx + rw + 4, top + dy + 1, 0.7);
+      }
+      // sparkles round it
+      for (let k = 0; k < 5; k++) { const sp = (t * 0.7 + k * 0.37) % 1; if (sp < 0.25) { const sx = cx + (hash(k, Math.floor(t * 0.7 + k * 0.37), 3) - 0.5) * W * 0.7, sy = cy + (hash(k, Math.floor(t * 0.7 + k * 0.37), 4) - 0.5) * 50; gg.fillStyle = '#ffffff'; put(sx, sy); put(sx - 1, sy, 0.5); put(sx + 1, sy, 0.5); put(sx, sy - 1, 0.5); put(sx, sy + 1, 0.5); gg.fillStyle = css(c); } }
+      // the price, in a tag that blinks
+      if ((t % 1.2) < 0.9) { fill(W - 32, H - 33, 24, 10, 0.35); for (let x = W - 32; x < W - 8; x++) { put(x, H - 33, 0.8); put(x, H - 24, 0.8); } glyphs(W - 29, H - 31, 3, 1, which * 5 + 11, 1); }
+      // the slogan, running along the bottom
+      gg.save(); gg.beginPath(); gg.rect(x0 + 4, y0, W - 8, H); gg.clip();
+      const run = Math.floor((t * 14) % (W + 60)); glyphs(W - run, H - 14, 12, 1, which * 17 + 40, 0.85);
+      gg.restore();
     } else if (h.kind === 'koi') {
       // a koi as big as a building, swimming slow circles, fins and tail beating
       const ang = t * 0.25 + h.x, cx = h.w / 2 + Math.cos(ang) * h.w * 0.22, cy = h.h / 2 + Math.sin(ang * 2) * h.h * 0.15, dir = -Math.sin(ang) >= 0 ? 1 : -1, L = h.w * 0.25;

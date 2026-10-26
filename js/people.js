@@ -35,9 +35,11 @@ function person(o = {}) {
     S.cap(lx + lean * 0.7 + (back ? -1.2 : 1) + dx * 0.15, hip, kx, ky, 2.3 + wd * 0.3, 1.9, R);
     S.cap(kx, ky, ax, ay, 1.8, 1.4, R);
     if (o.cyLegs && acc) { S.px(kx, ky, acc, true); S.px(ax, ay - 2, acc, true); }
+    if (o.kneePad) S.cap(kx - 0.3, ky - 0.6, kx + 0.6, ky + 0.6, 1.4, 1.2, back ? dark(rp(o.kneePad, 5)) : rp(o.kneePad, 5));
+    if (o.pockets && pose !== 'sit') S.cap(kx - 0.6 - dx * 0.15, ky - 3, kx - 0.4 - dx * 0.12, ky - 1.4, 1.2, 1.1, back ? dark(dark(legs)) : dark(legs));
     const B = back ? dark(boots) : boots;
     S.cap(ax - 0.5, ay + 0.1, ax + 2.8, ay + 0.5, 1.7, 1.35, B, { bias: 0.05 });
-    for (let x = Math.round(ax - 1.5); x <= Math.round(ax + 3.5); x++) if (S.get(x, Math.round(ay + 1.6))) S.px(x, ay + 1.6, B[0]);
+    for (let x = Math.round(ax - 1.5); x <= Math.round(ax + 3.5); x++) if (S.get(x, Math.round(ay + 1.6))) S.px(x, ay + 1.6, o.soles ? (back ? dark([col3(o.soles)])[0] : col3(o.soles)) : B[0], !!o.soles && !back);
   };
   // an arm to a hand, the elbow found by bending it down and back
   const arm = (shx, hx, hy, back) => {
@@ -53,6 +55,8 @@ function person(o = {}) {
   const H = o.hands || {}, hb = [H.bx === undefined ? cx - 2.5 : H.bx, H.by === undefined ? hip + 0.5 : H.by], hf = [H.fx === undefined ? cx + 4.8 : H.fx, H.fy === undefined ? hip + 1 : H.fy];
   // behind: a pack, an umbrella's shaft, the back arm and leg
   if (o.pack) { const pk = rp(o.pack, 6); S.shape([[cx - 8.6, sh], [cx - 3, sh - 0.5], [cx - 3, waist + 1], [cx - 9, waist + 1]], pk, { down: 0.3 }); S.cap(cx - 8.4, sh - 1.2, cx - 3.6, sh - 1.4, 1.4, 1.4, rp('#5a4a3a', 5)); for (let y = Math.round(sh + 2); y < waist; y += 3) S.px(cx - 8, y, pk[0]); if (acc) S.px(cx - 7, sh + 4, acc, true); }
+  // a weapon carried when it isn't in hand: a katana across the back, a baton at the hip
+  if (o.sheath === 'katana') { S.limb(cx - 6.5, sh - 5, cx + 1, waist + 3, 1.2, ['#1a1a20', '#3a3a44', '#5a5a66']); S.limb(cx - 7.5, sh - 6.5, cx - 6, sh - 4, 1.2, rp(o.sheathCol || '#ff4ab0', 4)); }
   arm(cx - 2.6, hb[0], hb[1], true);
   leg(st[0], true);
   // the body: a coat to the knee or a jacket to the hip, a collar, a belt
@@ -66,12 +70,16 @@ function person(o = {}) {
   }
   S.shape([[sx0 + 0.6, sh - 0.6], [sx1 - 0.2, sh - 0.6], [sx1 + 0.6, sh + 2], [sx1 - 0.4, waist], [sx1, hip + 0.8], [sx0, hip + 0.8], [sx0 + 0.4, waist], [sx0 - 0.4, sh + 2]], top);
   if (o.shirt) S.shape([[cx + 1.6, sh], [sx1 - 0.6, sh], [sx1 - 0.8, waist - 1], [cx + 2.4, waist - 1]], rp(o.shirt, 5));
+  // a vest over the shirt: a plate and its straps, where the coat's open
+  if (o.vest) { const vr = rp(o.vest, 6), x0 = o.coat === 'long' || o.coat === 'jacket' ? cx + 1.4 : sx0 + 0.6; S.shape([[x0, sh + 1.5], [sx1 - 0.4, sh + 1.5], [sx1 - 0.6, waist + 0.5], [x0 + 0.6, waist + 0.5]], vr, { down: 0.2 }); for (let x = Math.round(x0 + 1); x < sx1 - 1; x += 2) S.px(x, waist - 2, vr[1]); if (o.vestLight) S.px(sx1 - 1.5, sh + 3, o.vestLight, true); }
   if (o.apron) S.shape([[cx - 1, sh + 3], [sx1 + 0.8, sh + 3], [sx1 + 1.6, Y(5)], [cx - 1.5, Y(5)]], rp(o.apron, 6), { down: 0.25 });
   if (o.armor) { S.cap(cx - 2.5, sh + 2.5, cx + 2.5, sh + 2.5, 3.4, 3.4, rp(o.armor, 7)); S.cap(cx - 3.5, sh + 1, cx - 4.5, sh + 1.5, 2.6, 2.6, rp(o.armor, 7)); }
   if (o.collar) S.cap(cx - 3, sh - 1, cx + 0.5, sh - 1.8, 2.2, 1.6, top, { bias: 0.12 });
   for (let x = Math.round(sx0); x <= Math.round(sx1); x++) if (S.get(x, Math.round(hip))) S.px(x, hip, rp(o.belt || '#141216')[1]);
   if (acc && o.trim !== false) for (let y = Math.round(sh + 1); y < (o.coat === 'long' ? Y(6) : hip); y++) { const x = Math.round(sx1 - 0.5 + (y > waist ? (y - waist) * 0.12 : 0)); if (S.get(x, y)) S.px(x, y, acc, (y % 3) === 0); }
   if (o.plates && acc) for (let y = Math.round(sh + 2); y < waist; y += 2) S.px(cx + 1, y, acc, true);
+  // a baton hangs at the back of the belt, over the coat
+  if (o.sheath === 'baton') { S.limb(sx0 - 0.6, hip - 1, sx0 - 1.6, hip + 7, 1.3, ['#14141a', '#2a2a34', '#44444e']); S.px(sx0 - 1.6, hip + 7, o.sheathCol || '#5aa8ff', true); }
   // the front leg, over the body's hem
   if (o.coat !== 'long') leg(st[1], false);
   // the head: neck, skull, face, an ear, an eye, a brow, a nose, a mouth
@@ -103,6 +111,7 @@ function person(o = {}) {
   const [hx, hy] = hf;
   if (o.cutter) { const c = col3(o.cutterCol || '#ffb040'); S.cap(hx - 1, hy, hx + 5, hy - 0.5, 1.2, 1.1, MAT.steel); S.cap(hx + 0.5, hy + 1, hx + 0.5, hy + 2.5, 0.9, 0.8, MAT.steelD); S.px(hx + 6, hy - 0.5, c, true); S.px(hx + 7, hy - 0.5, mixRgb(c, [255, 255, 255], 0.6), true); S.px(hx + 2, hy - 1.5, c, true); }
   if (o.blade) { const c = col3(o.blade); for (let q = 0; q < 11; q++) S.px(hx + 1 + q * 0.95, hy - 1 - q * 0.45, q < 2 ? chrome[2] : mixRgb(c, [255, 255, 255], q % 4 ? 0.25 : 0.7), q >= 2); }
+  if (o.blaster && o.blasterBig) { S.cap(hx - 2, hy - 1.6, hx + 8, hy - 2.2, 2.3, 1.9, MAT.steelD); S.cap(hx + 6, hy - 3.2, hx + 9.5, hy - 3.2, 0.8, 0.8, MAT.steel); }
   if (o.blaster) { S.cap(hx - 1.5, hy - 1.2, hx + 5.5, hy - 1.6, 1.7, 1.4, MAT.steelD); if (o.blasterCol) for (let q = 0; q < 4; q++) S.px(hx + q, hy - 1.4, col3(o.blasterCol), q % 2 === 0); S.cap(hx + 5, hy - 1.6, hx + 7.5, hy - 1.6, 0.8, 0.8, MAT.steel); S.cap(hx - 0.5, hy, hx - 0.8, hy + 2.6, 0.9, 0.8, ['#1a120c', '#3a2618', '#5a3c24']); S.px(hx + 2, hy - 2.6, '#ff8a20', true); if (o.muzzle) { S.px(hx + 8.5, hy - 1.6, '#ffffff', true); S.px(hx + 9.5, hy - 1.6, '#ffd080', true); S.px(hx + 8.5, hy - 2.6, '#ffb040', true); S.px(hx + 8.5, hy - 0.6, '#ffb040', true); } }
   if (o.gun) { S.cap(hx - 1, hy - 1, hx + 6, hy - 1.4, 1.4, 1.2, MAT.steelD); S.px(hx + 1, hy + 0.8, MAT.steelD[2]); S.px(hx + 4, hy - 1.4, col3(o.visor || '#ff3040'), true); }
   if (o.bowl) { S.cap(hx - 0.5, hy - 1, hx + 3, hy - 1, 1.6, 1.4, ['#5a1a0e', '#a83a1e', '#e06a3a', '#ffa070']); S.px(hx + 1, hy - 4, '#d8d8e0'); S.px(hx + 2, hy - 6, '#b8b8c0'); S.px(hx + 1, hy - 8, '#9898a0'); }

@@ -100,7 +100,7 @@ async function run(B, url, vp, name, failures) {
   if (!boss.flag) fail('the Warden did not fall ' + JSON.stringify(boss));
   await shot('yard');
   // its helmet, worn from the Gear tab
-  const gear = await E(() => { const a0 = Game.armor(); Hud.tab = 'gear'; Hud.slot = 'head'; Hud.toggle('pack'); const b = document.querySelector('button[data-equip="helmet"]'); if (b) b.click(); Hud.toggle(null); return { owned: !!Game.s.gear.owned.helmet, on: Game.s.gear.on.head, a0, a1: Game.armor() }; });
+  const gear = await E(() => { const a0 = Game.armor(); Hud.tab = 'gear'; Hud.slot = 'head'; Hud.toggle('pack'); const pk = document.querySelector('button[data-pick="helmet"]'); if (pk) pk.click(); const b = document.querySelector('button[data-equip="helmet"]'); if (b) b.click(); Hud.toggle(null); return { owned: !!Game.s.gear.owned.helmet, on: Game.s.gear.on.head, a0, a1: Game.armor() }; });
   if (!gear.owned || gear.on !== 'helmet' || gear.a1 <= gear.a0) fail('the Warden\'s helmet was not worn ' + JSON.stringify(gear));
   // the hatch: breached, and down to street level
   const down = await E(() => { T_.walkTo(2500); T_.tap('useHit'); const h = World.props.find((p) => p.kind === 'hatch').done; T_.tap('useHit'); T_.run({}, 90); return { h, level: Game.s.level }; });

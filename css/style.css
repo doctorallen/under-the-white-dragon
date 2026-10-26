@@ -94,11 +94,31 @@ body.touch #pads { display: flex; }
 .tabs { display: flex; gap: 2px; margin: -2px 0 10px; border-bottom: 1px solid var(--edge); }
 .tabs button { background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 6px 12px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
 .tabs button.on { color: var(--teal); border-bottom-color: var(--teal); }
-.doll { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.doll { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; align-content: start; }
+/* the inventory takes the whole screen: the loadout left, the picked piece right */
+#panel.full { inset: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); max-width: none; border: 0; }
+.loadout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.detail { border-left: 1px solid var(--edge); padding-left: 16px; min-width: 0; }
+.detail h3:first-child { margin-top: 0; }
+.big { --r: var(--edge); border-left: 3px solid var(--r); padding: 2px 0 4px 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--r) 12%, transparent), transparent 80%); }
+.big h4 { margin: 2px 0 4px; font-size: 20px; font-weight: 600; }
+.big small.rar { color: var(--r); font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+.big p { margin: 0 0 8px; }
+.stats2 { display: grid; gap: 2px; font-family: var(--mono); font-size: 13px; max-width: 260px; }
+.stat { display: flex; gap: 8px; align-items: baseline; }
+.stat span { flex: 1; color: var(--dim); }
+.stat b { color: var(--ink); font-weight: 500; }
+.stat i { font-style: normal; font-size: 12px; }
+.stat i.up { color: var(--green); } .stat i.down { color: var(--red); }
+.stat.perk span { color: var(--sodium); }
+.big .buttons { margin-top: 10px; }
+button.go { border-color: var(--teal); color: var(--teal); }
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+@media (max-width: 560px) { .loadout { grid-template-columns: 1fr; } .detail { border-left: 0; padding-left: 0; } }
 .doll .slots { display: grid; gap: 6px; }
 .slot { --r: var(--edge); text-align: left; padding: 5px 8px; border: 1px solid var(--r); border-left-width: 3px; background: linear-gradient(90deg, color-mix(in srgb, var(--r) 18%, transparent), rgba(16, 12, 24, 0.6)); min-width: 0; }
 .slot small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
-.slot b { display: block; font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot b { display: block; font-weight: 500; font-size: 13px; line-height: 1.2; overflow-wrap: anywhere; }
 .slot.empty b { color: var(--dim); font-weight: 400; }
 .slot.sel { box-shadow: 0 0 0 1px var(--teal), 0 0 12px rgba(58, 240, 224, 0.35); }
 .slot .new { font-style: normal; color: var(--sodium); }
@@ -125,3 +145,11 @@ body.touch #pads { display: flex; }
 @media (orientation: portrait) and (max-width: 600px) {
   #rotate { display: grid; place-items: center; position: fixed; inset: 0; background: #08060c; color: var(--dim); font-style: italic; z-index: 9; }
 }
+
+/* gear thumbnails */
+.slot { display: flex; align-items: center; gap: 8px; }
+.slot > span { min-width: 0; flex: 1; }
+.slot img, .slot .noimg { width: 32px; height: 32px; flex: none; image-rendering: pixelated; background: rgba(0, 0, 0, 0.35); border: 1px solid color-mix(in srgb, var(--r) 50%, transparent); }
+.card img { width: 48px; height: 48px; flex: none; image-rendering: pixelated; background: rgba(0, 0, 0, 0.35); border: 1px solid color-mix(in srgb, var(--r) 50%, transparent); }
+.card .cardtext { flex: 1; min-width: 0; }
+.big .bigimg { float: right; width: 96px; height: 96px; margin: 2px 0 6px 10px; image-rendering: pixelated; background: radial-gradient(circle, color-mix(in srgb, var(--r) 22%, transparent), rgba(0, 0, 0, 0.35) 70%); border: 1px solid color-mix(in srgb, var(--r) 60%, transparent); }

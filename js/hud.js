@@ -6,7 +6,7 @@
 // elevator, a vendor, the fixer's jobs, the ripperdoc, the pause menu.
 // ---------------------------------------------------------------------------
 const Hud = {
-  open: null, who: null, last: {}, tab: 'gear', slot: 'outer',
+  open: null, who: null, last: {}, tab: 'gear', slot: 'outer', pick: null,
   init() {
     $('bPack').onclick = () => this.toggle('pack');
     $('bMenu').onclick = () => this.toggle('pause');
@@ -49,7 +49,7 @@ const Hud = {
   nextProgram() { const have = PROGRAM_ORDER.filter((p) => Game.s.programs[p]); if (!have.length) return; const i = have.indexOf(Game.s.prog); Game.s.prog = have[(i + 1) % have.length]; Game.toast('Program: ' + PROGRAMS[Game.s.prog].name); this.refresh(); },
   toggle(which, who) {
     if (!which || (this.open === which && !who)) { this.open = null; this.who = null; $('panel').hidden = true; Game.paused = false; return; }
-    this.open = which; this.who = who || this.who; Game.paused = true; $('panel').hidden = false; this.panel(which);
+    this.open = which; this.who = who || this.who; Game.paused = true; $('panel').hidden = false; $('panel').classList.toggle('full', which === 'pack'); this.panel(which);
   },
   items(o, cls = '') { return SALVAGE_ORDER.filter((k) => o[k]).map((k) => `<span class="item ${cls}"><i style="background:${SALVAGE[k].col[1]}"></i>${SALVAGE[k].name} <b>${o[k]}</b></span>`).join('') || '<span class="dim">Nothing.</span>'; },
   cost(c) { return Object.keys(c).map((k) => { const ok = k === 'cr' ? Game.s.cr >= c.cr : (Game.s.pack[k] || 0) >= c[k]; return `<span class="need ${ok ? 'ok' : ''}">${k === 'cr' ? c.cr + ' cr' : c[k] + ' ' + SALVAGE[k].name.toLowerCase()}</span>`; }).join(' · '); },
@@ -57,7 +57,37 @@ const Hud = {
     const G = GEAR[id], R = RARITY[G.rarity], st = [];
     if (G.armor) st.push('Armour ' + G.armor); if (G.dmg) st.push(G.dmg + ' damage × ' + G.shots + ' shots'); if (G.strike) st.push('Blows ' + G.strike);
     if (G.perk) for (const p in G.perk) st.push(PERKS[p](G.perk[p]));
-    return `<div class="card" style="--r:${R.col}"><div><b>${G.name}</b><small class="rar">${R.name} · ${SLOTS[G.slot]}</small><small>${st.join(' · ')}</small><small class="dim">${G.note}</small></div>${btn}</div>`;
+    return `<div class="card" style="--r:${R.col}"><img src="${this.thumb(id)}" alt=""><div class="cardtext"><b>${G.name}</b><small class="rar">${R.name} · ${SLOTS[G.slot]}</small><small>${st.join(' · ')}</small><small class="dim">${G.note}</small></div>${btn}</div>`;
+  },
+  // a thumbnail of a piece of gear: the detective wearing or holding just
+  // that, cropped to where it is, as an image (made once)
+  thumbs: {},
+  thumb(id) {
+    if (this.thumbs[id]) return this.thumbs[id];
+    const G = GEAR[id], crop = { head: [11, 11, 20, 18], face: [15, 14, 14, 12], outer: [8, 21, 26, 28], inner: [10, 21, 22, 20], legs: [10, 33, 22, 19], feet: [12, 43, 18, 9], ranged: [25, 23, 20, 11], melee: [27, 17, 18, 18] }[G.slot];
+    const o = Object.assign({}, RUNNER, { pose: 'stand', seed: 5, holding: true, blaster: false });
+    if (G.slot === 'inner' || G.slot === 'outer') o.shirt = '#8a8a84';
+    Object.assign(o, G.look || {});
+    if (G.slot === 'inner') o.top = o.shirt;
+    if (G.slot === 'feet') Object.assign(o, { pose: 'walk1', fixedHands: true });
+    if (G.slot === 'ranged') Object.assign(o, { pose: 'aim', blaster: true, hands: POSE_HANDS.aim });
+    if (G.slot === 'melee') Object.assign(o, { pose: 'strike', blade: G.look.bladeCol, sheath: null, hands: POSE_HANDS.strike });
+    const sp = person(o), [sx, sy, sw, sh] = crop, N = 48, k = N / Math.max(sw, sh), c = document.createElement('canvas'); c.width = c.height = N;
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+    const dx = (N - sw * k) / 2, dy = (N - sh * k) / 2;
+    g.drawImage(sp.c, sx, sy, sw, sh, dx, dy, sw * k, sh * k);
+    return (this.thumbs[id] = c.toDataURL());
+  },
+  gearDetail(id) {
+    const G = GEAR[id], R = RARITY[G.rarity], worn = Game.worn(G.slot), on = Game.s.gear.on[G.slot] === id;
+    const row = (name, v, w) => { const d = worn && !on && w !== undefined ? v - w : 0; return `<div class="stat"><span>${name}</span><b>${v}</b>${d ? `<i class="${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : ''}${d}</i>` : ''}</div>`; };
+    let st = '';
+    if (G.armor !== undefined) st += row('Armour', G.armor, worn && worn.armor);
+    if (G.dmg) st += row('Damage', G.dmg, worn && worn.dmg) + row('Shots', G.shots, worn && worn.shots) + row('Cycle', G.cd + ' s');
+    if (G.strike) st += row('Blow', G.strike, worn && worn.strike);
+    if (G.perk) for (const p in G.perk) st += `<div class="stat perk"><span>${PERKS[p](G.perk[p])}</span></div>`;
+    const btn = on ? (G.slot === 'ranged' ? '<span class="tag">wearing</span>' : `<button data-unequip="${G.slot}">Take off</button>`) : `<button data-equip="${id}" class="go">Wear</button>`;
+    return `<div class="big" style="--r:${R.col}"><img class="bigimg" src="${this.thumb(id)}" alt=""><small class="rar">${R.name} · ${SLOTS[G.slot]}</small><h4>${G.name}</h4><p class="dim">${G.note}</p><div class="stats2">${st}</div><div class="buttons">${btn}</div></div>`;
   },
   panel(which) {
     const s = Game.s, body = $('panelBody'), title = $('panelTitle'); let h = '';
@@ -67,13 +97,18 @@ const Hud = {
       const tab = this.tab || 'gear';
       h += '<nav class="tabs">' + [['gear', 'Gear'], ['items', 'Items'], ['ware', 'Ware'], ['jobs', 'Jobs']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
       if (tab === 'gear') {
-        const slot = (k) => { const g = Game.worn(k), spare = Object.keys(s.gear.owned).some((id) => GEAR[id].slot === k && s.gear.on[k] !== id); return `<button class="slot ${g ? 'r-' + g.rarity : 'empty'} ${this.slot === k ? 'sel' : ''}" data-slot="${k}"><small>${SLOTS[k]}${spare ? ' <i class="new">+</i>' : ''}</small><b>${g ? g.name : 'Empty'}</b></button>`; };
+        const slot = (k) => { const g = Game.worn(k), spare = Object.keys(s.gear.owned).some((id) => GEAR[id].slot === k && s.gear.on[k] !== id); return `<button class="slot ${g ? 'r-' + g.rarity : 'empty'} ${this.slot === k ? 'sel' : ''}" data-slot="${k}">${g ? `<img src="${this.thumb(s.gear.on[k])}" alt="">` : '<span class="noimg"></span>'}<span><small>${SLOTS[k]}${spare ? ' <i class="new">+</i>' : ''}</small><b>${g ? g.name : 'Empty'}</b></span></button>`; };
         const W = Game.weapon();
-        h += `<div class="doll"><div class="slots">${['head', 'face', 'outer', 'inner'].map(slot).join('')}</div>
-          <div class="fig"><canvas id="dollcv" width="132" height="150"></canvas><div class="stats"><span>Armour <b>${Game.armor()}</b></span><span>Blaster <b>${W.dmg}×${W.shots}</b></span><span>Blow <b>${Game.strikeDmg()}</b></span></div></div>
-          <div class="slots">${['legs', 'feet', 'ranged', 'melee'].map(slot).join('')}</div></div>`;
+        // the loadout on the left: you, between your slots; on the right, the
+        // piece picked (what's worn in the slot unless you pick another) and
+        // everything else you own for that slot
         const k = this.slot || 'outer', mine = Object.keys(s.gear.owned).filter((id) => GEAR[id].slot === k);
-        h += `<h3>${SLOTS[k]}</h3><div class="cards">` + (mine.map((id) => this.gearCard(id, s.gear.on[k] === id ? (k === 'ranged' ? '<span class="tag">wearing</span>' : `<button data-unequip="${k}">Take off</button>`) : `<button data-equip="${id}">Wear</button>`)).join('') || '<p class="dim">Nothing for this slot yet. Vendors sell gear, and it turns up in stashes and on the people you take down.</p>') + '</div>';
+        const pick = mine.includes(this.pick) ? this.pick : s.gear.on[k] || mine[0];
+        h += `<div class="loadout"><div class="doll"><div class="slots">${['head', 'face', 'outer', 'inner'].map(slot).join('')}</div>
+          <div class="fig"><canvas id="dollcv" width="132" height="150"></canvas><div class="stats"><span>Armour <b>${Game.armor()}</b></span><span>Blaster <b>${W.dmg}×${W.shots}</b></span><span>Blow <b>${Game.strikeDmg()}</b></span></div></div>
+          <div class="slots">${['legs', 'feet', 'ranged', 'melee'].map(slot).join('')}</div></div>
+          <div class="detail">${pick ? this.gearDetail(pick) : `<h3>${SLOTS[k]}</h3><p class="dim">Nothing for this slot yet. Vendors sell gear, and it turns up in stashes and on the people you take down.</p>`}
+          ${mine.length > 1 ? `<h3>Your ${SLOTS[k].toLowerCase()} gear</h3><div class="picks">` + mine.map((id) => { const G = GEAR[id]; return `<button class="slot r-${G.rarity} ${id === pick ? 'sel' : ''}" data-pick="${id}"><img src="${this.thumb(id)}" alt=""><span><small>${RARITY[G.rarity].name}${s.gear.on[k] === id ? ' · worn' : ''}</small><b>${G.name}</b></span></button>`; }).join('') + '</div>' : ''}</div></div>`;
       } else if (tab === 'items') {
         const worth = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0) * SALVAGE[k].price, 0);
         h += `<p class="sub">${s.cr} cr · ${Game.packCount()} pieces of salvage, worth about ${worth} cr to Kit. Whatever you pick up is yours to keep.</p><div class="rows">` + (SALVAGE_ORDER.filter((k) => s.pack[k]).map((k) => `<div class="row"><div><b><i class="sw" style="background:${SALVAGE[k].col[1]}"></i>${SALVAGE[k].name}</b><small>${SALVAGE[k].price} cr each at Kit's</small></div><span class="tag">× ${s.pack[k]}</span></div>`).join('') || '<p class="dim">No salvage. Hold Use on a machine to strip it.</p>') + '</div>';
@@ -133,7 +168,8 @@ const Hud = {
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     body.querySelectorAll('button[data-tab]').forEach((b) => (b.onclick = () => { this.tab = b.dataset.tab; this.panel('pack'); }));
-    body.querySelectorAll('button[data-slot]').forEach((b) => (b.onclick = () => { this.slot = b.dataset.slot; this.panel('pack'); }));
+    body.querySelectorAll('button[data-slot]').forEach((b) => (b.onclick = () => { this.slot = b.dataset.slot; this.pick = null; this.panel('pack'); }));
+    body.querySelectorAll('button[data-pick]').forEach((b) => (b.onclick = () => { this.pick = b.dataset.pick; this.panel('pack'); }));
     body.querySelectorAll('button[data-equip]').forEach((b) => (b.onclick = () => Game.equip(b.dataset.equip)));
     body.querySelectorAll('button[data-unequip]').forEach((b) => (b.onclick = () => Game.unequip(b.dataset.unequip)));
     body.querySelectorAll('button[data-buygear]').forEach((b) => (b.onclick = () => { const id = b.dataset.buygear, n = this.who && this.who.def.name, c = SHOP[n] && SHOP[n][id]; if (!c || s.cr < c || s.gear.owned[id]) return; s.cr -= c; Game.giveGear(id); this.refresh(); Save.write(); }));

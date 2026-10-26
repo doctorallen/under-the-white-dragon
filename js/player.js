@@ -29,7 +29,7 @@ const RunnerArt = {
       if (pose === 'cut') { o.cutter = true; o.blaster = false; }
       if (pose === 'shot') o.muzzle = true;
       if (st.arm) o.cyArm = true;
-      if (pose === 'strike' && (st.arm || mel)) { o.blade = mel ? mel.look.bladeCol : '#3af0e0'; o.blaster = false; }
+      if (pose === 'strike' && (st.arm || mel)) { o.blade = mel ? mel.look.bladeCol : '#3af0e0'; o.blaster = false; o.sheath = null; }
       s = person(o); if (left) s = flipSprite(s);
       this.cache.set(k, s);
     }

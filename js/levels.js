@@ -56,7 +56,7 @@ function cityLayers(L) {
       for (let x = 0; x < 1680; x += 6) P.put(x, 305, [58, 200, 210], 0.25);
     } },
   ];
-  L.holos.push({ layer: 2, kind: 'face', x: 380, y: 120, w: 96, h: 130, cols: [[255, 90, 190], [120, 220, 255]] });
+  L.holos.push({ layer: 2, kind: 'ad', x: 380, y: 112, w: 92, h: 128, cols: [[255, 90, 190], [120, 220, 255]] });
   L.holos.push({ layer: 1, kind: 'koi', x: 640, y: 96, w: 150, h: 80, cols: [[58, 240, 224], [255, 176, 64]] });
   L.holos.push({ layer: 2, kind: 'ring', x: 1180, y: 150, w: 64, h: 64, cols: [[255, 176, 64], [255, 74, 176]] });
   L.train = { layer: 2, y: 300, speed: 70, cars: 5, span: 1680 };

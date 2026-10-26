@@ -58,24 +58,24 @@ const GEAR = {
   // outer torso
   trench: { slot: 'outer', name: 'Precinct trench', rarity: 'common', armor: 6, look: { coat: 'long', top: '#5e4c38', collar: true }, note: 'The coat. Every detective has one; yours has been rained on for nine years.' },
   bomber: { slot: 'outer', name: 'Neon bomber', rarity: 'uncommon', armor: 10, look: { coat: 'jacket', top: '#2a2438', collar: true, trim: true, acc: '#ff4ab0' }, note: 'Lit seams. Nobody will mistake you for a cop.' },
-  armtrench: { slot: 'outer', name: 'Armoured trench', rarity: 'rare', armor: 18, look: { coat: 'long', top: '#34343c', collar: true, plates: true }, note: 'Ceramic plates sewn into the lining.' },
+  armtrench: { slot: 'outer', name: 'Armoured trench', rarity: 'rare', armor: 18, look: { coat: 'long', top: '#34343c', collar: true, plates: true, acc: '#ffb040' }, note: 'Ceramic plates sewn into the lining.' },
   // inner torso
   shirt: { slot: 'inner', name: 'Work shirt', rarity: 'common', armor: 1, look: { shirt: '#8a8a84' }, note: 'Pressed, once.' },
-  mesh: { slot: 'inner', name: 'Mesh vest', rarity: 'uncommon', armor: 8, look: { shirt: '#3a4a3a' }, note: 'Gang issue. Stops a knife, nearly.' },
-  ballistic: { slot: 'inner', name: 'Ballistic vest', rarity: 'rare', armor: 14, look: { shirt: '#2a2a30' }, note: 'Stops a bolt, mostly.' },
+  mesh: { slot: 'inner', name: 'Mesh vest', rarity: 'uncommon', armor: 8, look: { shirt: '#3a4a3a', vest: '#4a5a3a' }, note: 'Gang issue. Stops a knife, nearly.' },
+  ballistic: { slot: 'inner', name: 'Ballistic vest', rarity: 'rare', armor: 14, look: { shirt: '#2a2a30', vest: '#3a3e4a', vestLight: '#3af0e0' }, note: 'Stops a bolt, mostly.' },
   // legs
   slacks: { slot: 'legs', name: 'Old slacks', rarity: 'common', armor: 2, look: { legs: '#26262c' }, note: 'Good for sitting in a car all night.' },
-  cargo: { slot: 'legs', name: 'Cargo pants', rarity: 'uncommon', armor: 5, look: { legs: '#3a3a2a' }, note: 'Pockets for everything you strip.' },
-  plated: { slot: 'legs', name: 'Plated trousers', rarity: 'rare', armor: 10, look: { legs: '#2a2e38' }, note: 'Kevlar knees.' },
+  cargo: { slot: 'legs', name: 'Cargo pants', rarity: 'uncommon', armor: 5, look: { legs: '#4a4a32', pockets: true }, note: 'Pockets for everything you strip.' },
+  plated: { slot: 'legs', name: 'Plated trousers', rarity: 'rare', armor: 10, look: { legs: '#2a2e38', kneePad: '#5a6070' }, note: 'Kevlar knees.' },
   // feet
   boots: { slot: 'feet', name: 'Worn boots', rarity: 'common', armor: 2, look: { boots: '#161214' }, note: 'Resoled twice.' },
-  grips: { slot: 'feet', name: 'Grip runners', rarity: 'rare', armor: 3, look: { boots: '#e8e8f0' }, perk: { speed: 0.12 }, note: 'Soles that bite on wet steel.' },
+  grips: { slot: 'feet', name: 'Grip runners', rarity: 'rare', armor: 3, look: { boots: '#d8d8e0', soles: '#3af0e0' }, perk: { speed: 0.12 }, note: 'Soles that bite on wet steel.' },
   // weapons
   blaster: { slot: 'ranged', name: 'Precinct blaster', rarity: 'common', dmg: 16, shots: 6, cd: 0.28, bolt: [255, 170, 70], note: 'Six shots, then it needs a moment.' },
-  heavy: { slot: 'ranged', name: 'Heavy blaster', rarity: 'rare', dmg: 30, shots: 4, cd: 0.45, bolt: [255, 90, 50], look: { blasterCol: '#ff5a32' }, note: 'Four big shots. Slow to cycle.' },
+  heavy: { slot: 'ranged', name: 'Heavy blaster', rarity: 'rare', dmg: 30, shots: 4, cd: 0.45, bolt: [255, 90, 50], look: { blasterCol: '#ff5a32', blasterBig: true }, note: 'Four big shots. Slow to cycle.' },
   tracer: { slot: 'ranged', name: 'Tracer pistol', rarity: 'epic', dmg: 13, shots: 10, cd: 0.16, bolt: [58, 240, 224], look: { blasterCol: '#3af0e0' }, note: 'Ten quick shots that find their mark.' },
-  baton: { slot: 'melee', name: 'Shock baton', rarity: 'uncommon', strike: 20, look: { bladeCol: '#5aa8ff' }, note: 'A gang enforcer\'s. It still bites.' },
-  katana: { slot: 'melee', name: 'Mono-katana', rarity: 'epic', strike: 34, look: { bladeCol: '#ff4ab0' }, note: 'An edge one molecule thick.' },
+  baton: { slot: 'melee', name: 'Shock baton', rarity: 'uncommon', strike: 20, look: { bladeCol: '#5aa8ff', sheath: 'baton', sheathCol: '#5aa8ff' }, note: 'A gang enforcer\'s. It still bites.' },
+  katana: { slot: 'melee', name: 'Mono-katana', rarity: 'epic', strike: 34, look: { bladeCol: '#ff4ab0', sheath: 'katana', sheathCol: '#ff4ab0' }, note: 'An edge one molecule thick.' },
 };
 // what the detective owns and wears on day one
 const GEAR_START = { head: 'fedora', outer: 'trench', inner: 'shirt', legs: 'slacks', feet: 'boots', ranged: 'blaster' };
