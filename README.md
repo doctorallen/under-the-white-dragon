@@ -23,6 +23,8 @@ On Android the browser offers to install it the first time you tap; after that, 
 | Run program / pick next | Q / R | Program (hold to pick) |
 | Inventory (gear, items, gadgets, cases) | I | Gear |
 | A cab home | | Cab |
+| The map (drag, zoom) | M | Pause, then Map |
+| Dev settings | | Pause, then Dev settings |
 | Pause | Esc | II |
 
 ## The first slice
@@ -56,6 +58,8 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/actors.js` | People's routines and roles, enemies, the Warden, bolts |
 | `js/hack.js` | Jacking in |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
+| `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |
+| `js/dev.js` | Dev settings: switches and cheats for testing, kept in this browser only |
 | `js/flight.js` | Flying: the spinner's destinations, cabs, the flight through the city |
 | `js/skyline.js` | The city behind: layered towers, clouds, giant holograms, the monorail |
 | `js/gl.js` | The frame's last stage in WebGL2: bloom, reflections, the scale-up |

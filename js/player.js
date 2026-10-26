@@ -49,6 +49,7 @@ const Player = {
     this.aimT = Math.max(0, this.aimT - dt);
     // the blaster recharges a shot at a time
     const W = Game.weapon();
+    if (Dev.s.ammo && this.charge < W.shots) { this.charge = W.shots; Hud.refresh(); }
     if (this.charge < W.shots) { this.chargeT += dt; if (this.chargeT >= T.blaster.recharge / (1 + Game.perk('recharge'))) { this.chargeT = 0; this.charge++; Hud.refresh(); } } else this.chargeT = 0;
     this.inv = Math.max(0, this.inv - dt); this.hurtT = Math.max(0, this.hurtT - dt); this.strikeT = Math.max(0, this.strikeT - dt); this.strikeCd = Math.max(0, this.strikeCd - dt); this.drop = Math.max(0, this.drop - dt);
     if (ax && !this.strikeT) this.face = ax > 0 ? 1 : -1;
@@ -71,7 +72,7 @@ const Player = {
     }
     // ---- running
     // the stick sets the pace: a light push walks, a full one runs
-    const m = Math.abs(ax), sp = 1 + Game.perk('speed'), pace = (m < 0.62 ? P.walk : lerp(P.walk, P.speed, clamp((m - 0.62) / 0.28, 0, 1))) * sp;
+    const m = Math.abs(ax), sp = (1 + Game.perk('speed')) * Dev.s.speed, pace = (m < 0.62 ? P.walk : lerp(P.walk, P.speed, clamp((m - 0.62) / 0.28, 0, 1))) * sp;
     const busy = this.hold ? 0.15 : 1, target = Math.sign(ax) * pace * busy, acc = this.ground ? P.accel : P.airAccel;
     if (ax) this.vx += clamp(target - this.vx, -acc * dt, acc * dt);
     else this.vx -= clamp(this.vx, -P.friction * dt, P.friction * dt);

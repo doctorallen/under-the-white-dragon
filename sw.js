@@ -37,6 +37,8 @@ const FILES = [
   'js/life.js',
   'js/skyline.js',
   'js/flight.js',
+  'js/map.js',
+  'js/dev.js',
   'js/gl.js',
   'js/render.js',
   'js/hud.js',

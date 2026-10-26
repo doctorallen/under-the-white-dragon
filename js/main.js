@@ -4,6 +4,7 @@
 // and a spare chunk painted ahead of the camera when there's time.
 // ---------------------------------------------------------------------------
 function boot() {
+  Dev.load();
   const loaded = Save.start();
   View.init(); Input.init();
   World.load(Game.s.level);
@@ -27,7 +28,7 @@ function step(dt) {
   // between levels: fade out, arrive, fade in
   if (Game.fadeTo) { Game.fade += dt * 3; if (Game.fade >= 1) { const f = Game.fadeTo; Game.fadeTo = null; Game.arrive(f.level, f.spawn); } return; }
   if (Game.fade > 0) Game.fade = Math.max(0, Game.fade - dt * 2.5);
-  Game.pass(dt * 24 / T.day.length);
+  if (!Dev.s.freeze) Game.pass(dt * 24 / T.day.length);
   Game.ghost = Math.max(0, Game.ghost - dt);
   Player.step(dt);
   Actors.step(dt);
@@ -39,7 +40,7 @@ function step(dt) {
   if (Game.t - Save.last > 8) Save.write();
 }
 function loop(now) {
-  const dt = Math.min(0.1, (now - (Game.last || now)) / 1000); Game.last = now;
+  const dt = Math.min(0.1, (now - (Game.last || now)) / 1000); Game.last = now; Dev.frame(dt);
   if (!Game.paused) { Game.acc += dt; let n = 0; while (Game.acc >= 1 / 60 && n < 6) { step(1 / 60); Game.acc -= 1 / 60; n++; } if (n >= 6) Game.acc = 0; }
   else Game.acc = 0;
   render(); Hud.tick();

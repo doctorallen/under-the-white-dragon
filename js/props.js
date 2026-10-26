@@ -117,12 +117,15 @@ function grate(o = {}) {
   return S.done();
 }
 // a reinforced shutter: striped, too heavy for the plain cutter
+// a reinforced security shutter: a steel frame with a lock box on top, the
+// slatted shutter down to the ground, hazard paint, a red light saying locked
 function heavyShutter(o = {}) {
-  const w = o.w || 30, h = o.h || 30, S = new Spr(w, h, 65); S.ax = w / 2; S.ay = h - 1; const r = rp('#6a6a72', 7);
-  S.box(0, 0, w - 1, h - 1, r, { lo: 0, hi: 6 });
-  for (let y = 3; y < h; y += 4) for (let x = 1; x < w - 1; x++) S.px(x, y, r[0]);
-  for (let x = 0; x < w; x++) for (let y = h - 7; y < h - 2; y++) S.px(x, y, ((x + y) >> 2) % 2 ? '#d8a830' : '#1a1a1a');
-  for (const x of [4, w - 5]) for (let y = 2; y < h - 8; y += 6) S.px(x, y, '#c8c8d0');
+  const w = o.w || 30, h = o.h || 30, W = w + 8, H = h + 12, S = new Spr(W, H, 65); S.ax = W / 2; S.ay = H - 1; const r = rp('#7a7e88', 7), fr = rp('#3a3a42', 6);
+  for (let y = 0; y < H; y++) for (const x of [0, 1, 2, W - 3, W - 2, W - 1]) S.px(x, y, fr[x < 3 ? 2 + x : 6 - (x - W + 3)]);
+  for (let y = 0; y < 10; y++) for (let x = 0; x < W; x++) S.px(x, y, y === 0 ? fr[5] : y === 9 ? fr[0] : fr[2 + ((x >> 3) % 2)]);
+  S.px(W / 2 - 1, 4, '#ff2030', true); S.px(W / 2, 4, '#ff2030', true); S.px(W / 2 - 1, 5, '#ff6070', true); S.px(W / 2, 5, '#ff6070', true);
+  for (let y = 10; y < H; y++) for (let x = 3; x < W - 3; x++) S.px(x, y, (y - 10) % 4 === 0 ? r[1] : (y - 10) % 4 === 1 ? r[5] : r[3 + ((x * 7 + y) % 3 === 0 ? 1 : 0)]);
+  for (let x = 3; x < W - 3; x++) for (let y = H - 7; y < H - 2; y++) S.px(x, y, ((x + y) >> 2) % 2 ? '#e8b830' : '#1a1a1a');
   return S.done();
 }
 // a hatch in the floor or a service door, locked until breached
@@ -275,17 +278,18 @@ function salvageIcon(k) {
 // its skids (anchored at the bottom middle)
 function spinner(o = {}) {
   const W = 66, H = 26, S = new Spr(W, H, o.cab ? 401 : 400); S.ax = W / 2; S.ay = H - 1;
-  const body = rp(o.col || (o.cab ? '#c8a020' : '#2a3448'), 7), dark = rp('#14141c', 5);
+  const body = rp(o.col || (o.cab ? '#e0b028' : '#a8b0c0'), 7), dark = rp('#14141c', 5);
   S.shape([[3, 14], [14, 9], [44, 7], [60, 11], [64, 15], [62, 19], [8, 20], [2, 18]], body, { down: 0.35 });
   S.shape([[20, 9], [28, 3], [44, 3], [50, 8]], ['#0a1420', '#1a3448', '#3a6a88', '#8ac0d8'], { down: 0.2 }); // the canopy
   for (let x = 30; x < 44; x++) S.px(x, 4, '#c8f0ff', x % 3 === 0);
-  for (let x = 6; x < 60; x++) S.px(x, 15, body[5]);
+  for (let x = 6; x < 60; x++) { S.px(x, 15, body[6]); S.px(x, 16, o.cab ? '#1a1a1a' : '#2a5aff', !o.cab); } // a lit stripe down the side
+  for (let x = 15; x < 58; x++) S.px(x, 9 + (x < 44 ? 0 : (x - 44) * 0.3), body[6]);
   S.box(10, 19, 22, 21, dark, { lo: 0, hi: 3 }); S.box(42, 19, 54, 21, dark, { lo: 0, hi: 3 }); // thruster pods
   for (let x = 11; x < 22; x++) S.px(x, 22, '#3af0e0', true); for (let x = 43; x < 54; x++) S.px(x, 22, '#3af0e0', true);
   S.box(12, 23, 14, 25, dark); S.box(50, 23, 52, 25, dark); S.limb(8, 25, 56, 25, 1, MAT.steelD); // skids
   S.px(63, 14, '#fff8e0', true); S.px(62, 13, '#fff8e0', true); S.px(3, 16, '#ff3040', true); // head and tail lights
   if (o.cab) { S.box(32, 0, 40, 2, rp('#ffd040', 4), { glow: true }); for (let x = 8; x < 58; x += 4) S.px(x, 17, '#1a1a1a'); }
-  else { S.px(30, 2, '#ff3040', true); S.px(31, 2, '#ff3040', true); S.px(42, 2, '#3a8aff', true); S.px(43, 2, '#3a8aff', true); for (let x = 16; x < 40; x += 2) S.px(x, 13, '#e8e8f0'); }
+  else { S.box(29, 1, 33, 2, rp('#ff3040', 4), { glow: true }); S.box(40, 1, 44, 2, rp('#3a8aff', 4), { glow: true }); for (let x = 18; x < 40; x += 3) S.px(x, 12, '#1a2a6a'); }
   return S.done();
 }
 // a desk with a terminal, from the front

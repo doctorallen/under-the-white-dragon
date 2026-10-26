@@ -95,6 +95,9 @@ async function run(B, url, vp, name, failures) {
   const kit = await E(() => { T_.walkTo(1110); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });
   if (kit !== 'vendor') fail('Kit\'s trade panel did not open (' + kit + ')');
   await shot('market');
+  // the map draws the whole level, and a dev button works
+  const mapdev = await E(() => { Hud.toggle('map'); const ok = !!MapView.cache.stack && MapView.s > 0; Hud.toggle(null); Hud.toggle('dev'); const c0 = Game.s.cr; document.querySelector('button[data-devdo="cr"]').click(); Hud.toggle(null); return { ok, cr: Game.s.cr - c0 }; });
+  if (!mapdev.ok || mapdev.cr !== 1000) fail('the map or dev settings failed ' + JSON.stringify(mapdev));
   // Mags makes a filter mask, buying the glass that's missing
   const fab = await E(() => { Game.s.cr += 100; Game.s.pack.glass = 0; Game.s.pack.wire = (Game.s.pack.wire || 0) + 1; T_.walkTo(1215); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-make="mask"]'); if (b) b.click(); Hud.toggle(null); return { o, mask: !!Game.s.gear.owned.mask }; });
   if (fab.o !== 'fab' || !fab.mask) fail('Mags did not make the mask ' + JSON.stringify(fab));

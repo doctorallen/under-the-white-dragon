@@ -190,7 +190,7 @@ LEVELS.precinct = {
     for (const x of [500, 640, 780, 900, 1060, 1160, 1300, 1440]) L.tube(x, CEIL + 4, 24, '#e0ecff', 0.75);
     L.light(560, 140, 70, [0.4, 0.6, 1], 0.7); L.light(880, 180, 50, [0.6, 0.6, 0.8], 0.3);
     // the cell's bars stand in front of whoever's inside
-    L.prop('deco', 880, G, { art: () => { const S = new Spr(161, 107, 420); S.ax = 80; S.ay = 106; for (let x = 4; x < 160; x += 6) for (let y = 0; y < 107; y++) { S.px(x, y, tone(MAT.steel, 0.6)); S.px(x + 1, y, tone(MAT.steel, 0.3)); } for (let x = 0; x < 161; x++) { S.px(x, 0, tone(MAT.steel, 0.75)); S.px(x, 50, tone(MAT.steel, 0.55)); } return S.done(); }, id: 'cellbars', front: 107 });
+    L.prop('deco', 880, G, { art: () => { const S = new Spr(161, 107, 420); S.ax = 80; S.ay = 106; for (let x = 4; x < 160; x += 6) for (let y = 0; y < 107; y++) { S.px(x, y, tone(MAT.steel, 0.6)); S.px(x + 1, y, tone(MAT.steel, 0.3)); } for (let x = 0; x < 161; x++) { S.px(x, 0, tone(MAT.steel, 0.75)); S.px(x, 50, tone(MAT.steel, 0.55)); } return S.done(); }, id: 'cellbars', front: 1 });
     L.prop('deco', 560, G, { art: () => desk({}), id: 'pdesk' }); L.prop('deco', 470, G, { art: () => bench(), id: 'pb1' }); L.prop('deco', 610, G, { art: () => bench(), id: 'pb2' });
     L.prop('deco', 1110, G, { art: () => desk({ col: '#3a3028' }), id: 'ltdesk' }); L.light(1110, 190, 50, [1, 0.85, 0.6], 0.6);
     L.prop('deco', 1400, G, { art: () => desk({ col: '#2a2e38' }), id: 'qmdesk' });
@@ -419,7 +419,7 @@ LEVELS.street = {
     L.prop('junk', 1560, G); L.prop('rack', 1820, G, { label: 'dumped server rack' });
     L.wall(1930, 300, 1960, G, MAT.concrete, { base: 0.45 });
     L.block(1880, 300, 1930, G, MAT.concreteD, { base: 0.25, lip: 0 });
-    L.prop('heavy', 1886, G, { w: 26, h: 36 }); L.prop('stash', 1912, G, { label: 'gang stash', gear: ['mesh', 'baton'] });
+    L.prop('heavy', 1886, G, { w: 26, h: 36 }); L.light(1886, G - 44, 30, [1, 0.2, 0.25], 0.6); L.prop('stash', 1912, G, { label: 'gang stash', gear: ['mesh', 'baton'] });
     L.sign(1700, 320, 5, '#ff4ab0', { r: 55 });
     // further on: a car, and the old subway, sealed
     L.prop('car', 2080, G, { look: { col: '#3a3a4a' }, label: 'burnt-out car' });

@@ -21,6 +21,7 @@ const Input = {
       if (e.code === 'KeyQ') this.progHit = true;
       if (e.code === 'KeyR') Hud.nextProgram();
       if (e.code === 'KeyI' || e.code === 'Tab') { Hud.toggle('pack'); e.preventDefault(); }
+      if (e.code === 'KeyM') Hud.toggle('map');
       if (e.code === 'Escape') Hud.toggle(Hud.open ? Hud.open : 'pause');
       this.fromKeys();
     });

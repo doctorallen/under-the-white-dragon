@@ -114,7 +114,7 @@ const Game = {
     this.toast(LEVELS[level].name + ' · ' + LEVELS[level].depth);
   },
   hurt(n, from) {
-    if (Player.inv > 0 || this.paused) return;
+    if (Player.inv > 0 || this.paused || Dev.s.god) return;
     // armour takes its share off every hit
     this.s.hp -= n * 100 / (100 + this.armor()); Player.inv = T.player.iframes; Player.hurtT = 0.25;
     if (from) { Player.vx = Math.sign(Player.x - from.x || 1) * 110; Player.vy = -120; }

@@ -61,6 +61,9 @@ A side-scrolling noir for the phone. You're a detective with the Stack precinct,
 - **The fabricator:** Mags, at her stall in the Stack's market, makes gear from parts and money, upgrades any piece you own up to +3 (each level adds a quarter of its base armour or damage), and breaks pieces down into about half their parts. She sells parts at two and a half times what Kit pays; when you make or upgrade something you're short of parts for, the button buys what's missing at her price as part of the same payment.
 - **Salvage** shows as icons in a grid, in the inventory and at Mags's.
 - **Bodies:** a ganger you take down stays where they fell until you leave the level.
+- **The map:** paused, the whole level as one picture to drag and zoom, with you, the people who matter, the ways in and out and the hostiles marked.
+- **Dev settings** (pause menu): god mode, endless charge, stop the clock, teleport from the map, frame rate, run speed, time of day, give credits, parts, gear, gadgets and programs, set the world's flags, close or reset cases, kill or respawn enemies, restore stripped machines, and go to any level's spawn.
+- **Menus** take the whole screen.
 - **Death:** you wake in your own bed six hours later, with everything you had.
 
 ## Story (light)

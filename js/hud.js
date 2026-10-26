@@ -19,7 +19,7 @@ const Hud = {
   // every frame: cheap, only touches the DOM on change
   tick() {
     const s = Game.s;
-    this.set('clock', Game.clock() + ' · day ' + s.day);
+    this.set('clock', Game.clock() + ' · day ' + s.day + (Dev.s.fps ? ' · ' + Dev.fps + ' fps' : ''));
     this.set('place', World.L.name);
     const tg = Player.target;
     this.set('prompt', tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : '');
@@ -51,7 +51,7 @@ const Hud = {
   nextProgram() { const have = PROGRAM_ORDER.filter((p) => Game.s.programs[p]); if (!have.length) return; const i = have.indexOf(Game.s.prog); Game.s.prog = have[(i + 1) % have.length]; Game.toast('Program: ' + PROGRAMS[Game.s.prog].name); this.refresh(); },
   toggle(which, who) {
     if (!which || (this.open === which && !who)) { this.open = null; this.who = null; $('panel').hidden = true; Game.paused = false; return; }
-    this.open = which; this.who = who || this.who; Game.paused = true; $('panel').hidden = false; $('panel').classList.toggle('full', which === 'pack' || which === 'fab'); this.panel(which);
+    this.open = which; this.who = who || this.who; Game.paused = true; $('panel').hidden = false; this.panel(which);
   },
   items(o, cls = '') { return SALVAGE_ORDER.filter((k) => o[k]).map((k) => `<span class="item ${cls}"><i style="background:${SALVAGE[k].col[1]}"></i>${SALVAGE[k].name} <b>${o[k]}</b></span>`).join('') || '<span class="dim">Nothing.</span>'; },
   cost(c) { return Object.keys(c).map((k) => { const ok = k === 'cr' ? Game.s.cr >= c.cr : (Game.s.pack[k] || 0) >= c[k]; return `<span class="need ${ok ? 'ok' : ''}">${k === 'cr' ? c.cr + ' cr' : `<img class="ico" src="${this.icon(k)}" alt="">${c[k]} ${SALVAGE[k].name.toLowerCase()}`}${k !== 'cr' && !ok ? ` <i class="have">(${Game.s.pack[k] || 0})</i>` : ''}</span>`; }).join(' '); },
@@ -201,12 +201,18 @@ const Hud = {
         h += `<div class="card" style="--r:#3af0e0"><img src="${this.gadgetIcon(g)}" alt=""><div class="cardtext"><b>${G.name}</b><small class="rar">Gadget · ${G.kind}</small><small>${G.note}</small></div>${owned ? '<span class="tag">yours</span>' : `<div class="pay">${this.cost(G.cost)}${f.extra ? `<small class="buy">+ ${f.extra} cr for the parts you're missing</small>` : ''}<button data-gadget="${g}" class="go" ${s.cr >= f.total ? '' : 'disabled'}>Build · ${f.total} cr</button></div>`}</div>`;
       }
       h += '</div>';
+    } else if (which === 'map') {
+      title.textContent = 'Map · ' + World.L.name;
+      h += MapView.html();
+    } else if (which === 'dev') {
+      title.textContent = 'Dev settings';
+      h += Dev.html();
     } else if (which === 'pause') {
       title.textContent = 'Downlevel';
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
-        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Gear</b> I.</p>
+        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Gear</b> I. <b>Map</b> M.</p>
         <p>You\'re a detective with the precinct, tracing four synths who ran from the Spires and went down, and hunting the illegal chrome on the way. Lieutenant Hale at the precinct gives out cases; the quartermaster there builds gadgets. Your spinner is on the pad at the end of your hall. Strip machines for parts, sell them, or take them to Mags in the Stack\'s market for gear. Jack into data nodes for programs. The way down is in the service yard at the east end of the Stack, past the Warden. Anywhere, a cab takes you home for a fare.</p></div>
-        <div class="buttons"><button data-act="resume">Resume</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
+        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
     body.innerHTML = h; body.scrollTop = keep;
@@ -216,9 +222,12 @@ const Hud = {
     const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(((8 - h0) + 24) % 24 || 24); Actors.load(); Game.toast('You sleep. Morning, or what passes for it. You wake healed, your RAM full.', 'good'); this.toggle(null); this.refresh(); Save.write(); },
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
+      map: () => this.toggle('map'), dev: () => this.toggle('dev'),
       cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'home' || !Game.pay({ cr: fare })) return; Flight.start('home', 'pad', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
+    if (which === 'map') MapView.attach();
+    if (which === 'dev') Dev.bind(body);
     body.querySelectorAll('button[data-tab]').forEach((b) => (b.onclick = () => { this.tab = b.dataset.tab; this.panel('pack'); }));
     body.querySelectorAll('button[data-slot]').forEach((b) => (b.onclick = () => { this.slot = b.dataset.slot; this.pick = null; this.panel('pack'); }));
     body.querySelectorAll('button[data-pick]').forEach((b) => (b.onclick = () => { this.pick = b.dataset.pick; this.panel('pack'); }));
