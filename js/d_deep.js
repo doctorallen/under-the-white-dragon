@@ -247,7 +247,7 @@ addDistrict('d_cables', 'Cable Run', 5, -420, 180, 'A tunnel where every cable i
     L.light(1246, G - 26, 50, [1, 0.85, 0.5], 0.6);
     for (let x = 220; x < 2600; x += 180) L.light(x, G - 60, 120, (x / 180) % 2 ? [0.55, 0.4, 0.9] : [0.35, 0.85, 0.6], 0.45);
     // gantries between the trunks, ladders up
-    L.walk(360, 680, G - 100, 4, MAT.steelD); L.ladder(370, G - 100, G); L.walk(740, 1040, G - 160, 4, MAT.steelD); L.stairs(690, G - 100, 760, G - 160);
+    L.walk(360, 700, G - 100, 4, MAT.steelD); L.ladder(370, G - 100, G); L.walk(740, 1040, G - 160, 4, MAT.steelD); L.stairs(690, G - 100, 760, G - 160);
     L.walk(1520, 1880, G - 110, 4, MAT.steelD); L.ladder(1870, G - 110, G); L.walk(1940, 2280, G - 70, 4, MAT.steelD); L.ladder(1950, G - 70, G);
     L.prop('locker', 900, G - 160, { tier: 5, label: 'cache of scraps' }); L.prop('locker', 2200, G, { tier: 5, label: 'tool locker' });
     L.prop('wreck', 520, G, { label: 'dead drone' }); L.prop('rack', 1620, G - 110, { label: 'patch rack' }); L.prop('junk', 2050, G, { label: 'cable offcuts' }); L.prop('rack', 1350, G, { label: 'patch rack' });
