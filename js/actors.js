@@ -9,6 +9,7 @@ const NPC_ROLE = {
   noodles: { verb: 'Eat', prompt: () => 'Noodles · 12 cr', use: (n) => { if (Game.s.hp >= T.player.hp) { Actors.say(n, 'You\'re fine. Come back hungry.'); return; } if (!Game.pay({ cr: 12 })) { Actors.say(n, 'Twelve. You don\'t have twelve.'); return; } Game.s.hp = Math.min(T.player.hp, Game.s.hp + 50); Hud.refresh(); Actors.say(n, 'Eat. Slowly.'); } },
   vendor: { verb: 'Trade', prompt: (n) => 'Trade with ' + n.def.name, use: (n) => Hud.toggle('vendor', n) },
   fixer: { verb: 'Jobs', prompt: () => 'Talk to Juno', use: (n) => Hud.toggle('fixer', n) },
+  fab: { verb: 'Craft', prompt: () => 'Mags · make, upgrade, break down', use: (n) => Hud.toggle('fab', n) },
   doc: { verb: 'Mods', prompt: () => 'See the ripperdoc', use: (n) => Hud.toggle('doc', n) },
 };
 const GANG_LOOKS = [
@@ -18,12 +19,12 @@ const GANG_LOOKS = [
 ];
 
 const Actors = {
-  npcs: [], enemies: [], bolts: [], boss: null,
+  npcs: [], enemies: [], bolts: [], bodies: [], boss: null,
   load() {
     const L = World.L;
     this.npcs = L.npcs.map((def, i) => ({ def, i, x: def.x, y: def.y, face: def.face || 1, hidden: false, tx: def.x, wt: 0, bubble: null, line: 0, art: new Map() }));
     for (const n of this.npcs) { const e = this.entry(n); if (e && e[3] === 'away') { n.x = e[2]; n.hidden = true; } else if (e) n.x = e[2]; }
-    this.enemies = []; this.bolts = []; this.boss = null;
+    this.enemies = []; this.bolts = []; this.bodies = []; this.boss = null; // the dead stay where they fell till you leave
     L.enemies.forEach((d, i) => {
       if (d.type === 'warden' && Game.flag('warden')) return;
       const e = Object.assign({ i, x: d.x, y: d.y, vx: 0, vy: 0, face: -1, hp: 0, max: 0, cd: 1 + i * 0.3, t: hash(i, 3, 7) * 6, stun: 0, ally: 0, flash: 0, state: 'idle', st: 0 }, d);
@@ -136,9 +137,26 @@ const Actors = {
   die(e) {
     Fx.burst(e.x, e.y - (e.type === 'drone' ? 0 : 16), [255, 160, 60], e.type === 'warden' ? 40 : 14);
     if (e.type === 'drone') { const got = []; if (Game.give('glass', 1)) got.push('1 optic glass'); if (hash(e.i, Game.s.day, 3) < 0.5 && Game.give('chips', 1)) got.push('1 chips'); if (got.length) Game.toast('Drone down. + ' + got.join(', ')); Game.kill('drone'); }
+    if (e.type === 'gang') this.bodies.push({ x: e.x, y: e.y, face: e.face, i: e.i });
     if (e.type === 'gang') { const cr = 10 + Math.floor(hash(e.i, Game.s.day, 4) * 20); Game.s.cr += cr; Game.give('alloy', 1); Game.toast('+ ' + cr + ' cr, 1 scrap alloy'); Game.kill('gang'); }
     if (e.type === 'warden') { Game.s.flags.warden = true; Game.s.cr += 150; Game.give('chips', 2); Game.toast('The Warden goes down hard. Its lock on the shaft hatch lets go. + 150 cr, 2 chips', 'good'); Game.giveGear('helmet'); this.boss = null; Save.write(); }
     Hud.refresh();
+  },
+  // a body on the ground: the ganger's figure laid on its back, darkened
+  bodyArt(b) {
+    if (!this.bodyCache) this.bodyCache = new Map();
+    const k = b.i % 3 + (b.face < 0 ? 'L' : 'R'); let s = this.bodyCache.get(k);
+    if (!s) {
+      const up = person(Object.assign({}, GANG_LOOKS[b.i % 3], { pose: 'hurt', blade: null, seed: 40 + b.i })), [c, g] = canvasOf(up.h, up.w);
+      // turned a quarter: the head falls the way they were facing away from
+      g.translate(0, up.w); g.rotate(-Math.PI / 2); g.drawImage(up.c, 0, 0); g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(10,6,12,0.35)'; g.fillRect(0, 0, up.h, up.w);
+      const d = g.getImageData(0, 0, up.h, up.w).data; let low = 0; for (let y = up.w - 1; y >= 0 && !low; y--) for (let x = 0; x < up.h; x++) if (d[(y * up.h + x) * 4 + 3]) { low = y; break; }
+      s = { c, e: null, w: up.h, h: up.w, ax: up.ay - 16, ay: low };
+      if (b.face > 0) s = flipSprite(s);
+      this.bodyCache.set(k, s);
+    }
+    return s;
   },
   // sprites for each, cached
   art(n, pose, left) {

@@ -153,3 +153,22 @@ button.go { border-color: var(--teal); color: var(--teal); }
 .card img { width: 48px; height: 48px; flex: none; image-rendering: pixelated; background: rgba(0, 0, 0, 0.35); border: 1px solid color-mix(in srgb, var(--r) 50%, transparent); }
 .card .cardtext { flex: 1; min-width: 0; }
 .big .bigimg { float: right; width: 96px; height: 96px; margin: 2px 0 6px 10px; image-rendering: pixelated; background: radial-gradient(circle, color-mix(in srgb, var(--r) 22%, transparent), rgba(0, 0, 0, 0.35) 70%); border: 1px solid color-mix(in srgb, var(--r) 60%, transparent); }
+
+/* salvage: icons and a grid of tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.tile { --r: var(--edge); display: grid; justify-items: center; gap: 2px; padding: 8px 6px; text-align: center; border: 1px solid color-mix(in srgb, var(--r) 45%, var(--edge)); background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--r) 16%, transparent), rgba(16, 12, 24, 0.6) 70%); }
+.tile img { width: 48px; height: 48px; image-rendering: pixelated; }
+.tile b { font-weight: 500; font-size: 13px; }
+.tile .n { font-family: var(--mono); color: var(--sodium); font-size: 13px; }
+.tile small { color: var(--dim); font-size: 11px; }
+.tbtns { display: flex; gap: 4px; margin-top: 4px; }
+.tbtns button { padding: 3px 6px; font-size: 12px; }
+img.ico { width: 16px; height: 16px; vertical-align: -3px; margin-right: 2px; image-rendering: pixelated; }
+img.rowico { width: 32px; height: 32px; image-rendering: pixelated; flex: none; }
+.row .grow { flex: 1; min-width: 0; }
+.need { white-space: nowrap; margin-right: 6px; font-size: 13px; }
+.need .have { font-style: normal; opacity: 0.8; }
+.pay { display: grid; justify-items: end; gap: 4px; text-align: right; max-width: 48%; }
+.pay small.buy { color: var(--sodium); font-size: 12px; }
+b.cr { color: var(--sodium); font-weight: 500; }
+.pips { color: var(--sodium); letter-spacing: 2px; }

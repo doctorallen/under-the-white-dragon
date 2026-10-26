@@ -84,3 +84,34 @@ const SHOP = {
   Kit: { beanie: 30, mask: 90, bomber: 160, cargo: 110 },
   Ozu: { heavy: 380, ballistic: 300, plated: 240, grips: 320, armtrench: 420, katana: 600 },
 };
+
+// The fabricator: Mags, at her stall in the Stack's market, makes gear from
+// parts, upgrades it, breaks it down for parts, and sells parts at a markup.
+// Short of parts when you make or upgrade something, you can buy what's
+// missing from her at the same time.
+const FAB = {
+  markup: 2.5, maxLevel: 3, perLevel: 0.25, // each level adds a quarter of the piece's base stats
+  make: {
+    mask: { cr: 40, glass: 2, wire: 1 }, cargo: { cr: 50, alloy: 2, wire: 2 }, mesh: { cr: 60, alloy: 3, wire: 2 }, baton: { cr: 70, wire: 3, coolant: 1 },
+    plated: { cr: 110, alloy: 4, wire: 2 }, ballistic: { cr: 140, alloy: 5, chips: 1, coolant: 1 }, grips: { cr: 150, alloy: 2, coolant: 2, chips: 1 },
+    heavy: { cr: 180, alloy: 4, coolant: 2, chips: 2 }, armtrench: { cr: 200, alloy: 6, wire: 3 }, katana: { cr: 280, alloy: 5, chips: 3, glass: 1 },
+  },
+  rarityCost: { common: 1, uncommon: 1.5, rare: 2.2, epic: 3, legendary: 4 },
+  // what taking a piece to the next level costs
+  upgrade(id, lvl) {
+    const G = GEAR[id], r = this.rarityCost[G.rarity], n = lvl + 1, c = { cr: Math.round(30 * r * n / 5) * 5 };
+    if (G.slot === 'ranged') Object.assign(c, { chips: n, coolant: n });
+    else if (G.slot === 'melee') Object.assign(c, { alloy: n + 1, chips: n });
+    else if (G.slot === 'face') Object.assign(c, { glass: n + 1, chips: lvl });
+    else Object.assign(c, { alloy: n + 1, wire: n });
+    for (const k in c) if (!c[k]) delete c[k];
+    return c;
+  },
+  // what breaking a piece down gives back: about half of what it took
+  salvage(id, lvl) {
+    const G = GEAR[id], base = this.make[id] || { common: { alloy: 2, wire: 1 }, uncommon: { alloy: 3, wire: 2 }, rare: { alloy: 4, chips: 1, wire: 2 }, epic: { alloy: 4, chips: 3, glass: 1 }, legendary: { chips: 5, alloy: 4 } }[G.rarity], out = {};
+    for (const k in base) if (k !== 'cr') out[k] = Math.max(1, Math.round(base[k] / 2));
+    for (let l = 0; l < lvl; l++) { const u = this.upgrade(id, l); for (const k in u) if (k !== 'cr') out[k] = (out[k] || 0) + Math.max(1, Math.round(u[k] / 2)); }
+    return out;
+  },
+};

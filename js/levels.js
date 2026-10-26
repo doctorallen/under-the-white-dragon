@@ -195,6 +195,8 @@ LEVELS.stack = {
     L.prop('vending', 970, G, { look: { col: '#3af0e0', body: '#3a5a8a' }, label: 'vending machine' }); L.light(970, 625, 36, [0.3, 0.9, 1], 0.7);
     L.prop('vending', 988, G, { label: 'vending machine' }); L.light(988, 625, 36, [1, 0.3, 0.7], 0.7);
     L.prop('deco', 1110, G, { art: DECO.stall({ awning: '#2a5a8a' }), id: 'kitstall', front: 20 }); L.light(1110, 620, 60, [0.6, 0.85, 1], 0.7);
+    // Mags's fabrication stall: a workbench under an amber awning, sparks
+    L.prop('deco', 1215, G, { art: DECO.stall({ awning: '#8a5a1a' }), id: 'magsstall', front: 20 }); L.light(1215, 618, 60, [1, 0.7, 0.35], 0.75);
     L.prop('deco', 1060, G, { art: DECO.crate({ col: '#3a4a5a', w: 14, h: 11 }), id: 'cr1' }); L.prop('deco', 1074, G, { art: DECO.crate({ col: '#5a4a2a', w: 10, h: 8, label: '#e8b030' }), id: 'cr2' });
     // the bar: Juno's, a warm room under the walkway
     L.block(1300, MID, 1490, G, MAT.wood, { base: 0.36, lip: 0, bands: 5 });
@@ -263,6 +265,7 @@ LEVELS.stack = {
     const N = (o) => L.npc(o);
     N({ name: 'Mama Ruiz', role: 'noodles', look: { skin: SKINS[4], hair: 'bun', hairCol: '#2a2020', top: '#e8e0d0', apron: '#3a3a3a', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 880, y: G, sched: [[0, 24, 880, 'work']], lines: ['Detective. Noodles. Twelve. Sit.', 'You look like you need a bowl and a week of sleep.', 'Rain\'s been going since Tuesday. Year before last.'], behind: true });
     N({ name: 'Kit', role: 'vendor', rate: 1, look: { skin: SKINS[2], hair: 'cap', capCol: '#2a5a8a', top: '#4a5a6a', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 1110, y: G, sched: [[0, 24, 1110, 'work']], lines: ['Wire, glass, chips. I buy it all. Don\'t ask where it goes.', 'Strip it, bring it, get paid.'], behind: true });
+    N({ name: 'Mags', role: 'fab', look: { skin: SKINS[3], hair: 'undercut', hairCol: '#ffb040', top: '#3a3028', apron: '#5a4a3a', legs: '#2a2420', cyArm: true, acc: '#ffb040', shades: '#ffb040', hands: { fx: 26, fy: 38 } }, x: 1215, y: G, sched: [[0, 24, 1215, 'work']], lines: ['Parts and money. I make the rest.'], behind: true });
     N({ name: 'Doc Vasquez', role: 'doc', look: { skin: SKINS[0], hair: 'bald', top: '#e0e8e8', coat: 'long', legs: '#3a4a4a', cyArm: 'both', acc: '#3af0e0', eye: '#3af0e0' }, x: 560, y: G, face: -1, sched: [[0, 24, 560, 'stand']], lines: ['Sit down. Don\'t touch anything that glows.', 'Your nervous system only takes so much. Choose.', 'Synths? On my table I can\'t tell them from you anymore. Only by what they ask for.'] });
     N({ name: 'Juno', role: 'fixer', look: { skin: SKINS[3], hair: 'bob', hairCol: '#ff4ab0', top: '#2a1a2a', coat: 'long', legs: '#1a1a1e', acc: '#ff4ab0', eye: '#ff4ab0' }, x: 1420, y: G, face: -1, sched: [[0, 24, 1420, 'stand']], lines: ['The precinct sent a tracer. Cute. I have leads; they cost.', 'Everything in this city runs downhill. Money, water, synths.'] });
     N({ name: 'Ines', look: { skin: SKINS[1], hair: 'short', top: '#3a5a7a', legs: '#2a2a3a' }, x: 868, y: G, sched: [[19, 23, 868, 'sit'], [23, 24, 1560, 'away'], [0, 7, 1560, 'away'], [7, 19, 760, 'wander']], lines: ['Night shift at the plant. Third this week.', 'Mama\'s broth is the only warm thing on this level.'] });

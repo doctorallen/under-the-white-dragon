@@ -23,7 +23,8 @@ const Save = {
       // a save from before the apartment: the stash goes into the pack, the
       // capsule's spawn becomes the elevator, and you wear what you started in
       if (d.v === 2) { for (const k in d.stash || {}) d.pack[k] = (d.pack[k] || 0) + d.stash[k]; delete d.stash; if (d.spawn === 'capsule') d.spawn = 'elevator'; d.v = 3; }
-      Game.s = Object.assign(f, d, { mods: Object.assign(f.mods, d.mods), jobs: Object.assign(f.jobs, d.jobs), gear: d.gear || f.gear });
+      Game.s = Object.assign(f, d, { mods: Object.assign(f.mods, d.mods), jobs: Object.assign(f.jobs, d.jobs), gear: Object.assign(f.gear, d.gear || {}) });
+      Game.s.gear.lvl = Game.s.gear.lvl || {};
       return true;
     }
     Game.s = f; return false;

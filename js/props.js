@@ -258,3 +258,14 @@ function elevator(o = {}) {
   panel(S, W - 4, 24, W - 1, 30, MAT.steel); S.px(W - 3, 26, '#3af0e0', true); S.px(W - 3, 28, '#3af0e0', true);
   return S.done();
 }
+
+// ---- salvage, as icons for the inventory: 16 px, lit from the upper left ----
+function salvageIcon(k) {
+  const S = new Spr(16, 16, 300 + k.length), C = SALVAGE[k].col;
+  if (k === 'wire') { for (let i = 0; i < 4; i++) S.ell(5 + i * 2, 8, 2.2, 5, MAT.copper); for (let i = 0; i < 4; i++) S.px(5 + i * 2, 4, C[2]); S.limb(12, 9, 15, 13, 1, MAT.copper); }
+  if (k === 'alloy') { S.shape([[2, 5], [12, 3], [14, 10], [4, 13]], MAT.steel, { down: 0.3 }); for (const [x, y] of [[4, 6], [11, 5], [12, 10], [5, 11]]) S.px(x, y, MAT.steel[1]); S.limb(3, 5, 12, 3, 0.8, MAT.chrome); }
+  if (k === 'glass') { S.ell(8, 8, 6, 6, MAT.steelD); S.ell(8, 8, 4.6, 4.6, rp(C[1], 6), { glow: true }); S.px(6, 6, '#ffffff', true); S.px(7, 5, C[2], true); }
+  if (k === 'coolant') { S.cap(8, 5, 8, 13, 4, 4, rp(C[1], 6)); S.box(5, 2, 11, 4, MAT.steel, { lo: 2, hi: 6 }); for (let y = 7; y < 12; y++) S.px(8, y, C[2], true); }
+  if (k === 'chips') { S.box(3, 3, 12, 12, ['#14101c', '#241a30', '#3a2a4a'], { lo: 0, hi: 2 }); for (let i = 4; i < 12; i += 2) { S.px(i, 1, MAT.chrome[4]); S.px(i, 14, MAT.chrome[4]); S.px(1, i, MAT.chrome[4]); S.px(14, i, MAT.chrome[4]); } S.box(6, 6, 9, 9, rp(C[1], 4), { glow: true }); }
+  S.ax = 8; S.ay = 15; return S.done();
+}

@@ -11,7 +11,7 @@ const Game = {
   fresh() {
     return {
       v: 3, level: 'home', spawn: 'bed', px: 0, py: 0, hp: T.player.hp, cr: 40, ram: T.ram.max,
-      pack: {}, gear: { owned: Object.fromEntries(Object.values(GEAR_START).map((g) => [g, 1])), on: Object.assign({}, GEAR_START) }, mods: { owned: {}, on: {} }, programs: {}, prog: null,
+      pack: {}, gear: { owned: Object.fromEntries(Object.values(GEAR_START).map((g) => [g, 1])), on: Object.assign({}, GEAR_START), lvl: {} }, mods: { owned: {}, on: {} }, programs: {}, prog: null,
       done: {}, flags: {}, jobs: { taken: {}, done: {}, kills: {} }, time: T.day.start, day: 1, deaths: 0,
     };
   },
@@ -32,10 +32,37 @@ const Game = {
   },
   // ---- gear: one piece a slot ----
   worn(slot) { const id = this.s.gear.on[slot]; return id ? GEAR[id] : null; },
-  armor() { let a = 0; for (const k in this.s.gear.on) { const g = GEAR[this.s.gear.on[k]]; if (g && g.armor) a += g.armor; } return a; },
+  // a piece's level (from the fabricator) adds a quarter of its base stats each
+  lvl(id) { return this.s.gear.lvl[id] || 0; },
+  stat(id, key) { const v = GEAR[id][key]; return v === undefined ? undefined : Math.round(v * (1 + FAB.perLevel * this.lvl(id))); },
+  gearName(id) { const l = this.lvl(id); return GEAR[id].name + (l ? ' +' + l : ''); },
+  armor() { let a = 0; for (const k in this.s.gear.on) { const id = this.s.gear.on[k]; if (GEAR[id] && GEAR[id].armor) a += this.stat(id, 'armor'); } return a; },
   perk(name) { let v = 0; for (const k in this.s.gear.on) { const g = GEAR[this.s.gear.on[k]]; if (g && g.perk && g.perk[name]) v += g.perk[name]; } return v; },
-  weapon() { return this.worn('ranged') || GEAR.blaster; },
-  strikeDmg() { const m = this.worn('melee'); return (m ? m.strike : T.strike.dmg) + (this.has('mantis') ? T.strike.mantis : 0); },
+  weapon() { const id = this.s.gear.on.ranged || 'blaster'; return Object.assign({}, GEAR[id], { dmg: this.stat(id, 'dmg') }); },
+  strikeDmg() { const id = this.s.gear.on.melee; return (id ? this.stat(id, 'strike') : T.strike.dmg) + (this.has('mantis') ? T.strike.mantis : 0); },
+  // ---- the fabricator: parts you're short of can be bought from her as you pay ----
+  shortfall(cost) {
+    const missing = {}; let extra = 0;
+    for (const k in cost) if (k !== 'cr') { const m = cost[k] - (this.s.pack[k] || 0); if (m > 0) { missing[k] = m; extra += Math.round(m * SALVAGE[k].price * FAB.markup); } }
+    return { missing, extra, total: (cost.cr || 0) + extra };
+  },
+  payBuying(cost) {
+    const f = this.shortfall(cost); if (this.s.cr < f.total) return false;
+    for (const k in f.missing) this.s.pack[k] = (this.s.pack[k] || 0) + f.missing[k];
+    this.s.cr -= f.extra; return this.pay(cost);
+  },
+  make(id) { if (this.s.gear.owned[id] || !this.payBuying(FAB.make[id])) return false; this.giveGear(id); Save.write(); return true; },
+  upgrade(id) {
+    const l = this.lvl(id); if (!this.s.gear.owned[id] || l >= FAB.maxLevel || !this.payBuying(FAB.upgrade(id, l))) return false;
+    this.s.gear.lvl[id] = l + 1; this.toast(this.gearName(id) + '. Better than it was.', 'good'); Hud.refresh(); Save.write(); return true;
+  },
+  breakDown(id) {
+    const G = GEAR[id]; if (!this.s.gear.owned[id] || this.s.gear.on[G.slot] === id) return false;
+    const got = FAB.salvage(id, this.lvl(id)); for (const k in got) this.give(k, got[k]);
+    delete this.s.gear.owned[id]; delete this.s.gear.lvl[id];
+    this.toast(G.name + ' broken down: + ' + Object.keys(got).map((k) => got[k] + ' ' + SALVAGE[k].name.toLowerCase()).join(', '), 'good'); Hud.refresh(); Save.write(); return true;
+  },
+  buyPart(k, n) { const c = Math.round(SALVAGE[k].price * FAB.markup) * n; if (this.s.cr < c) return false; this.s.cr -= c; this.give(k, n); Save.write(); return true; },
   giveGear(id) {
     const G = GEAR[id]; if (!G || this.s.gear.owned[id]) return false;
     this.s.gear.owned[id] = 1; if (!this.s.gear.on[G.slot]) this.equip(id);

@@ -83,6 +83,9 @@ async function run(B, url, vp, name, failures) {
   const juno = await E(() => { T_.walkTo(1416); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-take="drones"]'); if (b) b.click(); Hud.toggle(null); return { o, taken: !!Game.s.jobs.taken.drones }; });
   if (juno.o !== 'fixer' || !juno.taken) fail('Juno\'s jobs did not open or the job was not taken ' + JSON.stringify(juno));
   await shot('market');
+  // Mags makes a filter mask, buying the glass that's missing
+  const fab = await E(() => { Game.s.cr += 100; Game.s.pack.glass = 0; Game.s.pack.wire = (Game.s.pack.wire || 0) + 1; T_.walkTo(1215); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-make="mask"]'); if (b) b.click(); Hud.toggle(null); return { o, mask: !!Game.s.gear.owned.mask }; });
+  if (fab.o !== 'fab' || !fab.mask) fail('Mags did not make the mask ' + JSON.stringify(fab));
   // up the stairs to both walkways
   const up = await E(() => { T_.walkTo(1700); const mid = Math.round(Player.y); T_.walkTo(1000); return { mid, top: Math.round(Player.y) }; });
   if (up.mid !== 500 || up.top !== 360) fail('the stairs did not carry the runner up ' + JSON.stringify(up));
@@ -109,6 +112,9 @@ async function run(B, url, vp, name, failures) {
   // a car's coolant
   const car = await E(() => { T_.walkTo(700); T_.hold(260); return Game.s.pack.coolant || 0; });
   if (!car) fail('the car gave no coolant');
+  // a ganger downed stays down
+  const body = await E(() => { const e = Actors.enemies.find((q) => q.type === 'gang'); Actors.damage(e, 999, 1); T_.run({}, 30); return Actors.bodies.length; });
+  if (body !== 1) fail('the ganger left no body (' + body + ')');
   // the ripperdoc fits lowlight optics (paid for here)
   const ware = await E(() => { Object.assign(Game.s.pack, { glass: 3, chips: 2 }); Game.s.cr += 100; Hud.toggle('doc'); const b = document.querySelector('button[data-buy="lowlight"]'); if (b) b.click(); Hud.toggle(null); return Game.has('lowlight'); });
   if (!ware) fail('the ripperdoc did not fit lowlight optics');

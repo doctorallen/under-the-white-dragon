@@ -100,6 +100,7 @@ function render() {
     if (n.def.smoke) { const on = (Game.t * 0.4 + n.i) % 1 < 0.3; gg.fillStyle = on ? '#ffb040' : '#a83a10'; gg.fillRect(Math.round(n.x + n.face * 6 - cx), Math.round(n.y - 24 - cy), 1, 1); }
   }
   for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } }
+  for (const b of Actors.bodies) { const s = Actors.bodyArt(b), x = Math.round(b.x - cx), y = Math.round(b.y - cy); g.fillStyle = 'rgba(60,4,10,0.55)'; g.fillRect(x - 9, y - 1, 18, 2); actor(s, b.x, b.y + 1); }
   for (const e of Actors.enemies) { const s = Actors.enemyArt(e), at = actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0); if (at) tag(e, s, at[0], at[1]); }
   if (Player.inv <= 0 || Math.floor(Game.t * 16) % 2) actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1);
   // bolts and sparks: all glow
