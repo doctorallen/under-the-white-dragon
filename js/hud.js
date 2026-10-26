@@ -109,7 +109,7 @@ const Hud = {
   // the fabricator's panel: make, upgrade, break down, parts
   fab() {
     const s = Game.s, tab = this.fabTab || 'make';
-    let h = `<p class="sub">"Bring me parts and money and I'll make you something. Short a part? I'll sell you one, at my price." · you have <b class="cr">${s.cr} cr</b></p>`;
+    let h = `<p class="sub">"Bring me parts and money and I'll make you something. Short a part? I'll sell you one, at my price."</p>`;
     h += '<nav class="tabs">' + [['make', 'Make'], ['upgrade', 'Upgrade'], ['salvage', 'Break down'], ['parts', 'Parts']].map(([k, n]) => `<button data-fab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
     // a button that pays for parts you lack as it goes
     const payBtn = (act, id, cost, label) => { const f = Game.shortfall(cost), ok = s.cr >= f.total; return `<div class="pay">${this.cost(cost)}${f.extra ? `<small class="buy">+ ${f.extra} cr to buy what you're missing</small>` : ''}<button data-${act}="${id}" class="go" ${ok ? '' : 'disabled'}>${label} · ${f.total} cr</button></div>`; };
@@ -180,7 +180,7 @@ const Hud = {
       h += `<p class="sub">${n ? n.def.lines[0] : ''}</p><div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${s.pack[k] || 0}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
       h += `<div class="buttons"><button data-act="sellAll" ${worth ? '' : 'disabled'}>Sell everything for ${worth} cr</button></div><p class="dim">Keep what the ripperdoc wants: wire, alloy, glass, coolant and chips all go into ware.</p>`;
       const shop = n && SHOP[n.def.name];
-      if (shop) h += `<h3>Gear for sale · you have ${s.cr} cr</h3><div class="cards">` + Object.keys(shop).map((id) => this.gearCard(id, s.gear.owned[id] ? '<span class="tag">yours</span>' : `<button data-buygear="${id}" ${s.cr >= shop[id] ? '' : 'disabled'}>${shop[id]} cr</button>`)).join('') + '</div>';
+      if (shop) h += `<h3>Gear for sale</h3><div class="cards">` + Object.keys(shop).map((id) => this.gearCard(id, s.gear.owned[id] ? '<span class="tag">yours</span>' : `<button data-buygear="${id}" ${s.cr >= shop[id] ? '' : 'disabled'}>${shop[id]} cr</button>`)).join('') + '</div>';
     } else if (which === 'fixer') {
       const n = this.who;
       title.textContent = n ? n.def.name : 'Cases';
@@ -195,7 +195,7 @@ const Hud = {
       if (JOBS.every((j) => s.jobs.done[j.id])) h += '<p class="sub">"Your woman went down the old subway, and she wasn\'t alone. Word is the synths are looking for whoever made them. Nobody up here made them, detective. When the subway opens, you go down after them."</p>';
     } else if (which === 'qm') {
       title.textContent = 'Quartermaster Ito';
-      h += `<p class="sub">"Chrome's for criminals. You get tools. Bring me parts and the precinct covers the rest of the paperwork, not the money." · you have <b class="cr">${s.cr} cr</b></p><div class="cards">`;
+      h += `<p class="sub">"Chrome's for criminals. You get tools. Bring me parts and the precinct covers the rest of the paperwork, not the money."</p><div class="cards">`;
       for (const g of GADGET_ORDER) {
         const G = GADGETS[g], owned = s.gadgets[g], f = Game.shortfall(G.cost);
         h += `<div class="card" style="--r:#3af0e0"><img src="${this.gadgetIcon(g)}" alt=""><div class="cardtext"><b>${G.name}</b><small class="rar">Gadget · ${G.kind}</small><small>${G.note}</small></div>${owned ? '<span class="tag">yours</span>' : `<div class="pay">${this.cost(G.cost)}${f.extra ? `<small class="buy">+ ${f.extra} cr for the parts you're missing</small>` : ''}<button data-gadget="${g}" class="go" ${s.cr >= f.total ? '' : 'disabled'}>Build · ${f.total} cr</button></div>`}</div>`;
@@ -210,6 +210,8 @@ const Hud = {
     }
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
     body.innerHTML = h; body.scrollTop = keep;
+    // where money changes hands, what you have is in the header
+    const crEl = $('panelCr'); crEl.hidden = !['vendor', 'fab', 'qm', 'cab', 'pack', 'fixer'].includes(which); crEl.textContent = s.cr + ' cr';
     // the buttons
     const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(((8 - h0) + 24) % 24 || 24); Actors.load(); Game.toast('You sleep. Morning, or what passes for it. You wake healed, your RAM full.', 'good'); this.toggle(null); this.refresh(); Save.write(); },
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
