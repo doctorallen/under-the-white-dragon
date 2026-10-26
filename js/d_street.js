@@ -269,7 +269,7 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
 
 // ---- The Scrapyard: mountains of scrap, a magnet crane, the compactor --------------
 addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap behind a chain-link fence: a magnet crane, the compactor, stacked wrecks, fires and dogs.', 'Scrapyard', () => district({
-  id: 'd_scrapyard', name: 'The Scrapyard', tier: 2, W: 2500, crowd: 3, amb: [0.17, 0.13, 0.14], floor: MAT.asphalt, layerDy: 20,
+  id: 'd_scrapyard', name: 'The Scrapyard', tier: 2, W: 2500, crowd: 3, amb: [0.26, 0.21, 0.22], floor: MAT.asphalt, layerDy: 20,
   local: { name: 'Picker', lines: LOCAL_LINES.scrap, look: { hair: 'hood', top: '#4a3a2a', coat: 'long', legs: '#2a2420', mask: '#3a3a3a' } },
   build(L, G) {
     // the mountains behind: rust, steel, plastic, painted in tiers
@@ -278,15 +278,19 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
     // the fence and its gate, a sign hung on it
     L.paint(170, G - 70, 500, G, (P) => { stFence(P, 170, 290, G, 56); stFence(P, 350, 500, G, 56); P.block(290, G - 64, 294, G, MAT.steel, { base: 0.6 }); P.block(346, G - 64, 350, G, MAT.steel, { base: 0.6 }); P.block(380, G - 50, 460, G - 34, rp('#c8a020', 6), { base: 0.55 }); for (let i = 0; i < 9; i++) for (const [a, b] of GLYPHS[(i * 11) % GLYPHS.length]) P.put(386 + i * 8 + a, G - 46 + b, [30, 20, 10]); });
     L.lamp(300, G, 70, '#ffd8a8', 0.9);
+    // floodlights on tall poles over the heaps
+    for (const fx of [760, 1120, 1660, 2080]) { L.lamp(fx, G, 130, '#fff4e0', 1.1); }
+    // scrap that catches the light: car doors, a fridge, a bathtub, a sign
+    L.paint(300, G - 160, 2400, G, (P) => { for (let k = 0; k < 26; k++) { const x = 320 + k * 80 + hash(k, 3, 5) * 40, y = G - 20 - hash(k, 4, 5) * 90, c = ['#8a3a2a', '#3a6a9a', '#c8c0b0', '#c89a2a', '#4a7a4a'][k % 5], w = 8 + hash(k, 5, 5) * 14, h = 5 + hash(k, 6, 5) * 8; P.area(x, y, x + w, y + h, rp(c, 6), (xx, yy) => 0.7 - (yy - y) / 20 - (xx - x) / 60 + (noise(xx / 2, yy / 2, k) - 0.5) * 0.3); if (k % 4 === 0) kFill(P, x + 2, y + 2, x + 5, y + 4, '#9ad0e8'); } });
     // the dealer's shack: a box of corrugated tin on blocks, a counter window
     L.paint(520, G - 90, 700, G, (P) => { corrugated(P, 530, G - 70, 690, G, MAT.rust); P.area(522, G - 84, 698, G - 68, KMAT.corrBlue, (x, y) => 0.5 + ((x - 522) % 3 === 0 ? 0.15 : 0) - (y - G + 84) / 30, { inside: (x, y) => y >= G - 84 + (x - 522) / 176 * 8 }); kFill(P, 560, G - 54, 640, G - 30, '#ffc070', 0.35); kShelves(P, 562, G - 52, 638, G - 32, ['#c8c8d0', '#c8a040', '#3af0e0', '#8a3a3a'], { back: '#3a2410' }); P.block(556, G - 30, 644, G - 26, MAT.steelD, { base: 0.6 }); kFill(P, 655, G - 50, 675, G, '#1a1410'); });
     L.sign(560, G - 98, 7, '#ffb040', { r: 60, seed: 41 }); L.light(600, G - 40, 70, [1, 0.75, 0.45], 0.8);
     L.npc({ name: 'Old Dutch', role: 'vendor', rate: 1.1, look: { skin: SKINS[1], hair: 'bald', top: '#5a4a3a', apron: '#3a2a1a', legs: '#2a2420', hands: { fx: 26, fy: 38 }, tall: 0.95 }, x: 600, y: G, face: -1, sched: [[0, 24, 600, 'work']], behind: true, lines: ['You buying or burying?', 'I pay by the kilo. Synth parts by the gram. Kidding.', 'Marr\'s crew runs the east heaps. Don\'t go out there without a gun.'] });
-    L.prop('deco', 720, G, { art: DECO.barrel(), id: 'scb1' }); L.fire(720, G - 15);
+    L.prop('deco', 720, G, { art: DECO.barrel(), id: 'scb1' }); L.fire(720, G - 15, 90, 1.3);
     L.critter('dog', 520, 1100, G, 2);
     // the magnet crane, a car stuck to it, swinging over the heaps
     L.paint(760, G - 260, 1150, G, (P) => stMagnetCrane(P, 830, G, { reach: 180, h: 230, hang: 120 }));
-    L.light(1010, G - 110, 60, [1, 0.6, 0.3], 0.5); L.light(850, G - 40, 50, [1, 0.85, 0.5], 0.6);
+    L.light(1010, G - 110, 90, [1, 0.85, 0.6], 0.8); L.light(850, G - 40, 70, [1, 0.85, 0.5], 0.8);
     L.prop('car', 940, G, { look: { col: '#3a3a3a', under: '#ff6a3a' }, label: 'wreck' }); L.prop('wreck', 1040, G, { label: 'wrecked drone' });
     // stacked wrecks, a walk over them
     L.paint(1150, G - 80, 1340, G, (P) => stCubes(P, 1160, G, 8, 3, 21));
@@ -307,7 +311,7 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
     L.vents.push({ x: 1500, y: G - 130, kind: 'steam' });
     // the east heaps: Marr's ground, fires, a burned car, more dogs
     L.paint(1680, G - 70, 2100, G, (P) => { heap(P, 1700, 1860, G, 50, MAT.rust, 17); heap(P, 1900, 2080, G, 60, MAT.steelD, 19); });
-    for (const x of [1760, 1990]) { L.prop('deco', x, G, { art: DECO.barrel(), id: 'scb' + x }); L.fire(x, G - 15); }
+    for (const x of [1760, 1990]) { L.prop('deco', x, G, { art: DECO.barrel(), id: 'scb' + x }); L.fire(x, G - 15, 90, 1.3); }
     L.prop('car', 1880, G, { look: { col: '#2a2a2a', under: '#ff6a3a' }, label: 'burned-out car' }); L.prop('junk', 2050, G, { label: 'junk pile' }); L.prop('junk', 1700, G, { label: 'junk pile' });
     L.critter('dog', 1700, 2300, G, 2);
     // the back gate: a tower of cubes, a lookout shack on top
@@ -330,6 +334,7 @@ addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of ill
     L.paint(180, G - 300, 1700, G - 150, (P) => { for (const [a, b, y] of [[300, 520, G - 240], [800, 1100, G - 220], [1300, 1560, G - 260]]) { P.block(a, y, b, y + 14, MAT.concreteD, { base: 0.35, drips: 0.3, dripLen: 10 }); railing(P, a, b, y, MAT.steel); for (let x = a + 10; x < b; x += 30) P.put(x, y + 16, [255, 200, 140], 0.8); } for (let k = 0; k < 6; k++) cable(P, 180, G - 290 + k * 20, 1700, G - 280 + k * 18, 20 + k * 8, '#060608'); pipe(P, 180, G - 170, 1700, G - 162, MAT.rust, { joints: 40 }); });
     // a dirty clinic: "no questions", a chair through the window
     bShophouse(L, 200, 330, G, { floors: 4, wall: KMAT.teal, shops: [['clinic', '#3af0e0']], roof: 'tank', bars: true, blade: '#3af0e0', seed: 401, lit: 0.35 });
+    stWait(L, 200, 330, G, { grime: true });
     L.paint(200, G - 300, 330, G, (P) => { for (let k = 0; k < 400; k++) P.tint(200 + hash(k, 1, 4) * 130, G - 300 + hash(k, 2, 4) * 300, [10, 14, 8], 0.4); for (let k = 0; k < 30; k++) P.put(210 + k * 3, G - 50 + Math.sin(k) * 2, [255, 74, 176]); });
     kStallAt(L, 380, G, 'organs', { npc: { name: 'Cold-box man', lines: ['Cold box. Don\'t open the cold box.', 'Grown, not taken. You have my word. My word\'s cheap.'] } });
     // a chop garage: a car on the lift, half its parts gone
@@ -347,14 +352,24 @@ addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of ill
     L.npc({ name: 'Doc Nine', look: { skin: SKINS[0], hair: 'bald', top: '#c8d0d0', coat: 'long', legs: '#2a2a2a', mask: '#c8e0e8', cyArm: 'both', acc: '#3af0e0' }, x: 1095, y: G, face: -1, sched: [[0, 24, 1095, 'stand']], lines: ['Close the door. You\'re letting the clean out.', 'I don\'t fit chrome. I fix what other people fit badly.', 'A woman came through with a cut wrist and a serial number she didn\'t want. Polite.'] });
     // more chop shops: shutters, a vet that isn't, a garage
     kShop(L, 1160, 1240, G, 'shutter', '#3af0e0', { h: 42, seed: 403 }); L.block(1160, G - 160, 1240, G - 42, MAT.concreteD, { base: 0.32, drips: 0.3, dripLen: 40 });
-    bShophouse(L, 1240, 1360, G, { floors: 3, wall: KMAT.pink, shops: [['vet', '#ffd040']], roof: 'shack', seed: 404, lit: 0.3 });
+    bShophouse(L, 1240, 1360, G, { floors: 3, wall: KMAT.pink, shops: [['vet', '#ffd040']], roof: 'shack', seed: 404, lit: 0.3 }); stWait(L, 1240, 1360, G, { grime: true });
     L.paint(1360, G - 80, 1560, G, (P) => stGarage(P, 1370, 1550, G, { h: 58, car: '#2a3a2a', open: 38 }));
     L.light(1460, G - 20, 60, [1, 0.75, 0.45], 0.6);
     kStallAt(L, 1610, G, 'organs', { npc: false }); L.prop('vending', 1660, G, { look: { col: '#ff4ab0', body: '#3a1a2a' }, label: 'vending machine' }); L.light(1660, G - 14, 30, [1, 0.3, 0.7], 0.6);
     L.prop('junk', 1200, G, { label: 'junk pile' }); L.prop('wreck', 1580, G, { label: 'gutted drone' });
     // the Gutter King's hall at the end
     arena(L, 1700, 2200, G, 'hall');
-    L.paint(1700, G - 60, 2200, G, (P) => { stCubes(P, 1712, G, 1, 2, 50); stCubes(P, 2166, G, 1, 2, 51); for (let x = 1720; x < 2180; x += 40) for (let k = 0; k < 14; k++) P.put(x + k, G - 30 + Math.sin(k + x) * 3, [255, 176, 64], 0.2); });
+    // the King's court: graffiti over the hall's walls, cages on chains, a throne of scrap, a crown in neon
+    L.paint(1700, G - 240, 2200, G, (P) => {
+      for (let k = 0; k < 900; k++) P.tint(1700 + hash(k, 1, 6) * 500, G - 220 + hash(k, 2, 6) * 220, [12, 8, 10], 0.35);
+      for (let g = 0; g < 7; g++) { const gx = 1720 + g * 66, gy = G - 120 + (g % 3) * 30, c = [[255, 74, 176], [58, 240, 224], [255, 208, 64], [154, 106, 255]][g % 4]; for (let k = 0; k < 40; k++) P.put(gx + k, gy + Math.round(Math.sin(k * 0.6 + g) * 5 + (k % 7 === 0 ? -3 : 0)), c, 0.25); for (let k = 0; k < 40; k += 2) P.put(gx + k, gy + Math.round(Math.sin(k * 0.6 + g) * 5) + 1, mixRgb(c, [0, 0, 0], 0.5)); }
+      for (const cx of [1790, 2110]) { kV(P, cx, G - 230, G - 150, '#2a2a2e'); for (let y = G - 150; y < G - 112; y++) for (let x = cx - 10; x <= cx + 10; x++) if ((x - cx) % 4 === 0 || y === G - 150 || y === G - 113) P.put(x, y, tone(MAT.steel, 0.5)); kFill(P, cx - 4, G - 126, cx + 4, G - 116, '#3a2a24'); }
+      heap(P, 1900, 2060, G, 46, MAT.rust, 23); P.block(1952, G - 70, 2008, G - 40, rp('#8a6a2a', 7), { base: 0.5 }); P.block(1948, G - 90, 1958, G - 40, rp('#8a6a2a', 7), { base: 0.55 }); P.block(2002, G - 90, 2012, G - 40, rp('#8a6a2a', 7), { base: 0.45 });
+      for (const [a, b] of [[1960, G - 104], [1972, G - 110], [1984, G - 112], [1996, G - 110], [2008, G - 104]]) for (let y = b; y < G - 96; y++) P.put(a, y, [255, 208, 64], 1);
+      kH(P, 1958, 2012, G - 96, [255, 208, 64], 1);
+      stCubes(P, 1712, G, 1, 3, 50); stCubes(P, 2160, G, 1, 3, 51);
+    });
+    L.light(1985, G - 100, 80, [1, 0.8, 0.3], 0.8); L.light(1790, G - 130, 40, [1, 0.4, 0.6], 0.5); L.light(2110, G - 130, 40, [0.4, 1, 0.9], 0.5);
     L.enemy('king', 1980, G, { range: [1720, 2180] });
     L.prop('locker', 2240, G, { tier: 2, label: 'the King\'s strongbox' });
     kFoes(L, G, [['gang', 600, 450, 720], ['gang', 1000, 960, 1150], ['gunner', 900, 760, 1080, G - 76], ['bruiser', 1450, 1360, 1600], ['drone', 1300, 1160, 1500, G - 120]]);
@@ -376,10 +391,10 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     kStallAt(L, 470, G, 'herbs', { npc: { name: 'Herbalist Mo', lines: ['Roots for the lungs. The air down here eats them.', 'Doctors charge you for a name. I charge you for a cure.'] } });
     L.prop('vending', 520, G, { look: { col: '#3aff80', body: '#e8f0f0' }, label: 'medicine vending machine' }); L.light(520, G - 14, 36, [0.4, 1, 0.6], 0.7);
     // the dentist: a tooth in lights; a vet with a dog on the step
-    bShophouse(L, 550, 670, G, { floors: 3, wall: KMAT.whitepanel, shops: [['dental', '#e8f4ff']], roof: 'flat', balcony: 'all', seed: 503 });
+    bShophouse(L, 550, 670, G, { floors: 3, wall: KMAT.whitepanel, shops: [['dental', '#e8f4ff']], roof: 'flat', balcony: 'all', seed: 503 }); stWait(L, 550, 670, G);
     L.paint(590, G - 98, 630, G - 66, (P) => { kFill(P, 594, G - 96, 626, G - 68, '#0a1018'); P.area(600, G - 92, 620, G - 72, rp('#e8f4ff', 5), (x, y) => 0.8 - (y - G + 92) / 40, { inside: (x, y) => (y < G - 82 && Math.hypot((x - 610) / 10, (y - G + 86) / 6) < 1) || (y >= G - 84 && (Math.abs(x - 604) < 3 || Math.abs(x - 616) < 3)), glow: 0.8 }); });
     L.light(610, G - 82, 50, [0.85, 0.95, 1], 0.6);
-    bShophouse(L, 670, 780, G, { floors: 2, wall: KMAT.ochre, shops: [['vet', '#ffd040']], roof: 'tin', seed: 504 });
+    bShophouse(L, 670, 780, G, { floors: 2, wall: KMAT.ochre, shops: [['vet', '#ffd040']], roof: 'tin', seed: 504 }); stWait(L, 670, 780, G);
     L.critter('dog', 680, 780, G, 1); L.critter('cat', 670, 780, G, 1);
     // Mercy Hospital: a white block, a red cross, the ambulance bay, a queue
     L.paint(800, G - 330, 1240, G, (P) => {
@@ -399,10 +414,10 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     // the street medics and the blood bank
     kStallAt(L, 1290, G, 'med', { npc: { name: 'Street medic', lines: ['Patches, painkillers, stitches. No chrome. I\'m legal.', 'Bleeding? Sit. Pay after.'] } });
     kStallAt(L, 1360, G, 'med', { npc: false });
-    bShophouse(L, 1400, 1540, G, { floors: 4, wall: KMAT.pink, shops: [['clinic', '#ff3a4a']], roof: 'tank', blade: '#ff3a4a', bladeLeft: true, seed: 505 });
+    bShophouse(L, 1400, 1540, G, { floors: 4, wall: KMAT.pink, shops: [['clinic', '#ff3a4a']], roof: 'tank', blade: '#ff3a4a', bladeLeft: true, seed: 505 }); stWait(L, 1400, 1540, G);
     L.paint(1410, G - 40, 1530, G - 4, (P) => { for (let k = 0; k < 5; k++) { const bx = 1418 + k * 22; P.area(bx, G - 30, bx + 10, G - 12, rp('#c81a2a', 6), (x, y) => 0.6 - (y - G + 30) / 30, { glow: 0.3 }); kV(P, bx + 5, G - 36, G - 30, '#c8c8c8'); } });
     // a lane of smaller practices with a gallery over them
-    bShophouse(L, 1560, 1680, G, { floors: 3, wall: KMAT.teal, shops: [['clinic', '#3af0e0']], roof: 'flat', balcony: false, seed: 506, gh: 44 });
+    bShophouse(L, 1560, 1680, G, { floors: 3, wall: KMAT.teal, shops: [['clinic', '#3af0e0']], roof: 'flat', balcony: false, seed: 506, gh: 44 }); stWait(L, 1560, 1680, G, { gh: 44 });
     bShophouse(L, 1680, 1800, G, { floors: 3, wall: KMAT.cream, shops: [['pharmacy', '#3aff80']], roof: 'tile', balcony: false, seed: 507, gh: 44 });
     bShophouse(L, 1800, 1930, G, { floors: 4, wall: KMAT.stucco, shops: [['tea', '#ffd040']], roof: 'tank', balcony: false, seed: 508, gh: 44 });
     L.stairs(1565, G, 1630, G - 82); L.walk(1565, 1925, G - 82, 5);
@@ -412,7 +427,7 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     // a little garden of rest at the end, a shrine to the sick, a bench
     bPark(L, 1960, 2180, G, { trees: ['willow', 'sakura'], seed: 509 });
     bToro(L, 2200, G);
-    bShophouse(L, 2230, 2370, G, { floors: 5, wall: KMAT.whitepanel, shops: [['clinic', '#e8f4ff'], ['pharmacy', '#3aff80']], roof: 'garden', seed: 510 });
+    bShophouse(L, 2230, 2370, G, { floors: 5, wall: KMAT.whitepanel, shops: [['clinic', '#e8f4ff'], ['pharmacy', '#3aff80']], roof: 'garden', seed: 510 }); stWait(L, 2230, 2300, G);
     L.prop('car', 2430, G, { look: { col: '#e8e8e8', under: '#ff3a4a' }, label: 'parked car' });
     L.prop('ac', 2380, G, { label: 'air conditioner' }); L.prop('junk', 1950, G, { label: 'junk pile' });
     L.prop('locker', 2470, G, { tier: 2, label: 'locker' });

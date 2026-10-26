@@ -18,7 +18,7 @@ const DPMAT = {
   ice: R(['#0e1c2a', '#24425a', '#5a8aa8', '#c8e8f8']),
   frost: R(['#1a2a38', '#3a5a72', '#8ab0c8', '#eef8ff']),
   vault: R(['#0a1218', '#16222e', '#26384a', '#6a8aa8']),
-  ruin: R(['#141414', '#262624', '#3e3c38', '#7a7468']),
+  ruin: R(['#1c1c1e', '#343432', '#525048', '#9a9282']),
   tileOld: R(['#18201c', '#2a3a32', '#46584c', '#a0b0a0']),
   sick: R(['#0e1404', '#1e2a08', '#3a4a10', '#a8c040']),
 };
@@ -56,7 +56,7 @@ function dpBundle(P, x, y0, y1, w, ramp, glow, seed) {
 // cables hanging from the ceiling in a curtain, swaying, some lit at the end
 function dpCurtain(P, x0, x1, y, len, glow, seed) {
   for (let x = x0; x < x1; x += 2) {
-    const l = len * (0.4 + hash(x, 1, seed) * 0.6), c = hash(x, 2, seed) < 0.5 ? [16, 12, 22] : [26, 20, 34];
+    const l = len * (0.4 + hash(x, 1, seed) * 0.6), c = hash(x, 2, seed) < 0.5 ? [40, 32, 54] : [60, 50, 78];
     for (let j = 0; j < l; j++) P.put(x + Math.sin(j / 14 + x * 0.3) * 1.5, y + j, c);
     if (glow && hash(x, 3, seed) < 0.18) { const yy = y + l, xx = x + Math.sin(l / 14 + x * 0.3) * 1.5; P.put(xx, yy, col3(glow), 1); P.put(xx, yy + 1, mixRgb(col3(glow), [0, 0, 0], 0.4), 0.6); }
   }
@@ -99,6 +99,17 @@ function dpPool(P, x0, x1, G, col, seed) {
 }
 // a peristaltic pipe: it swells and narrows, ribbed, as if it swallowed
 function dpGutPipe(P, pts, r, seed) { dpTube(P, pts, (d) => r * (0.75 + 0.35 * Math.sin(d / 26 + seed) ** 2), DPMAT.flesh, { rib: 7, seed, glow: '#c8e040', vein: 0.62 }); }
+// a maw in the wall: a ribbed round mouth the waste comes out of
+function dpMaw(P, cx, cy, r, seed) {
+  for (let y = -r - 6; y <= r + 6; y++) for (let x = -r - 6; x <= r + 6; x++) {
+    const d = Math.hypot(x, y * 1.15), a = Math.atan2(y, x); if (d > r + 6) continue;
+    let c;
+    if (d < r * 0.55) c = mixRgb([10, 12, 4], [60, 70, 20], Math.max(0, 1 - d / (r * 0.55)) * 0.3);
+    else { const rib = Math.sin(a * 14 + d * 0.3) > 0.3, v = 0.6 - (x * 0.4 + y * 0.6) / r * 0.3 - Math.abs(d - r * 0.8) / r * 0.6 + (rib ? -0.15 : 0); c = tone(DPMAT.flesh, clamp(v, 0, 1)); }
+    P.put(cx + x, cy + y, c);
+  }
+  for (let k = 0; k < 12; k++) { const x = cx - r * 0.4 + hash(k, 1, seed) * r * 0.8, l = 6 + hash(k, 2, seed) * 30; for (let j = 0; j < l; j++) P.put(x, cy + r * 0.45 + j, mixRgb(DP_SICK, [20, 30, 0], j / l), 0.3); }
+}
 // a broken column: a stone shaft, its top snapped off ragged
 function dpColumn(P, x, w, y0, G, seed) {
   const top = (xx) => y0 + noise(xx / 3, 0, seed) * 14;
@@ -215,11 +226,13 @@ addDistrict('d_cables', 'Cable Run', 5, -420, 180, 'A tunnel where every cable i
     dpBack(L, 2600, G, { wall: DPMAT.rock, panels: [80, 60], seed: 51 });
     // the trunks, the curtains between them, junction boxes on the trunks
     L.paint(0, 50, 2600, G, (P) => {
-      for (const [x, w, g] of [[320, 30, DP_GREEN], [700, 44, DP_VIOLET], [1060, 26, DP_GREEN], [1480, 50, DP_VIOLET], [1900, 34, DP_GREEN], [2300, 40, DP_VIOLET]]) dpBundle(P, x, 54, G, w, x % 3 ? DPMAT.cable : DPMAT.cableG, g, x);
+      for (const [x, w, g] of [[320, 30, DP_GREEN], [520, 20, DP_VIOLET], [700, 44, DP_VIOLET], [1060, 26, DP_GREEN], [1260, 18, DP_VIOLET], [1480, 50, DP_VIOLET], [1700, 22, DP_GREEN], [1900, 34, DP_GREEN], [2100, 20, DP_VIOLET], [2300, 40, DP_VIOLET]]) dpBundle(P, x, 54, G, w, x % 3 ? DPMAT.cable : DPMAT.cableG, g, x);
       for (const [a, b] of [[380, 640], [760, 1000], [1120, 1420], [1560, 1840], [1960, 2240]]) dpCurtain(P, a, b, 54, 200 + (a % 5) * 20, a % 2 ? DP_GREEN : DP_VIOLET, a);
       // cable trays along the wall, heavy runs in them feeding the trunks, sagging fibre across
       for (const ty of [G - 200, G - 150]) { for (let x = 0; x < 2600; x++) { P.put(x, ty, tone(MAT.steel, 0.6)); P.put(x, ty + 1, tone(MAT.steelD, 0.35)); if (x % 40 < 2) for (let j = 2; j < 10; j++) P.put(x, ty + j, tone(MAT.steelD, 0.4)); } for (let k = 0; k < 4; k++) dpTube(P, [[0, ty - 3 - k * 3], [2600, ty - 3 - k * 3]], 1.6, k % 2 ? DPMAT.cable : DPMAT.cableG, { glow: k === 1 ? (ty % 2 ? DP_VIOLET : DP_GREEN) : null, seed: ty + k, nodes: false, vein: 0.55 }); }
       for (let k = 0; k < 10; k++) { const x = k * 260 + 40; dpTube(P, [[x, G - 196], [x + 130, G - 140 + (k % 3) * 10], [x + 260, G - 196]], 2.2, k % 2 ? DPMAT.cable : DPMAT.cableG, { glow: k % 2 ? DP_VIOLET : DP_GREEN, seed: 900 + k }); }
+      for (let k = 0; k < 13; k++) { const x = k * 200 + 10; dpTube(P, [[x, G - 150], [x + 100, G - 90 - (k % 3) * 12], [x + 200, G - 150]], 3.4, k % 2 ? DPMAT.cable : DPMAT.cableG, { glow: k % 3 === 0 ? DP_GREEN : null, seed: 950 + k, rib: 8 }); }
+      for (const [a, b] of [[440, 600], [1600, 1760]]) for (let k = 0; k < 3; k++) dpTube(P, [[a + k * 6, G - 3 - k * 3], [b - k * 6, G - 3 - k * 3]], 3, DPMAT.cableG, { seed: a + k, rib: 6 });
       dpGrowth(P, 200, 2600, G, DP_GREEN, 52, { climb: 50 });
       for (const [x, y] of [[680, G - 110], [1460, G - 130], [2280, G - 100], [1040, G - 90]]) dpJunction(P, x, y, 26, 18, '#3aff80');
       // the cart track along the floor
@@ -279,7 +292,9 @@ addDistrict('d_gut', 'The Gut', 5, -450, 680, 'Where the city\'s waste ends up a
     dpBack(L, 2400, G, { wall: R(['#0c0a06', '#1a1610', '#2a2418', '#4a4430']), ribs: 40, seed: 71 });
     L.paint(0, 50, 2400, G, (P) => {
       // the digesting pipes: in from the ceiling, along the wall, down into the pools
-      dpGutPipe(P, [[0, 120], [400, 130], [700, 110], [1000, 140], [1400, 120], [1800, 136], [2400, 120]], 14, 5);
+      dpGutPipe(P, [[0, G - 180], [400, G - 166], [700, G - 186], [1000, G - 160], [1400, G - 182], [1800, G - 164], [2400, G - 180]], 14, 5);
+      dpGutPipe(P, [[1100, G - 120], [1250, G - 140], [1500, G - 118], [1700, G - 150], [2000, G - 126]], 9, 6);
+      dpMaw(P, 400, G - 86, 52, 7); dpRubble(P, 330, 480, G, 22, DPMAT.bone, 8);
       for (const x of [520, 1240, 1960]) dpGutPipe(P, [[x, 54], [x + 10, 150], [x - 10, 260], [x + 6, G]], 11, x);
       dpGutPipe(P, [[200, 54], [300, 200], [380, 250]], 8, 7);
       for (const [a, b] of [[600, 760], [1320, 1500], [2040, 2200]]) dpPool(P, a, b, G, '#a8d040', a);
@@ -310,11 +325,14 @@ addDistrict('d_roots', 'Old Roots', 5, -460, 860, 'The oldest buried things, a s
     L.paint(0, 50, 2200, G, (P) => {
       // the old station: a tiled wall, a name plate, a platform edge
       P.block(320, 180, 820, G, DPMAT.tileOld, { base: 0.36, panels: [6, 6], drips: 0.3, dripLen: 50 });
-      P.block(330, 196, 470, 214, KMAT.cream, { base: 0.5 }); for (let i = 0; i < 6; i++) for (const [a, b] of GLYPHS[(i * 5 + 3) % GLYPHS.length]) P.put(342 + i * 20 + a * 2, 200 + b * 2, [40, 30, 20]);
+      P.block(480, 186, 640, 206, KMAT.cream, { base: 0.5 }); for (let i = 0; i < 7; i++) for (const [a, b] of GLYPHS[(i * 5 + 3) % GLYPHS.length]) kFill(P, 488 + i * 21 + a * 2, 190 + b * 2, 490 + i * 21 + a * 2, 192 + b * 2, '#2a2014');
+      for (let x = 330; x < 810; x++) P.put(x, 231, ((x >> 2) % 2) ? [200, 160, 40] : [30, 26, 20]);
+      for (const x of [380, 760]) { P.area(x - 9, 190, x + 9, 208, MAT.chrome, (xx, y) => 0.7 - Math.hypot(xx - x, y - 199) / 14, { inside: (xx, y) => Math.hypot(xx - x, y - 199) < 9 }); kFill(P, x - 7, 192, x + 7, 206, '#d8d0b8'); for (let k = 0; k < 6; k++) P.put(x + k * 0.5, 199 - k, [30, 20, 20]); for (let k = 0; k < 4; k++) P.put(x + k, 199, [30, 20, 20]); }
+      for (const x of [420, 640]) { P.block(x, 214, x + 40, 218, MAT.wood, { base: 0.5 }); for (const lx of [x + 3, x + 35]) P.block(lx, 218, lx + 2, 229, MAT.steelD, { base: 0.4, lip: 0 }); }
       for (let x = 320; x < 820; x++) for (let y = 230; y < 236; y++) P.put(x, y, tone(MAT.brick, 0.45 + ((x >> 2) % 2) * 0.1));
       for (const x of [560, 700]) { kWin(P, x, 250, 40, 30, { dark: '#060808', cross: false }); }
       // the footings of the first towers: huge concrete feet, rebar out of their tops
-      for (const x of [960, 1560]) { P.block(x, 150, x + 120, G, MAT.concreteD, { base: 0.32, panels: [40, 30], drips: 0.3, dripLen: 70 }); for (let k = 0; k < 8; k++) for (let j = 0; j < 20; j++) P.put(x + 8 + k * 14 + j * 0.2, 150 - j, tone(MAT.rust, 0.5)); }
+      for (const x of [960, 1560]) { P.block(x, 150, x + 120, G, MAT.concrete, { base: 0.32, panels: [40, 30], drips: 0.3, dripLen: 70 }); for (let k = 0; k < 8; k++) for (let j = 0; j < 20; j++) P.put(x + 8 + k * 14 + j * 0.2, 150 - j, tone(MAT.rust, 0.5)); }
       // broken columns, rubble
       for (const [x, y] of [[880, 220], [1150, 250], [1320, 200], [1720, 240]]) dpColumn(P, x, 16, y, G, x);
       dpRubble(P, 1240, 1420, G, 30, DPMAT.ruin, 4); dpRubble(P, 300, 360, G, 20, DPMAT.ruin, 6);
@@ -327,7 +345,7 @@ addDistrict('d_roots', 'Old Roots', 5, -460, 860, 'The oldest buried things, a s
     bTemple(L, 1900, 2140, G, { h: 52, base: 10, roofH: 30, lit: true });
     L.paint(1760, 50, 2200, G, (P) => { dpRubble(P, 1770, 1850, G, 16, DPMAT.ruin, 9); for (const x of [1920, 2120]) dpTube(P, [[x, 54], [x + 20, 200], [x - 10, 300], [x + 4, G - 2]], 6, DPMAT.cable, { glow: DP_VIOLET, rib: 10, seed: x }); });
     for (const [x, c] of [[420, [0.3, 1, 0.6]], [760, [0.7, 0.4, 1]], [1020, [0.3, 1, 0.6]], [1280, [0.7, 0.4, 1]], [1620, [0.3, 1, 0.6]], [1900, [0.7, 0.4, 1]]]) L.light(x, G - 120, 100, c, 0.5);
-    L.light(560, 220, 90, [1, 0.85, 0.6], 0.4, 1, { mode: 'bad', seed: 3 });
+    L.light(560, 220, 90, [1, 0.85, 0.6], 0.6, 1, { mode: 'bad', seed: 3 }); L.light(400, 210, 60, [1, 0.85, 0.6], 0.5); for (const x of [1020, 1620]) L.light(x, 260, 90, [0.85, 0.8, 1], 0.4);
     // up onto the footings and the old platform
     L.walk(330, 810, 230, 5, MAT.concreteD); L.stairs(330, G, 450, 230);
     L.walk(960, 1080, 150, 5, MAT.concreteD); L.ladder(1070, 150, G); L.walk(1560, 1680, 150, 5, MAT.concreteD); L.ladder(1570, 150, G);

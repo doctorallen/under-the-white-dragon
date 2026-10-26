@@ -292,7 +292,7 @@ function unGenerator(P, x0, G, o = {}) {
   P.block(x0 + w - 30, top - 26, x0 + w - 6, top, ramp, { base: 0.5 }); unGauge(P, x0 + w - 18, top - 13, 6, 0.6);
 }
 addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under the city: transformers humming behind the fence, busbars, cable trays, a hall of generators, and the engineers who keep the lights on.', 'Substation', () => district({
-  id: 'd_substation', name: 'Substation Seven', tier: 2, W: 2600, sky: false, transit: 'hatch', crowd: 2, amb: [0.24, 0.27, 0.32], floor: MAT.concrete,
+  id: 'd_substation', name: 'Substation Seven', tier: 2, W: 2600, sky: false, transit: 'hatch', crowd: 2, amb: [0.28, 0.31, 0.36], floor: MAT.concrete,
   local: { name: 'Lineman Bex', lines: ['Don\'t touch anything that hums. Everything hums.', 'Half the Stack\'s lights run through that yard. When it trips, people riot.', 'The arcing\'s normal. Mostly. Stand back from the blue.'], look: { skin: SKINS[1], hair: 'helmet', armor: '#ffd040', visor: '#2a2a2a', top: '#2a4a6a', legs: '#2a2a2a' } },
   build(L, G) {
     const W = L.w;
@@ -331,7 +331,7 @@ addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under t
     for (const x of [2450, 2475, 2500, 2525, 2550]) L.prop('rack', x, G, { label: 'switchgear cabinet' });
     L.prop('locker', 2590, G, { tier: 2, label: 'fuse locker' });
     L.prop('ac', 1360, G, { label: 'cooling fan' }); L.prop('junk', 2100, G, { label: 'burnt-out switchgear' });
-    for (const x of [200, 700, 1250, 2000, 2440]) L.tube(x, G - 181, 26, '#e8f4ff', 0.8);
+    for (const x of [200, 700, 1250, 2000, 2440]) L.tube(x, G - 150, 26, '#e8f4ff', 0.8);
     for (const x of [680, 1900]) L.prop('deco', x, G, { art: () => unFrontPipe(200, x), id: 'unfp' + x, front: 1 });
     kFoes(L, G, [['sentinel', 700, 400, 1200, G - 80], ['drone', 1250, 1000, 1350], ['spider', 1700, 1420, 2040, G - 120], ['turret', 2110, 2000, 2400, G - 100], ['gunner', 2470, 2420, 2590]]);
     L.spots.push([200, G], [450, G], [700, G], [950, G], [1200, G], [1550, G], [1950, G], [2260, G], [2500, G]);
