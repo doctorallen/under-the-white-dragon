@@ -145,9 +145,10 @@ async function run(B, url, vp, name, failures) {
     const out = {};
     // the spent cells, picked up
     T_.walkTo(610); T_.tap('useHit'); out.casings = !!Cases.st('menagerie').found.casings;
-    // the still, enhanced: zoom in on the detail
+    // the still, enhanced: zoom in on the right spot, and it sharpens
     T_.walkTo(668); T_.tap('useHit'); out.photo = Hud.open;
-    for (let k = 0; k < 3; k++) { const cv = $('photocv'), [sx, sy] = Enhancer.spot; Enhancer.enhance(Enhancer.ox + sx * Enhancer.s, Enhancer.oy + sy * Enhancer.s); }
+    const sp = Enhancer.spots.find((q) => q.real); for (let k = 0; k < 2; k++) Enhancer.enhance(Enhancer.ox + (sp.x + sp.w / 2) * Enhancer.s, Enhancer.oy + (sp.y + sp.h / 2) * Enhancer.s);
+    out.scan = !!(Enhancer.scan && Enhancer.scan.sp === sp); if (out.scan) Enhancer.reveal(sp);
     out.still = !!Cases.st('menagerie').found.still;
     return out;
   });
@@ -158,7 +159,7 @@ async function run(B, url, vp, name, failures) {
     const b = document.querySelector('button[data-ask^="menagerie:lio"]'); if (b) b.click(); Hud.toggle(null);
     const c = Cases.st('menagerie'); return { o, found: Object.keys(c.found).sort().join(), lead: !!c.leads.coil, zola: !!Actors.npcs.find((n) => n.def.name === 'Zola') };
   });
-  if (!clues.casings || clues.photo !== 'photo' || !clues.still || lio.o !== 'talk' || lio.found !== 'band,casings,lio,still' || !lio.lead || !lio.zola) fail('the clues did not come together ' + JSON.stringify({ clues, lio }));
+  if (!clues.casings || clues.photo !== 'photo' || !clues.scan || !clues.still || lio.o !== 'talk' || lio.found !== 'band,casings,lio,still' || !lio.lead || !lio.zola) fail('the clues did not come together ' + JSON.stringify({ clues, lio }));
   const test = await E(() => {
     const z = Actors.npcs.find((n) => n.def.name === 'Zola'); Player.place(z.x - 12, z.y); T_.run({}, 10); T_.tap('useHit'); const o = Hud.open;
     let b = document.querySelector('button[data-test="menagerie"]'); if (b) b.click(); const t = Hud.open;

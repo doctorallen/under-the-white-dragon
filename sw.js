@@ -27,6 +27,7 @@ const FILES = [
   'js/items.js',
   'js/quests.js',
   'js/cases.js',
+  'js/enhance.js',
   'js/world.js',
   'js/levels.js',
   'js/kit.js',

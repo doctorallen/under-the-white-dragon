@@ -59,7 +59,6 @@ const Hud = {
     return '';
   },
   nextItem() { const have = Object.keys(ITEM).filter((k) => (ITEM[k].kind === 'consumable' || ITEM[k].kind === 'throwable') && Game.s.pack[k] > 0); if (!have.length) return; const i = have.indexOf(Game.s.quick); Game.s.quick = have[(i + 1) % have.length]; Game.toast('Quick item: ' + ITEM[Game.s.quick].name); this.refresh(); },
-  photoNote() { const C = Cases.def(Enhancer.id); $('photonote').textContent = Enhancer.found ? C.clues[Enhancer.cid].text : 'Closer. Keep looking.'; },
   nextProgram() { const have = PROGRAM_ORDER.filter((p) => Game.s.programs[p]); if (!have.length) return; const i = have.indexOf(Game.s.prog); Game.s.prog = have[(i + 1) % have.length]; Game.toast('Program: ' + PROGRAMS[Game.s.prog].name); this.refresh(); },
   toggle(which, who) {
     if (!which || (this.open === which && !who)) { this.open = null; this.who = null; $('panel').hidden = true; Game.paused = false; return; }

@@ -59,7 +59,7 @@ const PANELS = {
   },
   photo() {
     const C = Cases.def(Enhancer.id), K = C.clues[Enhancer.cid];
-    return ['Enhance · ' + K.name, `<div class="photowrap"><canvas id="photocv"></canvas></div><p class="sub" id="photonote">${Enhancer.found ? K.text : 'Tap to enhance where you want to look. Something in this picture matters.'}</p><div class="buttons"><button data-act="resume" class="go">Done</button></div>`];
+    return ['Enhance · ' + K.name, `<div class="photowrap"><canvas id="photocv"></canvas></div><div class="photobar"><p class="sub" id="photonote"></p><div class="buttons"><button data-enh="out">− Pull back</button><button data-enh="reset">Whole picture</button><button data-act="resume" class="go">Done</button></div></div>`];
   },
   travel() { return ['The city', WorldMap.html(false)]; },
   citymap() { return ['The city', WorldMap.html(true)]; },

@@ -59,7 +59,8 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/props.js` | Props: stalls, machines, doors, grates, nodes, the lift |
 | `js/items.js` | Salvage, consumables, throwables, keys, evidence, gadgets, programs, gear, shops, loot, the fabricator |
 | `js/quests.js` | Jobs and side work (`QUESTS`, `Quests`), named elites, the warrants board |
-| `js/cases.js` | Cases (`CASES`, `Cases`), the night desk, ranks, the baseline test, the photo enhancer |
+| `js/cases.js` | Cases (`CASES`, `Cases`), the night desk, ranks, the baseline test |
+| `js/enhance.js` | The photo enhancer: a camera still, spots to zoom in on, the clue among decoys |
 | `js/world.js` | The level builder and `World` |
 | `js/levels.js` | Home, the precinct, the Stack and street level; `cityLayers` |
 | `js/kit.js` | The architect's kit: shophouses, capsule towers, townhouses, temples, shrine gates, pagodas, glass towers, shanty stacks, slab blocks, theatres, bathhouses, arcades, shopfronts, trees, fifteen kinds of stall; and `district()`, the frame every place is built in |
