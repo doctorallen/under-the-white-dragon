@@ -84,7 +84,7 @@ function stWarehouse(P, x0, x1, G, h, num, col) {
   const top = G - h;
   corrugated(P, x0, top, x1, G, KMAT.corrBlue);
   P.area(x0 - 6, top - 20, x1 + 6, top + 2, MAT.rust, (x, y) => 0.5 + ((x - x0) % 3 === 0 ? 0.15 : 0) - (y - top + 20) / 40, { inside: (x, y) => y >= top - 20 + Math.abs(x - (x0 + x1) / 2) / ((x1 - x0) / 2 + 6) * 20 });
-  stNumber(P, x0 + 24, top + 16, num, 8, col || '#e8d8b0');
+  stNumber(P, x0 + 24, top + 16, num, 8, col || '#e8d8b0', 0.12);
   for (let k = 0; k < 40; k++) P.tint(x0 + 20 + hash(k, 1, 7) * 110, top + 14 + hash(k, 2, 7) * 44, [20, 30, 40], 0.5);
   const dx = x1 - 110; P.area(dx, G - 56, dx + 70, G, rp('#7a7a7a', 7), (x, y) => ((y - G + 56) % 3 === 0 ? 0.25 : 0.55) - (x - dx) / 300);
   P.block(dx - 3, G - 60, dx + 73, G - 56, MAT.steelD, { base: 0.5 });
@@ -226,7 +226,7 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     L.light(660, G - 24, 50, [1, 0.9, 0.7], 0.5);
     // the container yard under the gantry crane
     L.paint(740, G - 200, 1290, G, (P) => {
-      stGantry(P, 790, 1240, G, G - 172, { cab: 900, hook: 1120, hookY: G - 128, load: '#2a6a8a' });
+      stGantry(P, 790, 1240, G, G - 140, { cab: 900, hook: 1120, hookY: G - 100, load: '#2a6a8a' });
       stBox(P, 820, G - 22, 90, 22, '#a83a2a', 'MRD 0031'); stBox(P, 920, G - 22, 90, 22, '#2a5a8a', 'TKS 8810'); stBox(P, 830, G - 44, 90, 22, '#3a7a4a', 'MRD 2290'); stBox(P, 925, G - 44, 90, 22, '#c88a20', 'HNJ 4417'); stBox(P, 875, G - 66, 90, 22, '#6a3a6a', 'MRD 9902');
       stBox(P, 1060, G - 22, 90, 22, '#5a5a62', 'KSL 1180'); stBox(P, 1150, G - 22, 90, 22, '#a85a2a'); stBox(P, 1100, G - 44, 90, 22, '#2a4a7a', 'MRD 7713');
     });
@@ -235,14 +235,14 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     L.stairs(770, G, 820, G - 22, MAT.steel); L.stairs(1240, G - 22, 1280, G, MAT.steel);
     L.walk(820, 1010, G - 22, 0, MAT.steel, { rail: false }); L.walk(1010, 1240, G - 22, 0, MAT.steel, { rail: false });
     L.ladder(1050, G - 44, G - 22); L.ladder(870, G - 66, G - 44);
-    L.light(900, G - 150, 80, [1, 0.85, 0.5], 0.8); L.light(1120, G - 90, 70, [1, 0.9, 0.7], 0.6); L.lamp(812, G - 22, 60, '#fff0d0', 1); L.lamp(1050, G - 22, 60, '#fff0d0', 1);
+    L.light(900, G - 120, 80, [1, 0.85, 0.5], 0.8); L.light(1120, G - 90, 70, [1, 0.9, 0.7], 0.6); L.lamp(812, G - 22, 60, '#fff0d0', 1); L.lamp(1050, G - 22, 60, '#fff0d0', 1);
     L.prop('locker', 920, G - 66, { tier: 2, label: 'container locker' }); L.spots.push([920, G - 66], [1140, G - 44]);
     // the quay edge, the barge moored in the second water
     L.paint(1240, G - 12, 1300, G, (P) => { stBollard(P, 1260, G, 30); stBollard(P, 1285, G, 0); });
     L.light(1400, G - 40, 80, [1, 0.85, 0.6], 0.6); L.light(1470, G - 80, 30, [1, 0.95, 0.85], 0.6);
     // Warehouse Seven, its loading dock, a stair up its side to a gantry
     L.paint(1520, G - 160, 1960, G, (P) => stWarehouse(P, 1540, 1950, G, 130, 7, '#e8d8b0'));
-    L.light(1880, G - 30, 80, [1, 0.8, 0.45], 0.7); L.tube(1850, G - 66, 40, '#ffe8c0', 0.6);
+    L.light(1880, G - 30, 80, [1, 0.8, 0.45], 0.7); L.tube(1850, G - 66, 40, '#ffe8c0', 0.6); L.light(1600, G - 100, 110, [1, 0.92, 0.75], 0.8); L.lamp(1530, G, 110, '#fff0d0', 0.6);
     L.stairs(1550, G, 1640, G - 96, MAT.steel); L.walk(1550, 1760, G - 96, 4, MAT.steel);
     L.prop('deco', 1700, G - 96, { art: DECO.door({ col: '#3a4a5a', light: '#ffd8a0' }), id: 'dkoff' });
     L.spots.push([1700, G - 96]);
@@ -261,7 +261,7 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     L.prop('car', 2590, G, { look: { col: '#2a2a2a', under: '#ffb040' }, label: 'dock truck' }); L.prop('junk', 2560, G, { label: 'junk pile' });
     L.prop('locker', 2760, G, { tier: 2, label: 'locker' });
     L.lamp(1270, G, 70, '#ffd8a8', 0.9); L.lamp(2000, G, 70, '#ffd8a8', 0.9); L.lamp(2540, G, 70, '#c8e0ff', 0.9);
-    kFoes(L, G, [['gang', 1150, 1060, 1240], ['gunner', 1700, 1560, 1760, G - 96], ['bruiser', 1880, 1780, 1960], ['gunner', 2370, 2220, 2500], ['gang', 2650, 2540, 2760], ['drone', 960, 820, 1100, G - 110]]);
+    kFoes(L, G, [['gang', 1150, 1060, 1240], ['gunner', 1700, 1560, 1760, G - 96], ['bruiser', 1880, 1780, 1960], ['gunner', 2370, 2220, 2500], ['gang', 2650, 2540, 2760], ['drone', 960, 820, 1100, G - 80]]);
     L.spots.push([350, G], [650, G], [1000, G - 22], [1390, G], [1600, G], [1850, G], [2050, G], [2350, G], [2600, G]);
     L.critter('rat', 200, 2700, G, 3); L.litter(300, 2700, G, 4);
   },
@@ -281,7 +281,7 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
     // floodlights on tall poles over the heaps
     for (const fx of [760, 1120, 1660, 2080]) { L.lamp(fx, G, 130, '#fff4e0', 1.1); }
     // scrap that catches the light: car doors, a fridge, a bathtub, a sign
-    L.paint(300, G - 160, 2400, G, (P) => { for (let k = 0; k < 26; k++) { const x = 320 + k * 80 + hash(k, 3, 5) * 40, y = G - 20 - hash(k, 4, 5) * 90, c = ['#8a3a2a', '#3a6a9a', '#c8c0b0', '#c89a2a', '#4a7a4a'][k % 5], w = 8 + hash(k, 5, 5) * 14, h = 5 + hash(k, 6, 5) * 8; P.area(x, y, x + w, y + h, rp(c, 6), (xx, yy) => 0.7 - (yy - y) / 20 - (xx - x) / 60 + (noise(xx / 2, yy / 2, k) - 0.5) * 0.3); if (k % 4 === 0) kFill(P, x + 2, y + 2, x + 5, y + 4, '#9ad0e8'); } });
+    L.paint(300, G - 160, 2400, G, (P) => { heap(P, 940, 1180, G, 70, MAT.steel, 29); heap(P, 1050, 1150, G, 40, KMAT.corrBlue, 31); heap(P, 1640, 1720, G, 50, KMAT.plywood, 37); for (let k = 0; k < 26; k++) { const x = 320 + k * 80 + hash(k, 3, 5) * 40, y = G - 10 - hash(k, 4, 5) * 26, c = ['#8a3a2a', '#3a6a9a', '#c8c0b0', '#c89a2a', '#4a7a4a'][k % 5], w = 8 + hash(k, 5, 5) * 14, h = 5 + hash(k, 6, 5) * 8; P.area(x, y, x + w, y + h, rp(c, 6), (xx, yy) => 0.7 - (yy - y) / 20 - (xx - x) / 60 + (noise(xx / 2, yy / 2, k) - 0.5) * 0.3); if (k % 4 === 0) kFill(P, x + 2, y + 2, x + 5, y + 4, '#9ad0e8'); } });
     // the dealer's shack: a box of corrugated tin on blocks, a counter window
     L.paint(520, G - 90, 700, G, (P) => { corrugated(P, 530, G - 70, 690, G, MAT.rust); P.area(522, G - 84, 698, G - 68, KMAT.corrBlue, (x, y) => 0.5 + ((x - 522) % 3 === 0 ? 0.15 : 0) - (y - G + 84) / 30, { inside: (x, y) => y >= G - 84 + (x - 522) / 176 * 8 }); kFill(P, 560, G - 54, 640, G - 30, '#ffc070', 0.35); kShelves(P, 562, G - 52, 638, G - 32, ['#c8c8d0', '#c8a040', '#3af0e0', '#8a3a3a'], { back: '#3a2410' }); P.block(556, G - 30, 644, G - 26, MAT.steelD, { base: 0.6 }); kFill(P, 655, G - 50, 675, G, '#1a1410'); });
     L.sign(560, G - 98, 7, '#ffb040', { r: 60, seed: 41 }); L.light(600, G - 40, 70, [1, 0.75, 0.45], 0.8);
@@ -364,7 +364,8 @@ addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of ill
       for (let k = 0; k < 900; k++) P.tint(1700 + hash(k, 1, 6) * 500, G - 220 + hash(k, 2, 6) * 220, [12, 8, 10], 0.35);
       for (let g = 0; g < 7; g++) { const gx = 1720 + g * 66, gy = G - 120 + (g % 3) * 30, c = [[255, 74, 176], [58, 240, 224], [255, 208, 64], [154, 106, 255]][g % 4]; for (let k = 0; k < 40; k++) P.put(gx + k, gy + Math.round(Math.sin(k * 0.6 + g) * 5 + (k % 7 === 0 ? -3 : 0)), c, 0.25); for (let k = 0; k < 40; k += 2) P.put(gx + k, gy + Math.round(Math.sin(k * 0.6 + g) * 5) + 1, mixRgb(c, [0, 0, 0], 0.5)); }
       for (const cx of [1790, 2110]) { kV(P, cx, G - 230, G - 150, '#2a2a2e'); for (let y = G - 150; y < G - 112; y++) for (let x = cx - 10; x <= cx + 10; x++) if ((x - cx) % 4 === 0 || y === G - 150 || y === G - 113) P.put(x, y, tone(MAT.steel, 0.5)); kFill(P, cx - 4, G - 126, cx + 4, G - 116, '#3a2a24'); }
-      heap(P, 1900, 2060, G, 46, MAT.rust, 23); P.block(1952, G - 70, 2008, G - 40, rp('#8a6a2a', 7), { base: 0.5 }); P.block(1948, G - 90, 1958, G - 40, rp('#8a6a2a', 7), { base: 0.55 }); P.block(2002, G - 90, 2012, G - 40, rp('#8a6a2a', 7), { base: 0.45 });
+      heap(P, 1890, 1950, G, 30, MAT.rust, 23); heap(P, 2010, 2070, G, 34, MAT.steelD, 24);
+      P.block(1948, G - 80, 1960, G, rp('#8a6a2a', 7), { base: 0.55 }); P.block(2000, G - 80, 2012, G, rp('#8a6a2a', 7), { base: 0.45 }); P.block(1952, G - 64, 2008, G - 26, rp('#5a1a2a', 7), { base: 0.45 }); P.block(1944, G - 28, 2016, G - 18, rp('#8a6a2a', 7), { base: 0.6 }); P.block(1950, G - 18, 2010, G, MAT.steelD, { base: 0.4 });
       for (const [a, b] of [[1960, G - 104], [1972, G - 110], [1984, G - 112], [1996, G - 110], [2008, G - 104]]) for (let y = b; y < G - 96; y++) P.put(a, y, [255, 208, 64], 1);
       kH(P, 1958, 2012, G - 96, [255, 208, 64], 1);
       stCubes(P, 1712, G, 1, 3, 50); stCubes(P, 2160, G, 1, 3, 51);
@@ -403,10 +404,10 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
       P.block(790, G - 310, 1250, G - 300, KMAT.whitepanel, { base: 0.62 });
       kFill(P, 1000, G - 330, 1040, G - 312, '#0a0e10'); kCross(P, 1020, G - 321, 7, '#ff2a3a');
       P.block(790, G - 62, 1250, G - 56, KMAT.whitepanel, { base: 0.62 });
-      P.block(800, G - 56, 1000, G, KMAT.whitepanel, { base: 0.4 }); kFill(P, 830, G - 46, 970, G, '#d8f0ff', 0.25); for (let x = 830; x < 970; x += 35) for (let y = G - 46; y < G; y++) P.put(x, y, [60, 70, 80]);
+      P.block(800, G - 56, 1000, G, KMAT.whitepanel, { base: 0.4 }); for (let x = 830; x < 970; x++) for (let y = G - 46; y < G; y++) P.put(x, y, mixRgb([150, 185, 200], [70, 90, 100], (y - G + 46) / 46), 0.1); for (let x = 830; x < 970; x += 35) for (let y = G - 46; y < G; y++) P.put(x, y, [60, 70, 80]);
       kFill(P, 1000, G - 56, 1240, G, '#141a1e'); for (let x = 1000; x < 1240; x++) for (let y = G - 6; y < G - 2; y++) P.put(x, y, ((x + y) >> 2) % 2 ? [220, 40, 50] : [230, 230, 230]);
     });
-    L.sign(840, G - 72, 9, '#ff3a4a', { r: 70, seed: 51 }); L.light(900, G - 30, 100, [0.85, 0.95, 1], 0.9); L.light(1120, G - 30, 80, [1, 0.3, 0.35], 0.6, 1, { mode: 'bad', seed: 2 });
+    L.sign(840, G - 72, 9, '#ff3a4a', { r: 70, seed: 51 }); L.light(900, G - 30, 100, [0.85, 0.95, 1], 0.65); L.paint(1150, G - 98, 1230, G - 62, (P) => { kFill(P, 1150, G - 96, 1230, G - 64, '#0a0e10'); kCross(P, 1166, G - 80, 9, '#ff2a3a'); for (let i = 0; i < 6; i++) for (const [a, b] of GLYPHS[(i * 5 + 3) % GLYPHS.length]) P.put(1182 + i * 7 + a, G - 82 + b, [255, 90, 100], 1); }); L.light(1190, G - 80, 70, [1, 0.25, 0.3], 0.7, 1, { mode: 'sign', seed: 17 }); L.tube(1030, G - 54, 60, '#e8f4ff', 0.6); L.light(1120, G - 30, 80, [1, 0.3, 0.35], 0.6, 1, { mode: 'bad', seed: 2 });
     L.prop('deco', 1120, G, { art: () => spinner({ col: '#e8eef2' }), id: 'ambulance' }); L.light(1120, G - 26, 30, [1, 0.2, 0.25], 0.8, 1, { mode: 'bad', seed: 13 });
     L.npc({ name: 'Doctor Reyes', look: { skin: SKINS[4], hair: 'bun', hairCol: '#1a1414', top: '#e0e8e8', coat: 'long', legs: '#3a4a4a', glasses: true }, x: 940, y: G, face: -1, sched: [[0, 24, 940, 'stand']], lines: ['Eighteen-hour shift. Ask quickly.', 'We treat anyone. Chrome or no chrome, a wound is a wound.', 'Synths don\'t come here. They don\'t get sick. They get broken.'] });
     const queue = [['Patient', SKINS[1], '#5a3a3a', 'long'], ['Old patient', SKINS[5], '#3a3a5a', 'bun'], ['Patient', SKINS[3], '#3a5a3a', 'cap'], ['Mother', SKINS[2], '#6a3a5a', 'bob']];
