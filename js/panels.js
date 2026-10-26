@@ -1,0 +1,143 @@
+'use strict';
+// ---------------------------------------------------------------------------
+// The detective's panels: talking to people (questions, pressing them, the
+// baseline test, the verdict, a quest's offer or its next step), the test
+// itself, the photo enhancer, travel, the case file, the items you carry,
+// and the end of the story. Each returns [title, html]; panelBind wires up
+// the buttons after the panel is drawn.
+// ---------------------------------------------------------------------------
+const PANELS = {
+  talk(s) {
+    const n = Hud.who, name = n.def.name, line = n.def.lines[n.line % n.def.lines.length];
+    let h = `<p class="sub">"${line}"</p>`;
+    // the case's business with them
+    for (const a of Cases.actionsFor(name)) {
+      const C = Cases.def(a.id), c = Cases.st(a.id);
+      if (a.kind === 'ask') { const K = C.clues[a.cid]; h += `<div class="ask"><h3>${C.title}</h3><p class="dim">Ask about what happened.</p><div class="buttons"><button data-ask="${a.id}:${a.cid}:0">Ask politely</button><button data-ask="${a.id}:${a.cid}:1" class="warnb">Press them</button></div></div>`; }
+      if (a.kind === 'suspect') {
+        const read = c.test ? `Your read: <b class="${c.test}">${c.test === 'synth' ? 'a synth' : 'human'}</b>.` : 'You haven\'t tested them.';
+        h += `<div class="ask"><h3>${C.title}: the suspect</h3><p class="dim">${read}</p><div class="buttons">${c.test ? '' : `<button data-test="${a.id}" class="go">Run the baseline test</button>`}`;
+        if (C.ending) h += C.ending.map((E, i) => `<button data-end="${i}">${E.label}</button>`).join('');
+        else h += `<button data-verdict="${a.id}:retire" class="warnb">Retire</button><button data-verdict="${a.id}:arrest">Arrest</button><button data-verdict="${a.id}:release" class="quiet">Let go</button>`;
+        h += '</div></div>';
+      }
+    }
+    // quests: offers, and the steps that need them
+    for (const a of Quests.actionsFor(name)) {
+      const Q = QUESTS[a.id], st = Quests.step(a.id);
+      if (a.kind === 'offer') h += `<div class="ask"><h3>${Q.title}</h3><p class="dim">${Q.text}</p><div class="buttons"><button data-take="${a.id}" class="go">Take it</button></div></div>`;
+      if (a.kind === 'talk') h += `<div class="ask"><h3>${Q.title}</h3>${st.lines.map((l) => `<p class="sub">"${l}"</p>`).join('')}<div class="buttons"><button data-talked="${a.id}" class="go">${a.id === 'drones' || st.npc === Q.giver ? 'Report' : 'Go on'}</button></div></div>`;
+      if (a.kind === 'deliver') h += `<div class="ask"><h3>${Q.title}</h3><p class="dim">${st.text}: ${Hud.cost(st.items)}</p><div class="buttons"><button data-deliver="${a.id}" class="go" ${a.ok ? '' : 'disabled'}>Hand it over</button></div></div>`;
+      if (a.kind === 'choice') h += `<div class="ask"><h3>${Q.title}</h3>${st.lines.map((l) => `<p class="sub">"${l}"</p>`).join('')}<div class="buttons">${st.options.map((o, i) => `<button data-choose="${a.id}:${i}">${o.label}</button>`).join('')}</div></div>`;
+    }
+    // the lieutenant: the cases, the night desk, the warrants board
+    if (n.def.role === 'fixer') {
+      const offers = CASE_ORDER.filter((id) => Cases.available(id));
+      for (const id of offers) h += `<div class="ask"><h3>Case: ${CASES[id].title}</h3><p class="dim">${CASES[id].brief}</p><div class="buttons"><button data-case="${id}" class="go">Take the case</button></div></div>`;
+      const N = Cases.closed('menagerie') ? Cases.nightOffer() : null;
+      if (!Cases.closed('menagerie')) { // the night desk and the board open after the first case
+      }
+      else if (N) { const C = Cases.nightDef(N), on = Cases.st(N.id); h += `<div class="ask"><h3>The night desk: ${C.title}</h3><p class="dim">${C.brief} A few minutes' work. Pays ${C.reward.cr} cr.</p><div class="buttons">${on ? '<span class="tag">on it</span>' : `<button data-night="1">Take it</button>`}</div></div>`; }
+      else h += '<p class="dim">The night desk opens once you can fly out to the districts.</p>';
+      Warrants.refresh();
+      const W = Cases.closed('menagerie') ? s.warrants.list : [];
+      if (W.length) h += '<h3>Warrants board</h3><div class="rows">' + W.map((w) => `<div class="row ${w.done ? 'passed' : ''}"><div><b>${w.name}</b><small>Chrome, last seen in ${LEVELS[w.level].name}. ${w.reward} cr on the spot.</small></div>${w.done ? '<span class="tag">served</span>' : w.taken ? '<span class="tag">on it</span>' : `<button data-warrant="${w.id}">Take it</button>`}</div>`).join('') + '</div>';
+      const r = Cases.rank(), nx = Cases.nextRank(); h += `<p class="dim">You: ${r[1]}. ${nx ? (nx[0] - s.xp) + ' to ' + nx[1] + '.' : 'As high as it goes.'}</p>`;
+    }
+    const role = n.def.role && n.def.role !== 'fixer' ? NPC_ROLE[n.def.role] : null;
+    h += `<div class="buttons">${role ? `<button data-role="1">${role.verb}</button>` : ''}<button data-act="resume" class="quiet">Goodbye</button></div>`;
+    return [name, h];
+  },
+  test() {
+    const c = Cases.st(Baseline.id), C = Cases.def(Baseline.id);
+    let h = '<div class="testgrid"><div><canvas id="testcv"></canvas><p class="dim">Ask, then watch the needles. A human reacts at once. A synth answers flat, then late, then too much. Hard questions read clearer but raise the stress, and at the top of it they won\'t sit still.</p></div><div>';
+    h += `<p class="sub" id="testq">${Baseline.q ? '"' + Baseline.q.text + '"' : 'Ask your first question.'}</p>`;
+    const tiers = [[1, 'Mild'], [2, 'Probing'], [3, 'Hard']];
+    h += `<div class="buttons">${Baseline.asked >= 2 ? '<button data-call="human">Call it: human</button><button data-call="synth" class="warnb">Call it: synth</button>' : '<span class="dim">Ask at least two questions before you call it.</span>'}</div>`;
+    h += tiers.map(([lv, nm]) => `<div class="qrow"><span class="tag">${nm}</span>${BASELINE_QS.map((q, i) => (q[0] === lv ? `<button data-q="${i}" class="q">${q[1]}</button>` : '')).join('')}</div>`).join('') + '</div></div>';
+    return ['Baseline test · ' + C.suspect.name, h];
+  },
+  photo() {
+    const C = Cases.def(Enhancer.id), K = C.clues[Enhancer.cid];
+    return ['Enhance · ' + K.name, `<div class="photowrap"><canvas id="photocv"></canvas></div><p class="sub" id="photonote">${Enhancer.found ? K.text : 'Tap to enhance where you want to look. Something in this picture matters.'}</p><div class="buttons"><button data-act="resume" class="go">Done</button></div>`];
+  },
+  travel(s) {
+    const mode = Hud.mode || 'spinner', names = { spinner: 'Your spinner', subway: 'The subway', lift: 'The lift cages' };
+    const places = Travel.places(mode), byTier = {};
+    for (const id of places) (byTier[Travel.tierOf(id)] = byTier[Travel.tierOf(id)] || []).push(id);
+    const tierName = { 0: 'Above the clouds', 1: 'Up high', 2: 'Street level', 3: 'Old Town', 4: 'The Works', 5: 'The Bowels' };
+    let h = `<div class="travel"><p class="sub">${mode === 'spinner' ? 'Precinct issue, nine years old, still fast.' : mode === 'subway' ? 'The old line. The trains still run, somehow.' : 'A cage on a cable, going down.'} Where to?</p>`;
+    for (const t of Object.keys(byTier).sort()) {
+      h += `<h3>${tierName[t]}</h3><div class="rows">` + byTier[t].map((id) => { const L = LEVELS[id], ok = Travel.open(id), here = Cases.open().some((c) => { const w = Cases.where(c); return w && w.level === id; }) || Quests.open().some((q) => { const w = Quests.where(q); return w && w.level === id; }); return `<div class="row ${ok ? '' : 'passed'}"><div><b>${L.name}${here ? ' <i class="mark">◆</i>' : ''}</b><small>${ok ? (L.district ? THEME_NAMES[L.theme] || 'District' : 'Hub') : lockText(id)}</small></div><button data-go="${id}" class="go" ${ok ? '' : 'disabled'}>Go</button></div>`; }).join('') + '</div>';
+    }
+    return [names[mode], h + '</div>'];
+  },
+  ending(s) {
+    const E = CASES.maker.ending.find((e) => e.flag === s.flags.ending) || CASES.maker.ending[0];
+    const fates = ['iris', 'bishop', 'wren'].map((k) => `${CASES[k].suspect.name}: ${{ retire: 'retired', arrest: 'arrested', release: 'let go' }[s.flags[k]] || '?'}`).join(' · ');
+    return ['The end of the case', `<p class="sub">${E.text}</p><p class="dim">${fates}. ${s.flags.misfire ? 'You retired ' + s.flags.misfire + ' human being' + (s.flags.misfire > 1 ? 's' : '') + ' along the way.' : 'You never retired a human being.'}</p><p class="sub">The city is still here in the morning. There's still chrome on the streets, and the night desk still has work. You're ${Cases.rank()[1].toLowerCase()} now.</p><div class="buttons"><button data-act="resume" class="go">Back to the city</button></div>`];
+  },
+};
+// the work someone with a trade offers, shown above their trade
+function workHtml(name) {
+  return Quests.actionsFor(name).filter((a) => a.kind === 'offer').map((a) => { const Q = QUESTS[a.id]; return `<div class="ask"><h3>Work: ${Q.title}</h3><p class="dim">${Q.text}</p><div class="buttons"><button data-take="${a.id}" class="go">Take it</button></div></div>`; }).join('');
+}
+const THEME_NAMES = { neon: 'Neon streets', blocks: 'Housing blocks', plaza: 'Corporate plaza', docks: 'Canal docks', scrap: 'Scrapyards', flood: 'Flooded streets', line: 'The old line', works: 'Machine halls', servers: 'Server farms', tunnel: 'Cable tunnels', vault: 'Cooling vaults' };
+function lockText(id) {
+  if (id === 'spires') return 'Meridian\'s air lanes: you need an access code';
+  if (id === 'street') return 'Find the way down from the Stack first';
+  const t = Travel.tierOf(id); return { 2: 'Find the way down to street level first', 3: 'Open the old subway on street level first', 4: 'Take the Mayor\'s lift down from Old Town first', 5: 'Go down the shaft from the Works first' }[t] || 'Not yet';
+}
+// the case file: rank, then each open case: what's found, what's left, the
+// leads, the suspect; then open jobs and what's been closed
+function caseFile(s) {
+  const r = Cases.rank(), nx = Cases.nextRank(), pc = nx ? Math.round(((s.xp - r[0]) / (nx[0] - r[0])) * 100) : 100;
+  let h = `<div class="rank"><b>${r[1]}</b><div class="bar"><i style="width:${pc}%"></i></div><small>${nx ? (nx[0] - s.xp) + ' to ' + nx[1] : 'The top of the ladder'} · ${s.closed || 0} cases closed</small></div>`;
+  const open = Cases.open();
+  for (const id of open) {
+    const C = Cases.def(id), c = Cases.st(id), keys = Object.keys(C.clues), got = keys.filter((k) => c.found[k]);
+    h += `<div class="case ${s.track === id ? 'tracked' : ''}"><h3>${C.main ? 'Case' : 'Night case'}: ${C.title}</h3><p class="dim">${C.brief}</p>`;
+    h += `<p class="obj">▸ ${Cases.objective(id)}</p><div class="clues">` + keys.map((k) => (c.found[k] ? `<div class="clue on"><b>${C.clues[k].name}</b><small>${C.clues[k].text}</small></div>` : `<div class="clue"><b>?</b><small>${C.clues[k].kind === 'talk' ? 'Someone knows something' : C.clues[k].kind === 'photo' ? 'A picture to enhance' : 'Something left behind'}</small></div>`)).join('') + '</div>';
+    for (const L of C.leads) if (c.leads[L.id]) h += `<p class="lead">Lead: <b>${L.name}</b>. ${L.text}</p>`;
+    h += `<div class="buttons">${s.track === id ? '<span class="tag">tracked</span>' : `<button data-track="${id}">Track this</button>`}</div></div>`;
+  }
+  const jobs = Quests.open();
+  if (jobs.length) h += '<h3>Jobs</h3><div class="rows">' + jobs.map((id) => `<div class="row ${s.track === id ? 'tracked' : ''}"><div><b>${QUESTS[id].title}</b><small>▸ ${Quests.objective(id)}</small></div>${s.track === id ? '<span class="tag">tracked</span>' : `<button data-track="${id}">Track</button>`}</div>`).join('') + '</div>';
+  if (!open.length && !jobs.length) h += '<p class="dim">Nothing open. Lieutenant Hale at the precinct always has work.</p>';
+  const closed = CASE_ORDER.filter((id) => Cases.closed(id));
+  if (closed.length) h += '<h3>Closed</h3><div class="rows">' + closed.map((id) => { const c = Cases.st(id); return `<div class="row passed"><div><b>${CASES[id].title}</b><small>${CASES[id].suspect.name}: ${{ retire: 'retired', arrest: 'arrested', release: 'let go', ending: 'the end' }[c.verdict] || ''}${c.synth !== undefined ? (c.synth ? ', a synth' : ', human') : ''}</small></div></div>`; }).join('') + '</div>';
+  return h;
+}
+// what you carry that you can use: by kind, with Use and the quick slot
+function itemsTab(s) {
+  const worth = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0) * SALVAGE[k].price, 0);
+  let h = `<p class="sub">${s.cr} cr. Whatever you pick up is yours to keep. The Item button uses your quick item.</p>`;
+  for (const kind of ['consumable', 'throwable', 'key', 'evidence', 'salvage']) {
+    const ks = Object.keys(ITEM).filter((k) => ITEM[k].kind === kind && s.pack[k] > 0); if (!ks.length) continue;
+    h += `<h3>${ITEM_KINDS[kind]}${kind === 'salvage' ? ' · worth about ' + worth + ' cr to Kit' : ''}</h3><div class="tiles">` + ks.map((k) => { const I = ITEM[k], usable = kind === 'consumable' || kind === 'throwable'; return `<div class="tile ${s.quick === k ? 'quick' : ''}" style="--r:${(I.col || SALVAGE.wire.col)[1]}"><img src="${Hud.icon(k)}" alt=""><b>${I.name}</b><span class="n">× ${s.pack[k]}</span><small>${I.note || (kind === 'salvage' ? SALVAGE[k].price + ' cr each at Kit\'s' : '')}</small>${usable ? `<div class="tbtns"><button data-use="${k}">Use</button><button data-quick="${k}" ${s.quick === k ? 'disabled' : ''}>${s.quick === k ? 'Quick' : 'Set quick'}</button></div>` : ''}</div>`; }).join('') + '</div>';
+  }
+  return h;
+}
+function panelBind(body, which) {
+  const s = Game.s, n = Hud.who, re = () => Hud.panel(Hud.open);
+  body.querySelectorAll('button[data-ask]').forEach((b) => (b.onclick = () => { const [id, cid, p] = b.dataset.ask.split(':'); Cases.ask(id, cid, p === '1'); re(); }));
+  body.querySelectorAll('button[data-test]').forEach((b) => (b.onclick = () => Baseline.open(b.dataset.test)));
+  body.querySelectorAll('button[data-verdict]').forEach((b) => (b.onclick = () => { const [id, v] = b.dataset.verdict.split(':'); Cases.verdict(id, v); Hud.toggle(null); }));
+  body.querySelectorAll('button[data-end]').forEach((b) => (b.onclick = () => Cases.endWith(+b.dataset.end)));
+  body.querySelectorAll('button[data-take]').forEach((b) => (b.onclick = () => { Quests.start(b.dataset.take); re(); }));
+  body.querySelectorAll('button[data-talked]').forEach((b) => (b.onclick = () => { Quests.talked(b.dataset.talked); re(); }));
+  body.querySelectorAll('button[data-deliver]').forEach((b) => (b.onclick = () => { Quests.deliver(b.dataset.deliver); re(); }));
+  body.querySelectorAll('button[data-choose]').forEach((b) => (b.onclick = () => { const [id, i] = b.dataset.choose.split(':'); Quests.choose(id, +i); re(); }));
+  body.querySelectorAll('button[data-case]').forEach((b) => (b.onclick = () => { Cases.start(b.dataset.case); re(); }));
+  body.querySelectorAll('button[data-night]').forEach((b) => (b.onclick = () => { Cases.takeNight(); re(); }));
+  body.querySelectorAll('button[data-warrant]').forEach((b) => (b.onclick = () => { Warrants.take(+b.dataset.warrant); re(); }));
+  body.querySelectorAll('button[data-role]').forEach((b) => (b.onclick = () => { Hud.toggle(null); NPC_ROLE[n.def.role].use(n); }));
+  body.querySelectorAll('button[data-go]').forEach((b) => (b.onclick = () => Travel.go(b.dataset.go, Hud.mode)));
+  body.querySelectorAll('button[data-track]').forEach((b) => (b.onclick = () => { s.track = b.dataset.track; re(); }));
+  body.querySelectorAll('button[data-use]').forEach((b) => (b.onclick = () => { if (ITEM[b.dataset.use].kind === 'throwable') { s.quick = b.dataset.use; Hud.toggle(null); Game.useItem(b.dataset.use); } else { Game.useItem(b.dataset.use); re(); } }));
+  body.querySelectorAll('button[data-quick]').forEach((b) => (b.onclick = () => { s.quick = b.dataset.quick; Hud.refresh(); }));
+  body.querySelectorAll('button[data-q]').forEach((b) => (b.onclick = () => { Baseline.ask(+b.dataset.q); const c = Cases.st(Baseline.id); if (Baseline.stress >= 1) { Hud.toggle(null); Cases.bolt(Baseline.id); return; } $('testq').textContent = '"' + Baseline.q.text + '"'; if (Baseline.asked === 2) re(); }));
+  body.querySelectorAll('button[data-call]').forEach((b) => (b.onclick = () => { const c = Cases.st(Baseline.id); c.test = b.dataset.call; Save.write(); const who = Actors.npcs.find((q) => q.def.name === Cases.def(Baseline.id).suspect.name); Hud.toggle('talk', who || Hud.who); }));
+  if (which === 'test') { const cv = $('testcv'), dpr = window.devicePixelRatio || 1; cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr; if (!Baseline.raf) Baseline.draw(); }
+  if (which === 'photo') Enhancer.attach();
+}

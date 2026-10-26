@@ -4,7 +4,7 @@ A side-scrolling cyberpunk noir for the phone. You're a detective in a trench co
 
 **Play:** https://doctorallen.github.io/underhill/ (best on a phone held sideways). The repo keeps the name of the game it replaced, Underhill, until it's renamed.
 
-Strip machines for parts. Cut through grates and shutters. Jack into data nodes for programs. Sell salvage to vendors, take cases from Lieutenant Hale at the precinct, and fly there and back in your spinner. Implants are illegal and you hunt the people who carry them; you carry gadgets instead, built by the precinct's quartermaster, and gear made and upgraded by Mags the fabricator. The way down from each level is guarded.
+Take a case from Lieutenant Hale at the precinct, fly out in your spinner, find the clues (pick things up, enhance a photo, ask people and press them), follow the leads to the suspect, run the baseline test, and decide: retire, arrest or let go. A case takes a few minutes; the night desk always has another. Strip machines for parts, cut through grates and shutters, jack into data nodes for programs, and take side work from the people you meet. Implants are illegal and you hunt the people who carry them; you carry gadgets instead, built by the precinct's quartermaster, and gear made and upgraded by Mags the fabricator. The way down from each level is guarded.
 
 ## Install
 
@@ -21,11 +21,20 @@ On Android the browser offers to install it the first time you tap; after that, 
 | Fire (a blow up close) | J | Fire |
 | Use (hold to strip or cut) | E | The button names the action: Trade, Talk, Strip, Cut, Hack, Climb… |
 | Run program / pick next | Q / R | Program (hold to pick) |
-| Inventory (gear, items, gadgets, cases) | I | Gear |
+| Use the quick item / switch it | G / T | Item |
+| Inventory (cases, gear, items, gadgets) | I | Gear |
 | A cab home | | Cab |
 | The map (drag, zoom) | M | Pause, then Map |
 | Dev settings | | Pause, then Dev settings |
 | Pause | Esc | II |
+
+## The city
+
+- **Five hand-built hubs** and **23 generated districts** in six tiers, from the Spires above the clouds to the Bowels: Floor 31 (home), Precinct 9, the Stack, street level, Old Town, the Works, the Bowels and the Spires. Districts are built from a theme's blocks (`gen.js`) and reached by spinner up high, by the old subway in Old Town and by lift cages below that.
+- **Five story cases** (`CASES` in `cases.js`): the Menagerie on Neon Row, then Iris, Bishop and Wren (the synths who ran, each behind a boss), and the maker in the Spires, with three endings. **The night desk** makes a short case every night (a shot pet, a chrome deal, a missing person) somewhere you can reach.
+- **Eighteen jobs** (`QUESTS` in `quests.js`) from Hale and the people of every hub, and a **warrants board** of named chromers.
+- **Enemies** (`ENEMY` in `enemies.js`): drones, sentinels, gangers, gunners, bruisers, spider-bots, turrets, shielded corp guards, ferals, Meridian enforcers, and six bosses: the Warden, the Gutter King, the Old Mayor, the Foreman, the Root and Halden. A suspect who runs is a fugitive.
+- **Items:** noodle cups, med-patches and stims; frag grenades and EMPs; keys that open the way down; evidence.
 
 ## The first slice
 
@@ -47,15 +56,19 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/paint.js` | Materials, the city painter (`Pix`), decals, the chunk cache |
 | `js/people.js` | People, drones, the Warden |
 | `js/props.js` | Props: stalls, machines, doors, grates, nodes, the lift |
-| `js/items.js` | Salvage, mods, programs, jobs |
+| `js/items.js` | Salvage, consumables, throwables, keys, evidence, gadgets, programs, gear, shops, loot, the fabricator |
+| `js/quests.js` | Jobs and side work (`QUESTS`, `Quests`), named elites, the warrants board |
+| `js/cases.js` | Cases (`CASES`, `Cases`), the night desk, ranks, the baseline test, the photo enhancer |
 | `js/world.js` | The level builder and `World` |
-| `js/levels.js` | The Stack and street level |
+| `js/levels.js` | Home, the precinct, the Stack and street level; `cityLayers` |
+| `js/gen.js` | Generated districts (`THEMES`, `BLOCKS`, `buildPlace`), Old Town, the Works, the Bowels, the Spires, and `Travel` |
 | `js/things.js` | Props in play: looks, yields, prompts, uses |
 | `js/game.js` | `Game`: state and rules; programs |
 | `js/save.js` | localStorage save and load |
 | `js/input.js` | Keyboard and touch |
 | `js/player.js` | The runner: movement, ladders, strikes, Use; effects |
-| `js/actors.js` | People's routines and roles, enemies, the Warden, bolts |
+| `js/enemies.js` | `ENEMY` and `Foes`: what each enemy is and how it moves, fights and looks |
+| `js/actors.js` | People's routines and roles, case witnesses and suspects, enemies in play, bolts, thrown things |
 | `js/hack.js` | Jacking in |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
 | `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |
@@ -65,6 +78,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/gl.js` | The frame's last stage in WebGL2: bloom, reflections, the scale-up |
 | `js/render.js` | The frame: layers, light, actors, rain; a 2D finish without WebGL2 |
 | `js/hud.js` | HUD and panels |
+| `js/panels.js` | The detective's panels: talk, the baseline test, the enhancer, travel, the case file, items |
 | `js/pwa.js` | Installing, and reloading onto a new deploy |
 | `js/main.js` | Boot and the loop |
 | `sw.js`, `manifest.webmanifest`, `icons/` | The service worker (network first), the app manifest and icons |

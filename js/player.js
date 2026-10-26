@@ -50,7 +50,7 @@ const Player = {
     // the blaster recharges a shot at a time
     const W = Game.weapon();
     if (Dev.s.ammo && this.charge < W.shots) { this.charge = W.shots; Hud.refresh(); }
-    if (this.charge < W.shots) { this.chargeT += dt; if (this.chargeT >= T.blaster.recharge / (1 + Game.perk('recharge'))) { this.chargeT = 0; this.charge++; Hud.refresh(); } } else this.chargeT = 0;
+    if (this.charge < W.shots) { this.chargeT += dt; if (this.chargeT >= T.blaster.recharge / ((1 + Game.perk('recharge')) * W.recharge)) { this.chargeT = 0; this.charge++; Hud.refresh(); } } else this.chargeT = 0;
     this.inv = Math.max(0, this.inv - dt); this.hurtT = Math.max(0, this.hurtT - dt); this.strikeT = Math.max(0, this.strikeT - dt); this.strikeCd = Math.max(0, this.strikeCd - dt); this.drop = Math.max(0, this.drop - dt);
     if (ax && !this.strikeT) this.face = ax > 0 ? 1 : -1;
     // RAM comes back on its own
@@ -72,7 +72,7 @@ const Player = {
     }
     // ---- running
     // the stick sets the pace: a light push walks, a full one runs
-    const m = Math.abs(ax), sp = (1 + Game.perk('speed')) * Dev.s.speed, pace = (m < 0.62 ? P.walk : lerp(P.walk, P.speed, clamp((m - 0.62) / 0.28, 0, 1))) * sp;
+    const m = Math.abs(ax), sp = (1 + Game.perk('speed') + (Game.buffOn('speed') ? CONSUMABLES.stim.buff.speed : 0)) * Dev.s.speed, pace = (m < 0.62 ? P.walk : lerp(P.walk, P.speed, clamp((m - 0.62) / 0.28, 0, 1))) * sp;
     const busy = this.hold ? 0.15 : 1, target = Math.sign(ax) * pace * busy, acc = this.ground ? P.accel : P.airAccel;
     if (ax) this.vx += clamp(target - this.vx, -acc * dt, acc * dt);
     else this.vx -= clamp(this.vx, -P.friction * dt, P.friction * dt);
@@ -112,6 +112,12 @@ const Player = {
     if (this.y > World.L.h + 40) { Game.hurt(20); const sp = Object.values(World.L.spawns)[0]; this.place(sp[0], sp[1]); }
     if (Input.take('strikeHit') && this.strikeCd <= 0 && !this.hold) this.fire();
     if (Input.take('progHit')) this.runProgram();
+    if (Input.take('itemHit')) { const q = Game.quickItem(); if (q) Game.useItem(q); else Game.toast('Nothing to use. Vendors sell med-patches and grenades.'); }
+    // the rest of a burst, a shot at a time
+    if (this.burstQ > 0) { this.burstT -= dt; if (this.burstT <= 0) { this.burstQ--; this.burstT = 0.07; this.shot(Game.weapon()); } }
+    // gear that heals you, slowly
+    const rg = Game.perk('regen'); if (rg && Game.s.hp < T.player.hp && Game.s.hp > 0) { Game.s.hp = Math.min(T.player.hp, Game.s.hp + rg * dt); if (Game.frame % 30 === 0) Hud.refresh(); }
+    this.questT = (this.questT || 0) - dt; if (this.questT <= 0) { this.questT = 0.25; Quests.tick(); }
     this.interact(dt);
   },
   // Fire: up close it's a blow (the blaster's butt, or the blades); further
@@ -119,21 +125,40 @@ const Player = {
   fire() {
     const S = T.strike, x0 = this.face > 0 ? this.x : this.x - S.reach - 4, box = [x0, this.y - T.player.h + 2, x0 + S.reach + 4, this.y - 2];
     if (Actors.enemies.some((e) => { if (e.ally) return false; const b = Actors.hurtbox(e); return box[2] > b[0] && box[0] < b[2] && box[3] > b[1] && box[1] < b[3]; })) { this.strike(); return; }
-    const B = T.blaster, W = Game.weapon();
-    if (this.charge < 1) { Game.toast('The blaster\'s recharging.'); this.strikeCd = 0.2; return; }
+    const W = Game.weapon();
+    if (this.charge < 1) { Game.toast('Recharging.'); this.strikeCd = 0.2; return; }
     this.charge--; this.strikeCd = W.cd; this.aimT = 0.22; Hud.refresh();
+    this.shot(W);
+    if (W.burstN) { this.burstQ = W.burstN - 1; this.burstT = 0.07; }
+  },
+  // one pull of the trigger: a bolt (or a scatter of pellets) at the nearest
+  // hostile ahead within the gun's range, up or down a little
+  shot(W) {
     const mx = this.x + this.face * 12, my = this.y - 22;
     let best = null, bd = 1e9;
-    for (const e of Actors.enemies) { if (e.ally) continue; const b = Actors.hurtbox(e), tx = (b[0] + b[2]) / 2, ty = (b[1] + b[3]) / 2, dx = (tx - mx) * this.face, dy = ty - my; if (dx < 4 || dx > B.range || Math.abs(dy) > dx * 0.9 + 16) continue; const d = dx + Math.abs(dy) * 1.5; if (d < bd) { bd = d; best = [tx, ty]; } }
-    const a = best ? Math.atan2(best[1] - my, best[0] - mx) : (this.face > 0 ? 0 : Math.PI);
-    Actors.bolts.push({ x: mx, y: my, vx: Math.cos(a) * B.speed, vy: Math.sin(a) * B.speed, t: B.life, dmg: W.dmg, ally: true, player: true, c: W.bolt });
+    for (const e of Actors.enemies) { if (e.ally) continue; const b = Actors.hurtbox(e), tx = (b[0] + b[2]) / 2, ty = (b[1] + b[3]) / 2, dx = (tx - mx) * this.face, dy = ty - my; if (dx < 4 || dx > W.range || Math.abs(dy) > dx * 0.9 + 16) continue; const d = dx + Math.abs(dy) * 1.5; if (d < bd) { bd = d; best = [tx, ty]; } }
+    const a = best ? Math.atan2(best[1] - my, best[0] - mx) : (this.face > 0 ? 0 : Math.PI), n = W.pellets || 1;
+    for (let k = 0; k < n; k++) {
+      const aa = a + (n > 1 ? (k / (n - 1) - 0.5) * W.spread : 0);
+      Actors.bolts.push({ x: mx, y: my, vx: Math.cos(aa) * W.speed, vy: Math.sin(aa) * W.speed, t: (W.range / W.speed) * 1.15, dmg: W.dmg, ally: true, player: true, c: W.bolt, pierce: W.pierce, chain: W.chain });
+    }
     Game.flash = { x: mx + this.face * 4, y: my, t: 0.07 };
+  },
+  // throw what's in the quick slot: an arc ahead, a little more if you're running
+  throwIt(k) {
+    // lobbed to land on the nearest hostile ahead, or as far as it goes
+    const e = Actors.nearest((q) => !q.ally && Math.sign(q.x - this.x) === this.face && Math.abs(q.y - this.y) < 60, 200);
+    const d = e ? Math.abs(e.x + (e.vx || 0) * 0.4 - this.x) : 0, vy = e ? -clamp(d * 1.3, 90, 175) : -175, fl = (-vy + Math.sqrt(vy * vy + 2 * 520 * 24)) / 520;
+    const vx = e ? this.face * clamp(d / fl, 40, 220) : this.face * 165 + this.vx * 0.4;
+    Actors.throws.push({ x: this.x + this.face * 6, y: this.y - 24, vx, vy, t: k === 'frag' ? 1.4 : 1.0, kind: k });
+    this.strikeT = 0.15; return true;
   },
   strike() {
     const S = T.strike, dmg = Game.strikeDmg();
     this.strikeT = 0.2; this.strikeCd = S.cd;
     const x0 = this.face > 0 ? this.x : this.x - S.reach - 4, box = [x0, this.y - T.player.h + 2, x0 + S.reach + 4, this.y - 2];
-    if (Actors.hit(box, dmg, this.face)) Fx.sparks(this.x + this.face * 14, this.y - 18, 6);
+    const mel = Game.worn('melee');
+    if (Actors.hit(box, dmg, this.face, mel && mel.stun)) Fx.sparks(this.x + this.face * 14, this.y - 18, 6);
   },
   runProgram() {
     const prog = Game.s.prog;
@@ -156,8 +181,8 @@ const Player = {
     for (const n of Actors.npcs) {
       if (n.hidden) continue;
       const dx = Math.abs(n.x - this.x); if (dx > 20 || Math.abs(n.y - this.y) > 14) continue;
-      const dn = dx + (n.def.role ? 0 : 14); // passers-by don't get in the way of a machine you're at
-      if (dn < bd) { bd = dn; best = { n, pr: { verb: n.def.role ? NPC_ROLE[n.def.role].verb : 'Talk', text: n.def.role ? NPC_ROLE[n.def.role].prompt(n) : 'Talk to ' + n.def.name, tap: true } }; }
+      const work = n.def.caseId || Cases.actionsFor(n.def.name).length > 0, dn = dx + (work ? -30 : n.def.role ? 0 : 14); // passers-by don't get in the way of a machine you're at
+      if (dn < bd) { bd = dn; best = { n, pr: { verb: work ? 'Question' : n.def.role ? NPC_ROLE[n.def.role].verb : 'Talk', text: work ? 'Question ' + n.def.name : n.def.role ? NPC_ROLE[n.def.role].prompt(n) : 'Talk to ' + n.def.name, tap: true } }; }
     }
     this.target = best;
     const useHit = Input.take('useHit');
@@ -199,6 +224,14 @@ const Fx = {
     this.cap();
   },
   burst(x, y, c, n) { for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2 + hash(Game.frame, k, 4), s = 40 + hash(Game.frame, k, 5) * 70; Game.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0.3 + hash(Game.frame, k, 6) * 0.3, c, g: 0 }); } this.cap(); },
-  cap() { if (Game.particles.length > 200) Game.particles.splice(0, Game.particles.length - 200); },
+  // an arc bolt jumping from one to the next
+  arc(a, b) { const pa = Actors.hurtbox(a), pb = Actors.hurtbox(b), ax = (pa[0] + pa[2]) / 2, ay = (pa[1] + pa[3]) / 2, bx = (pb[0] + pb[2]) / 2, by = (pb[1] + pb[3]) / 2; for (let k = 0; k <= 10; k++) Game.particles.push({ x: ax + (bx - ax) * k / 10 + (hash(Game.frame, k, 8) - 0.5) * 6, y: ay + (by - ay) * k / 10 + (hash(Game.frame, k, 9) - 0.5) * 6, vx: 0, vy: 0, t: 0.15, c: [190, 150, 255], g: 0 }); this.cap(); },
+  // something thrown going off: a ring of light and a flash, its colour by kind
+  blast(x, y, kind, r) {
+    const c = { frag: [255, 150, 60], emp: [90, 160, 255], flash: [255, 255, 255], smoke: [150, 150, 160] }[kind];
+    for (let k = 0; k < 28; k++) { const a = (k / 28) * Math.PI * 2, s = r * (kind === 'smoke' ? 0.8 : 2.4); Game.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.7, t: kind === 'smoke' ? 1.6 : 0.35, c, g: kind === 'smoke' ? -20 : 0 }); }
+    Game.flash = { x, y, t: kind === 'flash' ? 0.25 : 0.12, r: r * 2, c: c.map((q) => q / 255) }; this.cap();
+  },
+  cap() { if (Game.particles.length > 260) Game.particles.splice(0, Game.particles.length - 200); },
   step(dt) { for (const p of Game.particles) { p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.t -= dt; } Game.particles = Game.particles.filter((p) => p.t > 0); if (Game.flash) { Game.flash.t -= dt; if (Game.flash.t <= 0) Game.flash = null; } },
 };

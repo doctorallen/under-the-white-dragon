@@ -19,7 +19,7 @@ const Dev = {
       <h3>Run speed · ×${this.s.speed}</h3><input type="range" min="0.5" max="4" step="0.25" value="${this.s.speed}" data-devrange="speed">
       <h3>Time of day · ${Game.clock()}</h3><input type="range" min="0" max="23.99" step="0.25" value="${Game.hour()}" data-devrange="time">
       <h3>Give</h3><div class="buttons">${btn('cr', '+1000 cr')}${btn('parts', '+10 of every part')}${btn('gear', 'All gear')}${btn('gadgets', 'All gadgets')}${btn('programs', 'All programs')}${btn('heal', 'Heal, fill RAM')}${btn('levels', 'Every piece +1')}</div>
-      <h3>The world</h3><div class="buttons">${btn('warden', 'Warden down')}${btn('lift', 'Lift restored')}${btn('been', 'Been everywhere')}${btn('cases', 'Close every case')}${btn('resetcases', 'Reset the cases')}${btn('kill', 'Kill everything here')}${btn('respawn', 'Respawn enemies')}${btn('undo', 'Restore stripped machines')}</div>
+      <h3>The world</h3><div class="buttons">${btn('warden', 'Warden down')}${btn('lift', 'Lift restored')}${btn('been', 'Been everywhere')}${btn('nextcase', 'Skip to the next suspect')}${btn('cases', 'Close every case')}${btn('resetcases', 'Reset the cases')}${btn('kill', 'Kill everything here')}${btn('respawn', 'Respawn enemies')}${btn('undo', 'Restore stripped machines')}</div>
       <h3>Go to</h3><div class="buttons">${spawns}</div>
       <p class="dim">Credits ${s.cr} · day ${s.day} · level ${World.L.id} at ${Math.round(Player.x)}, ${Math.round(Player.y)}</p>`;
   },
@@ -34,7 +34,8 @@ const Dev = {
       heal: () => { s.hp = T.player.hp; s.ram = T.ram.max; }, levels: () => { for (const id in s.gear.owned) s.gear.lvl[id] = Math.min(FAB.maxLevel, (s.gear.lvl[id] || 0) + 1); },
       warden: () => { s.flags.warden = true; Actors.load(); }, lift: () => { s.flags.lift = true; for (const p of World.props) p.spr = null; },
       been: () => { for (const id in LEVELS) s.flags['been:' + id] = true; },
-      cases: () => { for (const j of JOBS) { s.jobs.taken[j.id] = true; s.jobs.done[j.id] = true; } }, resetcases: () => { s.jobs = { taken: {}, done: {}, kills: {} }; },
+      cases: () => { for (const id of QUEST_ORDER) s.quests[id] = { st: QUESTS[id].steps.length, n: 0, done: true }; for (const id of CASE_ORDER) s.cases[id] = { found: {}, leads: {}, done: true, verdict: 'arrest', synth: true }; }, resetcases: () => { s.quests = {}; s.cases = {}; s.night = null; s.track = null; },
+      nextcase: () => { const id = CASE_ORDER.find((q) => !Cases.closed(q)); if (!id) return; if (!Cases.st(id)) { const C = CASES[id]; for (const a of C.after || []) if (QUESTS[a]) s.quests[a] = { st: 9, n: 0, done: true }; else s.cases[a] = { found: {}, leads: {}, done: true, verdict: 'arrest', synth: true }; Cases.start(id); } const C = CASES[id], c = Cases.st(id); for (const k in C.clues) c.found[k] = 1; for (const L of C.leads) c.leads[L.id] = 1; if (C.gate) s.flags[ENEMY[C.gate.boss].flag] = true; World.questProps(); Actors.questSpawns(); },
       kill: () => { for (const e of Actors.enemies.slice()) if (!e.ally) Actors.damage(e, 1e6, 1); }, respawn: () => Actors.load(),
       undo: () => { for (const p of World.props) if (p.done) { p.done = false; delete s.done[p.id]; p.spr = null; Props.init(p); } },
     };

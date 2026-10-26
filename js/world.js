@@ -62,6 +62,16 @@ const World = {
     // props, with what's been done to them
     this.props = L.props.map((p) => Object.assign({}, p, { done: !!Game.s.done[p.id] }));
     for (const p of this.props) Props.init(p);
+    this.questProps();
+  },
+  // the props cases and quests put in this level: clues, photos, pickups;
+  // made again whenever a case or quest moves on
+  questProps() {
+    if (!this.L) return;
+    const L = this.L, at = (a) => { let x = a.x, y = a.y; if (a.spot !== undefined && L.spots && L.spots.length) { const s = L.spots[a.spot % L.spots.length]; x = s[0] + 18; y = s[1]; } if (y === undefined || y === 'G') y = L.ground || Object.values(L.spawns)[0][1]; return [x, y]; };
+    this.props = this.props.filter((p) => !p.dyn);
+    for (const c of Cases.props(L.id)) { const [x, y] = at(c.K.at); const p = { id: 'clue:' + c.id + ':' + c.cid, kind: 'clue', x, y, caseId: c.id, cid: c.cid, K: c.K, dyn: true }; Props.init(p); this.props.push(p); }
+    for (const q of Quests.pickups(L.id)) { const [x, y] = at(q.a); const p = { id: 'pick:' + q.item, kind: 'pickup', x, y, item: q.item, dyn: true }; Props.init(p); this.props.push(p); }
   },
   // does the box (x0..x1, y0..y1) overlap anything solid?
   hits(x0, y0, x1, y1) {

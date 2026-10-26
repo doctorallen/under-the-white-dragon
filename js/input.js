@@ -8,7 +8,7 @@
 // pick another).
 // ---------------------------------------------------------------------------
 const Input = {
-  ax: 0, ay: 0, jump: false, use: false, jumpHit: false, strikeHit: false, useHit: false, progHit: false,
+  ax: 0, ay: 0, jump: false, use: false, jumpHit: false, strikeHit: false, useHit: false, progHit: false, itemHit: false,
   keys: new Set(), stick: null, touch: false, bot: null,
   init() {
     const map = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', Space: 'j', KeyK: 'j', KeyE: 'e', KeyF: 'e', ShiftLeft: 'slow', ShiftRight: 'slow' };
@@ -20,6 +20,8 @@ const Input = {
       if (e.code === 'KeyJ' || e.code === 'KeyX') this.strikeHit = true;
       if (e.code === 'KeyQ') this.progHit = true;
       if (e.code === 'KeyR') Hud.nextProgram();
+      if (e.code === 'KeyG') this.itemHit = true;
+      if (e.code === 'KeyT') Hud.nextItem();
       if (e.code === 'KeyI' || e.code === 'Tab') { Hud.toggle('pack'); e.preventDefault(); }
       if (e.code === 'KeyM') Hud.toggle('map');
       if (e.code === 'Escape') Hud.toggle(Hud.open ? Hud.open : 'pause');

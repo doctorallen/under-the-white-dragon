@@ -71,7 +71,7 @@ const ELEVATOR = [
 
 // ---- home: your apartment on floor 31, the hall, the elevator --------------------
 LEVELS.home = {
-  name: 'Floor 31', depth: '+40 m',
+  name: 'Floor 31', depth: '+40 m', tier: 1, hub: true,
   make() {
     const L = newLevel('home', 'Floor 31', 1940, 262);
     const G = 226, CEIL = 104, APT = 384, EL = 1470, IN = 1520;
@@ -143,7 +143,7 @@ LEVELS.home = {
     L.npc({ name: 'Tam', look: { skin: SKINS[2], hair: 'cap', capCol: '#ff4ab0', top: '#3a5a8a', legs: '#2a2a34', tall: 0.72 }, x: 980, y: G, sched: [[0, 1, 980, 'wander'], [1, 14, 980, 'away'], [14, 24, 980, 'wander']], lines: ['Is that a real blaster? Can I hold it? No? Okay.', 'My mum says detectives are just cops with sad coats.', 'I saw a synth once. It looked like a lady. It was nice to me.'] });
     L.npc({ name: 'Rook\'s brother', look: { skin: SKINS[1], hair: 'undercut', hairCol: '#3af0e0', top: '#2a2a2a', coat: 'jacket', legs: '#1a1a24', cyArm: true, acc: '#3af0e0' }, x: 1110, y: G, face: -1, sched: [[0, 24, 1110, 'stand']], smoke: true, lines: ['Window\'s the only place on this floor you can smoke without the alarm going.', 'Don\'t look at the arm, detective. It was my grandad\'s. From before the law.', 'You want the elevator, it\'s at the end. Kick it if it sulks.'] });
     // spawns, light, no weather indoors
-    L.spawns = { bed: [116, G], elevator: [EL, G], pad: [1650, G] };
+    L.spawns = { bed: [116, G], elevator: [EL, G], pad: [1650, G] }; L.ground = G;
     L.ambient = (x, y) => WIN.some(([a, b, c, d]) => x >= a && x < c && y >= b && y < d) ? [0.72, 0.78, 0.88] : x < APT ? [0.34, 0.28, 0.3] : x < IN ? [0.3, 0.32, 0.32] : [0.4, 0.44, 0.54];
     L.rain = 1; L.dry = [[0, 0, IN, L.h]];
     return L;
@@ -152,7 +152,7 @@ LEVELS.home = {
 
 // ---- Precinct 9: a pad on the tower's side, the lobby, cells, the lieutenant, the armoury
 LEVELS.precinct = {
-  name: 'Precinct 9', depth: '+120 m',
+  name: 'Precinct 9', depth: '+120 m', tier: 1, hub: true,
   make() {
     const L = newLevel('precinct', 'Precinct 9', 1560, 262);
     const G = 226, CEIL = 100, IN = 420;
@@ -199,7 +199,7 @@ LEVELS.precinct = {
     N({ name: 'Prisoner', look: { skin: SKINS[1], hair: 'mohawk', hairCol: '#ff4ab0', hairGlow: true, top: '#2a1a1e', legs: '#1a1a1e', cyArm: 'both', acc: '#ff4ab0', eye: '#ff4ab0' }, x: 880, y: G, face: -1, sched: [[0, 24, 880, 'stand']], lines: ['It\'s my arm. Mine. You can\'t arrest an arm.', 'Six months for a bit of chrome. Synths walk around free and I\'m in here.', 'You think you\'re clean, detective? Everyone up top\'s got something in them.'] });
     N({ name: 'Lieutenant Hale', role: 'fixer', look: { skin: SKINS[2], hair: 'bob', hairCol: '#c8c8c8', top: '#2a2e3a', coat: 'long', legs: '#1a1a24', collar: true }, x: 1130, y: G, face: -1, sched: [[0, 24, 1130, 'stand']], lines: ['Four synths, detective. And the city\'s full of illegal chrome while you look. Do both.', 'Good work. There\'s more. There\'s always more.'] });
     N({ name: 'Quartermaster Ito', role: 'qm', look: { skin: SKINS[0], hair: 'bald', top: '#3a4030', apron: '#2a2e24', legs: '#2a2a24', shades: '#ffb040', hands: { fx: 26, fy: 38 } }, x: 1400, y: G, sched: [[0, 24, 1400, 'work']], behind: true, lines: ['Tools, not chrome.'] });
-    L.spawns = { pad: [300, G] };
+    L.spawns = { pad: [300, G] }; L.ground = G;
     L.ambient = (x) => x < IN ? [0.42, 0.46, 0.58] : [0.3, 0.33, 0.4];
     L.rain = 1; L.dry = [[IN, 0, L.w, L.h]];
     return L;
@@ -208,7 +208,7 @@ LEVELS.precinct = {
 
 // ---- L1: the Stack ------------------------------------------------------------
 LEVELS.stack = {
-  name: 'The Stack', depth: '0 m',
+  name: 'The Stack', depth: '0 m', tier: 1, hub: true,
   make() {
     const L = newLevel('stack', 'The Stack', 2560, 690);
     const G = 640, MID = 500, UP = 360, YARD = 2200;
@@ -354,7 +354,7 @@ LEVELS.stack = {
     L.critter('rat', 720, 2150, G, 3); L.critter('rat', 20, 320, G, 1); L.critter('rat', 2220, 2540, G, 1); L.critter('cat', 1520, 2160, MID, 1);
     L.litter(700, 2180, G, 8); L.litter(1500, 2180, MID, 3); L.litter(2210, 2550, G, 3);
     L.vents.push({ x: 860, y: 618, kind: 'steam' }, { x: 2280, y: 390, kind: 'steam' });
-    L.spawns = { elevator: [158, G], shaft: [2470, G], lift: [2380, G] };
+    L.spawns = { elevator: [158, G], shaft: [2470, G], lift: [2380, G] }; L.ground = G;
     L.ambient = (x, y) => { const t = clamp(1 - y / 520, 0, 1); return [0.16 + t * 0.12, 0.13 + t * 0.07, 0.24 + t * 0.14]; };
     L.wet.push({ y: G + 1, x0: 700, x1: L.w, depth: 22, k: 0.38 });
     L.rain = 1;
@@ -366,7 +366,7 @@ LEVELS.stack = {
 
 // ---- L2: street level -----------------------------------------------------------
 LEVELS.street = {
-  name: 'Street level', depth: '−60 m',
+  name: 'Street level', depth: '−60 m', tier: 2, hub: true,
   make() {
     const L = newLevel('street', 'Street level', 2400, 500);
     const G = 452;
@@ -424,7 +424,7 @@ LEVELS.street = {
     // further on: a car, and the old subway, sealed
     L.prop('car', 2080, G, { look: { col: '#3a3a4a' }, label: 'burnt-out car' });
     L.block(2260, 300, L.w, G, MAT.tileW, { base: 0.36, lip: 0, panels: [8, 8] });
-    L.prop('sealed', 2330, G, { label: 'The old subway to Old Town. Sealed, for now.' });
+    L.prop('keydoor', 2330, G, { key: 'subwaypass', mode: 'subway', label: 'The old subway to Old Town' });
     L.sign(2290, 312, 6, '#ffb040', { r: 50, dead: 0.2 });
     // the people of the street
     const N = (o) => L.npc(o);
@@ -442,7 +442,7 @@ LEVELS.street = {
     L.critter('rat', 0, 2300, G, 4); L.litter(0, 2380, G, 10);
     L.vents.push({ x: 820, y: G, kind: 'steam' }, { x: 1360, y: G, kind: 'steam' }, { x: 2040, y: G, kind: 'steam' });
     for (const x of [80, 230, 470, 760, 1010, 1330, 1520, 1890, 2150]) L.drips.push({ x, y0: 162, y1: G });
-    L.spawns = { shaft: [128, G], lift: [300, G], elevator: [350, G] };
+    L.spawns = { shaft: [128, G], lift: [300, G], elevator: [350, G], subway: [2300, G] }; L.ground = G;
     L.ambient = [0.15, 0.12, 0.2];
     L.wet.push({ y: G + 1, x0: 0, x1: L.w, depth: 24, k: 0.45 });
     L.rain = 0;

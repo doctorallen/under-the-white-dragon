@@ -7,11 +7,12 @@
 // fabricator, the spinner, the pause menu.
 // ---------------------------------------------------------------------------
 const Hud = {
-  open: null, who: null, last: {}, tab: 'gear', slot: 'outer', pick: null,
+  open: null, who: null, last: {}, tab: 'jobs', slot: 'outer', pick: null, mode: 'spinner',
   init() {
     $('bPack').onclick = () => this.toggle('pack');
     $('bMenu').onclick = () => this.toggle('pause');
     $('bCab').onclick = () => this.toggle('cab');
+    $('bItem').onclick = () => { Input.itemHit = true; };
     $('panelClose').onclick = () => this.toggle(null);
     this.refresh();
   },
@@ -21,6 +22,7 @@ const Hud = {
     const s = Game.s;
     this.set('clock', Game.clock() + ' · day ' + s.day + (Dev.s.fps ? ' · ' + Dev.fps + ' fps' : ''));
     this.set('place', World.L.name);
+    this.set('obj', this.objective());
     const tg = Player.target;
     this.set('prompt', tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : '');
     // the Use button says what it would do, in a word
@@ -29,7 +31,7 @@ const Hud = {
     if (this.last.useState !== (tg ? (tg.pr.no ? 'no' : 'on') : 'off')) { this.last.useState = tg ? (tg.pr.no ? 'no' : 'on') : 'off'; $('bUse').classList.toggle('idle', !tg); $('bUse').classList.toggle('no', !!(tg && tg.pr.no)); }
     $('prompt').classList.toggle('no', !!(tg && tg.pr.no));
     $('holdbar').style.width = Player.hold ? Math.min(100, (Player.hold.t / Player.hold.need) * 100) + '%' : '0';
-    const b = Actors.boss; if (b && b.state !== 'idle') { $('boss').hidden = false; $('bossfill').style.width = Math.max(0, (b.hp / b.max) * 100) + '%'; } else $('boss').hidden = true;
+    const b = Actors.boss; if (b && b.state !== 'idle') { $('boss').hidden = false; this.set('bossname', ENEMY[b.type].name.toUpperCase()); $('bossfill').style.width = Math.max(0, (b.hp / b.max) * 100) + '%'; } else $('boss').hidden = true;
     const el = $('toasts'); for (const n of el.children) n.style.opacity = Game.t - +n.dataset.t > 3.6 ? 0 : 1;
     if (Game.toasts.length && Game.t - Game.toasts[0].t > 4.2) { Game.toasts.shift(); this.toasts(); }
     // speech over heads
@@ -44,10 +46,20 @@ const Hud = {
     $('ram').innerHTML = '<i class="on"></i>'.repeat(s.ram) + '<i></i>'.repeat(T.ram.max - s.ram);
     $('charge').innerHTML = '<i class="on"></i>'.repeat(Player.charge) + '<i></i>'.repeat(Math.max(0, Game.weapon().shots - Player.charge));
     $('cr').textContent = s.cr + ' cr';
+    const q = Game.quickItem(); $('bItem').textContent = q ? ITEM[q].name.split(' ')[0] + ' ' + s.pack[q] : 'Item'; $('bItem').classList.toggle('none', !q);
     $('bProg').textContent = s.prog ? PROGRAMS[s.prog].name : 'No program';
     $('bProg').classList.toggle('none', !s.prog);
     if (this.open) this.panel(this.open);
   },
+  // the tracked case or job: what next, and where
+  objective() {
+    const id = Game.s.track; if (!id) return '';
+    if (Cases.st(id) && !Cases.closed(id)) { const w = Cases.where(id); return '▸ ' + Cases.objective(id) + (w && w.level !== World.L.id ? ' · ' + LEVELS[w.level].name : ''); }
+    if (Quests.active(id)) { const w = Quests.where(id); return '▸ ' + Quests.objective(id) + (w && w.level !== World.L.id ? ' · ' + LEVELS[w.level].name : ''); }
+    return '';
+  },
+  nextItem() { const have = Object.keys(ITEM).filter((k) => (ITEM[k].kind === 'consumable' || ITEM[k].kind === 'throwable') && Game.s.pack[k] > 0); if (!have.length) return; const i = have.indexOf(Game.s.quick); Game.s.quick = have[(i + 1) % have.length]; Game.toast('Quick item: ' + ITEM[Game.s.quick].name); this.refresh(); },
+  photoNote() { const C = Cases.def(Enhancer.id); $('photonote').textContent = Enhancer.found ? C.clues[Enhancer.cid].text : 'Closer. Keep looking.'; },
   nextProgram() { const have = PROGRAM_ORDER.filter((p) => Game.s.programs[p]); if (!have.length) return; const i = have.indexOf(Game.s.prog); Game.s.prog = have[(i + 1) % have.length]; Game.toast('Program: ' + PROGRAMS[Game.s.prog].name); this.refresh(); },
   toggle(which, who) {
     if (!which || (this.open === which && !who)) { this.open = null; this.who = null; $('panel').hidden = true; Game.paused = false; return; }
@@ -66,9 +78,17 @@ const Hud = {
   },
   // salvage icons, as images (made once)
   icons: {},
-  icon(k) { if (this.icons[k]) return this.icons[k]; const sp = salvageIcon(k), [c, g] = canvasOf(48, 48); g.drawImage(sp.c, 0, 0, 48, 48); return (this.icons[k] = c.toDataURL()); },
+  icon(k) { if (this.icons[k]) return this.icons[k]; const sp = itemIcon(k), [c, g] = canvasOf(48, 48); g.drawImage(sp.c, 0, 0, 48, 48); if (sp.e) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.5; g.drawImage(sp.e, 0, 0, 48, 48); } return (this.icons[k] = c.toDataURL()); },
   // a grid of salvage tiles; `btn(k)` adds a button under each
   tiles(o, btn) { const ks = SALVAGE_ORDER.filter((k) => o === null || o[k]); return ks.length ? '<div class="tiles">' + ks.map((k) => `<div class="tile" style="--r:${SALVAGE[k].col[1]}"><img src="${this.icon(k)}" alt=""><b>${SALVAGE[k].name}</b>${o ? `<span class="n">× ${o[k]}</span>` : ''}${btn ? btn(k) : ''}</div>`).join('') + '</div>' : '<p class="dim">No salvage. Hold Use on a machine to strip it.</p>'; },
+  // a shop's stock: things to carry, then gear
+  shopHtml(shop) {
+    const s = Game.s, ids = Object.keys(shop), items = ids.filter((id) => ITEM[id]), gear = ids.filter((id) => GEAR[id]);
+    let h = '';
+    if (items.length) h += '<h3>For sale</h3><div class="tiles">' + items.map((k) => `<div class="tile" style="--r:${(ITEM[k].col || ['', '#888'])[1]}"><img src="${this.icon(k)}" alt=""><b>${ITEM[k].name}</b><small>${ITEM[k].note || ''}</small><span class="n">you have ${s.pack[k] || 0}</span><div class="tbtns"><button data-buyitem="${k}" ${s.cr >= shop[k] ? '' : 'disabled'}>${shop[k]} cr</button></div></div>`).join('') + '</div>';
+    if (gear.length) h += '<h3>Gear for sale</h3><div class="cards">' + gear.map((id) => this.gearCard(id, s.gear.owned[id] ? '<span class="tag">yours</span>' : `<button data-buygear="${id}" ${s.cr >= shop[id] ? '' : 'disabled'}>${shop[id]} cr</button>`)).join('') + '</div>';
+    return h;
+  },
   gearCard(id, btn) {
     const G = GEAR[id], R = RARITY[G.rarity], st = [];
     if (G.armor) st.push('Armour ' + Game.stat(id, 'armor')); if (G.dmg) st.push(Game.stat(id, 'dmg') + ' damage × ' + G.shots + ' shots'); if (G.strike) st.push('Blows ' + Game.stat(id, 'strike'));
@@ -132,8 +152,8 @@ const Hud = {
     if (which === 'pack') {
       // what you carry, in four tabs: gear on a figure of you, items, ware and programs, jobs
       title.textContent = 'Inventory';
-      const tab = this.tab || 'gear';
-      h += '<nav class="tabs">' + [['gear', 'Gear'], ['items', 'Items'], ['ware', 'Gadgets'], ['jobs', 'Cases']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
+      const tab = this.tab || 'jobs';
+      h += '<nav class="tabs">' + [['jobs', 'Cases'], ['gear', 'Gear'], ['items', 'Items'], ['ware', 'Gadgets']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
       if (tab === 'gear') {
         const slot = (k) => { const g = Game.worn(k), spare = Object.keys(s.gear.owned).some((id) => GEAR[id].slot === k && s.gear.on[k] !== id); return `<button class="slot ${g ? 'r-' + g.rarity : 'empty'} ${this.slot === k ? 'sel' : ''}" data-slot="${k}">${g ? `<img src="${this.thumb(s.gear.on[k])}" alt="">` : '<span class="noimg"></span>'}<span><small>${SLOTS[k]}${spare ? ' <i class="new">+</i>' : ''}</small><b>${g ? Game.gearName(s.gear.on[k]) : 'Empty'}</b></span></button>`; };
         const W = Game.weapon();
@@ -148,15 +168,12 @@ const Hud = {
           <div class="detail">${pick ? this.gearDetail(pick) : `<h3>${SLOTS[k]}</h3><p class="dim">Nothing for this slot yet. Vendors sell gear, and it turns up in stashes and on the people you take down.</p>`}
           ${mine.length > 1 ? `<h3>Your ${SLOTS[k].toLowerCase()} gear</h3><div class="picks">` + mine.map((id) => { const G = GEAR[id]; return `<button class="slot r-${G.rarity} ${id === pick ? 'sel' : ''}" data-pick="${id}"><img src="${this.thumb(id)}" alt=""><span><small>${RARITY[G.rarity].name}${s.gear.on[k] === id ? ' · worn' : ''}</small><b>${Game.gearName(id)}</b></span></button>`; }).join('') + '</div>' : ''}</div></div>`;
       } else if (tab === 'items') {
-        const worth = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0) * SALVAGE[k].price, 0);
-        h += `<p class="sub">${s.cr} cr · ${Game.packCount()} pieces of salvage, worth about ${worth} cr to Kit. Whatever you pick up is yours to keep.</p>` + this.tiles(s.pack, (k) => `<small>${SALVAGE[k].price} cr each at Kit's</small>`);
+        h += itemsTab(s);
       } else if (tab === 'ware') {
         h += `<h3>Gadgets</h3><div class="tiles">` + GADGET_ORDER.map((g) => `<div class="tile ${s.gadgets[g] ? '' : 'off'}" style="--r:#3af0e0"><img src="${this.gadgetIcon(g)}" alt=""><b>${GADGETS[g].name}</b><small>${s.gadgets[g] ? GADGETS[g].note : 'Quartermaster Ito at the precinct builds these.'}</small></div>`).join('') + '</div>';
         h += `<h3>Programs · RAM ${s.ram} of ${T.ram.max}</h3><div class="rows">` + (PROGRAM_ORDER.filter((p) => s.programs[p]).map((p) => `<div class="row"><div><b>${PROGRAMS[p].name}</b><small>${PROGRAMS[p].ram} RAM · ${PROGRAMS[p].note}</small></div><button data-prog="${p}" ${s.prog === p ? 'disabled' : ''}>${s.prog === p ? 'Selected' : 'Select'}</button></div>`).join('') || '<p class="dim">No programs yet. Jack into data nodes to find them.</p>') + '</div>';
       } else {
-        h += `<div class="rows">` + (JOBS.filter((j) => s.jobs.taken[j.id] && !s.jobs.done[j.id]).map((j) => `<div class="row"><div><b>${j.title}</b><small>${j.text}</small></div><span class="tag">${Game.jobReady(j) ? 'ready' : ''}</span></div>`).join('') || '<p class="dim">No open cases. Lieutenant Hale at the precinct has some.</p>') + '</div>';
-        const story = JOBS.filter((j) => s.jobs.done[j.id] && j.story);
-        if (story.length) h += '<h3>Case notes</h3>' + story.map((j) => `<p class="sub">${j.story}</p>`).join('');
+        h += caseFile(s);
       }
     } else if (which === 'bed') {
       title.textContent = 'Home';
@@ -164,9 +181,6 @@ const Hud = {
     } else if (which === 'elevator') {
       title.textContent = 'Elevator';
       h += `<p class="sub">A lift cage that groans. Buttons for the floors you know.</p><div class="rows">` + ELEVATOR.map((f) => { const here = World.L.id === f.level, known = !f.needs || Game.flag(f.needs); return `<div class="row ${known ? '' : 'passed'}"><div><b>${f.name}</b><small>${known ? f.note : 'The button is dead. You haven\'t found a way there yet.'}</small></div>${here ? '<span class="tag">you\'re here</span>' : `<button data-floor="${f.level}" ${known ? '' : 'disabled'}>Go</button>`}</div>`; }).join('') + '</div>';
-    } else if (which === 'spinner') {
-      title.textContent = 'Your spinner';
-      h += `<p class="sub">Precinct issue, nine years old, still fast. Where to?</p><div class="rows">` + Flight.PLACES.filter((f) => f.level !== World.L.id).map((f) => { const known = !f.needs || Game.flag(f.needs); return `<div class="row ${known ? '' : 'passed'}"><div><b>${f.name}</b><small>${known ? f.note : 'You don\'t know a way in there yet.'}</small></div><button data-fly="${f.level}:${f.spawn}" class="go" ${known ? '' : 'disabled'}>Fly</button></div>`; }).join('') + '</div>';
     } else if (which === 'cab') {
       const fare = Flight.cabFare(), home = World.L.id === 'home';
       title.textContent = 'Call a cab';
@@ -178,21 +192,9 @@ const Hud = {
       const n = this.who, rate = (n && n.def.rate) || 1, worth = SALVAGE_ORDER.reduce((a, k) => a + Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate), 0);
       title.textContent = n ? n.def.name : 'Vendor';
       h += `<p class="sub">${n ? n.def.lines[0] : ''}</p><div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${s.pack[k] || 0}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
-      h += `<div class="buttons"><button data-act="sellAll" ${worth ? '' : 'disabled'}>Sell everything for ${worth} cr</button></div><p class="dim">Keep what the ripperdoc wants: wire, alloy, glass, coolant and chips all go into ware.</p>`;
+      h += `<div class="buttons"><button data-act="sellAll" ${worth ? '' : 'disabled'}>Sell everything for ${worth} cr</button></div><p class="dim">Keep what Mags wants: she builds gear from wire, alloy, glass, coolant and chips.</p>`;
       const shop = n && SHOP[n.def.name];
-      if (shop) h += `<h3>Gear for sale</h3><div class="cards">` + Object.keys(shop).map((id) => this.gearCard(id, s.gear.owned[id] ? '<span class="tag">yours</span>' : `<button data-buygear="${id}" ${s.cr >= shop[id] ? '' : 'disabled'}>${shop[id]} cr</button>`)).join('') + '</div>';
-    } else if (which === 'fixer') {
-      const n = this.who;
-      title.textContent = n ? n.def.name : 'Cases';
-      h += `<p class="sub">"${n ? n.def.lines[Math.min(n.def.lines.length - 1, Object.keys(s.jobs.done).length ? 1 : 0)] : ''}"</p><div class="rows">`;
-      for (const j of JOBS) {
-        const st = Game.jobState(j); if (st === 'locked') continue;
-        const btn = st === 'open' ? `<button data-take="${j.id}">Take the case</button>` : st === 'ready' ? `<button data-finish="${j.id}" class="go">Report</button>` : st === 'done' ? '<span class="tag">closed</span>' : `<span class="tag">${j.kills ? (s.jobs.kills[j.id + ':' + Object.keys(j.kills)[0]] || 0) + ' of ' + Object.values(j.kills)[0] : 'open'}</span>`;
-        const rw = [j.reward.cr ? j.reward.cr + ' cr' : '', j.reward.chips ? j.reward.chips + ' chips' : '', j.reward.gear ? GEAR[j.reward.gear].name.toLowerCase() : ''].filter(Boolean).join(', ');
-        h += `<div class="row ${st === 'done' ? 'passed' : ''}"><div><b>${j.title}</b><small>${j.text}</small><small class="gold">Pays ${rw}</small></div>${btn}</div>`;
-      }
-      h += '</div>';
-      if (JOBS.every((j) => s.jobs.done[j.id])) h += '<p class="sub">"Your woman went down the old subway, and she wasn\'t alone. Word is the synths are looking for whoever made them. Nobody up here made them, detective. When the subway opens, you go down after them."</p>';
+      if (shop) h += this.shopHtml(shop);
     } else if (which === 'qm') {
       title.textContent = 'Quartermaster Ito';
       h += `<p class="sub">"Chrome's for criminals. You get tools. Bring me parts and the precinct covers the rest of the paperwork, not the money."</p><div class="cards">`;
@@ -200,7 +202,9 @@ const Hud = {
         const G = GADGETS[g], owned = s.gadgets[g], f = Game.shortfall(G.cost);
         h += `<div class="card" style="--r:#3af0e0"><img src="${this.gadgetIcon(g)}" alt=""><div class="cardtext"><b>${G.name}</b><small class="rar">Gadget · ${G.kind}</small><small>${G.note}</small></div>${owned ? '<span class="tag">yours</span>' : `<div class="pay">${this.cost(G.cost)}${f.extra ? `<small class="buy">+ ${f.extra} cr for the parts you're missing</small>` : ''}<button data-gadget="${g}" class="go" ${s.cr >= f.total ? '' : 'disabled'}>Build · ${f.total} cr</button></div>`}</div>`;
       }
-      h += '</div>';
+      h += '</div>' + this.shopHtml(SHOP['Quartermaster Ito']);
+    } else if (PANELS[which]) {
+      const [t, html] = PANELS[which](s); title.textContent = t; h += html;
     } else if (which === 'map') {
       title.textContent = 'Map · ' + World.L.name;
       h += MapView.html();
@@ -210,10 +214,11 @@ const Hud = {
     } else if (which === 'pause') {
       title.textContent = 'Downlevel';
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
-        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Gear</b> I. <b>Map</b> M.</p>
-        <p>You\'re a detective with the precinct, tracing four synths who ran from the Spires and went down, and hunting the illegal chrome on the way. Lieutenant Hale at the precinct gives out cases; the quartermaster there builds gadgets. Your spinner is on the pad at the end of your hall. Strip machines for parts, sell them, or take them to Mags in the Stack\'s market for gear. Jack into data nodes for programs. The way down is in the service yard at the east end of the Stack, past the Warden. Anywhere, a cab takes you home for a fare.</p></div>
+        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Gear</b> I. <b>Map</b> M.</p>
+        <p>You\'re a tracer with the precinct. Four synths ran from the Spires and went down into the city; Lieutenant Hale gives you their cases one at a time, and the night desk always has a short one. Find the clues (pick things up, enhance photos, ask people, press them), follow the leads to the suspect, run the baseline test, and decide: retire, arrest or let go. Retire a human and it costs you. Your spinner is on the pad at the end of your hall; the old subway and the lift cages go deeper. Strip machines for parts, sell them, or take them to Mags for gear. Anywhere, a cab takes you home for a fare.</p></div>
         <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
+    if (['vendor', 'qm', 'fab'].includes(which) && this.who) h = workHtml(this.who.def.name) + h;
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
     body.innerHTML = h; body.scrollTop = keep;
     // where money changes hands, what you have is in the header
@@ -226,6 +231,7 @@ const Hud = {
       cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'home' || !Game.pay({ cr: fare })) return; Flight.start('home', 'pad', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
+    panelBind(body, which);
     if (which === 'map') MapView.attach();
     if (which === 'dev') Dev.bind(body);
     body.querySelectorAll('button[data-tab]').forEach((b) => (b.onclick = () => { this.tab = b.dataset.tab; this.panel('pack'); }));
@@ -233,19 +239,17 @@ const Hud = {
     body.querySelectorAll('button[data-pick]').forEach((b) => (b.onclick = () => { this.pick = b.dataset.pick; this.panel('pack'); }));
     body.querySelectorAll('button[data-equip]').forEach((b) => (b.onclick = () => Game.equip(b.dataset.equip)));
     body.querySelectorAll('button[data-unequip]').forEach((b) => (b.onclick = () => Game.unequip(b.dataset.unequip)));
+    body.querySelectorAll('button[data-buyitem]').forEach((b) => (b.onclick = () => { const k = b.dataset.buyitem, n = this.who, shop = SHOP[n && n.def.name] || SHOP['Quartermaster Ito'], c = shop[k]; if (!c || s.cr < c) return; s.cr -= c; Game.give(k, 1); if (!s.quick && (ITEM[k].kind === 'consumable' || ITEM[k].kind === 'throwable')) s.quick = k; this.refresh(); Save.write(); }));
     body.querySelectorAll('button[data-buygear]').forEach((b) => (b.onclick = () => { const id = b.dataset.buygear, n = this.who && this.who.def.name, c = SHOP[n] && SHOP[n][id]; if (!c || s.cr < c || s.gear.owned[id]) return; s.cr -= c; Game.giveGear(id); this.refresh(); Save.write(); }));
     body.querySelectorAll('button[data-fab]').forEach((b) => (b.onclick = () => { this.fabTab = b.dataset.fab; this.panel('fab'); }));
     body.querySelectorAll('button[data-make]').forEach((b) => (b.onclick = () => { Game.make(b.dataset.make); this.refresh(); }));
     body.querySelectorAll('button[data-upgrade]').forEach((b) => (b.onclick = () => { Game.upgrade(b.dataset.upgrade); this.refresh(); }));
     body.querySelectorAll('button[data-break]').forEach((b) => (b.onclick = () => { Game.breakDown(b.dataset.break); this.refresh(); }));
     body.querySelectorAll('button[data-part]').forEach((b) => (b.onclick = () => { const [k, n] = b.dataset.part.split(':'); Game.buyPart(k, +n); this.refresh(); }));
-    body.querySelectorAll('button[data-fly]').forEach((b) => (b.onclick = () => { const [l, sp] = b.dataset.fly.split(':'); Flight.start(l, sp, false); }));
     body.querySelectorAll('button[data-floor]').forEach((b) => (b.onclick = () => { this.toggle(null); Game.go(b.dataset.floor, 'elevator'); }));
     const dc = $('dollcv'); if (dc) { const g = dc.getContext('2d'), sp = RunnerArt.get('stand', false); g.imageSmoothingEnabled = false; g.clearRect(0, 0, dc.width, dc.height); g.drawImage(sp.c, (dc.width - sp.w * 3) / 2, dc.height - sp.h * 3, sp.w * 3, sp.h * 3); if (sp.e) { g.globalCompositeOperation = 'lighter'; g.drawImage(sp.e, (dc.width - sp.w * 3) / 2, dc.height - sp.h * 3, sp.w * 3, sp.h * 3); g.globalCompositeOperation = 'source-over'; } }
     body.querySelectorAll('button[data-prog]').forEach((b) => (b.onclick = () => { s.prog = b.dataset.prog; this.refresh(); }));
     body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = (this.who && this.who.def.rate) || 1, n = s.pack[k] || 0; s.cr += Math.round(n * SALVAGE[k].price * rate); s.pack[k] = 0; this.refresh(); }));
-    body.querySelectorAll('button[data-take]').forEach((b) => (b.onclick = () => Game.takeJob(JOBS.find((j) => j.id === b.dataset.take))));
-    body.querySelectorAll('button[data-finish]').forEach((b) => (b.onclick = () => Game.finishJob(JOBS.find((j) => j.id === b.dataset.finish))));
     body.querySelectorAll('button[data-gadget]').forEach((b) => (b.onclick = () => { const g = b.dataset.gadget; if (s.gadgets[g] || !Game.payBuying(GADGETS[g].cost)) return; s.gadgets[g] = 1; Game.toast(GADGETS[g].name + '. ' + GADGETS[g].note, 'good'); RunnerArt.cache.clear(); this.refresh(); Save.write(); }));
   },
 };

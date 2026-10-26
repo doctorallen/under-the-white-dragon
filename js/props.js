@@ -302,3 +302,44 @@ function desk(o = {}) {
 }
 // a bench
 function bench() { const S = new Spr(30, 10, 411); S.ax = 15; S.ay = 9; panel(S, 0, 3, 29, 5, MAT.steel, { a: 0.7, b: 0.5 }); for (const x of [3, 26]) S.limb(x, 5, x, 9, 1, MAT.steelD); panel(S, 0, 0, 29, 1, MAT.steelD); return S.done(); }
+
+// ---- the ways about, and what cases leave lying around ------------------------
+// a subway platform's door and sign
+function subwayDoor() {
+  const S = new Spr(44, 50, 430); S.ax = 22; S.ay = 49;
+  panel(S, 0, 8, 43, 49, R(['#1a2a2a', '#2a3e3a', '#3a524a', '#7a9a8a']), { a: 0.6, b: 0.4 });
+  panel(S, 6, 14, 21, 49, MAT.chrome, { a: 0.55, b: 0.4 }); panel(S, 22, 14, 37, 49, MAT.chrome, { a: 0.45, b: 0.3 });
+  for (let x = 8; x < 36; x++) S.px(x, 26, '#0a1414');
+  panel(S, 8, 0, 35, 6, ['#0a0a0e', '#16161c']); for (let x = 11; x < 33; x += 3) S.px(x, 3, '#ffd040', true);
+  return S.done();
+}
+// a locker: a tall steel box, a lit latch
+function locker() {
+  const S = new Spr(14, 26, 431); S.ax = 7; S.ay = 25;
+  panel(S, 0, 0, 13, 25, rp('#4a5058', 6)); for (let y = 3; y < 9; y += 2) for (let x = 3; x < 11; x++) S.px(x, y, '#1a1e24');
+  S.px(10, 14, '#3aff80', true); S.px(10, 15, '#1a5a2a');
+  return S.done();
+}
+// an evidence marker: a little lit tent by whatever's there
+function marker(o = {}) {
+  const S = new Spr(12, 12, 432); S.ax = 6; S.ay = 11; const c = col3(o.col || '#ffd040');
+  for (let y = 0; y < 8; y++) for (let x = -y / 2; x <= y / 2; x++) S.px(6 + x, 3 + y, mixRgb(c, [0, 0, 0], x < 0 ? 0.2 : 0), true);
+  S.px(6, 6, '#1a1a1a'); S.px(6, 8, '#1a1a1a');
+  S.px(2, 11, '#c8c8d0'); S.px(9, 10, '#e8e8f0', true);
+  return S.done();
+}
+
+// an icon for anything you carry: salvage as before; the rest by kind, in
+// the item's own colours
+function itemIcon(k) {
+  const I = ITEM[k]; if (!I || I.kind === 'salvage') return salvageIcon(k);
+  const S = new Spr(16, 16, 320 + k.length), c = I.col || ['#3a3a3a', '#8a8a8a', '#e8e8e8'], ramp = rp(c[1], 6);
+  if (I.kind === 'consumable') {
+    if (k === 'noodlecup') { S.shape([[3, 5], [13, 5], [11, 14], [5, 14]], rp('#e8e0d0', 6), { down: 0.3 }); for (let x = 4; x < 13; x++) S.px(x, 8, c[2]); S.limb(9, 5, 12, 0, 0.8, ['#3a2a1a', '#6a4a2a']); }
+    else if (k === 'stim') { S.cap(4, 12, 11, 5, 1.6, 1.6, ramp); S.limb(11, 5, 14, 2, 0.8, MAT.chrome); S.px(6, 10, c[2], true); S.px(8, 8, c[2], true); }
+    else { S.box(2, 4, 13, 12, rp('#e8f0e8', 5), { lo: 1, hi: 4 }); S.box(6, 5, 9, 11, ramp, { glow: true }); S.box(4, 7, 11, 9, ramp, { glow: true }); }
+  } else if (I.kind === 'throwable') { S.ell(8, 9, 5, 5.5, ramp); S.box(6, 2, 10, 4, MAT.steel, { lo: 1, hi: 5 }); S.limb(10, 3, 13, 5, 0.8, MAT.chrome); S.px(8, 9, c[2], true); }
+  else if (I.kind === 'key') { panel(S, 1, 4, 14, 12, ramp, { a: 0.7, b: 0.45 }); for (let x = 3; x < 8; x++) S.px(x, 7, '#1a1a1a'); S.px(11, 9, c[2], true); }
+  else { panel(S, 2, 3, 13, 13, rp('#c8b890', 5), { a: 0.7, b: 0.5 }); for (let y = 6; y < 12; y += 2) for (let x = 4; x < 11; x++) if (hash(x, y, k.length) > 0.3) S.px(x, y, '#3a3428'); S.box(9, 1, 12, 4, rp('#ff4a6a', 4)); }
+  S.ax = 8; S.ay = 15; return S.done();
+}

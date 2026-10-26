@@ -47,6 +47,15 @@ const Life = {
         if (c.flee) { c.flee -= dt; if (c.flee <= 0) { c.flee = 0; c.vx = 0; } }
         else if (hash(Math.floor(c.t * 0.2), c.i, 6) < 0.2) c.vx = (hash(Math.floor(c.t * 0.2), c.i, 7) < 0.5 ? -1 : 1) * 22; else c.vx = 0;
         c.x = clamp(c.x + c.vx * dt, c.x0, c.x1); if (Math.abs(c.vx) > 3) c.face = Math.sign(c.vx);
+      } else if (c.kind === 'dog') {
+        // a synth dog: trots about, and comes to heel by you for a while
+        const d = Math.abs(dp);
+        if (d < 90 && Math.abs(Player.y - c.y) < 20) c.vx = d > 22 ? Math.sign(dp) * 60 : 0;
+        else if (hash(Math.floor(c.t * 0.3), c.i, 8) < 0.35) c.vx = (hash(Math.floor(c.t * 0.3), c.i, 9) < 0.5 ? -1 : 1) * 34; else c.vx = 0;
+        c.x = clamp(c.x + c.vx * dt, c.x0, c.x1); if (Math.abs(c.vx) > 3) c.face = Math.sign(c.vx); else if (d < 90) c.face = Math.sign(dp) || 1;
+      } else if (c.kind === 'owl') {
+        // an owl on its perch: it turns its head to follow you
+        c.vx = 0; c.face = Math.abs(dp) < 140 ? Math.sign(dp) || 1 : c.face;
       }
     }
     // ---- litter: slides in the wind, lifts in a gust, tumbles
@@ -92,6 +101,26 @@ const Life = {
       const s = S.done(); return left ? flipSprite(s) : s;
     });
   },
+  dog(frame, left) {
+    return this.art('dog' + frame + left, () => {
+      const S = new Spr(16, 12, 95); S.ax = 8; S.ay = 11; const fur = ['#2a2018', '#4a3a2a', '#6a5440', '#8a7058'];
+      S.ell(7, 6.5, 4.6, 2.6, fur); S.ell(12, 4, 2.2, 2, fur); S.box(13, 4, 15, 6, fur.slice(1)); S.px(11, 1.6, fur[1]); S.px(12, 1.4, fur[0]);
+      S.px(12.6, 3.4, '#3af0e0', true); S.box(10, 5, 11, 7, ['#1a6a7a', '#3af0e0'], { glow: true });
+      const a = frame ? 1 : 0; for (let y = 8; y < 12; y++) { S.px(4 + a, y, fur[1]); S.px(6 - a, y, fur[0]); S.px(9 - a, y, fur[1]); S.px(11 + a, y, fur[0]); }
+      S.limb(2.6, 6, 0.6, 3 + a, 0.7, fur.slice(1));
+      const s = S.done(); return left ? flipSprite(s) : s;
+    });
+  },
+  owl(frame, left) {
+    return this.art('owl' + frame + left, () => {
+      const S = new Spr(12, 16, 97); S.ax = 6; S.ay = 15; const f = ['#2a2420', '#4a4038', '#7a6a58', '#a89880'];
+      S.ell(6, 9.5, 4, 5.4, f); S.ell(6, 4.6, 3.6, 3.2, f); S.px(3, 1.6, f[1]); S.px(9, 1.6, f[1]);
+      S.px(4.4, 4.4, '#ffb030', true); S.px(7.6, 4.4, '#ffb030', true); if (!frame) { S.px(4.4, 4.4, '#ffe080', true); S.px(7.6, 4.4, '#ffe080', true); }
+      S.px(6, 5.6, '#3a2a1a'); for (let y = 9; y < 14; y += 2) S.px(6 + (y % 4 ? 1 : -1), y, f[3]);
+      S.px(4, 15, '#5a4a2a'); S.px(8, 15, '#5a4a2a');
+      const s = S.done(); return left ? flipSprite(s) : s;
+    });
+  },
   // the flying cars behind the blocks: lanes across the far layer, each car's
   // place worked out from the clock, so nothing needs keeping
   drawTraffic(g, gg, cx, cy, layer) {
@@ -129,7 +158,7 @@ const Life = {
     }
     for (const c of this.critters) {
       const moving = Math.abs(c.vx) > 3, fr = moving ? Math.floor(t * 12) % 2 : 0;
-      const s = c.kind === 'rat' ? this.rat(fr, c.face < 0) : this.cat(c.kind === 'cat' && !moving ? Math.floor(t * 0.7 + c.i) % 2 : fr, c.face < 0);
+      const s = c.kind === 'rat' ? this.rat(fr, c.face < 0) : c.kind === 'dog' ? this.dog(fr, c.face < 0) : c.kind === 'owl' ? this.owl(hash(Math.floor(t * 2), c.i, 3) < 0.08 ? 1 : 0, c.face < 0) : this.cat(c.kind === 'cat' && !moving ? Math.floor(t * 0.7 + c.i) % 2 : fr, c.face < 0);
       const x = Math.round(c.x - s.ax - cx), y = Math.round(c.y - s.ay - cy);
       if (x > -16 && x < View.w + 16 && y > -12 && y < View.h + 12) { g.drawImage(s.c, x, y); if (s.e) gg.drawImage(s.e, x, y); }
     }
@@ -162,7 +191,7 @@ const Life = {
         // three scenes in turn: a steaming bowl, a pulsing logo, a face that blinks
         const scene = Math.floor(t / 3.5) % 3, u = (t % 3.5) / 3.5;
         if (scene === 0) { lit = c1; const bx = A.w / 2, by = A.h * 0.62; for (let i = -7; i <= 7; i++) for (let j = 0; j <= 4; j++) if ((i * i) / 49 + (j * j) / 16 <= 1) put(bx + i, by + j, j === 0 ? [255, 255, 255] : c1); for (let k = 0; k < 3; k++) for (let s = 0; s < 5; s++) put(bx - 4 + k * 4 + Math.round(Math.sin(t * 3 + s + k)), by - 2 - s - ((t * 6) % 2), c2, 0.6); put(bx + 5, by - 6, c2); put(bx + 6, by - 7, c2); put(bx + 7, by - 8, c2); }
-        if (scene === 1) { lit = c2; const r = 3 + u * (Math.min(A.w, A.h) / 2 - 3); for (let a = 0; a < Math.PI * 2; a += 0.15) { put(A.w / 2 + Math.cos(a) * r, A.h / 2 + Math.sin(a) * r, c2, 1 - u); put(A.w / 2 + Math.cos(a) * 4, A.h / 2 + Math.sin(a) * 4, c1); } for (const [i, j] of GLYPHS[(A.x + 5) % GLYPHS.length]) put(A.w / 2 - 1 + i, A.h / 2 - 2 + j, [255, 255, 255]); }
+        if (scene === 1) { lit = c2; const r = 3 + u * (Math.min(A.w, A.h) / 2 - 3); for (let a = 0; a < Math.PI * 2; a += 0.15) { put(A.w / 2 + Math.cos(a) * r, A.h / 2 + Math.sin(a) * r, c2, 1 - u); put(A.w / 2 + Math.cos(a) * 4, A.h / 2 + Math.sin(a) * 4, c1); } for (const [i, j] of GLYPHS[(Math.floor(A.x) + 5) % GLYPHS.length]) put(A.w / 2 - 1 + i, A.h / 2 - 2 + j, [255, 255, 255]); }
         if (scene === 2) { lit = c1; const fx = A.w / 2, fy = A.h / 2; for (let a = 0; a < Math.PI * 2; a += 0.12) put(fx + Math.cos(a) * A.w * 0.22, fy + Math.sin(a) * A.h * 0.36, c1); const blink = (t % 2.2) < 0.15; for (const ex of [-3, 3]) { put(fx + ex, fy - 2, c2); if (!blink) put(fx + ex, fy - 1, [255, 255, 255]); } for (let k = -3; k <= 3; k++) put(fx + k, fy + 4 + Math.abs(k) * 0.2 - (Math.sin(t * 2) > 0 ? 0 : 1) * (k === 0 ? 0 : 0), c2); }
         // a wipe between scenes
         if (u > 0.94) for (let y = 0; y < A.h; y++) put(Math.floor((u - 0.94) / 0.06 * A.w), y, [255, 255, 255], 0.8);

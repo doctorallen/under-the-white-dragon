@@ -2,15 +2,18 @@
 // The game played headlessly in Chrome, sideways on a phone and on a desktop:
 // it boots without an error in the apartment (the desktop run without
 // WebGL2, so the 2D path is played too); the spinner on the pad flies to the
-// precinct, where Lieutenant Hale gives a case and the quartermaster builds
-// spectral lenses; a cab flies home; the elevator goes down to the Stack; a
+// precinct, where Lieutenant Hale gives a job and the first case and the
+// quartermaster builds spectral lenses; a cab flies home; the elevator goes down to the Stack; a
 // vending machine is stripped for parts; Kit's panel opens; Mags makes a
 // mask, buying the glass that's missing; the stairs carry the runner up to
 // both walkways; the data node gives Breach; the strike downs a drone; the
 // grate into the service yard is cut; the Warden falls and drops its helmet,
 // which is worn from the Gear tab; the hatch is breached and the shaft leads
 // down to street level; a car there gives coolant; a ganger downed stays
-// down; the elevator there goes home; a reload brings it all back.
+// down; the elevator there goes home; the spinner flies to Neon Row, where
+// the case's clues are found (a photo enhanced, a witness asked), the suspect
+// tested and arrested; a medpatch heals and a frag hurts; every level loads
+// and draws; a reload brings it all back.
 // Screenshots go to test/out. Chrome comes from $CHROME (puppeteer-core), or,
 // where that isn't installed, playwright's Chromium.
 const http = require('http'), fs = require('fs'), path = require('path');
@@ -73,12 +76,13 @@ async function run(B, url, vp, name, failures) {
   if (!st.frame) fail('the loop is not running');
   await shot('home');
   // out to the pad and the spinner, up to the precinct
-  const fly = await E(() => { T_.walkTo(1760); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-fly="precinct:pad"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
-  if (fly.o !== 'spinner' || !fly.on || fly.level !== 'precinct') fail('the spinner did not fly to the precinct ' + JSON.stringify(fly));
+  const fly = await E(() => { T_.walkTo(1760); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-go="precinct"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
+  if (fly.o !== 'travel' || !fly.on || fly.level !== 'precinct') fail('the spinner did not fly to the precinct ' + JSON.stringify(fly));
   await shot('precinct');
-  // Hale's case, and the quartermaster's lenses
-  const hale = await E(() => { T_.walkTo(1130); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-take="drones"]'); if (b) b.click(); Hud.toggle(null); return { o, taken: !!Game.s.jobs.taken.drones }; });
-  if (hale.o !== 'fixer' || !hale.taken) fail('Hale\'s cases did not open or the case was not taken ' + JSON.stringify(hale));
+  // Hale's job and the first case, and the quartermaster's lenses
+  const hale = await E(() => { T_.walkTo(1130); T_.tap('useHit'); const o = Hud.open; let b = document.querySelector('button[data-take="drones"]'); if (b) b.click(); b = document.querySelector('button[data-case="menagerie"]'); if (b) b.click(); Hud.toggle(null); return { o, taken: Quests.active('drones'), case: !!Cases.st('menagerie') }; });
+  if (hale.o !== 'talk' || !hale.taken || !hale.case) fail('Hale did not give the job and the case ' + JSON.stringify(hale));
+  await shot('hale');
   const qm = await E(() => { Object.assign(Game.s.pack, { glass: 2, chips: 1 }); Game.s.cr += 80; T_.walkTo(1400); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-gadget="scanner"]'); if (b) b.click(); Hud.toggle(null); return { o, has: Game.has('scanner') }; });
   if (qm.o !== 'qm' || !qm.has) fail('the quartermaster did not build the lenses ' + JSON.stringify(qm));
   // a cab home
@@ -108,7 +112,7 @@ async function run(B, url, vp, name, failures) {
   const node = await E(() => { T_.walkTo(1070); T_.tap('useHit'); const on = Hack.on; Hack.finish(true); Hack.close(); return { on, breach: !!Game.s.programs.breach }; });
   if (!node.on || !node.breach) fail('the data node did not give Breach ' + JSON.stringify(node));
   // a drone, struck down
-  const drone = await E(() => { const d = Actors.enemies.find((e) => e.type === 'drone' && e.y < 400); Player.place(d.x - 40, 360); let n = 0; for (let k = 0; k < 900 && d.hp > 0; k++) { Game.s.hp = 100; Input.bot = { ax: Math.sign(d.x - Player.x) * (Math.abs(d.x - Player.x) > 18 ? 1 : 0) }; if (k % 12 === 0) { Player.face = Math.sign(d.x - Player.x) || 1; Input.strikeHit = true; } step(1 / 60); n++; } Input.bot = null; return { hp: d.hp, kills: Game.s.jobs.kills['drones:drone'] || 0, steps: n }; });
+  const drone = await E(() => { const d = Actors.enemies.find((e) => e.type === 'drone' && e.y < 400); Player.place(d.x - 40, 360); let n = 0; for (let k = 0; k < 900 && d.hp > 0; k++) { Game.s.hp = 100; Input.bot = { ax: Math.sign(d.x - Player.x) * (Math.abs(d.x - Player.x) > 18 ? 1 : 0) }; if (k % 12 === 0) { Player.face = Math.sign(d.x - Player.x) || 1; Input.strikeHit = true; } step(1 / 60); n++; } Input.bot = null; return { hp: d.hp, kills: Quests.st('drones').n, steps: n }; });
   if (drone.hp > 0 || drone.kills !== 1) fail('the strike did not down a drone ' + JSON.stringify(drone));
   await shot('walkway');
   // the grate into the yard, then the Warden
@@ -134,6 +138,52 @@ async function run(B, url, vp, name, failures) {
   // the elevator on street level goes home
   const home = await E(() => { T_.walkTo(350); T_.tap('useHit'); const b = document.querySelector('button[data-floor="home"]'); if (b) b.click(); T_.run({}, 90); return Game.s.level; });
   if (home !== 'home') fail('the street elevator did not go home (' + home + ')');
+  // the spinner to Neon Row and the Menagerie case
+  const row = await E(() => { T_.walkTo(1760); T_.tap('useHit'); const b = document.querySelector('button[data-go="d_neonrow"]'); if (b) b.click(); T_.run({}, 330); return { level: Game.s.level, clues: World.props.filter((p) => p.kind === 'clue').length }; });
+  if (row.level !== 'd_neonrow' || row.clues !== 3) fail('the spinner did not reach Neon Row with its clues ' + JSON.stringify(row));
+  const clues = await E(() => {
+    const out = {};
+    // the spent cells, picked up
+    T_.walkTo(610); T_.tap('useHit'); out.casings = !!Cases.st('menagerie').found.casings;
+    // the still, enhanced: zoom in on the detail
+    T_.walkTo(668); T_.tap('useHit'); out.photo = Hud.open;
+    for (let k = 0; k < 3; k++) { const cv = $('photocv'), [sx, sy] = Enhancer.spot; Enhancer.enhance(Enhancer.ox + sx * Enhancer.s, Enhancer.oy + sy * Enhancer.s); }
+    out.still = !!Cases.st('menagerie').found.still;
+    return out;
+  });
+  await shot('photo');
+  const lio = await E(() => {
+    Hud.toggle(null); T_.walkTo(720); T_.tap('useHit');
+    const L = Actors.npcs.find((n) => n.def.name === 'Lio'); Player.place(L.x - 12, L.y); T_.run({}, 10); T_.tap('useHit'); const o = Hud.open;
+    const b = document.querySelector('button[data-ask^="menagerie:lio"]'); if (b) b.click(); Hud.toggle(null);
+    const c = Cases.st('menagerie'); return { o, found: Object.keys(c.found).sort().join(), lead: !!c.leads.coil, zola: !!Actors.npcs.find((n) => n.def.name === 'Zola') };
+  });
+  if (!clues.casings || clues.photo !== 'photo' || !clues.still || lio.o !== 'talk' || lio.found !== 'band,casings,lio,still' || !lio.lead || !lio.zola) fail('the clues did not come together ' + JSON.stringify({ clues, lio }));
+  const test = await E(() => {
+    const z = Actors.npcs.find((n) => n.def.name === 'Zola'); Player.place(z.x - 12, z.y); T_.run({}, 10); T_.tap('useHit'); const o = Hud.open;
+    let b = document.querySelector('button[data-test="menagerie"]'); if (b) b.click(); const t = Hud.open;
+    let asked = 0; for (const i of [0, 3]) { const q = document.querySelector('button[data-q="' + i + '"]'); if (q) { q.click(); asked++; Baseline.t = 3; } }
+    return { o, t, asked, btns: [...document.querySelectorAll('#panelBody button')].map((x) => Object.keys(x.dataset).join()).join(' ') };
+  });
+  await sleep(300); await shot('test');
+  const verdict = await E(() => {
+    let b = document.querySelector('button[data-call="synth"]'); if (b) b.click(); const o = Hud.open;
+    b = document.querySelector('button[data-verdict="menagerie:arrest"]'); if (b) b.click();
+    return { o, closed: Cases.closed('menagerie'), clinic: !!Quests.available('clinic') };
+  });
+  if (test.o !== 'talk' || test.t !== 'test' || verdict.o !== 'talk' || !verdict.closed || !verdict.clinic) fail('the suspect was not tested and arrested ' + JSON.stringify({ test, verdict }));
+  // a medpatch heals, a frag hurts
+  const items = await E(() => {
+    Hud.toggle(null); Game.s.hp = 40; Game.give('medpatch', 1); Game.give('frag', 1); Game.useItem('medpatch'); const hp = Game.s.hp;
+    const e = Actors.enemies.find((q) => !ENEMY[q.type].boss && ENEMY[q.type].ai !== 'flyer' && q.hp > 0); Player.place(e.x - 50, e.y); Player.face = 1; const h0 = e.hp;
+    Game.useItem('frag'); T_.run({}, 120); return { hp, hit: h0 - Math.max(0, e.hp) };
+  });
+  if (items.hp !== 75 || items.hit <= 0) fail('a medpatch or a frag did nothing ' + JSON.stringify(items));
+  // every level loads and draws
+  if (name === 'phone') {
+    const lv = await E(() => { const bad = []; const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
+    if (lv.bad.length || lv.n < 25) fail('levels failed to load: ' + JSON.stringify(lv));
+  }
   // a reload brings it back
   const before = await E(() => { Save.write(); return JSON.stringify({ l: Game.s.level, p: Game.s.programs, m: Game.s.gadgets, w: Game.s.flags.warden, g: Game.s.gear.on }); });
   await page.reload(); for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.Downlevel)); i++) await sleep(200);

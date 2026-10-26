@@ -25,7 +25,8 @@ const Save = {
       // ware from before implants were outlawed comes back as the gadget that does its job
       if (d.mods) { const m = { lowlight: 'scanner', spring: 'jets', mantis: 'cutter' }; d.gadgets = d.gadgets || {}; for (const k in d.mods.owned || {}) if (m[k]) d.gadgets[m[k]] = 1; delete d.mods; }
       if (d.v === 2) { for (const k in d.stash || {}) d.pack[k] = (d.pack[k] || 0) + d.stash[k]; delete d.stash; if (d.spawn === 'capsule') d.spawn = 'elevator'; d.v = 3; }
-      Game.s = Object.assign(f, d, { jobs: Object.assign(f.jobs, d.jobs), gear: Object.assign(f.gear, d.gear || {}) });
+      Quests.migrate(d); Cases.migrate(d);
+      Game.s = Object.assign(f, d, { gear: Object.assign(f.gear, d.gear || {}), warrants: d.warrants || f.warrants });
       Game.s.gear.lvl = Game.s.gear.lvl || {};
       return true;
     }

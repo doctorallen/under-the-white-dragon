@@ -26,10 +26,25 @@ A side-scrolling noir for the phone. You're a detective with the Stack precinct,
 | L0 The Spires | +300 m | Corporate towers above the smog. The ending. | (proposed) |
 | Floor 31 | +40 m | Home: your apartment, the hall, the elevator | The elevator |
 | L1 The Stack | 0 m | Capsule hotel, market, bar, clinic, walkways, drones | The Warden, then Breach on the shaft hatch |
-| L2 Street level | −60 m | Under the overpasses: fence, clinic, gang turf | (proposed) the Gutter King, then the subway |
-| L3 Old Town | −140 m | The first city, sunk under the new one | (proposed) the Old Mayor |
-| L4 The Works | −260 m | Pumps, power, server farms | (proposed) the Foreman; heat needs a heat sink |
-| L5 The Bowels | −400 m | The core that runs the city | (proposed) the Root |
+| L2 Street level | −60 m | Under the overpasses: fence, clinic, gang turf | The subway, with Hale's transit pass |
+| L3 Old Town | −140 m | The first city, sunk under the new one | The Old Mayor, then his lift |
+| L4 The Works | −260 m | Pumps, power, server farms | The Foreman, then the works pass |
+| L5 The Bowels | −400 m | The core that runs the city | The Root |
+
+## Built: the detective
+
+Inspired by Blade Runner's tone (the 1997 point-and-click especially: clues gathered at scenes, photos enhanced for a detail, a test to tell a synth, and whether to retire one left to you) but sized for a phone: one case is a few minutes and always moves you on.
+
+- **Cases** (`cases.js`). Hale gives them. A case has clues (an item to examine, a photo to enhance, a person to ask, politely or pressed), leads that open when the right clues are in, a suspect who appears once you have the lead (sometimes behind a boss), and a verdict: retire, arrest or let go. Whether the suspect is a synth is decided when you take the case, and sometimes it's random.
+- **The baseline test.** Ask questions of three strengths and watch an eye and two needles. A human reacts at once; a synth answers flat, then late, then too much. Harder questions read clearer but raise the stress, and at the top of it a synth bolts (a fugitive: bring them down before they reach the edge and they give up; let them go and the case closes badly) and a human just stops talking. Retiring a human costs 300 cr and a mark on your record.
+- **The photo enhancer.** A still of the scene, painted from the level; tap to enhance twice as close; get close enough on the detail and it's a clue.
+- **Rank.** Closing cases earns rank, and rank raises what cases pay.
+- **The story:** the Menagerie (a pet shop's animals shot, on Neon Row), then the four who ran: Iris in Old Town (behind the Old Mayor, who sells synths back), Bishop in the Works (behind the Foreman), Wren in the Bowels (behind the Root), and the one who made them, in the Spires (behind Halden), with three endings: expose Meridian, take the deal, or take her home.
+- **The night desk:** a generated case each night in a district you can reach: a shot pet, a chrome deal or someone missing.
+- **Jobs and the warrants board** (`quests.js`): side work from the people in the hubs (go, talk, collect, kill, deliver, choose), and named chromers worth money on the spot.
+- **Districts** (`gen.js`): 23 generated from a theme's blocks (facades, markets, courtyards, towers, plazas, docks, scrap heaps, platforms, machine halls, server racks, cable runs), with lockers to loot, people, enemies by tier, rats, synth dogs and owls. Hubs in hand: Old Town, the Works, the Bowels and the Spires, each with a boss and a key to the next.
+- **Getting around:** the spinner up high; the old subway from street level (Hale's transit pass) to Old Town and its districts; lift cages below (the Mayor's key, then the Works pass).
+- **Items,** kept few: noodle cups, med-patches, stims; frag grenades (lobbed onto the nearest hostile) and EMPs (stun machines and shields); keys; evidence. One is your quick item, on the Item button.
 
 ## Built (first slice)
 
@@ -72,13 +87,11 @@ Told through Lieutenant Hale's cases, Juno (an informant), the people, and what 
 - **The case:** four synths ran from the Spires. The precinct calls you a tracer.
 - **First lead:** the street clinic's records show a woman with no ID who paid to have a serial cut from her wrist and asked the way to the subway.
 - **Further down:** the synths are looking for whoever made them. Nobody up top did. The Root at the bottom is the city's mind, or what's left of it. What you learn there sends you up to the Spires for the ending.
-- (proposed) Each synth is a case with a choice at the end: retire them, let them go, or something else. People react to what you chose.
+- Each synth is a case with a choice at the end: retire, arrest or let them go. (proposed) People react to what you chose.
 
 ## Proposed (not built)
 
-- **(proposed)** The Gutter King, the subway, and Old Town (L3), then the Works and the Bowels.
 - **(proposed)** More gadgets: a grapple, a drone of your own, a heat sink, thermal camo, a better deck. Chrome warrants on more levels.
 - **(proposed)** Standing with each level's crowd, and more jobs with real choices.
 - **(proposed)** Better places to live as you earn, with your gear on display.
-- **(proposed)** The Spires as the ending.
 - **(proposed)** Sound.

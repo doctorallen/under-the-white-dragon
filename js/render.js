@@ -186,7 +186,7 @@ function tag(e, s, sx, sy) {
   t.globalCompositeOperation = 'copy'; t.drawImage(o, 0, 0); t.globalCompositeOperation = 'source-in'; t.fillStyle = css(col); t.fillRect(0, 0, o.width, o.height);
   gg.globalAlpha = 0.55 * k; gg.drawImage(View.tmp, 0, 0, o.width, o.height, sx - 1, sy - 1, o.width, o.height); gg.globalAlpha = 1;
   // the health bar: segments over the top of its shape
-  if (e.type === 'warden') return; // the Warden's bar is on the HUD
+  if (ENEMY[e.type].boss) return; // a boss's bar is on the HUD
   const b = Actors.hurtbox(e), n = e.type === 'drone' ? 5 : 6, w = n * 3 - 1, x0 = Math.round((b[0] + b[2]) / 2 - w / 2 - View.cx), y0 = Math.round(b[1] - View.cy) - 5, lit = Math.ceil((e.hp / e.max) * n);
   gg.globalAlpha = k;
   for (let i = 0; i < n; i++) { gg.fillStyle = i < lit ? css(col) : css(col.map((q) => q * 0.25)); gg.fillRect(x0 + i * 3, y0, 2, 2); }
@@ -214,7 +214,7 @@ function lightMap(cx, cy) {
   // the runner's cutter gives off a little light of its own; so do the bolts
   lights.push({ x: Player.x + Player.face * 6, y: Player.y - 16, r: T.light.lamp, c: [1, 0.78, 0.5], k: 0.32, flat: 1 });
   for (const b of Actors.bolts) lights.push({ x: b.x, y: b.y, r: 30, c: b.c.map((q) => q / 255), k: 0.5, flat: 1 });
-  if (Game.flash) lights.push({ x: Game.flash.x, y: Game.flash.y, r: 60, c: [1, 0.75, 0.4], k: 1, flat: 1 });
+  if (Game.flash) lights.push({ x: Game.flash.x, y: Game.flash.y, r: Game.flash.r || 60, c: Game.flash.c || [1, 0.75, 0.4], k: 1, flat: 1 });
   for (const e of Actors.enemies) if (e.type === 'warden') lights.push({ x: e.x + e.face * 20, y: e.y - 50, r: 50, c: [1, 0.25, 0.3], k: 0.5, flat: 1 });
   const low = Game.has('scanner') ? T.light.lowlight : 0, amb = L.ambient, n = lw * lh;
   // ambient first, then each light adds itself over just the cells it reaches

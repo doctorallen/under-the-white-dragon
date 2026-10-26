@@ -103,6 +103,8 @@ function person(o = {}) {
   if (o.eye) { const ec = col3(o.eye); for (let x = 2; x < 6; x++) S.px(cx + x, head - 0.3, mixRgb(ec, [255, 255, 255], x === 3 ? 0.55 : 0.1), true); S.px(cx + 1, head - 0.3, chrome[3]); S.px(cx + 1, head + 0.6, chrome[2]); }
   // a hat over the hair: a fedora's crown, its band, a brim wide of the face
   if (o.hat === 'fedora') { const hc = rp(o.hatCol || '#3a3028', 6); S.cap(cx - 1.2, head - 3.4, cx + 2.6, head - 3.8, 3, 2, hc); for (let x = -5; x <= 7; x++) S.px(cx + x, head - 2 + (x > 4 || x < -3 ? 0.6 : 0), hc[x < 0 ? 1 : 2]); for (let x = -2; x <= 4; x++) S.px(cx + x, head - 2.9, hc[0]); }
+  // a thin band round the brow, a stone of light at the front
+  if (o.hat === 'circlet') { const hc = col3(o.hatCol || '#e8e8ff'); for (let x = -2; x <= 5; x++) S.px(cx + x, head - 2.2, mixRgb(hc, [80, 80, 100], x < 1 ? 0.4 : 0)); S.px(cx + 4, head - 2.4, '#3af0e0', true); }
   // goggles: over the eyes, or pushed up on the forehead if the face is taken
   if (o.goggles) { const gc = col3(o.goggles), up = o.shades || o.mask, gy = up ? head - 3.2 : head - 0.4; for (let x = -2; x < 6; x++) S.px(cx + x, gy + (up ? 0 : 0.6), '#1a1a20'); for (const lx of [2, 4]) { S.px(cx + lx, gy, gc, true); S.px(cx + lx + 1, gy, mixRgb(gc, [255, 255, 255], 0.4), true); } }
   // a visor band across the eyes, lit
@@ -120,6 +122,8 @@ function person(o = {}) {
   if (o.bowl) { S.cap(hx - 0.5, hy - 1, hx + 3, hy - 1, 1.6, 1.4, ['#5a1a0e', '#a83a1e', '#e06a3a', '#ffa070']); S.px(hx + 1, hy - 4, '#d8d8e0'); S.px(hx + 2, hy - 6, '#b8b8c0'); S.px(hx + 1, hy - 8, '#9898a0'); }
   if (o.phone) { S.px(hx + 1, hy - 1, col3(o.phone), true); S.px(hx + 1, hy - 2, col3(o.phone), true); }
   if (o.umbrella) { const uc = rp(o.umbrella, 6); S.cap(hx, hy, hx, head - 9, 0.6, 0.6, ['#2a2a2a', '#5a5a5a', '#8a8a8a']); S.cap(hx - 9, head - 9, hx + 9, head - 9, 2.4, 2.4, uc, { mask: (x, y) => y <= head - 9 }); for (let x = -10; x <= 10; x++) S.px(hx + x, head - 8.6, o.umbrellaGlow ? col3(o.umbrellaGlow) : uc[0], !!o.umbrellaGlow && x % 2 === 0); }
+  // a riot shield in front, a lit strip down its edge
+  if (o.shield) { const sc = rp(o.shield, 6); S.box(hx + 2, hy - 13, hx + 6, hy + 9, sc, { lo: 1, hi: 4 }); for (let y = hy - 12; y < hy + 9; y += 2) S.px(hx + 6, y, col3(o.visor || '#3af0e0'), true); S.px(hx + 4, hy - 6, '#c8d8e8'); }
   const out = S.done(); out.actor = true; return out;
 }
 // walking frames come from the same choices
