@@ -273,7 +273,7 @@ function kShop(L, x0, x1, G, kind, col, o = {}) {
       else kShelves(P, ix0 + 6, iy0 + 6, ix1 - 6, G - 14, kind === 'bakery' ? ['#d8a858', '#c88a3a', '#f0d8a0'] : ['#3a6a3a', '#8a5a2a', '#c8c0a0'], { back: mixRgb(c, [30, 20, 14], 0.6), seed });
       P.block(ix0, G - 12, ix1, G, MAT.wood, { base: 0.5 });
     } else if (kind === 'bar' || kind === 'club') { // dark, a lit door, a bouncer's light
-      kFill(P, ix0, iy0, ix1, G, '#0a060c');
+      kFill(P, ix0, iy0, ix1, G, '#1a0e20'); for (let x = ix0 + 4; x < ix1 - 4; x += 9) if (Math.abs(x - mid) > 16) { kFill(P, x, iy0 + 12, x + 4, G - 8, mixRgb(c, [10, 0, 14], 0.78), 0.2); } // (light through the slats)
       P.block(mid - 11, G - KS.door - 2, mid + 11, G, KMAT.blackglass, { base: 0.4 }); kFill(P, mid - 9, G - KS.door, mid + 9, G, mixRgb(c, [10, 0, 10], 0.6), 0.45);
       for (let x = ix0 + 2; x < ix1 - 2; x++) if (Math.abs(x - mid) > 13) P.put(x, iy0 + 6, c, 1);
     } else if (kind === 'temple') { // red doors with gold studs

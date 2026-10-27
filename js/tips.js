@@ -47,7 +47,7 @@ const Tips = {
   // the leads, for the Jobs tab
   list() {
     const ids = TIP_ORDER.filter((id) => this.st(id) === 'known'); if (!ids.length) return '';
-    return '<h3>Leads</h3>' + ids.map((id) => { const T = TIPS[id], R = RESIDENTS[T.who], ok = this.canStrip(T.kind), what = (TIP_YIELD[T.kind] || []).map(([k, g]) => GRADE[g].name.toLowerCase() + ' ' + PART[k].name.toLowerCase()).join(', ');
+    return '<h3>Leads</h3>' + ids.map((id) => { const T = TIPS[id], R = RESIDENTS[T.who], ok = this.canStrip(T.kind), names = (TIP_YIELD[T.kind] || []).map(([k, g]) => GRADE[g].name.toLowerCase() + ' ' + PART[k].name.toLowerCase()), what = [...new Set(names)].map((n) => (names.filter((m) => m === n).length > 1 ? 'two ' + n + 's' : n)).join(', ');
       return `<div class="need2 ${ok ? 'ok' : 'no'}"><img class="picon" src="${Parts.icon(TIP_YIELD[T.kind][0][0], TIP_YIELD[T.kind][0][1])}" alt=""><div><b>${T.label[0].toUpperCase() + T.label.slice(1)} · ${LEVELS[T.level].name}</b><small>From ${R.name}. Inside: ${what}.${ok ? '' : ' Needs the ' + this.need(T.kind).name.toLowerCase() + ' (' + this.need(T.kind).cr + ' cr, ' + (this.need(T.kind).at === 'ana' ? 'Mechanic Ana, Overpass Market' : 'Nurse Kade, Clinic Row') + ').'}</small></div><span class="have">${ok ? '✓ your tools' : '✕ tools'}</span></div>`; }).join('');
   },
   // the line at the top of the screen, when there's nothing on the bench

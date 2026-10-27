@@ -129,13 +129,13 @@ const Jobs = {
     }
     if (a.kind === 'handback') {
       const t = b.tested, trace = this.traced(b);
-      if (J.odd) return `<div class="ask"><h3>${J.title}</h3><p class="dim">${t.res === 'works' ? 'It works' : 'It half works'}. ${t.res === 'works' ? J.pay : Math.round(J.pay / 2)} cr.</p><div class="buttons"><button data-job="back:${a.id}" class="go">Hand it back</button></div></div>`;
+      if (J.odd) return `<div class="ask"><h3>${J.title}</h3><p class="dim">${t.res === 'works' ? 'It works' : 'It half works'}. ${t.res === 'works' ? J.pay : Math.round(J.pay / 2)} cr.${Object.values(b.slots).some((s) => s.p && s.p.how !== 'pull' && s.p.g === 'scrap') ? ' There\'s scrap in it now: it might not last the night.' : ''}</p><div class="buttons"><button data-job="back:${a.id}" class="go">Hand it back</button></div></div>`;
       return `<div class="ask"><h3>${J.title}</h3><p class="dim">${t.res === 'works' ? 'It works' : 'It half works'}${t.loose ? `, and ${t.loose} screw${t.loose > 1 ? 's' : ''} won't hold` : ''}.${trace ? ' There\'s a Meridian serial in it that isn\'t theirs.' : ''}${J.pay ? ` ${t.res === 'works' ? J.pay : J.pay / 2} cr.` : ''}</p><div class="buttons"><button data-job="back:${a.id}" class="go">Hand it back</button></div></div>`;
     }
     return '';
   },
   act(cmd) {
-    const [what, id] = cmd.split(':');
+    const i = cmd.indexOf(':'), what = cmd.slice(0, i), id = cmd.slice(i + 1); // (an odd job's id has colons of its own)
     if (what === 'take') this.take(id);
     if (what === 'back') this.handBack(id);
   },
@@ -234,7 +234,7 @@ const Jobs = {
     if (s.heat >= 70) {
       const found = s.heat >= 90;
       news.push('A knock before dawn: a precinct detective, polite, wet coat. He goes through the bar and the storeroom for a long time, and Auntie Lin watches him do it.');
-      if (found && hot) { const J = JOBS[hot]; news.push(`He moves the rug. He finds the trapdoor, and ${J.title} in your basement, and takes it as evidence. ${J.name} won't be coming back for it.`); this.st(hot).st = 'seized'; if (b && b.job === hot) Bench.clear(); else delete s.aside[hot]; }
+      if (found && hot) { const J = JOBS[hot]; news.push(`He moves the rug. He finds the trapdoor, and ${J.title} in your basement, and takes it as evidence. ${J.name} won't be coming back for it.`); this.st(hot).st = 'seized'; if (b && b.job === hot) Bench.clear(); else delete s.aside[hot]; this.heat(-30); } // (with the evidence gone, they ease off)
       else if (found) news.push('He moves the rug and finds the trapdoor. Down there he finds a cold iron and nothing he can use, and leaves. He knows where you work now.');
       else news.push('He stands on the rug for a while, talking to Lin about the weather. Then he leaves.');
       this.heat(-30);
