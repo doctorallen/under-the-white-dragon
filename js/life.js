@@ -195,6 +195,16 @@ const Life = {
         if (scene === 2) { lit = c1; const fx = A.w / 2, fy = A.h / 2; for (let a = 0; a < Math.PI * 2; a += 0.12) put(fx + Math.cos(a) * A.w * 0.22, fy + Math.sin(a) * A.h * 0.36, c1); const blink = (t % 2.2) < 0.15; for (const ex of [-3, 3]) { put(fx + ex, fy - 2, c2); if (!blink) put(fx + ex, fy - 1, [255, 255, 255]); } for (let k = -3; k <= 3; k++) put(fx + k, fy + 4 + Math.abs(k) * 0.2 - (Math.sin(t * 2) > 0 ? 0 : 1) * (k === 0 ? 0 : 0), c2); }
         // a wipe between scenes
         if (u > 0.94) for (let y = 0; y < A.h; y++) put(Math.floor((u - 0.94) / 0.06 * A.w), y, [255, 255, 255], 0.8);
+      } else if (A.kind === 'ecg') {
+        // a heartbeat trace running across, a dot at its head, the rate in glyphs
+        const head = (t * 18) % A.w, base = A.h * 0.62;
+        for (let x = 0; x < A.w; x++) { const age = (head - x + A.w) % A.w, ph = (x + Math.floor(t * 18 / A.w) * 7) % 22, y = ph === 8 ? base - 6 : ph === 9 ? base + 3 : ph === 10 ? base - 2 : base; if (age < A.w - 4) put(x, y, c1, 1 - age / A.w); }
+        put(head, base, [255, 255, 255]);
+        for (const [i, j] of GLYPHS[(Math.floor(t / 2) + A.x) % GLYPHS.length]) put(2 + i, 2 + j, c2); for (const [i, j] of GLYPHS[(Math.floor(t / 2) + 3) % GLYPHS.length]) put(6 + i, 2 + j, c2);
+      } else if (A.kind === 'readout') {
+        // rows of figures ticking over, one line flagged in the second colour
+        for (let r = 0; r < Math.floor((A.h - 2) / 6); r++) { const flag = (Math.floor(t / 1.5) + r) % 5 === 0; for (let k = 0; k < Math.floor((A.w - 4) / 5); k++) { const gl = GLYPHS[(k * 3 + r * 5 + Math.floor(t * (r % 2 ? 3 : 1.5))) % GLYPHS.length]; for (const [i, j] of gl) put(2 + k * 5 + i, 2 + r * 6 + j, flag ? c2 : c1, flag ? 1 : 0.8); } }
+        if (Math.floor(t * 2) % 2) put(A.w - 3, A.h - 3, c2);
       } else if (A.kind === 'bars') {
         for (let k = 0; k < Math.floor(A.w / 3); k++) { const hh = Math.floor((0.25 + 0.75 * Math.abs(Math.sin(t * (2 + (k % 4) * 0.7) + k))) * (A.h - 2)); for (let y = 0; y < hh; y += 2) put(1 + k * 3, A.h - 1 - y, y > A.h * 0.6 ? c2 : c1); }
       }

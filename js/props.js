@@ -404,3 +404,27 @@ function rug() {
   for (const x of [0, 1, W - 2, W - 1]) S.px(x, H - 1, '#c8b890');
   return S.done();
 }
+// the work chair: a ripper's recliner, padded blue-grey on a steel pedestal,
+// the back laid low, clamps on the arm for a limb, a little screen lit
+function workChair() {
+  const W = 62, H = 42, S = new Spr(W, H, 444); S.ax = 31; S.ay = H - 1;
+  const pad = rp('#6a86a8', 7), st = rp('#5a6070', 6), dk = rp('#2a2e36', 5);
+  S.box(16, H - 5, 46, H - 1, st, { lo: 1, hi: 5 }); S.box(28, 26, 34, H - 5, st, { lo: 1, hi: 5 }); // the pedestal
+  S.box(30, 22, 33, 26, dk); S.px(31, 24, '#3af0e0', true); // a lit joint
+  S.box(18, 20, 48, 26, pad, { lo: 1, hi: 6 }); for (let x = 20; x < 47; x += 5) S.px(x, 21, pad[6]); // the seat, quilted
+  S.limb(18, 22, 5, 8, 4, pad); S.ell(4, 5, 4.5, 3.5, pad); // the back laid low, the headrest
+  S.limb(48, 22, 57, 33, 3.2, pad); S.box(54, 33, 60, 36, st, { lo: 1, hi: 5 }); // the leg rest and its foot plate
+  S.box(36, 14, 54, 16, st, { lo: 1, hi: 6 }); S.limb(52, 16, 52, 21, 1.2, st); // the arm rest on its post
+  for (const x of [39, 47]) { S.box(x, 11, x + 3, 14, MAT.chrome, { lo: 1, hi: 6 }); S.px(x + 1, 12, '#ff4a6a', true); } // its clamps, armed
+  S.box(4, 26, 14, 33, dk, { lo: 1, hi: 3 }); S.box(5, 27, 13, 32, rp('#0e3a3a', 4)); for (let x = 6; x < 12; x++) S.px(x, 30 - ((x * 3) % 3), '#3aff80', true); S.px(12, 28, '#3af0e0', true);
+  S.limb(14, 30, 28, 36, 0.8, dk); S.limb(14, 31, 28, 38, 0.8, rp('#c85a28', 4)); // its cables
+  return S.done();
+}
+// a tray of tools on a stand: scissors, clamps, a probe
+function toolTray() {
+  const W = 20, H = 30, S = new Spr(W, H, 445); S.ax = 10; S.ay = H - 1;
+  S.limb(10, 8, 10, H - 2, 1, MAT.steelD); S.limb(5, H - 1, 15, H - 1, 1, MAT.steelD);
+  S.box(1, 5, 18, 8, rp('#7a8090', 6), { lo: 1, hi: 5 });
+  for (const [x, y, c] of [[3, 4, '#e8ecf4'], [4, 3, '#e8ecf4'], [5, 4, '#c8ccd4'], [8, 4, '#c8ccd4'], [9, 3, '#e8ecf4'], [10, 4, '#e8ecf4'], [13, 4, '#ff8a3a'], [14, 4, '#ff8a3a'], [15, 3, '#c8ccd4'], [16, 2, '#c8ccd4']]) S.px(x, y, c);
+  return S.done();
+}

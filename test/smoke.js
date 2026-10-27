@@ -70,7 +70,7 @@ async function run(B, url, vp, name, failures) {
   const E = (fn, arg) => page.evaluate(fn, arg);
   console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))));
   const st = await E(() => ({ level: Game.s.level, x: Player.x, frame: Game.frame }));
-  if (st.level !== 'd_cellar' || Math.abs(st.x - 450) > 40) fail('the game does not start in the basement by the cot ' + JSON.stringify(st));
+  if (st.level !== 'd_cellar' || Math.abs(st.x - 630) > 40) fail('the game does not start in the basement by the cot ' + JSON.stringify(st));
   if (!st.frame) fail('the loop is not running');
   await shot('basement');
   // the bench and the shelf answer Use; the basement isn't on the city map

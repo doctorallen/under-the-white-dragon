@@ -10,7 +10,7 @@ You carry no gun: if you're seen, run, or take someone down quietly from behind.
 
 ## The basement
 
-- **The White Dragon** (`d_dragon.js`): the street with the tall neon sign, Auntie Lin's bar and her storeroom, with a rug over the trapdoor; down the ladder, the basement (`d_cellar`, kept off the city map): the bench, the parts shelf (your parts and the notebook), the cot. Sleeping brings the morning after.
+- **The White Dragon** (`d_dragon.js`): the street with the tall neon sign, Auntie Lin's bar and her storeroom, with a rug over the trapdoor; down the ladder, the basement (`d_cellar`, kept off the city map), a ripper's den made out of a cellar: red neon over grimy tile, the work chair under articulated lamps, monitors on arms, glowing canisters, spare chrome on hooks, teal screens round the cot; the bench, the parts shelf (your parts and the notebook), a terminal. Sleeping brings the morning after.
 - **The bench** (`bench.js`): Driver, Probe, Iron, Hands and the Lens on a close-up of the thing.
 - **Parts and the notebook** (`parts.js`): `PART`, `GRADE`, `DEVICE` (frames with slots), stall stock, what stripping a machine gives.
 - **Jobs and heat** (`jobs.js`): Ozzy (an honest repair) and Vey (a synth's arm: a scrap servo from Nurse Kade, or a Meridian one from the clinic cabinet that can be traced). At 40 heat a drone patrols your street; at 70 a detective knocks before dawn and searches upstairs; at 90 he finds the trapdoor and takes any illegal work off the bench.
