@@ -1,14 +1,89 @@
 'use strict';
 // Props: the city's furniture, painted from shapes, anchored at the bottom
 // middle unless they hang (ay = 0).
+// a drinks machine, a person's height: rows of cans behind glass, a lit
+// strip, the coin slot and the flap at the bottom
 function vending(o = {}) {
-  const S = new Spr(16, 26, 41); S.ax = 8; S.ay = 25; const c = col3(o.col || '#ff4ab0');
-  S.box(0, 0, 15, 25, rp(o.body || '#c83a5a'), { lo: 0, hi: 5 });
-  S.box(2, 2, 10, 17, ['#1a0e18', '#2a1a2a'], { lo: 0, hi: 1 });
-  for (let y = 3; y < 17; y += 3) for (let x = 3; x < 10; x += 2) S.px(x, y, ['#ff6060', '#60d0ff', '#ffd040', '#80ff80'][(x + y) % 4], true);
-  for (let y = 2; y < 18; y++) S.px(12, y, c, true);
-  S.box(12, 9, 14, 11, ['#101014', '#30303a']); S.box(2, 20, 10, 23, ['#06060a', '#141418']);
-  for (let x = 1; x < 15; x++) S.px(x, 1, mixRgb(c, [255, 255, 255], 0.5), true);
+  const S = new Spr(22, 36, 41); S.ax = 11; S.ay = 35; const c = col3(o.col || '#ff4ab0');
+  S.box(0, 0, 21, 35, rp(o.body || '#c83a5a'), { lo: 0, hi: 5 });
+  S.box(2, 3, 14, 24, ['#1a0e18', '#2a1a2a'], { lo: 0, hi: 1 });
+  for (let y = 5; y < 24; y += 4) { for (let x = 3; x < 14; x += 3) { const q = ['#ff6060', '#60d0ff', '#ffd040', '#80ff80'][(x + y) % 4]; S.px(x, y, q, true); S.px(x + 1, y, q, true); S.px(x, y + 1, q, true); S.px(x + 1, y + 1, q); } for (let x = 2; x < 14; x++) S.px(x, y + 2, '#3a3040'); }
+  for (let y = 3; y < 25; y++) S.px(16, y, c, true);
+  S.box(16, 12, 19, 15, ['#101014', '#30303a']); S.px(17, 17, '#3aff80', true); S.box(2, 27, 14, 32, ['#06060a', '#141418']);
+  for (let x = 1; x < 21; x++) S.px(x, 1, mixRgb(c, [255, 255, 255], 0.5), true);
+  return S.done();
+}
+// ---- the businesses' machines: someone owns these, and stripping one is
+// theft (OWNED in things.js). Each sits at people scale; the ones that sit on
+// a counter or hang on a wall are lifted (o.lift) but anchored at the floor,
+// so you reach them from where you stand.
+function lifted(S, H, lift) { S.ay = H - 1 + (lift || 0); return S; }
+function cashRegister(o = {}) {
+  const S = lifted(new Spr(22, 16, 450), 16, o.lift === undefined ? 30 : o.lift); S.ax = 11;
+  S.box(0, 8, 21, 15, rp('#3a3e48', 6), { lo: 1, hi: 5 }); S.box(1, 12, 20, 15, rp('#2a2e36', 5)); S.px(10, 13, '#c8c8d0');
+  for (let r = 0; r < 2; r++) for (let k = 0; k < 4; k++) S.px(3 + k * 2, 9 + r * 2, '#e8e0d0');
+  S.part(); S.box(12, 0, 20, 8, rp('#1a1c22', 4)); for (let x = 13; x < 20; x++) S.px(x, 3, '#3aff80', true); S.px(14, 5, '#3aff80', true); S.px(16, 5, '#3aff80', true);
+  return S.done();
+}
+function handDryer(o = {}) {
+  const S = lifted(new Spr(14, 16, 451), 16, o.lift === undefined ? 34 : o.lift); S.ax = 7;
+  S.box(0, 0, 13, 11, rp('#d8dce0', 6), { lo: 1, hi: 5 }); S.box(4, 11, 9, 15, rp('#a8acb4', 5)); S.px(3, 4, '#ff4a4a', true); for (let x = 5; x < 11; x++) S.px(x, 7, '#8a909a');
+  return S.done();
+}
+function jukebox() {
+  const S = new Spr(28, 44, 452); S.ax = 14; S.ay = 43;
+  S.box(1, 14, 26, 43, rp('#5a2a1a', 6), { lo: 1, hi: 5 }); S.ell(13.5, 14, 13, 13, rp('#7a3a1a', 6));
+  for (let a = Math.PI; a < Math.PI * 2; a += 0.04) for (const [r, c] of [[12, '#ff4ab0'], [10, '#ffd040'], [8, '#3af0e0']]) S.px(13.5 + Math.cos(a) * r, 14 + Math.sin(a) * r, c, true);
+  S.box(6, 16, 21, 26, rp('#1a1014', 4)); for (let k = 0; k < 4; k++) S.px(8 + k * 4, 21, '#e8e0d0', true);
+  for (let y = 30; y < 41; y += 2) for (let x = 4; x < 24; x += 2) S.px(x, y, '#2a1410');
+  for (let y = 14; y < 43; y++) { S.px(1, y, '#ff4ab0', true); S.px(26, y, '#3af0e0', true); }
+  return S.done();
+}
+function arcadeCab(o = {}) {
+  const S = new Spr(24, 46, 453); S.ax = 12; S.ay = 45; const c = col3(o.col || '#3af0e0');
+  S.box(1, 0, 22, 45, rp(o.body || '#2a1a4a', 6), { lo: 1, hi: 5 }); S.box(2, 1, 21, 7, rp('#1a0e2a', 4)); for (let x = 4; x < 20; x++) S.px(x, 4, c, true);
+  S.box(3, 9, 20, 22, rp('#0a0a14', 4)); for (let k = 0; k < 18; k++) S.px(5 + Math.floor(hash(k, 1, 453 + (o.seed || 0)) * 13), 11 + Math.floor(hash(k, 2, 453 + (o.seed || 0)) * 9), ['#ff4ab0', '#ffd040', '#3af0e0', '#ffffff'][k % 4], true);
+  S.box(1, 24, 22, 28, rp('#3a3a48', 5)); S.px(6, 25, '#ff3040', true); S.px(14, 25, '#3aff80', true); S.px(17, 25, '#3a8aff', true); S.px(6, 24, '#c8c8d0');
+  S.box(8, 34, 15, 37, ['#06060a', '#141418']); S.px(11, 35, '#ffd040', true);
+  return S.done();
+}
+function pachinko(o = {}) {
+  const S = new Spr(22, 46, 454); S.ax = 11; S.ay = 45;
+  S.box(0, 0, 21, 45, rp('#c8b060', 6), { lo: 1, hi: 5 }); S.box(2, 3, 19, 26, rp('#1a2a4a', 4));
+  for (let y = 5; y < 25; y += 3) for (let x = 4 + (y % 2); x < 18; x += 3) S.px(x, y, '#e8e8f0');
+  S.ell(10.5, 14, 4, 4, ['#ff4ab0', '#ff8ad8', '#ffd0f0']); for (let k = 0; k < 4; k++) S.px(5 + k * 4, 22, ['#ffd040', '#3af0e0'][k % 2], true);
+  S.box(2, 28, 19, 33, rp('#e8e0d0', 5)); for (let x = 4; x < 18; x += 2) S.px(x, 30, '#c8c8d0'); S.ell(17, 37, 2.5, 2.5, rp('#3a3a48', 5));
+  for (let x = 1; x < 21; x++) S.px(x, 1, (x >> 1) % 2 ? '#ffd040' : '#ff4ab0', true);
+  return S.done();
+}
+function coffeeMachine(o = {}) {
+  const S = lifted(new Spr(16, 22, 455), 22, o.lift === undefined ? 30 : o.lift); S.ax = 8;
+  S.box(0, 0, 15, 21, rp('#5a6070', 6), { lo: 1, hi: 5 }); S.box(3, 9, 12, 18, rp('#1a1c22', 4)); S.box(6, 9, 9, 11, rp('#8a909a', 5)); S.box(5, 15, 10, 18, rp('#e8e0d0', 5)); S.px(3, 3, '#3aff80', true); S.px(6, 3, '#ff8a3a', true);
+  return S.done();
+}
+function atm() {
+  const S = new Spr(24, 40, 456); S.ax = 12; S.ay = 39;
+  S.box(0, 0, 23, 39, rp('#3a4048', 6), { lo: 1, hi: 5 }); S.box(1, 0, 22, 5, rp('#1a3a6a', 5)); for (let x = 4; x < 20; x++) S.px(x, 2, '#9ad0ff', true);
+  S.box(4, 8, 19, 18, rp('#0a1420', 4)); for (let x = 6; x < 17; x++) S.px(x, 11, '#3af0e0', true); for (let x = 6; x < 13; x++) S.px(x, 14, '#3af0e0', true);
+  for (let r = 0; r < 3; r++) for (let k = 0; k < 3; k++) S.box(5 + k * 4, 21 + r * 3, 7 + k * 4, 22 + r * 3, rp('#c8c8d0', 5)); S.box(17, 21, 20, 23, ['#06060a', '#141418']); S.px(18, 22, '#3aff80', true); S.box(5, 31, 18, 33, ['#06060a', '#141418']);
+  return S.done();
+}
+function ticketMachine() {
+  const S = new Spr(20, 38, 457); S.ax = 10; S.ay = 37;
+  S.box(0, 0, 19, 37, rp('#e8b030', 6), { lo: 1, hi: 5 }); S.box(3, 4, 16, 14, rp('#0a1014', 4)); for (let x = 5; x < 14; x++) S.px(x, 8, '#ffd040', true); for (let x = 5; x < 11; x++) S.px(x, 11, '#ffd040', true);
+  S.box(4, 18, 15, 21, rp('#2a2e36', 5)); S.box(6, 26, 13, 28, ['#06060a', '#141418']); S.px(15, 17, '#3aff80', true);
+  return S.done();
+}
+function karaoke() {
+  const S = new Spr(30, 34, 458); S.ax = 15; S.ay = 33;
+  for (const x of [0, 21]) { S.box(x, 6, x + 8, 33, rp('#1a1a22', 5), { lo: 1, hi: 4 }); S.ell(x + 4, 14, 3, 3, ['#06060a', '#2a2a34', '#4a4a58']); S.ell(x + 4, 26, 3, 3, ['#06060a', '#2a2a34', '#4a4a58']); }
+  S.box(9, 0, 20, 12, rp('#2a2e36', 5)); S.box(10, 1, 19, 10, rp('#0a0a14', 4)); for (let k = 0; k < 4; k++) for (let x = 11; x < 18; x++) if ((x + k) % 3) S.px(x, 3 + k * 2, ['#ff4ab0', '#ffd040'][k % 2], true);
+  S.box(10, 24, 19, 33, rp('#3a3a48', 5), { lo: 1, hi: 4 }); S.px(12, 27, '#3aff80', true); S.px(16, 27, '#ff4a4a', true);
+  return S.done();
+}
+function offeringBox() {
+  const S = new Spr(24, 18, 459); S.ax = 12; S.ay = 17;
+  S.box(0, 3, 23, 17, rp('#5a2a14', 6), { lo: 1, hi: 5 }); for (let x = 2; x < 22; x += 3) for (let y = 4; y < 8; y++) S.px(x, y, '#1a0a06'); S.box(0, 0, 23, 3, rp('#8a3a1a', 6)); S.px(11, 12, '#e8b030', true); S.px(12, 12, '#e8b030', true);
   return S.done();
 }
 function stall(o = {}) {

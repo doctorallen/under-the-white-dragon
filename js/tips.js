@@ -14,7 +14,7 @@ const TOOLS = {
   3: { name: 'Clinic micro-kit', cr: 300, at: 'kade', note: 'Micro-drivers and a clean desoldering station. Medical machines, and the clinic-grade parts in them.' },
 };
 // what each kind of machine needs to strip (anything else, the hand kit)
-const STRIP_TIER = { rack: 2, dronewreck: 2, substation: 2, autodoc: 3 };
+const STRIP_TIER = { rack: 2, dronewreck: 2, substation: 2, autodoc: 3, atm: 2 };
 
 // who tells you what, where, and from what day
 const TIPS = {

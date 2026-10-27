@@ -74,6 +74,7 @@ addDistrict('d_neonrow', 'Neon Row', 1, 60, 380, 'The nightlife strip: bars, pac
     // the end: a corp tower, a noodle robot in its lobby
     bGlass(L, 2720, 2900, G, { h: 380, crown: 'slant', edge: '#ff4ab0', logo: '#e8e8ff', panel: 48, seed: 121 });
     kStallAt(L, 2780, G, 'robot', { col: '#ff4ab0' });
+    nrDoors(L, G); // (the places on the Row you can walk into: d_neon.js)
     // overhead: cables, lanterns and washing across the street
     L.paint(300, G - 180, 1950, G - 120, (P) => { for (let k = 0; k < 3; k++) cable(P, 300, G - 170 + k * 8, 1950, G - 160 + k * 6, 30 + k * 6, '#08080c'); });
     bLanterns(L, 300, 540, G - 132, ['#ff3a2a', '#ffb040']); bLanterns(L, 1144, 1440, G - 140, ['#ff4ab0', '#3af0e0'], { step: 16 }); bLanterns(L, 2190, 2410, G - 128, ['#ff3a2a', '#ffd040']);

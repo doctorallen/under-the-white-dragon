@@ -173,7 +173,7 @@ const Player = {
     let best = null, bd = 1e9;
     for (const p of World.props) {
       if (p.kind === 'deco') continue;
-      const reach = p.kind === 'exit' ? 14 : p.kind === 'car' ? 30 : p.kind === 'lift' ? 16 : 18 + (p.block ? (p.block.x1 - p.block.x0) / 2 : 0);
+      const reach = p.kind === 'exit' ? 14 : p.kind === 'car' ? 44 : p.kind === 'lift' ? 16 : 18 + (p.block ? (p.block.x1 - p.block.x0) / 2 : 0);
       const dx = Math.abs(p.x - this.x), dy = p.kind === 'exit' ? Math.abs(p.y - (this.y - 16)) : Math.abs(p.y - this.y);
       if (dx > reach || dy > (p.kind === 'exit' ? 24 : 26)) continue;
       const pr = Props.prompt(p); if (!pr) continue;

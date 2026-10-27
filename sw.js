@@ -41,7 +41,7 @@ const FILES = [
   'js/d_works.js',
   'js/d_deep.js',
   'js/d_dragon.js',
-  'js/d_block.js',
+  'js/d_block.js', 'js/d_neon.js',
   'js/things.js',
   'js/game.js',
   'js/save.js',

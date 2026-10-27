@@ -151,13 +151,13 @@ async function run(B, url, vp, name, failures) {
   await shot('frontage');
   // the block's people keep their own days: at a quarter to seven Mo's on the till
   // and people are shopping; stop one and they say what they're about; the
-  // clerk sells you things; at twenty past eight people are eating at the White Dragon
+  // clerk sells you things; just after eight people are eating at the White Dragon
   const town = await E(() => {
     const t0 = Game.s.time, see = (lv, h) => { Game.s.time = h; Game.arrive(lv, 'door'); T_.run({}, 30); return Actors.npcs.filter((n) => n.def.town); };
     const g = see('d_grocery', 18.75), mo = g.find((n) => n.def.town === 'mo'), shoppers = g.filter((n) => n.def.town !== 'mo').length;
     const shopper = g.find((n) => n.def.town !== 'mo'); if (shopper) Actors.talk(shopper); const said = shopper && shopper.bubble && shopper.bubble.text;
     if (mo) Actors.talk(mo); const till = Hud.open; Hud.toggle(null);
-    const eating = see('d_noodles', 20.3).filter((n) => !n.moving && n.act === 'sit').length;
+    const eating = see('d_noodles', 20.1).filter((n) => !n.moving && n.act === 'sit').length;
     Game.s.time = t0; Game.arrive('d_dragon', 'door'); T_.run({}, 10);
     return { mo: !!(mo && mo.act === 'work'), shoppers, said, till, eating };
   });

@@ -9,7 +9,7 @@ const PROP_ART = {
   vending: (p) => vending(p.look || {}), ac: () => acUnit(), rack: (p) => rack({ h: 40, seed: p.x, warn: true }), car: (p) => car(p.look || {}),
   junk: (p) => junk({ seed: p.x % 7 }), wreck: () => wreck(), cache: () => { const S = new Spr(16, 12, 81); S.ax = 8; S.ay = 11; S.box(0, 0, 15, 11, MAT.concreteD, { lo: 1, hi: 5 }); for (let x = 2; x < 14; x += 3) S.px(x, 5, '#a85ad8', true); return S.done(); },
   grate: (p) => grate({ w: p.w || 12, h: p.h || 32 }), heavy: (p) => heavyShutter({ w: p.w || 30, h: p.h || 32 }), hatch: (p) => hatch({ w: p.w || 26, h: p.h || 34, stripe: true }),
-  dronewreck: () => droneWreck(), substation: () => junctionBox(), autodoc: () => autodoc(), door: (p) => (p.out ? innerDoor({ kind: p.look, seed: p.x }) : null), node: (p) => node({ col: p.col }), workbench: () => workbench(), trapdoor: (p) => (p.up ? null : rug()), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? cabStand() : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
+  register: (p) => cashRegister(p), dryer: (p) => handDryer(p), jukebox: () => jukebox(), arcadecab: (p) => arcadeCab({ col: p.col, body: p.body, seed: p.x }), pachinko: () => pachinko(), coffee: (p) => coffeeMachine(p), atm: () => atm(), ticket: () => ticketMachine(), karaoke: () => karaoke(), offering: () => offeringBox(), dronewreck: () => droneWreck(), substation: () => junctionBox(), autodoc: () => autodoc(), door: (p) => (p.out ? innerDoor({ kind: p.look, seed: p.x }) : null), node: (p) => node({ col: p.col }), workbench: () => workbench(), trapdoor: (p) => (p.up ? null : rug()), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? cabStand() : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
   keydoor: (p) => (p.mode === 'subway' ? subwayDoor() : hatch({ w: 40, h: 44, col: '#3a3a40', lock: Game.s.pack[p.key] > 0 ? '#3aff80' : '#ffb040', stripe: true })), locker: () => locker(), clue: (p) => marker({ col: p.K.kind === 'photo' ? '#3af0e0' : '#ffd040' }), pickup: () => marker({ col: '#ff9ad8' }), closet: () => closet(), elevator: (p) => elevator({ at: ELEVATOR.findIndex((f) => f.level === p.level) }), exit: () => null, deco: (p) => p.art(),
   sealed: (p) => hatch({ w: 40, h: 40, col: '#3a3a40', lock: '#ffb040', stripe: true }),
 };
@@ -17,10 +17,12 @@ const PROP_ART = {
 const YIELDS = {
   vending: [['wire', 1, 2], ['glass', 1, 1], ['cr', 3, 12]], ac: [['alloy', 1, 2], ['coolant', 0, 1]], rack: [['chips', 1, 2], ['wire', 1, 2]],
   car: [['coolant', 1, 2], ['alloy', 1, 2], ['wire', 0, 1]], junk: [['alloy', 1, 2], ['wire', 0, 1]], wreck: [['chips', 0, 1], ['glass', 1, 1], ['wire', 1, 1]],
-  cache: [['chips', 2, 3], ['cr', 30, 60]], dronewreck: [['wire', 1, 2], ['chips', 0, 1]], substation: [['wire', 2, 3], ['alloy', 1, 1]], autodoc: [['chips', 1, 2], ['glass', 1, 1]], stash: [['chips', 2, 3], ['coolant', 1, 1], ['cr', 60, 90]],
+  cache: [['chips', 2, 3], ['cr', 30, 60]], dronewreck: [['wire', 1, 2], ['chips', 0, 1]], register: [['cr', 8, 24], ['wire', 0, 1]], dryer: [['wire', 1, 1]], jukebox: [['wire', 1, 2], ['glass', 0, 1]], arcadecab: [['wire', 1, 1], ['glass', 1, 1]], pachinko: [['alloy', 1, 2], ['cr', 2, 9]], coffee: [['alloy', 1, 1]], atm: [['cr', 20, 45], ['chips', 0, 1]], ticket: [['cr', 3, 10]], karaoke: [['wire', 1, 2]], offering: [['cr', 4, 16]], substation: [['wire', 2, 3], ['alloy', 1, 1]], autodoc: [['chips', 1, 2], ['glass', 1, 1]], stash: [['chips', 2, 3], ['coolant', 1, 1], ['cr', 60, 90]],
 };
-const RESTOCK = { junk: 3, vending: 5, car: 4 };
-const STRIP_TIME = { dronewreck: 1.8, substation: 2.0, autodoc: 2.6, vending: 1.6, ac: 1.2, rack: 1.8, car: 2.4, junk: 1.0, wreck: 1.0, cache: 1.4, stash: 1.2 };
+const RESTOCK = { junk: 3, vending: 5, car: 4, register: 6, dryer: 6, jukebox: 6, arcadecab: 6, pachinko: 6, coffee: 6, atm: 8, ticket: 6, karaoke: 6, offering: 2 };
+// what's someone's: stripping it is theft, and it's heat (more if anyone sees)
+const OWNED = { vending: 3, car: 3, register: 6, dryer: 2, jukebox: 5, arcadecab: 4, pachinko: 4, coffee: 3, atm: 10, ticket: 3, karaoke: 4, offering: 6 };
+const STRIP_TIME = { register: 1.4, dryer: 0.9, jukebox: 2.0, arcadecab: 1.8, pachinko: 1.6, coffee: 1.1, atm: 3.0, ticket: 1.4, karaoke: 1.6, offering: 0.8, dronewreck: 1.8, substation: 2.0, autodoc: 2.6, vending: 1.6, ac: 1.2, rack: 1.8, car: 2.4, junk: 1.0, wreck: 1.0, cache: 1.4, stash: 1.2 };
 
 const Props = {
   init(p) {
@@ -44,7 +46,7 @@ const Props = {
   prompt(p) {
     if (p.kind === 'deco') return null;
     if (p.kind === 'cache' && !Game.has('scanner')) return null;
-    if (YIELDS[p.kind]) return p.done ? null : Tips.canStrip(p.kind) ? { verb: 'Strip', text: 'Strip ' + (p.label || p.kind), hold: STRIP_TIME[p.kind] } : { verb: 'Strip', text: (p.label || p.kind)[0].toUpperCase() + (p.label || p.kind).slice(1) + ': it needs the ' + Tips.need(p.kind).name.toLowerCase(), tap: true, no: true };
+    if (YIELDS[p.kind]) return p.done ? null : Tips.canStrip(p.kind) ? { verb: 'Strip', text: 'Strip ' + (p.label || p.kind) + (OWNED[p.kind] ? ' · someone\'s: heat' : ''), hold: STRIP_TIME[p.kind] } : { verb: 'Strip', text: (p.label || p.kind)[0].toUpperCase() + (p.label || p.kind).slice(1) + ': it needs the ' + Tips.need(p.kind).name.toLowerCase(), tap: true, no: true };
     if (p.kind === 'grate') return p.done ? null : { verb: 'Cut', text: 'Cut the grate', hold: 1.3 };
     if (p.kind === 'heavy') return p.done ? null : Game.has('cutter') ? { verb: 'Cut', text: 'Cut the shutter', hold: 2.0 } : { verb: 'Cut', text: 'Too heavy for a hand cutter: it needs a plasma cutter', tap: true, no: true };
     if (p.kind === 'hatch') {
@@ -57,7 +59,7 @@ const Props = {
     if (p.kind === 'lift') return Game.s.flags.lift ? { verb: 'Ride', text: 'Take the lift ' + (p.dir || ''), tap: true } : { verb: 'Repair', text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
     if (p.kind === 'bed') return { verb: 'Sleep', text: p.label || 'Your cot', tap: true };
     if (p.kind === 'workbench') return { verb: 'Work', text: 'Your bench', tap: true };
-    if (p.kind === 'door') return p.out ? { verb: 'Leave', text: p.label, tap: true } : { verb: 'Enter', text: p.label, tap: true };
+    if (p.kind === 'door') { if (p.hours && !Props.openNow(p.hours)) return { verb: 'Closed', text: `${p.label}: opens at ${String(p.hours[0]).padStart(2, '0')}:00`, tap: true, no: true }; return p.out ? { verb: 'Leave', text: p.label, tap: true } : { verb: 'Enter', text: p.label, tap: true }; }
     if (p.kind === 'trapdoor') return p.up ? { verb: 'Climb', text: 'Up the ladder, into the storeroom', tap: true } : { verb: 'Climb down', text: 'The rug, and the trapdoor under it', tap: true };
     if (p.kind === 'cabinet') return p.done ? null : { verb: 'Jimmy', text: 'A locked parts cabinet: Meridian stock', hold: 1.6 };
     if (p.kind === 'shelf') return { verb: 'Look', text: 'The parts shelf', tap: true };
@@ -81,6 +83,7 @@ const Props = {
       for (const part of Parts.strip(p)) got.push(Parts.name(part).toLowerCase() + (part.gauge ? ' (' + part.gauge + ')' : '') + (part.st === 'worn' ? ' (worn)' : ''));
       this.finish(p); Fx.sparks(p.x, p.y - 8, 10);
       Game.toast(got.length ? '+ ' + got.join(', ') : 'Nothing worth taking.');
+      if (OWNED[p.kind]) { const seen = Actors.npcs.some((n) => !n.hidden && Math.abs(n.x - p.x) < 150 && Math.abs(n.y - p.y) < 40); Jobs.heat(OWNED[p.kind] + (seen ? 4 : 0), seen ? 'Somebody saw you do it.' : 'That was somebody\'s.'); }
       // some hold something to wear
       if (p.gear) for (const g of [].concat(p.gear)) Game.giveGear(g);
       return;
@@ -117,6 +120,8 @@ const Props = {
     if (p.kind === 'exit') { Game.go(p.to[0], p.to[1]); return; }
   },
   finish(p) { p.done = true; Game.s.done[p.id] = RESTOCK[p.kind] ? Game.s.day : 1; p.spr = null; Save.write(); },
+  // a door's hours [open, close], round midnight or not
+  openNow([a, b], h = Game.hour()) { return a < b ? h >= a && h < b : h >= a || h < b; },
   // is it still done? Junk piles, vending machines and parked cars come back:
   // new junk, a restocked machine, another car (RESTOCK, in days)
   isDone(p) { const d = Game.s.done[p.id]; return !!d && !(RESTOCK[p.kind] && Game.s.day - d >= RESTOCK[p.kind]); },
