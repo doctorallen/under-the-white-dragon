@@ -178,7 +178,7 @@ const Town = {
       const R = RESIDENTS[id], st = this.state(id, hour), on = st.level === here && !st.hidden;
       let n = Actors.npcs.find((q) => q.def.town === id);
       if (!on) { if (n) Actors.npcs.splice(Actors.npcs.indexOf(n), 1); continue; }
-      if (!n) { n = { def: { name: R.name, look: R.look, town: id, sched: [[0, 24, st.x, 'stand']], lines: [R.who] }, i: 120 + TOWN_ORDER.indexOf(id), x: st.x, y: st.y, face: st.dir || 1, hidden: false, tx: st.x, wt: 0, bubble: null, line: 0, art: new Map() }; Actors.npcs.push(n); }
+      if (!n) { n = { def: { name: R.name, look: R.look, town: id, sched: [[0, 24, st.x, 'stand']], lines: [R.who] }, i: 120 + TOWN_ORDER.indexOf(id), x: st.x, y: st.y, face: st.dir || 1, hidden: false, tx: st.x, wt: 0, bubble: null, line: 0, art: new Map() }; Actors.npcs.push(n); if (!st.moving) this.lastAct[id] = st.act + st.e.h; } // (already there when you walk in: nothing to say about arriving)
       const dx = st.x - n.x;
       if (st.moving) { n.face = st.dir; n.walked = (n.walked || 0) + Math.abs(dx); }
       else if (st.act === 'eat') n.face = 1;

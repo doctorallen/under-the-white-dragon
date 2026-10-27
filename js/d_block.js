@@ -12,9 +12,9 @@
 const BK = { G: 386, F1: 386 - 76 }; // the ground, and the flats' upper floor
 
 // a small hidden interior: walls, a ceiling, a door out at the west end
-function bkRoom(id, name, W, build) {
+function bkRoom(id, name, W, build, amb = [0.42, 0.4, 0.44]) {
   LEVELS[id] = { name, tier: 1, hidden: true, metres: 2, depth: '+2 m', mapX: 230, blurb: name, label: name, make: () => district({
-    id, name, tier: 1, W, sky: false, rain: 0, amb: [0.14, 0.13, 0.16], floor: MAT.concreteD,
+    id, name, tier: 1, W, sky: false, rain: 0, amb, floor: MAT.concreteD,
     build(L, G) { L.props = L.props.filter((p) => p.kind !== 'transit'); L.wall(0, 0, 24, G, MAT.concreteD, { base: 0.3 }); L.wall(W - 24, 0, W, G, MAT.concreteD, { base: 0.3 }); build(L, G); L.spots = Array.from({ length: 10 }, () => [W - 60, G]); },
   }) };
 }
@@ -59,7 +59,7 @@ bkRoom('d_grocery', 'Mo\'s Grocery', 540, (L, G) => {
   L.light(408, G - 50, 60, [0.6, 0.9, 1], 0.6);
   L.prop('door', 44, G, { label: 'Out to the street', out: true, to: ['d_dragon', 'grocery'] });
   L.spawns = { door: [60, G] };
-});
+}, [0.62, 0.66, 0.64]); // (a grocery under strip lights is bright)
 
 // ---- the flats: a lobby and five flats, cut away ------------------------------------
 // each flat: its walls' colour, where the bed and the table are, a window, a light
@@ -109,4 +109,4 @@ bkRoom('d_flats', 'Wan Fat Mansions', 540, (L, G) => {
   L.light(60, G - 50, 50, [0.9, 0.9, 1], 0.4); L.light(140, F1 - 40, 50, [0.9, 0.9, 1], 0.4);
   L.prop('door', 50, G, { label: 'Out to the street', out: true, to: ['d_dragon', 'flats'] });
   L.spawns = { door: [70, G] };
-});
+}, [0.44, 0.4, 0.38]);

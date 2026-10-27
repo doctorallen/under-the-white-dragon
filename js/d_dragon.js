@@ -70,7 +70,7 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, a
 // counter, and through the curtain her storeroom with the rug and the trapdoor.
 const WN = { W: 940, CEIL: 128, PART: 618, BACK: 630, END: 912 };
 LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2, depth: '+2 m', mapX: 230, blurb: 'Auntie Lin\'s noodle bar.', label: 'Noodle bar', make: () => district({
-  id: 'd_noodles', name: 'The White Dragon', tier: 1, W: WN.W, sky: false, rain: 0, amb: [0.16, 0.12, 0.12], floor: KMAT.darkwood,
+  id: 'd_noodles', name: 'The White Dragon', tier: 1, W: WN.W, sky: false, rain: 0, amb: [0.5, 0.4, 0.34], floor: KMAT.darkwood,
   build(L, G) {
     const C = G - WN.CEIL;
     L.props = L.props.filter((p) => p.kind !== 'transit');
@@ -136,7 +136,7 @@ const CL = { W: 720, CEIL: 132 };
 // a line of pixels, for arms and cables (glow > 0 lights it)
 function clLine(P, x0, y0, x1, y1, col, glow = 0) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); for (let k = 0; k <= n; k++) P.put(Math.round(x0 + ((x1 - x0) * k) / n), Math.round(y0 + ((y1 - y0) * k) / n), col, glow); }
 LEVELS.d_cellar = { name: 'Under the White Dragon', tier: 1, hidden: true, metres: -4, depth: '-4 m', mapX: 230, blurb: 'Your workshop, under the noodle bar. Nobody knows.', label: 'Workshop', make: () => district({
-  id: 'd_cellar', name: 'Under the White Dragon', tier: 1, W: CL.W, sky: false, rain: 0, amb: [0.1, 0.09, 0.13], floor: MAT.concreteD,
+  id: 'd_cellar', name: 'Under the White Dragon', tier: 1, W: CL.W, sky: false, rain: 0, amb: [0.26, 0.22, 0.28], floor: MAT.concreteD,
   build(L, G) {
     const C = G - CL.CEIL, W = CL.W, TT = C + 24; // TT: the top of the tile
     // no way out but the ladder: the district's spinner pad isn't here
