@@ -51,7 +51,8 @@ const Flight = {
     // the car, in the middle, banking and bobbing, its thrusters and lights glowing
     const s = this.art, cx = Math.round(w * 0.42), cy = Math.round(h * 0.55 + Math.sin(t * 2.3) * 3 + bank * 4);
     g.save(); g.translate(cx, cy); g.rotate(bank * 0.06 - 0.03); g.drawImage(s.c, -s.ax, -s.ay); g.restore();
-    gg.save(); gg.translate(cx, cy); gg.rotate(bank * 0.06 - 0.03); if (s.e) gg.drawImage(s.e, -s.ax, -s.ay);
+    // (the city's lights behind are hidden by the car's body, then its own go on)
+    gg.save(); gg.translate(cx, cy); gg.rotate(bank * 0.06 - 0.03); gg.globalCompositeOperation = 'destination-out'; gg.drawImage(s.c, -s.ax, -s.ay); gg.globalCompositeOperation = 'source-over'; if (s.e) gg.drawImage(s.e, -s.ax, -s.ay);
     gg.globalAlpha = 0.5; gg.fillStyle = '#3af0e0'; gg.fillRect(-s.ax + 10, -2, 12, 2); gg.fillRect(-s.ax + 42, -2, 12, 2);
     for (let k = 0; k < 22; k++) { gg.globalAlpha = 0.16 * (1 - k / 22); gg.fillStyle = '#fff4d8'; gg.fillRect(s.ax - 2 + k * 3, -12 - k * 0.25, 3, 2 + k * 0.6); } // headlight beam
     if (!this.cab) { const on = Math.floor(t * 6) % 2; gg.globalAlpha = 0.9; gg.fillStyle = on ? '#ff3040' : '#3a8aff'; gg.fillRect(-s.ax + (on ? 29 : 41), -s.ay + 1, 4, 2); }

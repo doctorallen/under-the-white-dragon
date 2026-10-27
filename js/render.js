@@ -69,12 +69,12 @@ function render() {
   // flickering signs and tubes: their glow dims with their light
   for (const f of L.flicks) { if (f.x1 < cx || f.x0 > cx + w || f.y1 < cy || f.y0 > cy + h) continue; const k = Life.flick(f.fl); if (k > 0.97) continue; gg.globalCompositeOperation = 'destination-out'; gg.fillStyle = `rgba(0,0,0,${1 - k})`; gg.fillRect(f.x0 - cx, f.y0 - cy, f.x1 - f.x0, f.y1 - f.y0); gg.globalCompositeOperation = 'source-over'; g.fillStyle = `rgba(0,0,0,${(1 - k) * 0.55})`; g.fillRect(f.x0 - cx, f.y0 - cy, f.x1 - f.x0, f.y1 - f.y0); }
   Life.drawAds(gg, cx, cy);
-  // props
+  // props, each hiding the glow behind it (a lit doorway behind a parked car)
   for (const p of World.props) {
     const s = Props.sprite(p); if (!s) continue;
     const x = Math.round(p.x - s.ax - cx), y = Math.round(p.y - s.ay - cy);
     if (x > w || y > h || x + s.w < 0 || y + s.h < 0) continue;
-    g.drawImage(s.c, x, y); if (s.e) gg.drawImage(s.e, x, y);
+    g.drawImage(s.c, x, y); occlude(s.c, x, y); if (s.e) gg.drawImage(s.e, x, y);
   }
   Life.drawWorld(g, gg, cx, cy);
   // the light

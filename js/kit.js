@@ -321,6 +321,7 @@ function kShop(L, x0, x1, G, kind, col, o = {}) {
 function bShophouse(L, x0, x1, G, o = {}) {
   const seed = o.seed || x0 * 7 + 3, r = new Rng(seed), fl = o.floors || 3, fh = Math.max(o.fh || 0, KS.fh), gh = Math.max(o.gh || KS.gh, KS.door + 4), top = G - gh - fl * fh, wall = o.wall || r.pick([KMAT.stucco, KMAT.cream, KMAT.teal, KMAT.pink, MAT.concrete, KMAT.mint]), w = x1 - x0;
   L.paint(x0 - 12, top - 40, x1 + 12, G - gh + 2, (P) => {
+    const r = new Rng(seed + 101); // (its own draws: every chunk this paints draws the same ones)
     P.block(x0, top, x1, G - gh, wall, { base: 0.42, drips: 0.12, dripLen: 22, seed });
     // floor by floor: a band, windows, sometimes a balcony across, AC units
     for (let f = 0; f < fl; f++) {
@@ -481,6 +482,7 @@ function bStack(L, x0, x1, G, o = {}) {
   const boxes = []; let y = base;
   for (let k = 0; k < levels; k++) { const bh = r.i(40, 50), cnt = r.i(1, 3); let bx = x0 + r.i(-16, 20); for (let q = 0; q < cnt && bx < x1 - 30; q++) { const bw = r.i(44, 76); boxes.push({ x: bx, y: y - bh, w: Math.min(bw, x1 + 20 - bx), h: bh, m: r.pick(mats), s: r.i(1, 1e5) }); bx += bw + r.i(-6, 10); } y -= bh; }
   L.paint(x0 - 40, y - 30, x1 + 40, G, (P) => {
+    const r = new Rng(seed + 103); // (its own draws: every chunk this paints draws the same ones)
     // the old block under it all: brick, barred windows, a stair up its side
     P.block(x0, base, x1, G - KS.gh, MAT.brickD, { base: 0.38, drips: 0.2, dripLen: 20, seed });
     for (let x = x0 + 10; x < x1 - 24; x += 32) kWin(P, x, base + 12, KS.winW, KS.winH, { lit: hash(x, 2, seed) < 0.5 ? '#ffc880' : null, bars: true });
@@ -559,8 +561,9 @@ function bBath(L, x0, x1, G, o = {}) {
 }
 // A park: grass, a path, trees of a kind, a lamp or two, benches, a pond
 function bPark(L, x0, x1, G, o = {}) {
-  const seed = o.seed || x0, r = new Rng(seed), trees = o.trees || ['sakura', 'pine', 'street'];
-  L.paint(x0, G - 100, x1, G + 4, (P) => {
+  const seed = o.seed || x0, trees = o.trees || ['sakura', 'pine', 'street'];
+  L.paint(x0 - 40, G - 100, x1 + 40, G + 4, (P) => { // (wide enough for the trees' crowns at the ends)
+    const r = new Rng(seed + 107); // (its own draws: every chunk this paints draws the same ones)
     kGrass(P, x0, x1, G, { seed });
     if (o.pond) { const px0 = x0 + (x1 - x0) * 0.4, px1 = px0 + 80; for (let x = px0; x < px1; x++) for (let y = G - 2; y < G + 4; y++) P.put(x, y, tone(KMAT.water, 0.35 + (y === G - 2 ? 0.3 : 0) + (noise(x / 9, y, 4) - 0.5) * 0.2)); }
     for (let x = x0 + 30; x < x1 - 20; x += r.i(70, 110)) kTree(P, x, G - 2, r.pick(trees), { h: r.i(50, 80), seed: x });
