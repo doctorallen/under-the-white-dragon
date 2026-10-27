@@ -7,7 +7,7 @@
 // arc and go off, the dead stay where they fell.
 // ---------------------------------------------------------------------------
 const NPC_ROLE = {
-  noodles: { verb: 'Eat', prompt: () => 'Noodles · 12 cr', use: (n) => { if (Game.s.hp >= T.player.hp) { Actors.say(n, 'You\'re fine. Come back hungry.'); return; } if (!Game.pay({ cr: 12 })) { Actors.say(n, 'Twelve. You don\'t have twelve.'); return; } Game.s.hp = Math.min(T.player.hp, Game.s.hp + 50); Hud.refresh(); Actors.say(n, 'Eat. Slowly.'); } },
+  noodles: { verb: 'Eat', prompt: () => LEGACY ? 'Noodles · 12 cr' : 'A bowl of noodles · 6 cr', use: (n) => { if (!LEGACY) { const paid = Game.pay({ cr: 6 }); Game.pass(0.25); n.line = (n.line || 0) + 1; Actors.say(n, paid ? n.def.lines[n.line % n.def.lines.length] : 'Eat. Pay me when you\'ve got it.'); Hud.refresh(); return; } if (Game.s.hp >= T.player.hp) { Actors.say(n, 'You\'re fine. Come back hungry.'); return; } if (!Game.pay({ cr: 12 })) { Actors.say(n, 'Twelve. You don\'t have twelve.'); return; } Game.s.hp = Math.min(T.player.hp, Game.s.hp + 50); Hud.refresh(); Actors.say(n, 'Eat. Slowly.'); } },
   vendor: { verb: 'Trade', prompt: (n) => 'Trade with ' + n.def.name, use: (n) => Hud.toggle('vendor', n) },
   fixer: { verb: 'Cases', prompt: (n) => 'Talk to ' + n.def.name, use: (n) => Hud.toggle('fixer', n) },
   qm: { verb: 'Gadgets', prompt: () => 'The quartermaster', use: (n) => Hud.toggle('qm', n) },

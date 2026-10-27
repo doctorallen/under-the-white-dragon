@@ -19,6 +19,7 @@ const YIELDS = {
   car: [['coolant', 1, 2], ['alloy', 1, 2], ['wire', 0, 1]], junk: [['alloy', 1, 2], ['wire', 0, 1]], wreck: [['chips', 0, 1], ['glass', 1, 1], ['wire', 1, 1]],
   cache: [['chips', 2, 3], ['cr', 30, 60]], dronewreck: [['wire', 1, 2], ['chips', 0, 1]], substation: [['wire', 2, 3], ['alloy', 1, 1]], autodoc: [['chips', 1, 2], ['glass', 1, 1]], stash: [['chips', 2, 3], ['coolant', 1, 1], ['cr', 60, 90]],
 };
+const RESTOCK = { junk: 3, vending: 5, car: 4 };
 const STRIP_TIME = { dronewreck: 1.8, substation: 2.0, autodoc: 2.6, vending: 1.6, ac: 1.2, rack: 1.8, car: 2.4, junk: 1.0, wreck: 1.0, cache: 1.4, stash: 1.2 };
 
 const Props = {
@@ -115,5 +116,8 @@ const Props = {
     if (p.kind === 'elevator') { Hud.toggle('elevator'); return; }
     if (p.kind === 'exit') { Game.go(p.to[0], p.to[1]); return; }
   },
-  finish(p) { p.done = true; Game.s.done[p.id] = 1; p.spr = null; Save.write(); },
+  finish(p) { p.done = true; Game.s.done[p.id] = RESTOCK[p.kind] ? Game.s.day : 1; p.spr = null; Save.write(); },
+  // is it still done? Junk piles, vending machines and parked cars come back:
+  // new junk, a restocked machine, another car (RESTOCK, in days)
+  isDone(p) { const d = Game.s.done[p.id]; return !!d && !(RESTOCK[p.kind] && Game.s.day - d >= RESTOCK[p.kind]); },
 };

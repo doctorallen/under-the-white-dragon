@@ -110,7 +110,7 @@ const Bench = {
     r.p += dt / (sc.strip ? 1.1 : 0.7);
     if (r.bi < binds.length && r.p >= binds[r.bi]) { r.p = binds[r.bi]; r.bind = 0; this.say('It\'s binding. Ease off, now, or you\'ll strip it.'); return; }
     if (r.p >= 1) {
-      sc.st = out ? 'out' : 'in'; this.rt[h.i] = null; h.done = true;
+      sc.st = out ? 'out' : 'in'; this.rt[h.i] = null; h.done = true; this.b.tested = null; // (changed since it was tested: test it again)
       const left = this.b.screws.filter((s) => s.st === 'in').length;
       if (out) this.say(left ? `It's out. ${left} to go.` : 'That\'s the last one. Lift the casing.');
       else this.say(sc.strip ? 'It spins in but never bites. Loose.' : left === this.b.screws.length ? 'All in. Power it up.' : 'Snug.');
@@ -148,7 +148,7 @@ const Bench = {
   lift() {
     const n = this.b.screws.filter((s) => s.st === 'in').length;
     if (n) { this.say(`Still screwed down: ${n} screw${n > 1 ? 's' : ''} to go.`); return; }
-    this.b.open = true; this.tool = 'probe'; this.fx = null; this.say('The casing comes away. Probe the parts to find what\'s wrong.'); this.side();
+    this.b.open = true; this.b.tested = null; this.tool = 'probe'; this.fx = null; this.say('The casing comes away. Probe the parts to find what\'s wrong.'); this.side();
   },
   close() { this.b.open = false; this.tool = 'driver'; this.sel = null; this.lit = {}; this.say('Casing on. Drive the screws home, then power it up.'); this.side(); },
   fit(id) {

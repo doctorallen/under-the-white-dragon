@@ -132,7 +132,7 @@ const Town = {
     if (e.at === 'grocery') return { place: 'grocery', x: e.act === 'work' ? 488 : e.act === 'stock' ? SHELF[1] + 6 : e.x, y: BK.G };
     const home = e.at === 'home' ? R.home : RESIDENTS[e.at.split(':')[1]].home, F = FLATS[home];
     const twin = TOWN_ORDER.filter((q) => RESIDENTS[q].home === home).indexOf(id);
-    if (e.act === 'sleep') return { place: 'flats', flat: home, x: F.bed + (twin > 0 ? (home === 'C' ? 26 : -26) : 0), y: F.y };
+    if (e.act === 'sleep') return { place: 'flats', flat: home, x: F.bed + (twin > 0 ? (home === 'C' ? 36 : -36) : 0), y: F.y };
     return { place: 'flats', flat: home, x: F.table + (e.at === 'home' ? (twin > 0 ? 12 : -12) : 14), y: F.y };
   },
   // inside the flats: across a floor, or by the stairs between floors

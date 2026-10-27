@@ -10,7 +10,7 @@
 // out front gives a scrap part; there's no gun, and the help and the pack talk
 // about the basement; a cab flies from the stand to the Overpass Market, where Ana
 // sells a part; the map and dev settings work; on Clinic Row Kade's stall
-// opens, there are no enemies, and the cabinet gives a Meridian servo and heat; a terminal is jacked into; Ozzy's
+// opens, there are no enemies, and the cabinet gives a Meridian servo and heat; Ozzy's
 // cab flies home for free; a medpatch heals; every level loads and draws; a
 // reload brings it all back.
 // Screenshots go to test/out. Chrome comes from $CHROME (puppeteer-core), or,
@@ -70,6 +70,9 @@ async function run(B, url, vp, name, failures) {
   const shot = (n) => page.screenshot({ path: path.join(OUT, `${name}-${n}.png`) });
   const E = (fn, arg) => page.evaluate(fn, arg);
   console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))));
+  // a new game opens on how things stand; Get up closes it
+  const intro = await E(() => { const was = Hud.open; const b = document.querySelector('button[data-act="resume"]'); if (b) b.click(); T_.run({}, 10); return was; });
+  if (intro !== 'intro') fail('a new game did not open on the intro (' + intro + ')');
   const st = await E(() => ({ level: Game.s.level, x: Player.x, frame: Game.frame }));
   if (st.level !== 'd_cellar' || Math.abs(st.x - 630) > 40) fail('the game does not start in the basement by the cot ' + JSON.stringify(st));
   if (!st.frame) fail('the loop is not running');
@@ -188,24 +191,15 @@ async function run(B, url, vp, name, failures) {
   const cab0 = await E(() => { for (const e of Actors.enemies) { e.alert = false; e.aware = 0; } const c = World.props.find((p) => p.kind === 'cabinet'), h0 = Game.s.heat; Player.place(c.x, c.y); T_.run({}, 4); T_.hold(140); return { done: c.done, servo: Game.s.parts.some((p) => p.k === 'servo' && p.g === 'military' && p.how === 'take'), heat: Game.s.heat - h0 }; });
   if (!cab0.done || !cab0.servo || cab0.heat < 15) fail('the cabinet did not give a Meridian servo and heat ' + JSON.stringify(cab0));
   await shot('clinicrow');
-  // a terminal: jack in, cross the network to the core, forcing any ICE in the way
-  const node = await E(() => {
-    const t = World.props.find((p) => p.kind === 'node'); Player.place(t.x, t.y); T_.run({}, 4); T_.tap('useHit'); const on = Hud.open === 'net' && !!Hack.net, N = Hack.net; if (!N) return { on };
-    const core = N.nodes.length - 1;
-    for (let k = 0; k < 12 && !N.out; k++) {
-      const prev = {}, q = [N.at]; prev[N.at] = -1; while (q.length) { const a = q.shift(); for (const l of N.nodes[a].links) if (prev[l] === undefined) { prev[l] = a; q.push(l); } }
-      let s = core; while (prev[s] !== N.at) s = prev[s];
-      Hack.go(s); if (N.ask !== null) Hack.act('force');
-    }
-    Hack.act('out'); return { on, open: Hud.open };
-  });
-  if (!node.on || node.open) fail('the terminal did not jack in and out ' + JSON.stringify(node));
+  // no terminals to jack into, no lockers of loot: those were the detective's
+  const legacy = await E(() => World.props.filter((p) => ['node', 'locker', 'cache', 'stash'].includes(p.kind)).length);
+  if (legacy) fail('Clinic Row still has terminals or lockers (' + legacy + ')');
   // a cab home: Ozzy flies you for nothing now
   const cab = await E(() => { const c0 = Game.s.cr; Hud.toggle('cab'); const b = document.querySelector('button[data-act="cab"]'); if (b) b.click(); T_.run({}, 330); return { level: Game.s.level, paid: c0 - Game.s.cr }; });
   if (cab.level !== 'd_dragon' || cab.paid !== 0) fail('Ozzy did not fly the runner home to the White Dragon for free ' + JSON.stringify(cab));
-  // a medpatch heals
-  const items = await E(() => { Game.s.hp = 40; Game.give('medpatch', 1); Game.useItem('medpatch'); return Game.s.hp; });
-  if (items !== 75) fail('a medpatch did nothing (' + items + ')');
+  // nothing hurts: a fall or a trace leaves you as you were
+  const hurt = await E(() => { const h = Game.s.hp; Game.hurt(20); return Game.s.hp - h; });
+  if (hurt) fail('the runner can still be hurt (' + hurt + ')');
   // every level loads and draws
   if (name === 'phone') {
     const lv = await E(() => { const bad = []; const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); if (Actors.enemies.length) bad.push(id + ' has enemies'); for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });

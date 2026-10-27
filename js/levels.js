@@ -16,15 +16,15 @@ const DECO = {
 const CROWD_LINES = [
   'Third shift this week. Fourth if you count this one.', 'Rain\'s warm tonight. That\'s the chemicals.', 'Lift\'s out again. Lift\'s always out.',
   'My kid wants a chrome arm for her birthday. She\'s nine.', 'They\'re hiring at the Works. Nobody comes back up to say how it is.', 'You see the fish on the billboard? It follows you if you look at it.',
-  'Got any change? No? Me neither.', 'They say synths don\'t sleep. I don\'t sleep either. Doesn\'t make me one.', 'Don\'t eat the street noodles. Eat Mama\'s.',
-  'Detective? You don\'t look like a detective. That\'s probably the point.', 'I haven\'t seen the sky in eleven years. I hear it\'s overrated.', 'Somebody stole the copper out of my wall again.',
+  'Got any change? No? Me neither.', 'They say synths don\'t sleep. I don\'t sleep either. Doesn\'t make me one.', 'Don\'t eat the street noodles. Eat Lin\'s.',
+  'You fix things? My whole life\'s broken. Kidding. Mostly.', 'I haven\'t seen the sky in eleven years. I hear it\'s overrated.', 'Somebody stole the copper out of my wall again.',
 ];
-function crowd(L, n, x0, x1, y, seed) {
+function crowd(L, n, x0, x1, y, seed, wet = true) {
   const r = new Rng(seed);
   for (let i = 0; i < n; i++) {
     const hairs = ['short', 'bob', 'long', 'cap', 'hood', 'bun', 'bald', 'undercut'], tops = ['#3a4a5a', '#5a3a3a', '#3a5a3a', '#4a4a4a', '#6a5a3a', '#2a2a3a', '#5a3a5a', '#c8c0b0'];
     const look = { skin: r.pick(SKINS), hair: r.pick(hairs), hairCol: r.pick(['#1a1414', '#3a2a20', '#8a6a4a', '#c8c8c8', '#ff4ab0', '#3af0e0']), top: r.pick(tops), coat: r.f() < 0.4 ? 'long' : 'jacket', legs: r.pick(['#2a2a2a', '#1a1a24', '#3a3028']), tall: 0.88 + r.f() * 0.14 };
-    if (r.f() < 0.25) { look.umbrella = r.pick(['#2a3a5a', '#5a2a3a', '#2a2a2a']); if (r.f() < 0.5) look.umbrellaGlow = r.pick(['#3af0e0', '#ff4ab0']); }
+    if (r.f() < 0.25) { look.umbrella = r.pick(['#2a3a5a', '#5a2a3a', '#2a2a2a']); if (r.f() < 0.5) look.umbrellaGlow = r.pick(['#3af0e0', '#ff4ab0']); if (!wet) delete look.umbrella, delete look.umbrellaGlow; } // (no umbrellas under a roof)
     if (r.f() < 0.2) { look.cyArm = true; look.acc = r.pick(['#3af0e0', '#ff4ab0', '#ffb040']); }
     // a night city: out most hours, home for a few before dawn
     const home = x0 + r.f() * (x1 - x0), h0 = 2 + r.i(0, 2), h1 = h0 + 3 + r.i(0, 3);

@@ -18,9 +18,9 @@ const Input = {
       if (k) { this.keys.add(k); if (k === 'j') this.jumpHit = true; if (k === 'e') this.useHit = true; e.preventDefault(); }
       if (e.code === 'KeyJ' || e.code === 'KeyX') this.strikeHit = true;
       if (e.code === 'KeyQ') this.progHit = true;
-      if (e.code === 'KeyR') Hud.nextProgram();
+      if (e.code === 'KeyR' && LEGACY) Hud.nextProgram();
       if (e.code === 'KeyG') this.itemHit = true;
-      if (e.code === 'KeyT') Hud.nextItem();
+      if (e.code === 'KeyT' && LEGACY) Hud.nextItem();
       if (e.code === 'KeyI' || e.code === 'Tab') { Hud.toggle('pack'); e.preventDefault(); }
       if (e.code === 'KeyM') Hud.toggle('map');
       if (e.code === 'Escape') Hud.toggle(Hud.open ? Hud.open : 'pause');

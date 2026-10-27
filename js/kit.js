@@ -676,10 +676,10 @@ const STALL_NAMES = { ramen: 'Ramen cook', yakitori: 'Grill man', dumpling: 'Dum
 const STALL_LINES = {
   ramen: ['Shoyu or miso? Don\'t say synth broth, I\'ll throw you out.', 'Sit. Eat. The rain can wait.'], yakitori: ['Chicken. Real chicken. Don\'t ask from where.', 'Smoke\'s free. Skewers are not.'],
   dumpling: ['Six for a credit. Steamed this morning. This evening. Recently.', 'My grandmother\'s recipe. She was a synth, you know. Joking!'], fish: ['Canal fish. Glows a little. Perfectly safe.', 'Fresh off the barge. Fresh-ish.'],
-  fruit: ['Real oranges from the arcology. Fell off a truck.', 'Apples are grown in vats now. These ones aren\'t. Probably.'], tea: ['Sit down, tracer. Tea first, questions after.', 'Green, black, or the one that keeps you awake for three days.'],
+  fruit: ['Real oranges from the arcology. Fell off a truck.', 'Apples are grown in vats now. These ones aren\'t. Probably.'], tea: ['Sit down, tinker. Tea first, questions after.', 'Green, black, or the one that keeps you awake for three days.'],
   flowers: ['Real flowers. Smell them. That\'s free.', 'For the dead or the living? Different price.'], parts: ['Chips, screens, coils. Nothing stolen. Nothing I know of.', 'Need a part? I\'ve got the part. Somewhere.'],
   med: ['Patches, painkillers, stitches. No chrome. I\'m legal.', 'Bleeding? Sit. Pay after.'], herbs: ['Roots for the lungs. The air down here eats them.', 'Old remedies. They work as well as the new ones. Which is to say, a bit.'],
-  organs: ['Cold box. Don\'t open the cold box.', 'Everything in here\'s grown, not taken. You have my word. My word\'s cheap.'], masks: ['Fox, demon, cat. Hide your face, tracer. Everyone does.', 'Festival\'s on the fourth. Every month.'],
+  organs: ['Cold box. Don\'t open the cold box.', 'Everything in here\'s grown, not taken. You have my word. My word\'s cheap.'], masks: ['Fox, demon, cat. Hide your face, tinker. Everyone does.', 'Festival\'s on the fourth. Every month.'],
   books: ['Paper books. Nobody reads them. I do.', 'A first edition of a manual for a car that doesn\'t exist any more.'], skewers: ['Two for one. One for two. Whatever.', 'Mum says don\'t talk to cops.'],
 };
 
@@ -710,9 +710,9 @@ function district(o) {
   for (let x = 300; L.spots.length < 10 && x < W - 150; x += Math.max(140, Math.floor((W - 450) / 10))) if (!L.spots.some((s) => Math.abs(s[0] - x) < 60 && s[1] === G)) L.spots.push([x, G]);
   // a terminal on the ground, by one of the spots: a network to jack into
   const gs = L.spots.filter((s) => s[1] === G), ts = gs.length ? gs[Math.floor(hash(o.id.length, W, 23) * gs.length)] : [W * 0.5, G], tier = o.tier || 1;
-  L.prop('node', ts[0] - 26, G, { term: true, level: tier >= 5 ? 3 : tier >= 3 ? 2 : 1, col: '#ffb040' }); L.light(ts[0] - 26, G - 18, 40, [1, 0.7, 0.3], 0.5);
+  if (LEGACY) L.prop('node', ts[0] - 26, G, { term: true, level: tier >= 5 ? 3 : tier >= 3 ? 2 : 1, col: '#ffb040' }); if (LEGACY) L.light(ts[0] - 26, G - 18, 40, [1, 0.7, 0.3], 0.5);
   // people passing, light, weather
-  if (o.crowd) crowd(L, o.crowd, o.crowdFrom || 300, o.crowdTo || W - 200, G, o.id.length * 977 + W);
+  if (o.crowd) crowd(L, o.crowd, o.crowdFrom || 300, o.crowdTo || W - 200, G, o.id.length * 977 + W, o.rain === undefined ? o.sky !== false : !!o.rain);
   if (o.local) L.npc(Object.assign({ x: 260, y: G, sched: [[0, 24, 260, 'stand']] }, o.local, { look: Object.assign({ skin: SKINS[2], hair: 'short', top: '#3a4a5a', coat: 'jacket', legs: '#2a2a2a' }, o.local.look || {}) }));
   const amb = o.amb || [0.2, 0.17, 0.26];
   if (o.sky !== false) L.ambient = (ax, ay) => { const t = clamp(1 - ay / 400, 0, 1); return [amb[0] + t * 0.08, amb[1] + t * 0.06, amb[2] + t * 0.1]; };

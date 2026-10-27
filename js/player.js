@@ -114,6 +114,7 @@ const Player = {
     }
     this.y = ny;
     if (this.y > World.L.h + 40) { Game.hurt(20); const sp = Object.values(World.L.spawns)[0]; this.place(sp[0], sp[1]); }
+    if (!LEGACY) { Input.take('strikeHit'); Input.take('progHit'); Input.take('itemHit'); } // (no fists, programs or quick items now)
     if (Input.take('strikeHit') && this.strikeCd <= 0 && !this.hold) this.fire();
     if (Input.take('progHit')) this.runProgram();
     if (Input.take('itemHit')) { const q = Game.quickItem(); if (q) Game.useItem(q); else Game.toast('Nothing to use. Vendors sell med-patches and grenades.'); }
@@ -181,7 +182,7 @@ const Player = {
     for (const n of Actors.npcs) {
       if (n.hidden) continue;
       const dx = Math.abs(n.x - this.x); if (dx > 20 || Math.abs(n.y - this.y) > 14) continue;
-      const work = n.def.caseId || Cases.actionsFor(n.def.name).length > 0, dn = dx + (work ? -30 : n.def.role ? 0 : 14); // passers-by don't get in the way of a machine you're at
+      const work = n.def.caseId || Cases.actionsFor(n.def.name).length > 0, job = !work && Jobs.actionsFor(n.def.name).length > 0, dn = dx + (work || job ? -30 : n.def.role ? 0 : 14); // (someone with a job for you comes first) // passers-by don't get in the way of a machine you're at
       if (dn < bd) { bd = dn; best = { n, pr: { verb: work ? 'Question' : n.def.role ? NPC_ROLE[n.def.role].verb : 'Talk', text: work ? 'Question ' + n.def.name : n.def.role ? NPC_ROLE[n.def.role].prompt(n) : 'Talk to ' + n.def.name, tap: true } }; }
     }
     this.target = best;

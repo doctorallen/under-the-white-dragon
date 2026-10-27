@@ -50,8 +50,8 @@ const MapView = {
     g.fillStyle = 'rgba(6,5,10,0.25)'; g.fillRect(this.ox, this.oy, this.img.width * s, this.img.height * s);
     // dots first, then their names, most important first, skipping any that would overlap
     const marks = [], mark = (x, y, text, col, dot, pri) => marks.push({ x, y, text, col, dot, pri });
-    const PLACES = { elevator: 'Elevator', spinner: 'Spinner', lift: 'Freight lift', hatch: 'Shaft', exit: 'Ladder up', node: 'Data node', bed: 'Bed', closet: 'Closet', sealed: 'Sealed', heavy: 'Shutter', grate: 'Grate' };
-    for (const p of World.props) if (PLACES[p.kind] && !(p.kind === 'node' && p.done)) mark(p.x, p.y - 20, PLACES[p.kind], '#3af0e0', 2.5, 2);
+    const PLACES = { elevator: 'Elevator', spinner: 'Spinner', lift: 'Freight lift', hatch: 'Shaft', exit: 'Ladder up', node: 'Data node', bed: 'Cot', closet: 'Closet', sealed: 'Sealed', heavy: 'Shutter', grate: 'Grate', workbench: 'Bench', shelf: 'Parts shelf', trapdoor: 'Trapdoor', door: 'Door', transit: 'Cab stand', dronewreck: 'Lead', substation: 'Lead', autodoc: 'Lead' };
+    for (const p of World.props) if (PLACES[p.kind] && !(p.done && (p.kind === 'node' || TIP_YIELD[p.kind]))) mark(p.x, p.y - 20, PLACES[p.kind], '#3af0e0', 2.5, 2);
     for (const n of Actors.npcs) if (!n.hidden) { const named = n.def.role || !/Passer-by|Commuter|Local|Night worker/.test(n.def.name); mark(n.x, n.y - 20, named ? n.def.name : '', n.def.role ? '#ffb040' : '#a69cb6', n.def.role ? 3 : 2, n.def.role ? 3 : 1); }
     for (const e of Actors.enemies) if (!e.ally) mark(e.x, e.y - 12, e.type === 'warden' ? 'The Warden' : '', '#ff4060', e.type === 'warden' ? 5 : 3, 4);
     for (const b of Actors.bodies) mark(b.x, b.y - 2, '', '#5a4048', 2, 0);

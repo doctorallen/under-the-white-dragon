@@ -29,7 +29,7 @@ addDistrict('d_neonrow', 'Neon Row', 1, 60, 380, 'The nightlife strip: bars, pac
     L.paint(626, G - 80, 656, G - 76, (P) => P.block(626, G - 80, 656, G - 78, MAT.steelD, { base: 0.5 })); L.paint(639, G - 78, 643, G - 24, (P) => P.block(640, G - 78, 642, G - 24, MAT.steelD, { base: 0.4 }));
     L.light(670, G - 30, 120, [0.4, 1, 0.9], 0.8);
     L.critter('owl', 640, 640, G - 80, 1); L.critter('dog', 590, 760, G, 1); L.critter('cat', 560, 780, G, 1);
-    L.npc({ name: 'Lio', look: { skin: SKINS[2], hair: 'short', hairCol: '#3a2418', top: '#3a5a4a', apron: '#2a3a30', legs: '#2a2a2a', glasses: true }, x: 690, y: G, face: -1, sched: [[0, 24, 690, 'stand']], lines: ['Every one of them. Shot in their cages.', 'You want a dog? I\'ve got one left. Synth. Good boy.', 'A real owl. Do you know what a real owl is worth?'] });
+    L.npc({ name: 'Lio', look: { skin: SKINS[2], hair: 'short', hairCol: '#3a2418', top: '#3a5a4a', apron: '#2a3a30', legs: '#2a2a2a', glasses: true }, x: 690, y: G, face: -1, sched: [[0, 24, 690, 'stand']], lines: ['Every one of them hand-reared. Mostly.', 'You want a dog? I\'ve got one left. Synth. Good boy.', 'A real owl. Do you know what a real owl is worth?'] });
     // a capsule hotel, noodle carts in front of it
     bCapsules(L, 800, 960, G, { h: 320, sign: '#ffd040', seed: 41 });
     kStallAt(L, 840, G, 'ramen', { npc: { name: 'Old Sato', lines: ['Shoyu or miso? Don\'t say synth broth, I\'ll throw you out.', 'The pet shop lady? Lio\'s a man. Nice man. Owes everybody.'] } });
@@ -203,7 +203,7 @@ addDistrict('d_kessler', 'Kessler Blocks', 1, 50, 230, 'A housing estate up high
 // ---- Glasshouse Plaza: Meridian's front garden. Glass and white metal
 // towers of every shape, a fountain, a ring of chrome, boutiques under a
 // canopy, a sky-garden, and security everywhere.
-addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza: glass towers, a fountain and a hologram, boutiques, and security everywhere.', 'Corporate plaza', () => district({
+addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza: glass towers, a fountain and a hologram, boutiques, and guards who look straight through you.', 'Corporate plaza', () => district({
   id: 'd_glasshouse', name: 'Glasshouse Plaza', tier: 1, W: 2700, crowd: 8, layerDy: 30, floor: KMAT.whitepanel, amb: [0.22, 0.24, 0.3],
   local: { name: 'Office worker', lines: LOCAL_LINES.plaza, look: { hair: 'short', top: '#1a1a24', coat: 'long', collar: true, legs: '#1a1a24' } },
   build(L, G) {

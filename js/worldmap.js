@@ -34,7 +34,7 @@ const WorldMap = {
   cv: null, img: null, K: 1.3, s: 1, ox: 0, oy: 0, sel: null, browse: false, timer: 0,
   // every place on the map: its pin and what you know of it
   places() {
-    return Object.keys(LEVELS).filter((id) => LEVELS[id].metres !== undefined && LEVELS[id].mapX !== undefined && !LEVELS[id].hidden).map((id) => {
+    return Object.keys(LEVELS).filter((id) => LEVELS[id].metres !== undefined && LEVELS[id].mapX !== undefined && !LEVELS[id].hidden && (LEGACY || id === 'd_dragon' || Travel.open(id) || ['high', 'street', 'under'].includes(Travel.band(id)) && !['home', 'precinct', 'stack', 'street'].includes(id))).map((id) => {
       const L = LEVELS[id]; return { id, name: L.name, x: L.mapX, y: wmapY(L.metres), m: L.metres, L };
     });
   },
@@ -138,7 +138,7 @@ const WorldMap = {
   clampView() { const cv = this.cv, w = WMAP_W * this.s, h = WMAP_H * this.s; this.ox = w <= cv.width ? (cv.width - w) / 2 : clamp(this.ox, cv.width - w, 0); this.oy = h <= cv.height ? (cv.height - h) / 2 : clamp(this.oy, cv.height - h - cv.height * 0.3, cv.height * 0.15); },
   zoom(k, sx, sy) { const dpr = window.devicePixelRatio || 1, x = sx * dpr, y = sy * dpr, s0 = this.s; this.s = clamp(this.s * k, (this.cv.width / WMAP_W) * 0.9, 4 * dpr); this.ox = x - (x - this.ox) * (this.s / s0); this.oy = y - (y - this.oy) * (this.s / s0); this.clampView(); this.draw(); },
   // which pins are worth a mark: where an open case or job wants you
-  wanted() { const w = new Set(); for (const c of Cases.open()) { const q = Cases.where(c); if (q) w.add(q.level); } for (const j of Quests.open()) { const q = Quests.where(j); if (q) w.add(q.level); } return w; },
+  wanted() { const w = new Set(); for (const id of TIP_ORDER) if (Tips.st(id) === 'known') w.add(TIPS[id].level); for (const c of Cases.open()) { const q = Cases.where(c); if (q) w.add(q.level); } for (const j of Quests.open()) { const q = Quests.where(j); if (q) w.add(q.level); } return w; },
   tap(x, y) {
     let best = null, bd = 26 * (window.devicePixelRatio || 1);
     for (const p of this.places()) { const d = Math.hypot(this.ox + p.x * this.s - x, this.oy + p.y * this.s - y); if (d < bd) { bd = d; best = p.id; } }

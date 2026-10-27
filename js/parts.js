@@ -59,6 +59,7 @@ const DEVICE = {
 // what a stall sells: [kind, grade, price, gauge, a line about it]
 const PART_STOCK = {
   ana: [['cell', 'street', 25], ['aerial', 'street', 30], ['board', 'street', 45], ['relay', 'street', 20]],
+  mo: [['cell', 'street', 28, null, 'Household cells, behind the counter. A little dearer than the market.'], ['relay', 'street', 24, null, 'Fuses and relays, for the block\'s wiring.']],
   kade: [['servo', 'scrap', 80, 'heavy', 'Refurbished. It\'s been in three arms already. It might have one more in it.'], ['servo', 'clinic', 70, 'light', 'Clinic grade, light gauge: made for a nurse\'s hand, not a soldier\'s.'], ['cell', 'clinic', 40]],
 };
 // what stripping a machine gets you, besides salvage: one tired part
@@ -91,6 +92,11 @@ const Parts = {
   give(p, quiet) { Game.s.parts.push(p); if (!quiet) Game.toast('Onto the shelf: ' + this.name(p) + '.', 'good'); return p; },
   take(id) { const s = Game.s, i = s.parts.findIndex((p) => p.id === id); return i < 0 ? null : s.parts.splice(i, 1)[0]; },
   have(k) { return Game.s.parts.filter((p) => p.k === k); },
+  // dead and burnt parts are only good for scrap: what a stall gives for them
+  junk() { return Game.s.parts.filter((p) => p.st === 'dead' || p.st === 'burnt'); },
+  // (and the salvage you've stripped: wire, alloy, glass, coolant, chips)
+  junkValue() { return this.junk().reduce((a, p) => a + (p.st === 'dead' ? 3 : 1) + (p.g === 'clinic' || p.g === 'military' ? 4 : 0), 0) + SALVAGE_ORDER.reduce((a, k) => a + (Game.s.pack[k] || 0) * SALVAGE[k].price, 0); },
+  sellJunk() { const v = this.junkValue(); if (!v) return; Game.s.parts = Game.s.parts.filter((p) => p.st !== 'dead' && p.st !== 'burnt'); for (const k of SALVAGE_ORDER) Game.s.pack[k] = 0; Game.s.cr += v; Game.toast(`You tip it all into the scrap bin: ${v} cr.`, 'good'); Hud.refresh(); Save.write(); },
   name(p) { return GRADE[p.g].name + ' ' + PART[p.k].name.toLowerCase(); },
   // where it's from: "bought at the Overpass Market"
   from(p) { const L = LEVELS[p.from]; return (HOW[p.how] || 'found') + (p.how === 'pull' ? ' from ' + (p.out || 'a job') : L ? (p.how === 'trade' ? ' at ' : ' in ') + L.name : ''); },
@@ -107,8 +113,8 @@ const Parts = {
     const T = TIP_YIELD[p.kind];
     if (T) return T.filter(([, , , ch], i) => !ch || hash(p.x, i, 78) < ch).map(([k, g, gauge]) => this.give(this.make(k, g, gauge ? { gauge } : {}), true));
     const k = PART_YIELD[p.kind]; if (!k) return [];
-    const t = Tips.tier(), g = p.kind === 'rack' || (t >= 2 && hash(p.x, p.y, 79) < 0.4) ? 'street' : 'scrap';
-    return [this.give(this.make(k, g, { st: hash(p.x, p.y, 77) < (t >= 2 ? 0.9 : 0.7) ? 'ok' : 'worn' }), true)];
+    const t = Tips.tier(), d = Game.s.day, g = p.kind === 'rack' || (t >= 2 && hash(p.x, p.y + d, 79) < 0.4) ? 'street' : 'scrap';
+    return [this.give(this.make(k, g, { st: hash(p.x, p.y + d, 77) < (t >= 2 ? 0.9 : 0.7) ? 'ok' : 'worn' }), true)];
   },
   // a part's picture, as on the bench (made once a kind and grade)
   icons: {},

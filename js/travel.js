@@ -30,7 +30,8 @@ const Travel = {
   open(id) {
     const L = LEVELS[id], f = (k) => Game.flag(k);
     if (!L || L.metres === undefined) return false;
-    if (!LEGACY && (id === 'home' || id === 'precinct')) return false;
+    if (!LEGACY && (id === 'home' || id === 'precinct' || id === 'stack' || id === 'street')) return false;
+    if (!LEGACY && !['high', 'street', 'under'].includes(this.band(id))) return false; // (the deep city's ways down were the detective's)
     if (L.hidden) return false; // (the basement: only through the trapdoor)
     if (f('been:' + id) || id === 'd_dragon' || id === 'stack') return true;
     if (id === 'spires') return Game.s.pack.spirepass > 0;
@@ -38,7 +39,7 @@ const Travel = {
     const b = this.band(id);
     if (b === 'high') return true;
     if (b === 'street') return true;
-    if (b === 'under') return f('been:street');
+    if (b === 'under') return LEGACY ? f('been:street') : this.row('street').some((k) => f('been:' + k));
     if (b === 'old') return f('been:oldtown');
     if (b === 'works') return f('been:works');
     if (b === 'bowels') return f('been:bowels');

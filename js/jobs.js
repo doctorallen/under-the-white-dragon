@@ -14,7 +14,7 @@
 // ---------------------------------------------------------------------------
 const JOBS = {
   ozzy: {
-    name: 'Ozzy', title: 'Ozzy\'s nav unit', dev: 'navunit', at: 350, wait: 356, pay: 80, honest: true,
+    name: 'Ozzy', title: 'Ozzy\'s nav unit', dev: 'navunit', at: 425, wait: 425, pay: 80, honest: true,
     look: { skin: SKINS[1], hair: 'cap', capCol: '#ffd040', top: '#4a4430', coat: 'jacket', legs: '#2a2a34', wide: 1 },
     parts: { board: ['street', 'ok'], cell: ['street', 'dead'], aerial: ['street', 'burnt'] },
     lines: ['Rain\'s bad for business. Good for yours, I guess.'],
@@ -22,7 +22,7 @@ const JOBS = {
     waiting: '"I\'ll be at the counter. Lin\'s noodles are the only thing in this city that still works."',
   },
   vey: {
-    name: 'Vey', title: 'Vey\'s arm', dev: 'arm', at: 592, wait: 592, pay: 0, illegal: true, rusty: true,
+    name: 'Vey', title: 'Vey\'s arm', dev: 'arm', at: 575, wait: 575, pay: 0, illegal: true, rusty: true,
     look: { skin: SKINS[0], hair: 'bob', hairCol: '#e8e8f2', top: '#2a2a3a', coat: 'long', legs: '#1a1a24', cyArm: true },
     parts: { servo: ['military', 'dead', 'heavy'], board: ['clinic', 'ok'], cell: ['clinic', 'worn'] },
     lines: ['Don\'t look at the arm. Everyone looks at the arm.'],
@@ -67,7 +67,7 @@ const Jobs = {
     const day = Game.s.day, pairs = [];
     for (const k in ODD) for (const r of ODD[k].who) pairs.push([k, r]);
     const out = [], used = new Set();
-    for (let i = 0; out.length < 2 && i < 16; i++) { const [k, r] = pairs[Math.floor(hash(day, i, 101) * pairs.length)]; if (used.has(r) || used.has(k)) continue; used.add(r); used.add(k); out.push('odd:' + day + ':' + r + ':' + k); }
+    for (let i = 0; out.length < 2 && i < 16; i++) { const [k, r] = pairs[Math.floor(hash(day, i, 101) * pairs.length)]; if (used.has(r) || used.has(k) || (Game.s.flags['sour:' + r] || 0) > day) continue; used.add(r); used.add(k); out.push('odd:' + day + ':' + r + ':' + k); }
     return out;
   },
   oddMake(id) {
@@ -154,7 +154,7 @@ const Jobs = {
     const J = this.def(id), c = this.st(id), b = this.dev(id); if (!b || !b.tested) return;
     const t = b.tested, pay = J.pay ? (t.res === 'works' ? J.pay : Math.round(J.pay / 2)) : 0;
     if (!J.odd) Object.assign(c, { st: 'back', day: Game.s.day, res: t.res, loose: t.loose, scorch: b.scorch.length, traced: this.traced(b), parts: Object.fromEntries(Object.entries(b.slots).map(([k, s]) => [k, s.p && { g: s.p.g, how: s.p.how, st: s.p.st, gauge: s.p.gauge }])) });
-    if (J.odd) c.st = 'done';
+    if (J.odd) Object.assign(c, { st: 'done', back: Game.s.day, fitted: Object.values(b.slots).filter((s) => s.p && s.p.how !== 'pull').map((s) => ({ k: s.p.k, g: s.p.g })) });
     if (pay) { Game.s.cr += pay; Game.toast(J.odd ? `"${J.thanks}" ${J.name} pays you ${pay} cr.` : `${J.name} pays you ${pay} cr.`, 'good'); }
     else Game.toast(`${J.name} flexes the hand, slowly. "I owe you."`, 'good');
     if (J.honest) this.heat(J.odd ? -3 : -10, J.odd ? null : 'An honest repair, seen to be done.');
@@ -195,7 +195,7 @@ const Jobs = {
     const busy = Object.keys(Game.s.jobs).filter((id) => Game.s.jobs[id].st === 'bench');
     if (busy.length) out += '<h3>In the basement</h3>' + busy.map(doing).join('');
     const asks = this.oddToday().filter((id) => !Game.s.jobs[id]), story = JOB_ORDER.filter((id) => this.st(id).st === 'offer');
-    if (asks.length || story.length) out += '<h3>Asking for you</h3>' + story.map((id) => card(id, 'new', `${JOBS[id].name} is waiting at the bar upstairs. ${JOBS[id].pay ? JOBS[id].pay + ' cr.' : 'A favour.'}`)).join('') + asks.map((id) => { const c = this.oddMake(id), R = RESIDENTS[c.res]; return card(id, 'today', `${R.name}'s ${ODD[c.tpl].name} is broken. Find ${R.name}: ${place(c.res)} right now. Pays about ${c.pay} cr.`); }).join('');
+    if (asks.length || story.length) out += '<h3>Asking for you</h3>' + story.map((id) => card(id, 'new', `${JOBS[id].name} is waiting at the bar upstairs. ${JOBS[id].pay ? JOBS[id].pay + ' cr.' : 'A favour.'}`)).join('') + asks.map((id) => { const c = this.oddMake(id), R = RESIDENTS[c.res]; return card(id, 'today', `${R.name}'s ${ODD[c.tpl].name} is broken. ${R.name} is ${place(c.res)} right now. Pays about ${c.pay} cr.`); }).join('');
     out += Tips.list();
     const past = Object.keys(Game.s.jobs).filter((id) => ['back', 'done', 'seized'].includes(Game.s.jobs[id].st));
     if (past.length) out += '<h3>Done</h3>' + past.slice(-6).map((id) => card(id, Game.s.jobs[id].st === 'seized' ? 'seized' : 'done', Game.s.jobs[id].st === 'back' ? 'You\'ll hear how it went in the morning.' : Game.s.jobs[id].st === 'seized' ? 'Taken by the precinct.' : 'Done.', '', 'done')).join('');
@@ -224,7 +224,7 @@ const Jobs = {
       if (id === 'vey') {
         const servo = c.parts.servo || {};
         if (c.traced) { news.push('A Meridian serial lit up a checkpoint on the Overpass at dawn: a runaway synth with a stolen servo in her arm. Vey\'s in a precinct van, and they\'ll want to know who fitted it.'); this.heat(25); }
-        else if (servo.g === 'scrap' && clean) { s.flags['vey:schematic'] = true; Parts.jot('vey:schematic', 'Vey left a folded schematic under the door: the controller for a Spires service lift. It needs a relay and a control board to fool.'); news.push('Vey came by before the bar opened. The arm holds. She left a folded schematic under your door, a Spires service lift, and no note.'); }
+        else if (servo.g === 'scrap' && clean) { s.flags['vey:schematic'] = true; s.cr += 120; news.push('Vey came by before the bar opened. The arm holds. Under your door: an envelope with 120 cr in it, and no note. She pays what she owes.'); }
         else news.push(`The ${servo.g === 'scrap' ? 'scrap' : 'light'} servo gave out on Vey at a bad moment. She got away, just. She'll be back, and she'll remember.`);
       }
     }
@@ -239,6 +239,13 @@ const Jobs = {
       else news.push('He stands on the rug for a while, talking to Lin about the weather. Then he leaves.');
       this.heat(-30);
     } else this.heat(-5);
+    // scrap parts in the residents' things: some give out overnight, and the
+    // owner remembers who fitted them
+    for (const id in s.jobs) {
+      const c = s.jobs[id]; if (!id.startsWith('odd:') || c.st !== 'done' || c.checked || c.back === undefined || c.back >= s.day) continue;
+      c.checked = true; const R = RESIDENTS[c.res], bad = (c.fitted || []).find((p, i) => p.g === 'scrap' && hash(s.day, i, id.length + 107) < 0.35);
+      if (bad) { s.flags['sour:' + c.res] = s.day + 3; news.push(`${R.name}'s ${ODD[c.tpl].name} died again overnight: the scrap ${PART[bad.k].name.toLowerCase()} you fitted gave out. ${R.name} isn't asking for the money back, but won't be bringing you anything for a few days.`); }
+    }
     Tips.morning(news);
     this.news = news; return news;
   },

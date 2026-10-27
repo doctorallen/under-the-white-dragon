@@ -13,7 +13,7 @@ function boot() {
   Actors.load(); Life.load();
   Game.cam.x = Player.x; Game.cam.y = Player.y - 30;
   Hud.init();
-  Game.toast(loaded ? 'Back at ' + World.L.name + '.' : 'Under the White Dragon. The basement is yours, down the trapdoor under Auntie Lin\'s storeroom: the bench, the parts shelf, the cot. Nobody upstairs knows what you do down here, and people know to ask at the bar. Someone\'s already waiting up there.');
+  if (loaded) Game.toast('Back at ' + World.L.name + '.'); else Hud.toggle('intro'); // (a new game opens on how things stand)
   addEventListener('visibilitychange', () => { if (document.hidden) Save.write(); });
   addEventListener('pagehide', () => Save.write());
   $('loading').hidden = true;

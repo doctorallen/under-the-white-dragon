@@ -90,6 +90,7 @@ const Hud = {
   tiles(o, btn) { const ks = SALVAGE_ORDER.filter((k) => o === null || o[k]); return ks.length ? '<div class="tiles">' + ks.map((k) => `<div class="tile" style="--r:${SALVAGE[k].col[1]}"><img src="${this.icon(k)}" alt=""><b>${SALVAGE[k].name}</b>${o ? `<span class="n">× ${o[k]}</span>` : ''}${btn ? btn(k) : ''}</div>`).join('') + '</div>' : '<p class="dim">No salvage. Hold Use on a machine to strip it.</p>'; },
   // a shop's stock: things to carry, then gear
   shopHtml(shop) {
+    if (!LEGACY) return ''; // (nothing to carry or wear that does anything now)
     const s = Game.s, ids = Object.keys(shop), items = ids.filter((id) => ITEM[id]), gear = ids.filter((id) => GEAR[id] && GEAR[id].slot !== 'ranged');
     let h = '';
     if (items.length) h += '<h3>For sale</h3><div class="tiles">' + items.map((k) => `<div class="tile" style="--r:${(ITEM[k].col || ['', '#888'])[1]}"><img src="${this.icon(k)}" alt=""><b>${ITEM[k].name}</b><small>${ITEM[k].note || ''}</small><span class="n">you have ${s.pack[k] || 0}</span><div class="tbtns"><button data-buyitem="${k}" ${s.cr >= shop[k] ? '' : 'disabled'}>${shop[k]} cr</button></div></div>`).join('') + '</div>';
@@ -158,8 +159,8 @@ const Hud = {
     const s = Game.s, body = $('panelBody'), title = $('panelTitle'); let h = '';
     if (which === 'pack') {
       // what you carry, in four tabs: gear on a figure of you, items, ware and programs, jobs
-      title.textContent = 'Pockets';
       const tab = this.tab === 'items' ? 'items' : 'jobs';
+      title.textContent = tab === 'jobs' ? 'Jobs' : 'Pockets';
       h += '<nav class="tabs">' + [['jobs', 'Jobs'], ['items', 'Items']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
       if (tab === 'gear') {
         const slot = (k) => { const g = Game.worn(k), spare = Object.keys(s.gear.owned).some((id) => GEAR[id].slot === k && s.gear.on[k] !== id); return `<button class="slot ${g ? 'r-' + g.rarity : 'empty'} ${this.slot === k ? 'sel' : ''}" data-slot="${k}">${g ? `<img src="${this.thumb(s.gear.on[k])}" alt="">` : '<span class="noimg"></span>'}<span><small>${SLOTS[k]}${spare ? ' <i class="new">+</i>' : ''}</small><b>${g ? Game.gearName(s.gear.on[k]) : 'Empty'}</b></span></button>`; };
@@ -183,15 +184,15 @@ const Hud = {
         h += Jobs.list();
       }
     } else if (which === 'bed') {
-      title.textContent = 'Home';
-      h += `<p class="sub">Your bed, your window, your city. It's ${Game.clock()}, day ${s.day}.</p><div class="buttons"><button data-act="sleep">Sleep till morning</button></div><p class="dim">Sleeping heals you and fills your RAM.</p>`;
+      title.textContent = 'Your cot';
+      h += `<p class="sub">A cot behind the shelves, the bar's noise through the ceiling. It's ${Game.clock()}, day ${s.day}.</p><div class="buttons"><button data-act="sleep" class="go">Sleep till morning</button></div><p class="dim">In the morning you hear how your fixes held up, and who's been asking.</p>`;
     } else if (which === 'elevator') {
       title.textContent = 'Elevator';
       h += `<p class="sub">A lift cage that groans. Buttons for the floors you know.</p><div class="rows">` + ELEVATOR.map((f) => { const here = World.L.id === f.level, known = !f.needs || Game.flag(f.needs); return `<div class="row ${known ? '' : 'passed'}"><div><b>${f.name}</b><small>${known ? f.note : 'The button is dead. You haven\'t found a way there yet.'}</small></div>${here ? '<span class="tag">you\'re here</span>' : `<button data-floor="${f.level}" ${known ? '' : 'disabled'}>Go</button>`}</div>`; }).join('') + '</div>';
     } else if (which === 'cab') {
       const fare = Flight.cabFare(), home = ['d_dragon', 'd_noodles', 'd_cellar'].includes(World.L.id);
       title.textContent = 'Call a cab';
-      h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down on your pad.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>${fare ? `Call a cab · ${fare} cr` : 'Call Ozzy · free'}</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
+      h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down out front of the White Dragon.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>${fare ? `Call a cab · ${fare} cr` : 'Call Ozzy · free'}</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
     } else if (which === 'fab') {
       title.textContent = 'Mags · fabricator';
       h += this.fab();
@@ -199,7 +200,7 @@ const Hud = {
       const n = this.who, rate = (n && n.def.rate) || 1, worth = SALVAGE_ORDER.reduce((a, k) => a + Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate), 0);
       title.textContent = n ? n.def.name : 'Vendor';
       h += `<p class="sub">${n ? n.def.lines[0] : ''}</p><div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${s.pack[k] || 0}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
-      h += `<div class="buttons"><button data-act="sellAll" ${worth ? '' : 'disabled'}>Sell everything for ${worth} cr</button></div><p class="dim">Keep what Mags wants: she builds gear from wire, alloy, glass, coolant and chips.</p>`;
+      h += `<div class="buttons"><button data-act="sellAll" ${worth ? '' : 'disabled'}>Sell everything for ${worth} cr</button></div>${LEGACY ? '<p class="dim">Keep what Mags wants: she builds gear from wire, alloy, glass, coolant and chips.</p>' : ''}`;
       const shop = n && SHOP[n.def.name];
       if (shop) h += this.shopHtml(shop);
     } else if (which === 'qm') {
@@ -221,10 +222,10 @@ const Hud = {
     } else if (which === 'pause') {
       title.textContent = 'Under the White Dragon';
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
-        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Use</b> E (hold it to strip machines). <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Jobs</b> I. <b>Map</b> M.</p>
-        <p>You fix what the city breaks, in a hidden basement under the White Dragon, a noodle bar in the Stack, and some of what you fix is illegal. The way down is a trapdoor under the rug in Auntie Lin\'s storeroom. People bring their broken things to the bar: talk to them, take the job down to your bench, and open it up. Hold the driver on the screws (ease off when one binds), probe the parts, melt the bad one free with the iron, seat a good one, solder it, close it up and power it up. Parts come from machines you strip, from the stalls (Mechanic Ana at the Overpass Market, Nurse Kade on Clinic Row), or from places you shouldn\'t be. Hand the fix back at the counter, and sleep on it: in the morning you hear what it did.</p>
+        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Use</b> E (hold it to strip machines). ${LEGACY ? '<b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. ' : ''}<b>Jobs</b> I. <b>Map</b> M. On a phone: the stick on the left, Use and Jump on the right.</p>
+        <p>You fix what the city breaks, in a hidden basement under the White Dragon, Auntie Lin\'s noodle bar, and some of what you fix is illegal. The way down is a trapdoor under the rug in Auntie Lin\'s storeroom. People bring their broken things to the bar: talk to them, take the job down to your bench, and open it up. Hold the driver on the screws (ease off when one binds), probe the parts, melt the bad one free with the iron, seat a good one, solder it, close it up and power it up. Parts come from machines you strip, from the stalls (Mechanic Ana at the Overpass Market, Nurse Kade on Clinic Row), or from places you shouldn\'t be. Hand the fix back to whoever brought it, and sleep on it: in the morning you hear what it did. People on the block bring small repairs too, and tell you where there are parts to be had; better tools from the stalls let you strip the good ones.</p>
         <p>Heat is how close the precinct is to your trapdoor. Illegal work, stolen parts and traceable serials raise it; honest repairs and time bring it down. There\'s a cab stand out front, and a cab gets you home from anywhere: you pay the fare, until someone owes you a ride.</p></div>
-        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
+        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button>${Dev.shown() ? '<button data-act="dev">Dev settings</button>' : ''}<button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     if (['vendor', 'qm', 'fab'].includes(which) && this.who) h = workHtml(this.who.def.name) + h;
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
@@ -232,7 +233,7 @@ const Hud = {
     // where money changes hands, what you have is in the header
     const crEl = $('panelCr'); crEl.hidden = !['vendor', 'fab', 'qm', 'cab', 'pack', 'fixer', 'partshop', 'grocer'].includes(which); crEl.textContent = s.cr + ' cr';
     // the buttons
-    const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(((8 - h0) + 24) % 24 || 24); const news = Jobs.morning(); Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
+    const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(h0 < 8 ? 8 - h0 : 32 - h0); const fresh = Game.s.morning !== Game.s.day; Game.s.morning = Game.s.day; const news = fresh ? Jobs.morning() : (Jobs.news = []); /* (one morning a day: a nap before eight doesn't bring another) */ Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => this.toggle('dev'),

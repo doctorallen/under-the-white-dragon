@@ -47,6 +47,9 @@ function newLevel(id, name, w, h) {
   return L;
 }
 
+// what the detective's city had that the tinkerer's doesn't: lockers of loot, data
+// nodes, caches, sealed and pass-locked doors (hatches and shutters stand open)
+const LEGACY_PROPS = ['locker', 'node', 'cache', 'stash', 'sealed', 'keydoor', 'elevator', 'closet', 'spinner'];
 const World = {
   L: null, far: null, layers: [], props: [], shared: {},
   load(id) {
@@ -62,7 +65,7 @@ const World = {
     if (!L.layersPainted) L.layersPainted = L.layersKey ? (World.shared[L.layersKey] = World.shared[L.layersKey] || paintLayers()) : paintLayers();
     this.layers = L.layersPainted;
     // props, with what's been done to them
-    this.props = L.props.map((p) => Object.assign({}, p, { done: !!Game.s.done[p.id] }));
+    this.props = L.props.filter((p) => LEGACY || !LEGACY_PROPS.includes(p.kind)).map((p) => Object.assign({}, p, { done: Props.isDone(p) || (!LEGACY && (p.kind === 'hatch' || p.kind === 'heavy')) }));
     for (const p of this.props) Props.init(p);
     this.questProps();
   },

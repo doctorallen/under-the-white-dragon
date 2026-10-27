@@ -285,7 +285,7 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
     // the dealer's shack: a box of corrugated tin on blocks, a counter window
     L.paint(520, G - 90, 700, G, (P) => { corrugated(P, 530, G - 70, 690, G, MAT.rust); P.area(522, G - 84, 698, G - 68, KMAT.corrBlue, (x, y) => 0.5 + ((x - 522) % 3 === 0 ? 0.15 : 0) - (y - G + 84) / 30, { inside: (x, y) => y >= G - 84 + (x - 522) / 176 * 8 }); kFill(P, 560, G - 54, 640, G - 30, '#ffc070', 0.35); kShelves(P, 562, G - 52, 638, G - 32, ['#c8c8d0', '#c8a040', '#3af0e0', '#8a3a3a'], { back: '#3a2410' }); P.block(556, G - 30, 644, G - 26, MAT.steelD, { base: 0.6 }); kFill(P, 655, G - 50, 675, G, '#1a1410'); });
     L.sign(560, G - 98, 7, '#ffb040', { r: 60, seed: 41 }); L.light(600, G - 40, 70, [1, 0.75, 0.45], 0.8);
-    L.npc({ name: 'Old Dutch', role: 'vendor', rate: 1.1, look: { skin: SKINS[1], hair: 'bald', top: '#5a4a3a', apron: '#3a2a1a', legs: '#2a2420', hands: { fx: 26, fy: 38 }, tall: 0.95 }, x: 600, y: G, face: -1, sched: [[0, 24, 600, 'work']], behind: true, lines: ['You buying or burying?', 'I pay by the kilo. Synth parts by the gram. Kidding.', 'Marr\'s crew runs the east heaps. Don\'t go out there without a gun.'] });
+    L.npc({ name: 'Old Dutch', role: 'vendor', rate: 1.1, look: { skin: SKINS[1], hair: 'bald', top: '#5a4a3a', apron: '#3a2a1a', legs: '#2a2420', hands: { fx: 26, fy: 38 }, tall: 0.95 }, x: 600, y: G, face: -1, sched: [[0, 24, 600, 'work']], behind: true, lines: ['You buying or burying?', 'I pay by the kilo. Synth parts by the gram. Kidding.', 'Marr\'s crew runs the east heaps. Don\'t go out there with anything worth taking.'] });
     L.prop('deco', 720, G, { art: DECO.barrel(), id: 'scb1' }); L.fire(720, G - 15, 90, 1.3);
     L.critter('dog', 520, 1100, G, 2);
     // the magnet crane, a car stuck to it, swinging over the heaps
@@ -326,7 +326,7 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
 }));
 
 // ---- Chop Shop Alley: illegal chrome, chopped cars, the Gutter King ---------------
-addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of illegal chrome clinics and chop garages. The Gutter King holds court at the end.', 'Chop shops', () => district({
+addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of illegal chrome clinics and chop garages. The Gutter King\'s hall stands at the end, and nobody goes in.', 'Chop shops', () => district({
   id: 'd_chopshop', name: 'Chop Shop Alley', tier: 2, W: 2300, crowd: 5, amb: [0.15, 0.13, 0.18], floor: MAT.asphalt, layerDy: 0,
   local: { name: 'Lookout', lines: ['You\'re in the wrong alley, tinker.', 'Nobody here\'s got chrome. Nobody here\'s got anything. Walk on.', 'The King hears everything. Even this.'], look: { hair: 'mohawk', hairCol: '#3af0e0', hairGlow: true, top: '#1a1a1e', coat: 'jacket', cyArm: true, acc: '#3af0e0' } },
   build(L, G) {
@@ -345,7 +345,7 @@ addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of ill
     bStack(L, 740, 900, G, { levels: 4, shop: 'pawn', shopCol: '#3af0e0', blade: '#ff4ab0', seed: 402 });
     L.stairs(905, G, 960, G - 76); L.walk(740, 1090, G - 76, 4, MAT.steelD);
     L.prop('locker', 800, G - 76, { tier: 2, label: 'locker' }); L.prop('ac', 1040, G - 76, { label: 'air conditioner' }); L.spots.push([1000, G - 76]);
-    kStallAt(L, 950, G, 'parts', { col: '#5a2a5a', npc: { name: 'Fence', lines: ['Arms, eyes, a liver if you want one. Not for you, of course. Officer.', 'The King gets a slice of everything sold in this alley.'] } });
+    kStallAt(L, 950, G, 'parts', { col: '#5a2a5a', npc: { name: 'Fence', lines: ['Arms, eyes, a liver if you want one. Not for you, of course. You just fix things.', 'The King gets a slice of everything sold in this alley.'] } });
     // the back-room surgery, seen through a door left open
     L.paint(1000, G - 150, 1150, G, (P) => { P.block(1000, G - 140, 1150, G, MAT.brickD, { base: 0.35, drips: 0.25, dripLen: 30 }); kFill(P, 1040, G - 48, 1110, G, '#0e2a2a', 0.25); for (let y = G - 46; y < G; y++) for (let x = 1042; x < 1108; x++) if ((x + y) % 7 === 0) P.put(x, y, [120, 255, 230], 0.3); P.block(1036, G - 52, 1114, G - 48, MAT.steelD, { base: 0.5 }); for (let k = 0; k < 20; k++) P.put(1015 + k, G - 100 + k * 0.5, [255, 74, 176]); kWin(P, 1020, G - 120, 14, 14, { lit: '#9af0e0', bars: true }); kWin(P, 1110, G - 120, 14, 14, { bars: true }); });
     L.prop('deco', 1075, G, { art: DECO.chair(), id: 'ccchair' }); L.light(1075, G - 30, 60, [0.5, 1, 0.9], 0.8, 1, { mode: 'tube', seed: 3 });

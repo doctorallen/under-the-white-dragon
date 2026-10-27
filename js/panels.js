@@ -83,19 +83,22 @@ const PANELS = {
     return ['Case board · ' + C.title, h];
   },
   net() { return [(Hack.p && Hack.p.term ? 'Terminal' : 'Data node') + ' · jacked in', Hack.html()]; },
+  // a new game: how things stand
+  intro(s) { return ['Under the White Dragon', '<p class="sub">The basement is yours: a bench, a parts shelf and a cot, under a trapdoor in Auntie Lin\'s storeroom. Nobody upstairs knows what you do down here. People who need something fixed and can\'t ask a licensed shop know to ask at the bar.</p><p class="sub">Someone\'s already waiting up there. Climb the ladder, talk to them, and bring the job down to your bench.</p><p class="dim">Move with the stick or the arrow keys. Use (E) works the bench, the ladder, doors and people.</p><div class="buttons"><button data-act="resume" class="go">Get up</button></div>']; },
   // the morning after: what your fixes did overnight
   morning(s) { return ['Morning · day ' + s.day, Jobs.news.map((l) => `<p class="sub">${l}</p>`).join('') + '<div class="buttons"><button data-act="resume" class="go">Get up</button></div>']; },
   // a parts stall: what they sell, by grade
   partshop(s) {
     const n = Hud.who, stock = PART_STOCK[n.def.stock];
     let h = `<p class="sub">"${n.def.lines[n.line % n.def.lines.length]}"</p><div class="parts">`;
-    h += stock.map(([k, g, cr, gauge, note], i) => `<div class="part" style="--r:${GRADE[g].col}"><img class="picon" src="${Parts.icon(k, g)}" alt=""><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr} cr</button></div></div>`).join('');
+    h += stockHtml(n.def.stock, s);
+    const jn = Parts.junk().length, sv = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0), 0); if (jn || sv) h += `<div class="part tool" style="--r:#8a8a90"><b>The scrap bin</b><small>${[jn ? jn + ' dead or burnt part' + (jn > 1 ? 's' : '') + ' off your shelf' : '', sv ? sv + ' bits of salvage' : ''].filter(Boolean).join(' and ')}: good for nothing but the metal.</small><div class="tbtns"><button data-selljunk>Sell for ${Parts.junkValue()} cr</button></div></div>`;
     const t = Tips.forSale(n.def.stock);
     if (t) { const T = TOOLS[t], can = Tips.tier() === t - 1; h += `<div class="part tool" style="--r:#ffd040"><b>${T.name} · tools</b><small>${T.note}${can ? '' : ' (After the ' + TOOLS[t - 1].name.toLowerCase() + ': one thing at a time.)'}</small><div class="tbtns"><button data-buytool="${t}" ${can && s.cr >= T.cr ? '' : 'disabled'}>${T.cr} cr</button></div></div>`; }
     return [n.def.name + '\'s parts', h + '</div>'];
   },
   // the grocery's till: whoever's on shift sells you things
-  grocer(s) { const n = Hud.who; return [n.def.name + ' · Mo\'s Grocery', `<p class="sub">"${Town.talkLine(n)}"</p>` + Hud.shopHtml(SHOP[n.def.name])]; },
+  grocer(s) { const n = Hud.who; return [n.def.name + ' · Mo\'s Grocery', `<p class="sub">"${Town.talkLine(n)}"</p><p class="dim">Behind the counter, with the batteries and the fuses:</p><div class="parts">` + stockHtml('mo', s) + '</div>' + (LEGACY ? Hud.shopHtml(SHOP[n.def.name]) : '')]; },
   // what's waiting in the basement, set aside: pick one to put on the bench
   benchpick(s) {
     const ids = Object.keys(s.aside);
@@ -130,6 +133,10 @@ const Board = {
   id: null, ans: {}, pins: {}, msg: {},
   open(id) { if (this.id !== id) { this.ans = {}; this.pins = {}; this.msg = {}; } this.id = id; Hud.toggle('board'); },
 };
+// a stall's parts, by grade, each with a buy button
+function stockHtml(key, s) {
+  return PART_STOCK[key].map(([k, g, cr, gauge, note], i) => `<div class="part" style="--r:${GRADE[g].col}"><img class="picon" src="${Parts.icon(k, g)}" alt=""><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr} cr</button></div></div>`).join('');
+}
 // the work someone with a trade offers, shown above their trade
 function workHtml(name) {
   return Quests.actionsFor(name).filter((a) => a.kind === 'offer').map((a) => { const Q = QUESTS[a.id]; return `<div class="ask"><h3>Work: ${Q.title}</h3><p class="dim">${Q.text}</p><div class="buttons"><button data-take="${a.id}" class="go">Take it</button></div></div>`; }).join('');
@@ -137,6 +144,7 @@ function workHtml(name) {
 function lockText(id) {
   if (id === 'spires') return 'Meridian\'s air lanes: you need an access code';
   if (id === 'oldtown') return Game.s.pack.subwaypass > 0 ? 'Find the way down to street level first' : 'The old subway is sealed: Hale can get you a pass';
+  if (!LEGACY && Travel.band(id) === 'under') return 'Walk the street-level places first: the manholes are there';
   return { street: 'Find the way down from the Stack first', under: 'Get down to street level first: the manholes are there', old: 'Ride the old subway down to Old Town first', works: 'Take the Mayor\'s lift down from Old Town first', bowels: 'Go down the shaft from the Works first' }[Travel.band(id)] || 'Not yet';
 }
 // the case file: rank, then each open case: what's found, what's left, the
@@ -162,17 +170,21 @@ function caseFile(s) {
 // what you carry that you can use: by kind, with Use and the quick slot
 function itemsTab(s) {
   const worth = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0) * SALVAGE[k].price, 0);
-  let h = `<p class="sub">${s.cr} cr. Whatever you pick up is yours to keep. The Item button uses your quick item.</p>`;
+  let h = `<p class="sub">${s.cr} cr. Whatever you pick up is yours to keep. ${LEGACY ? 'The Item button uses your quick item.' : 'Salvage sells at the stalls\' scrap bins.'}</p>`;
+  if (!LEGACY) { // (out in the city, it helps to know what's on the shelf at home)
+    h += `<h3>On your shelf at home · ${TOOLS[Tips.tier()].name.toLowerCase()}</h3>` + (s.parts.length ? '<div class="parts">' + s.parts.map((p) => `<div class="part" style="--r:${GRADE[p.g].col}"><img class="picon" src="${Parts.icon(p.k, p.g)}" alt=""><b>${Parts.name(p)}${p.gauge ? ' · ' + p.gauge + ' gauge' : ''}</b><small>${PART_STATE[p.st]} · ${Parts.from(p)}</small></div>`).join('') + '</div>' : '<p class="dim">No parts yet. Strip machines, or buy them at the stalls.</p>');
+  }
   for (const kind of ['consumable', 'throwable', 'key', 'evidence', 'salvage']) {
     const ks = Object.keys(ITEM).filter((k) => ITEM[k].kind === kind && s.pack[k] > 0); if (!ks.length) continue;
-    h += `<h3>${ITEM_KINDS[kind]}${kind === 'salvage' ? ' · worth about ' + worth + ' cr to Kit' : ''}</h3><div class="tiles">` + ks.map((k) => { const I = ITEM[k], usable = kind === 'consumable' || kind === 'throwable'; return `<div class="tile ${s.quick === k ? 'quick' : ''}" style="--r:${(I.col || SALVAGE.wire.col)[1]}"><img src="${Hud.icon(k)}" alt=""><b>${I.name}</b><span class="n">× ${s.pack[k]}</span><small>${I.note || (kind === 'salvage' ? SALVAGE[k].price + ' cr each at Kit\'s' : '')}</small>${usable ? `<div class="tbtns"><button data-use="${k}">Use</button><button data-quick="${k}" ${s.quick === k ? 'disabled' : ''}>${s.quick === k ? 'Quick' : 'Set quick'}</button></div>` : ''}</div>`; }).join('') + '</div>';
+    h += `<h3>${ITEM_KINDS[kind]}${kind === 'salvage' ? ' · worth about ' + worth + ' cr for scrap' : ''}</h3><div class="tiles">` + ks.map((k) => { const I = ITEM[k], usable = LEGACY && (kind === 'consumable' || kind === 'throwable'); return `<div class="tile ${s.quick === k ? 'quick' : ''}" style="--r:${(I.col || SALVAGE.wire.col)[1]}"><img src="${Hud.icon(k)}" alt=""><b>${I.name}</b><span class="n">× ${s.pack[k]}</span><small>${I.note || (kind === 'salvage' ? SALVAGE[k].price + ' cr each for scrap' : '')}</small>${usable ? `<div class="tbtns"><button data-use="${k}">Use</button><button data-quick="${k}" ${s.quick === k ? 'disabled' : ''}>${s.quick === k ? 'Quick' : 'Set quick'}</button></div>` : ''}</div>`; }).join('') + '</div>';
   }
   return h;
 }
 function panelBind(body, which) {
   const s = Game.s, n = Hud.who, re = () => Hud.panel(Hud.open);
+  body.querySelectorAll('button[data-selljunk]').forEach((b) => (b.onclick = () => { Parts.sellJunk(); re(); }));
   body.querySelectorAll('button[data-buytool]').forEach((b) => (b.onclick = () => { if (Tips.buy(+b.dataset.buytool)) re(); }));
-  body.querySelectorAll('button[data-buypart]').forEach((b) => (b.onclick = () => { const [k, g, cr, gauge] = PART_STOCK[n.def.stock][+b.dataset.buypart]; if (!Game.pay({ cr })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); }));
+  body.querySelectorAll('button[data-buypart]').forEach((b) => (b.onclick = () => { const [k, g, cr, gauge] = PART_STOCK[Hud.open === 'grocer' ? 'mo' : n.def.stock][+b.dataset.buypart]; if (!Game.pay({ cr })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); }));
   body.querySelectorAll('button[data-benchload]').forEach((b) => (b.onclick = () => Bench.load(b.dataset.benchload)));
   body.querySelectorAll('button[data-job]').forEach((b) => (b.onclick = () => { const c = b.dataset.job; Jobs.act(c); if (!c.startsWith('back')) re(); }));
   body.querySelectorAll('button[data-ask]').forEach((b) => (b.onclick = () => { const [id, cid] = b.dataset.ask.split(':'); Cases.ask(id, cid); re(); }));

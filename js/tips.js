@@ -11,7 +11,7 @@
 const TOOLS = {
   1: { name: 'Hand kit', note: 'Screwdrivers, pliers, a soldering iron. Enough for vending machines, cars and junk.' },
   2: { name: 'Precision kit', cr: 150, at: 'ana', note: 'Security bits, a torque driver, a hot-air pen. Server racks, drones and junction boxes give up their parts to it.' },
-  3: { name: 'Clinic micro-kit', cr: 400, at: 'kade', note: 'Micro-drivers and a clean desoldering station. Medical machines, and the clinic-grade parts in them.' },
+  3: { name: 'Clinic micro-kit', cr: 300, at: 'kade', note: 'Micro-drivers and a clean desoldering station. Medical machines, and the clinic-grade parts in them.' },
 };
 // what each kind of machine needs to strip (anything else, the hand kit)
 const STRIP_TIER = { rack: 2, dronewreck: 2, substation: 2, autodoc: 3 };

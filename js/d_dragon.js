@@ -10,9 +10,9 @@
 //   d_cellar, the basement (hidden too): down the ladder from the trapdoor.
 // Helpers carry the prefix `wd`.
 // ---------------------------------------------------------------------------
-const WD = { FRONT: 300, DOOR: 424, END: 470, CEIL: 122 };
+const WD = { FRONT: 300, DOOR: 424, END: 470, CEIL: 62 }; // (the shop's ground floor: a door's height and the fascia over it)
 
-addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, and on it a noodle bar with what nobody knows under it.', 'The White Dragon', () => district({
+addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street of shophouses and capsules, and on it a noodle bar with what nobody knows under it.', 'The White Dragon', () => district({
   id: 'd_dragon', name: 'The White Dragon', tier: 1, W: 1500, crowd: 0, amb: [0.2, 0.17, 0.26], layerDy: 0,
   build(L, G) {
     const C = G - WD.CEIL;
@@ -27,7 +27,7 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, a
     // the White Dragon's building: flats above, the shop below
     L.paint(WD.FRONT, G - 330, WD.END + 6, G, (P) => {
       P.block(WD.FRONT, G - 320, WD.END, C, KMAT.plaster, { base: 0.4, panels: [60, 34], drips: 0.12, dripLen: 24 });
-      for (let fy = G - 306; fy < C - 24; fy += 34) for (let fx = 316; fx < WD.END - 14; fx += 26) if (fx > 352 || fy + 18 < G - 150) kWin(P, fx, fy, 14, 18, { lit: hash(fx, fy, 31) < 0.45 ? (hash(fx, fy, 32) < 0.5 ? '#ffd8a0' : '#a8e0ff') : null, blinds: hash(fx, fy, 33) < 0.4, curtain: hash(fx, fy, 34) < 0.3 ? '#5a2a3a' : null });
+      for (let fy = C - 50 + 12; fy > G - 316; fy -= 50) for (let fx = 334; fx < WD.END - 22; fx += 34) kWin(P, fx, fy, KS.winW, KS.winH, { lit: hash(fx, fy, 31) < 0.45 ? (hash(fx, fy, 32) < 0.5 ? '#ffd8a0' : '#a8e0ff') : null, blinds: hash(fx, fy, 33) < 0.4, curtain: hash(fx, fy, 34) < 0.3 ? '#5a2a3a' : null });
       P.block(WD.FRONT - 4, G - 330, WD.END + 4, G - 320, KMAT.kawara, { base: 0.5 });
       P.block(WD.FRONT, C, WD.END, C + 6, MAT.concreteD, { base: 0.5 });
       // the pier at the corner, the shop window, the door with its curtain, a pier at the end
@@ -37,20 +37,21 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, a
       // the shopfront's own wall, behind the window and the door (nothing of the city shows through)
       P.block(330, C + 16, WD.END - 12, G, KMAT.darkwood, { base: 0.32, panels: [24, 30] });
       // the window: warm light, steam on the glass, people eating at the counter inside
-      kFill(P, 336, C + 22, 404, G - 18, '#2a120a');
-      for (let y = C + 23; y < G - 19; y++) for (let x = 337; x < 403; x++) P.put(x, y, mixRgb([200, 110, 50], [120, 50, 24], (y - C) / 100 + hash(x >> 3, y >> 3, 81) * 0.2), 0.12);
-      for (const [x, h] of [[348, 18], [366, 20], [386, 17]]) { for (let y = G - 19 - h; y < G - 19; y++) for (let dx = 0; dx < 7; dx++) if (y > G - 19 - h + 3 || (dx > 1 && dx < 5)) P.put(x + dx, y, [40, 20, 14]); }
-      for (let x = 337; x < 403; x++) { P.put(x, G - 24, [60, 30, 18]); P.put(x, G - 23, [90, 50, 30]); }
-      for (let k = 0; k < 40; k++) P.tint(337 + Math.floor(hash(k, 1, 82) * 66), C + 23 + Math.floor(hash(k, 2, 82) * 20), [255, 240, 220], 0.3);
-      kFill(P, 334, G - 18, 406, G - 14, '#1a0e0a'); kFill(P, 334, G - 14, 406, G, '#2a1612');
-      // the door: dark wood, a lit gap, the curtain over it
-      kFill(P, 410, C + 18, 440, G, '#140c0a'); for (let y = C + 20; y < G; y++) P.put(425, y, [255, 180, 110], 0.4);
-      kNoren(P, 408, 442, C + 18, 26, '#e8e4dc');
+      kFill(P, 336, C + 20, 404, G - 14, '#2a120a');
+      for (let y = C + 21; y < G - 15; y++) for (let x = 337; x < 403; x++) P.put(x, y, mixRgb([220, 130, 60], [140, 60, 28], (y - C) / 50), 0.14);
+      for (const [x, h] of [[346, 14], [362, 16], [380, 13], [394, 15]]) { for (let y = G - 18 - h; y < G - 18; y++) for (let dx = 0; dx < 6; dx++) if (y > G - 18 - h + 3 || (dx > 1 && dx < 4)) P.put(x + dx, y, [40, 20, 14]); } // (people at the counter inside)
+      for (let x = 337; x < 403; x++) { P.put(x, G - 19, [60, 30, 18]); P.put(x, G - 18, [90, 50, 30]); }
+      for (let x = 337; x < 403; x++) P.put(x, Math.round((C + G) / 2) - 4, [60, 30, 18]);
+      kFill(P, 334, G - 14, 406, G - 11, '#1a0e0a'); kFill(P, 334, G - 11, 406, G, '#2a1612');
+      // the door, a person's height: dark wood frame, the warm inside through it, the curtain over the top
+      kFill(P, WD.DOOR - 13, G - KS.door - 4, WD.DOOR + 13, G, '#140c0a'); kFill(P, WD.DOOR - 10, G - KS.door, WD.DOOR + 10, G, '#e8a060', 0.4);
+      for (let y = G - KS.door; y < G; y++) P.put(WD.DOOR - 1, y, [120, 60, 30]);
+      kNoren(P, WD.DOOR - 14, WD.DOOR + 14, G - KS.door - 6, 16, '#e8e4dc');
     });
     // the gap to the next building: an alley, dark, a drainpipe
     L.paint(WD.END, G - 330, 490, G, (P) => { kFill(P, WD.END, G - 330, 490, G, '#08070c'); for (let y = G - 330; y < G; y++) { P.put(478, y, [26, 28, 34]); P.put(479, y, [44, 48, 56]); } for (let y = G - 300; y < G; y += 46) for (let x = WD.END; x < 490; x++) P.put(x, y, [30, 30, 38]); });
     bLanterns(L, 336, 450, C + 8, ['#ff3a3a', '#ffb040'], { step: 22 });
-    L.light(370, G - 40, 50, [1, 0.6, 0.35], 0.7);
+    L.light(370, G - 30, 50, [1, 0.6, 0.35], 0.7); L.light(WD.DOOR, G - 20, 34, [1, 0.65, 0.35], 0.8);
     L.prop('door', WD.DOOR, G, { label: 'The White Dragon', to: ['d_noodles', 'door'] });
     L.spawns.door = [WD.DOOR, G];
     // the sign on the corner, over the street, a conduit down the pier
@@ -86,9 +87,7 @@ LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2,
       for (const [x, w] of [[380, 60], [460, 80], [552, 50]]) { kFill(P, x, C + 18, x + w, C + 40, '#120806'); for (let k = 0; k < w - 10; k += 5) P.put(x + 5 + k, C + 24 + (k % 3) * 5, [255, 210, 150], 0.4); }
       for (let k = 0; k < 20; k++) P.tint(380 + Math.floor(hash(k, 1, 83) * 220), C + 44 + Math.floor(hash(k, 2, 83) * 30), [40, 20, 14], 0.25);
       // the front window, from inside: the street, wet and neon
-      kFill(P, 40, C + 20, 120, G - 30, '#06080e');
-      for (let y = C + 21; y < G - 31; y++) for (let x = 41; x < 119; x++) { const v = hash(x >> 2, y >> 3, 84); P.put(x, y, v < 0.06 ? [255, 74, 176] : v < 0.1 ? [58, 240, 224] : mixRgb([10, 14, 24], [24, 30, 48], (y - C) / 90)); }
-      for (let k = 0; k < 30; k++) { const x = 42 + Math.floor(hash(k, 3, 84) * 76), y0 = C + 22 + Math.floor(hash(k, 4, 84) * 40); for (let y = y0; y < y0 + 5; y++) P.put(x, y, [120, 140, 170]); }
+      kFill(P, 40, C + 20, 120, G - 30, '#06080e'); bkWindow(P, 41, C + 21, 119, G - 31, 84);
       kFill(P, 36, G - 30, 124, G - 26, '#2a1610');
       // the tables along the wall: dark wood, a bowl and chopsticks on each
       for (const x of [150, 220, 290]) { P.block(x, G - 18, x + 26, G - 15, KMAT.darkwood, { base: 0.6 }); kFill(P, x + 11, G - 15, x + 15, G, '#1a0e0a'); kFill(P, x + 9, G - 21, x + 17, G - 18, '#e8e0d0'); kFill(P, x + 10, G - 22, x + 16, G - 21, '#c84a2a'); }
