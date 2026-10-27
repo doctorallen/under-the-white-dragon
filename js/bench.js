@@ -28,19 +28,23 @@ const Bench = {
   // ---- what's on the bench ----
   // a thing to fix: the device and the parts in it, [grade, state, gauge] a
   // slot (null for an empty one)
-  put(dev, o = {}) {
+  put(dev, o = {}) { Game.s.bench = this.make(dev, o); this.reset(); },
+  // a thing to fix, as it comes in, not yet on the bench
+  make(dev, o = {}) {
     const D = DEVICE[dev], slots = {};
     for (const k in D.slots) {
       const sp = (o.parts || {})[k];
       slots[k] = sp === null ? { p: null, j: ['open', 'open'] } : { p: Parts.make(D.slots[k].kind, sp ? sp[0] : 'street', { st: sp ? sp[1] : 'ok', gauge: sp ? sp[2] : undefined, how: 'pull', out: o.name || D.name }), j: ['solid', 'solid'] };
     }
-    Game.s.bench = { dev, job: o.job || null, name: o.name || D.name, open: false, rusty: !!o.rusty, screws: D.screws.map(() => ({ st: 'in', strip: false })), slots, probed: {}, scorch: [], tested: null };
-    this.reset();
+    return { dev, job: o.job || null, name: o.name || D.name, open: false, rusty: !!o.rusty, screws: D.screws.map(() => ({ st: 'in', strip: false })), slots, probed: {}, scorch: [], tested: null };
   },
+  // set what's on the bench aside (it keeps just as it is), and pick up another
+  aside() { const b = this.b; if (!b) return; Game.s.aside[b.job || 'x' + Game.s.pid] = b; Game.s.bench = null; this.reset(); Save.write(); if (Object.keys(Game.s.aside).length) Hud.toggle('benchpick'); else Hud.toggle(null); },
+  load(id) { const a = Game.s.aside, b = a[id]; if (!b || this.b) return; delete a[id]; Game.s.bench = b; this.reset(); Save.write(); Hud.toggle('bench'); },
   clear() { Game.s.bench = null; this.reset(); },
   reset() { this.hold = null; this.heat = {}; this.rt = {}; this.lit = {}; this.sel = null; this.msg = ''; this.fx = null; this.tool = this.b && this.b.open ? 'probe' : 'driver'; },
   open() {
-    if (!this.b) { Game.toast('Your bench. Nothing on it yet: a job brings something to fix.'); return; }
+    if (!this.b) { if (Object.keys(Game.s.aside).length) Hud.toggle('benchpick'); else Game.toast('Your bench. Nothing on it yet: people bring their broken things to you. Ask around.'); return; }
     this.hold = null; this.msg = ''; Hud.toggle('bench');
   },
   // ---- places on the board ----
@@ -198,9 +202,9 @@ const Bench = {
     }
     $('benchtray').innerHTML = tray;
     const inn = b.screws.filter((s) => s.st === 'in').length;
-    $('benchacts').innerHTML = (b.open ? '<button data-bench="close">Close it up</button>' : (inn ? '' : '<button data-bench="lift">Lift the casing</button>') + '<button data-bench="test" class="go">Power it up</button>') + '<button data-bench="done" class="quiet">Leave it</button>';
+    $('benchacts').innerHTML = (b.open ? '<button data-bench="close">Close it up</button>' : (inn ? '' : '<button data-bench="lift">Lift the casing</button>') + '<button data-bench="test" class="go">Power it up</button>') + '<button data-bench="aside" class="quiet">Set it aside</button><button data-bench="done" class="quiet">Leave it</button>';
     side.querySelectorAll('button[data-fit]').forEach((x) => (x.onclick = () => this.fit(+x.dataset.fit)));
-    side.querySelectorAll('button[data-bench]').forEach((x) => (x.onclick = () => { const a = x.dataset.bench; if (a === 'close') this.close(); if (a === 'lift') this.lift(); if (a === 'test') this.test(); if (a === 'done') { Save.write(); Hud.toggle(null); } }));
+    side.querySelectorAll('button[data-bench]').forEach((x) => (x.onclick = () => { const a = x.dataset.bench; if (a === 'close') this.close(); if (a === 'lift') this.lift(); if (a === 'test') this.test(); if (a === 'aside') this.aside(); if (a === 'done') { Save.write(); Hud.toggle(null); } }));
   },
   attach() {
     const cv = $('benchcv'); if (!cv) return; const dpr = window.devicePixelRatio || 1;
@@ -355,6 +359,13 @@ function casingArt(g, D, b, ox, oy, t, fx) {
     R(16, 14, 74, 48, '#06080a'); R(18, 16, 70, 44, '#0e1a22'); R(20, 18, 20, 1, '#2a4a5a'); R(20, 18, 1, 12, '#2a4a5a');
     for (let i = 0; i < 3; i++) { R(104, 18 + i * 14, 28, 10, '#06080a'); R(105, 19 + i * 14, 26, 8, C[2]); R(105, 26 + i * 14, 26, 1, C[0]); }
     for (let x = 18; x < 132; x += 4) R(x, 72, 2, 8, '#14181e');
+  } else if (D.face) {
+    // the everyday things: a radio's dial and grille, a cooker's lid, a drone's rotors, a fan's blades
+    const circ = (cx, cy, r, c) => { g.fillStyle = c; g.beginPath(); g.arc(ox + cx, oy + cy, r, 0, Math.PI * 2); g.fill(); };
+    if (D.face === 'radio') { for (let y = 14; y < h - 14; y += 4) for (let x = 14; x < 70; x += 4) R(x, y, 2, 2, '#2a1810'); R(80, 16, 38, 14, '#14100c'); R(82, 18, 34, 10, '#e8c870'); for (let x = 84; x < 114; x += 4) R(x, 21, 1, 4, '#5a3a1a'); R(98, 18, 1, 10, '#ff3a2a'); circ(88, 52, 8, C[0]); circ(88, 51, 6, C[2]); circ(108, 52, 8, C[0]); circ(108, 51, 6, C[2]); }
+    if (D.face === 'cooker') { circ(w / 2, h / 2 - 4, 30, C[0]); circ(w / 2, h / 2 - 5, 27, C[2]); R(w / 2 - 8, 8, 16, 5, C[0]); R(w / 2 - 14, h - 18, 28, 8, '#14100c'); R(w / 2 - 10, h - 16, 6, 4, '#ff6a3a'); R(w / 2 + 2, h - 16, 6, 4, '#3a3a3a'); }
+    if (D.face === 'drone') { for (const cx of [18, w - 18]) { circ(cx, h / 2, 14, '#14181e'); circ(cx, h / 2, 2, C[2]); R(cx - 13, h / 2 - 1, 26, 2, '#5a5a62'); } R(w / 2 - 22, h / 2 - 12, 44, 24, C[0]); R(w / 2 - 20, h / 2 - 10, 40, 20, C[1]); circ(w / 2, h / 2, 5, '#0a0e14'); circ(w / 2, h / 2, 3, '#3af0e0'); }
+    if (D.face === 'fan') { circ(w / 2, h / 2, 32, '#14181e'); for (let a = 0; a < 3; a++) { const A = a * 2.094 + 0.4; g.fillStyle = C[2]; g.beginPath(); g.ellipse(ox + w / 2 + Math.cos(A) * 15, oy + h / 2 + Math.sin(A) * 15, 13, 6, A, 0, Math.PI * 2); g.fill(); } circ(w / 2, h / 2, 5, C[0]); for (let r = 20; r <= 32; r += 6) { g.strokeStyle = '#3a4a52'; g.lineWidth = 1; g.beginPath(); g.arc(ox + w / 2, oy + h / 2, r, 0, Math.PI * 2); g.stroke(); } }
   } else {
     R(58, 2, 1, h - 4, C[0]); R(108, 2, 1, h - 4, C[0]); R(59, 2, 1, h - 4, C[2]);
     g.fillStyle = C[0]; g.beginPath(); g.arc(ox + 31, oy + h / 2, 15, 0, Math.PI * 2); g.fill(); g.fillStyle = C[2]; g.beginPath(); g.arc(ox + 30, oy + h / 2 - 1, 12, 0, Math.PI * 2); g.fill(); R(27, (h >> 1) - 3, 6, 6, C[0]);

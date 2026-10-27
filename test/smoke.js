@@ -121,6 +121,15 @@ async function run(B, url, vp, name, failures) {
   });
   await shot('morning');
   if (!job.oz || job.talk !== 'talk' || job.on !== 'ozzy' || job.res !== 'works' || job.paid !== 80 || job.morning !== 'morning' || !job.rides || job.fare) fail('Ozzy\'s job did not play through ' + JSON.stringify(job));
+  // an odd job from a resident: take it, swap the bad parts, hand it back for pay
+  const odd = await E(() => {
+    Hud.toggle(null); const ids = Jobs.oddToday(); if (!ids.length) return { n: 0 };
+    const a = ids[0]; Jobs.take(a); const B = Bench, D = B.D; B.b.open = true;
+    for (const k in D.slots) { const s = B.b.slots[k]; if (s.p.st !== 'ok') s.p = Parts.make(D.slots[k].kind, 'street'); B.b.probed[k] = 1; }
+    B.close(); B.b.screws.forEach((s) => (s.st = 'in')); B.test(); const res = B.b.tested.res, c0 = Game.s.cr;
+    Jobs.handBack(a); return { n: ids.length, res, paid: Game.s.cr - c0, st: Game.s.jobs[a].st, bench: Game.s.bench };
+  });
+  if (odd.n < 1 || odd.res !== 'works' || odd.paid <= 0 || odd.st !== 'done' || odd.bench) fail('a resident\'s odd job did not play through ' + JSON.stringify(odd));
   // out through the dining room and the front door, onto the street: the sign, the cab stand
   await E(() => { Hud.toggle(null); T_.walkTo(300); });
   await shot('diningroom');

@@ -8,7 +8,7 @@
 // ---------------------------------------------------------------------------
 const PANELS = {
   talk(s) {
-    const n = Hud.who, name = n.def.name, line = n.def.lines[n.line % n.def.lines.length];
+    const n = Hud.who, name = n.def.name, line = n.def.town ? Town.talkLine(n) : n.def.lines[n.line % n.def.lines.length];
     let h = `<p class="sub">"${line}"</p>`;
     // the case's business with them
     for (const a of Cases.actionsFor(name)) {
@@ -94,6 +94,11 @@ const PANELS = {
   },
   // the grocery's till: whoever's on shift sells you things
   grocer(s) { const n = Hud.who; return [n.def.name + ' · Mo\'s Grocery', `<p class="sub">"${Town.talkLine(n)}"</p>` + Hud.shopHtml(SHOP[n.def.name])]; },
+  // what's waiting in the basement, set aside: pick one to put on the bench
+  benchpick(s) {
+    const ids = Object.keys(s.aside);
+    return ['The bench · what\'s waiting', '<p class="sub">Your bench is clear. What\'s waiting:</p><div class="rows">' + ids.map((id) => { const b = s.aside[id]; return `<div class="row"><div><b>${b.name}</b><small>${b.tested ? 'Tested: ' + ({ works: 'it works', half: 'it half works', dead: 'nothing', smoke: 'it smoked' })[b.tested.res] : b.open ? 'Open on the mat.' : 'Not opened yet.'}</small></div><button data-benchload="${id}" class="go">Put it on the bench</button></div>`; }).join('') + '</div>'];
+  },
   bench() { return ['The bench · ' + Bench.b.name, Bench.html()]; },
   // the shelf: the parts you have, and the notebook
   shelf(s) {
@@ -165,6 +170,7 @@ function itemsTab(s) {
 function panelBind(body, which) {
   const s = Game.s, n = Hud.who, re = () => Hud.panel(Hud.open);
   body.querySelectorAll('button[data-buypart]').forEach((b) => (b.onclick = () => { const [k, g, cr, gauge] = PART_STOCK[n.def.stock][+b.dataset.buypart]; if (!Game.pay({ cr })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); }));
+  body.querySelectorAll('button[data-benchload]').forEach((b) => (b.onclick = () => Bench.load(b.dataset.benchload)));
   body.querySelectorAll('button[data-job]').forEach((b) => (b.onclick = () => { const c = b.dataset.job; Jobs.act(c); if (!c.startsWith('back')) re(); }));
   body.querySelectorAll('button[data-ask]').forEach((b) => (b.onclick = () => { const [id, cid] = b.dataset.ask.split(':'); Cases.ask(id, cid); re(); }));
   body.querySelectorAll('button[data-net]').forEach((b) => (b.onclick = () => { Hack.go(+b.dataset.net); re(); }));

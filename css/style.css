@@ -391,3 +391,4 @@ b { font-weight: 400; color: #fff; }
 .heatbar i::after { content: ''; position: absolute; inset: 0; width: var(--h); background: linear-gradient(90deg, var(--sodium), #ff4a6a); }
 .part img.picon { width: 60px; height: 36px; image-rendering: pixelated; margin-bottom: 2px; }
 .part .tbtns button { padding: 6px 14px; }
+.benchside > * { flex-shrink: 0; }

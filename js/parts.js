@@ -64,6 +64,22 @@ const PART_STOCK = {
 // what stripping a machine gets you, besides salvage: one tired part
 const PART_YIELD = { vending: 'cell', car: 'aerial', ac: 'relay', rack: 'board', wreck: 'board', junk: 'cell' };
 
+// the everyday things the block's residents bring in (jobs.js, ODD)
+Object.assign(DEVICE, {
+  radio: { name: 'Kitchen radio', kind: 'Handheld', face: 'radio', w: 132, h: 80, col: ['#3a2418', '#7a5236', '#b88a5a'],
+    screws: [[8, 8], [124, 8], [8, 72], [124, 72]],
+    slots: { board: { kind: 'board', x: 16, y: 16, w: 40, h: 26 }, relay: { kind: 'relay', x: 72, y: 18, w: 26, h: 14 }, aerial: { kind: 'aerial', x: 66, y: 52, w: 50, h: 12 }, cell: { kind: 'cell', x: 16, y: 54, w: 36, h: 14 } } },
+  cooker: { name: 'Rice cooker', kind: 'Fixture', face: 'cooker', w: 116, h: 84, col: ['#8a8478', '#d8d0c0', '#f4eee2'],
+    screws: [[10, 10], [106, 10], [58, 76]],
+    slots: { relay: { kind: 'relay', x: 18, y: 20, w: 30, h: 16 }, board: { kind: 'board', x: 62, y: 18, w: 38, h: 26 }, cell: { kind: 'cell', x: 32, y: 54, w: 44, h: 14 } } },
+  toydrone: { name: 'Toy drone', kind: 'Drone', face: 'drone', w: 146, h: 70, col: ['#8a3a10', '#e8702a', '#ffb070'],
+    screws: [[10, 10], [136, 10], [10, 60], [136, 60]],
+    slots: { cell: { kind: 'cell', x: 14, y: 28, w: 30, h: 14 }, board: { kind: 'board', x: 56, y: 22, w: 36, h: 26 }, aerial: { kind: 'aerial', x: 104, y: 30, w: 30, h: 10 } } },
+  fan: { name: 'Desk fan', kind: 'Fixture', face: 'fan', w: 124, h: 80, col: ['#2a3a44', '#5a7a88', '#9ac0cc'],
+    screws: [[8, 8], [116, 8], [8, 72], [116, 72]],
+    slots: { relay: { kind: 'relay', x: 16, y: 18, w: 28, h: 16 }, board: { kind: 'board', x: 58, y: 16, w: 46, h: 28 }, cell: { kind: 'cell', x: 30, y: 54, w: 44, h: 14 } } },
+});
+
 const Parts = {
   make(k, g, o = {}) { const s = Game.s; s.pid = (s.pid || 1) + 1; return Object.assign({ id: s.pid, k, g, st: 'ok', from: World.L ? World.L.id : 'd_dragon', how: 'strip' }, o); },
   give(p, quiet) { Game.s.parts.push(p); if (!quiet) Game.toast('Onto the shelf: ' + this.name(p) + '.', 'good'); return p; },

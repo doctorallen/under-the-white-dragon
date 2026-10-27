@@ -221,6 +221,8 @@ const Town = {
     return (st.act === 'browse' || st.act === 'pay' ? R.say.shop : R.say[st.act]) || R.who;
   },
   talk(n) {
+    // something broken to ask you about, or something of theirs you've fixed: the talk panel
+    if (Jobs.actionsFor(n.def.name).length) { n.face = Math.sign(Player.x - n.x) || n.face; Hud.toggle('talk', n); return; }
     const id = n.def.town, R = RESIDENTS[id], st = n.townState || this.state(id, Game.hour());
     const line = this.talkLine(n);
     // the clerk at the till sells you things

@@ -34,6 +34,8 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, a
       P.block(WD.FRONT, C + 6, 330, G, KMAT.lacquer, { base: 0.42 });
       P.block(WD.END - 12, C + 6, WD.END, G, KMAT.lacquer, { base: 0.42 });
       P.block(330, C + 6, WD.END - 12, C + 16, KMAT.darkwood, { base: 0.5 }); // the fascia
+      // the shopfront's own wall, behind the window and the door (nothing of the city shows through)
+      P.block(330, C + 16, WD.END - 12, G, KMAT.darkwood, { base: 0.32, panels: [24, 30] });
       // the window: warm light, steam on the glass, people eating at the counter inside
       kFill(P, 336, C + 22, 404, G - 18, '#2a120a');
       for (let y = C + 23; y < G - 19; y++) for (let x = 337; x < 403; x++) P.put(x, y, mixRgb([200, 110, 50], [120, 50, 24], (y - C) / 100 + hash(x >> 3, y >> 3, 81) * 0.2), 0.12);
@@ -45,6 +47,8 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, a
       kFill(P, 410, C + 18, 440, G, '#140c0a'); for (let y = C + 20; y < G; y++) P.put(425, y, [255, 180, 110], 0.4);
       kNoren(P, 408, 442, C + 18, 26, '#e8e4dc');
     });
+    // the gap to the next building: an alley, dark, a drainpipe
+    L.paint(WD.END, G - 330, 490, G, (P) => { kFill(P, WD.END, G - 330, 490, G, '#08070c'); for (let y = G - 330; y < G; y++) { P.put(478, y, [26, 28, 34]); P.put(479, y, [44, 48, 56]); } for (let y = G - 300; y < G; y += 46) for (let x = WD.END; x < 490; x++) P.put(x, y, [30, 30, 38]); });
     bLanterns(L, 336, 450, C + 8, ['#ff3a3a', '#ffb040'], { step: 22 });
     L.light(370, G - 40, 50, [1, 0.6, 0.35], 0.7);
     L.prop('door', WD.DOOR, G, { label: 'The White Dragon', to: ['d_noodles', 'door'] });
