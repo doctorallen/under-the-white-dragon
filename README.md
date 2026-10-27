@@ -28,6 +28,10 @@ On Android the browser offers to install it the first time you tap; after that, 
 | Dev settings | | Pause, then Dev settings |
 | Pause | Esc | II |
 
+## Fine grain
+
+FINE GRAIN, on the pause menu (offered only where there's WebGL2, off by default), draws the game at three art pixels to a world pixel instead of one: the same city at the same size on screen, with three times the detail each way. The painted city, the far layers, rain and every sprite are painted finer, not enlarged; strokes and shading keep their size in the world, so the brushwork reads the same. The choice is kept in the save, and switching it reloads (everything is painted at one grain). `?fine` and `?coarse` in the address override it. It costs about nine times the pixels to paint and finish, so it wants a recent phone.
+
 ## The city
 
 - **35 places, every one built by hand**, from the Spires above the clouds to the Bowels: home, the precinct, the Stack and street level; up high Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge and the Arcology Gardens; on the street the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley and Clinic Row; under it the undercity (the Main Drain, Boiler House Nine, Substation Seven, the Waterworks); then Old Town and its arcade, chapel, old line, cistern market and lantern quarter; the Works with its pump hall, foundry, server farm and coolant vats; the Bowels with its cable run, cooling vaults, gut and old roots.

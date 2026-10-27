@@ -64,13 +64,15 @@ const tone = (ramp, v, jit = 0) => ramp[clamp(Math.round(v * (ramp.length - 1) +
 // one to three strokes at hashed places; for every pixel, `mid` is its
 // stroke's middle (where its tone is read) and `jit` the stroke's jitter.
 // It depends only on the place, so anything painted twice matches itself.
-function strokeRow(mid, jit, x0, n, y, seed) {
-  const C = 8, ph = Math.floor(hash(y, 7, seed) * C);
+function strokeRow(mid, jit, x0, n, y, seed, C = 8) {
+  const  ph = Math.floor(hash(y, 7, seed) * C);
   let c = Math.floor((x0 + ph) / C), cs = c * C - ph, i = 0;
   while (i < n) {
     const h = hash(c, y, seed + 1), h2 = hash(c, y, seed + 2), h3 = hash(c, y, seed + 3);
+    // (cut points in whole eighths of the cell, so strokes keep their length at any grain)
+    const u = C >> 3;
     let a = C, b = C;
-    if (h > 0.3) { if (h < 0.7) a = 2 + ((h2 * (C - 3)) | 0); else { a = 2 + ((h2 * 3) | 0); b = Math.min(C - 2, a + 2 + ((h3 * 3) | 0)); } }
+    if (h > 0.3) { if (h < 0.7) a = (2 + ((h2 * 5) | 0)) * u; else { a = (2 + ((h2 * 3) | 0)) * u; b = Math.min(6, a / u + 2 + ((h3 * 3) | 0)) * u; } }
     const ja = h2 + h3 - 1, jb = hash(c, y, seed + 4) + h3 - 1, jc = hash(c, y, seed + 5) + h - 1;
     const ma = cs + ((a - 1) >> 1), mb = cs + ((a + b - 1) >> 1), mc = cs + ((b + C - 1) >> 1);
     for (let k = 0; k < C; k++) {
@@ -82,6 +84,27 @@ function strokeRow(mid, jit, x0, n, y, seed) {
     c++; cs += C;
   }
 }
+
+// ---- the grain: art px to a world px ------------------------------------------
+// Positions, physics and every number in tuning.js are world px. The art is
+// drawn at AP art px to each: 1 normally, 3 with FINE GRAIN (the pause menu,
+// kept in the save's settings), where everything painted from world sizes and
+// every sprite built from shapes comes out with three times the pixels, at
+// the same size in the world. It's read here, before anything is built, and
+// changing it reloads the page. Only where there's WebGL2; ?fine or ?coarse
+// in the address overrides it. ap(v): a world distance as whole art px.
+function artGrain() {
+  try {
+    const q = location.search;
+    if (/[?&]fine\b/.test(q)) return 3;
+    if (/[?&]coarse\b/.test(q)) return 1;
+    const s = JSON.parse(localStorage.getItem('downlevel.save.v1') || 'null');
+    if (s && s.settings && s.settings.fine && document.createElement('canvas').getContext('webgl2')) return 3;
+  } catch (e) { /* storage or WebGL unavailable: the normal grain */ }
+  return 1;
+}
+let AP = artGrain(); // (let only so the pause map can paint at the coarse grain: see MapView.picture)
+const ap = (v) => Math.round(v * AP);
 
 // ---- a small canvas helper ----------------------------------------------------
 function canvasOf(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; return [c, g]; }

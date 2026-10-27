@@ -10,7 +10,7 @@ const Game = {
   s: null, cam: { x: 0, y: 0 }, toasts: [], particles: [], ghost: 0,
   fresh() {
     return {
-      v: 3, level: 'home', spawn: 'bed', px: 0, py: 0, hp: T.player.hp, cr: 40, ram: T.ram.max,
+      v: 3, settings: {}, level: 'home', spawn: 'bed', px: 0, py: 0, hp: T.player.hp, cr: 40, ram: T.ram.max,
       pack: {}, gadgets: {}, quick: null, quests: {}, gear: { owned: Object.fromEntries(Object.values(GEAR_START).map((g) => [g, 1])), on: Object.assign({}, GEAR_START), lvl: {} }, programs: {}, prog: null,
       done: {}, flags: {}, track: null, warrants: { day: 0, list: [] }, cases: {}, xp: 0, closed: 0, night: null, time: T.day.start, day: 1, deaths: 0,
     };

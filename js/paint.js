@@ -35,47 +35,72 @@ const MAT = {
 };
 const col3 = (h) => (typeof h === 'string' ? rgb(h) : h);
 
-// A pixel buffer over a piece of the world: (ox, oy) is its top left.
+// A pixel buffer over a piece of the world: (ox, oy) is its top left and w, h
+// its size, in world px; its pixels are art px, AP to a world px (W, H).
+// Painters work in world px throughout: put() fills the AP x AP art px of a
+// world px (or of a point between them), and area() is sampled at every art
+// px, so what's painted from world sizes comes out finer of itself.
 class Pix {
   constructor(w, h, ox = 0, oy = 0) {
     this.w = w; this.h = h; this.ox = ox; this.oy = oy; this.n = 1; this.glowed = false;
-    this.c = new Uint8ClampedArray(w * h * 4); this.g = new Uint8ClampedArray(w * h * 4);
-    this.mid = new Int16Array(w + 16); this.jit = new Float32Array(w + 16);
+    this.W = w * AP; this.H = h * AP; this.aox = ox * AP; this.aoy = oy * AP;
+    this.c = new Uint8ClampedArray(this.W * this.H * 4); this.g = new Uint8ClampedArray(this.W * this.H * 4);
+    this.mid = new Int16Array(this.W + 16 * AP); this.jit = new Float32Array(this.W + 16 * AP);
   }
-  put(x, y, col, glow = 0) {
-    x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy;
-    if (x < 0 || y < 0 || x >= this.w || y >= this.h || !col) return;
-    const o = (y * this.w + x) * 4; this.c[o] = col[0]; this.c[o + 1] = col[1]; this.c[o + 2] = col[2]; this.c[o + 3] = 255;
+  // one art px, by its index in the buffer
+  dot(i, col, glow) {
+    const o = i * 4; this.c[o] = col[0]; this.c[o + 1] = col[1]; this.c[o + 2] = col[2]; this.c[o + 3] = 255;
     if (glow) { this.g[o] = col[0] * glow; this.g[o + 1] = col[1] * glow; this.g[o + 2] = col[2] * glow; this.g[o + 3] = 255; this.glowed = true; }
     else this.g[o] = this.g[o + 1] = this.g[o + 2] = this.g[o + 3] = 0;
   }
+  put(x, y, col, glow = 0) {
+    if (!col) return;
+    if (AP === 1) { x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy; if (x < 0 || y < 0 || x >= this.w || y >= this.h) return; this.dot(y * this.w + x, col, glow); return; }
+    const X0 = Math.floor(x * AP) - this.aox, Y0 = Math.floor(y * AP) - this.aoy;
+    for (let Y = Math.max(0, Y0); Y < Math.min(this.H, Y0 + AP); Y++) for (let X = Math.max(0, X0); X < Math.min(this.W, X0 + AP); X++) this.dot(Y * this.W + X, col, glow);
+  }
+  // one art px at a point in the world (a fine dot: thin lines, glints)
+  fine(x, y, col, glow = 0) { const X = Math.floor(x * AP) - this.aox, Y = Math.floor(y * AP) - this.aoy; if (!col || X < 0 || Y < 0 || X >= this.W || Y >= this.H) return; this.dot(Y * this.W + X, col, glow); }
   // mix what's there towards a colour (haze, steam)
-  tint(x, y, col, k) { x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy; if (x < 0 || y < 0 || x >= this.w || y >= this.h) return; const o = (y * this.w + x) * 4; if (!this.c[o + 3]) return; this.c[o] = lerp(this.c[o], col[0], k); this.c[o + 1] = lerp(this.c[o + 1], col[1], k); this.c[o + 2] = lerp(this.c[o + 2], col[2], k); }
+  tint(x, y, col, k) {
+    const X0 = Math.floor(x * AP) - this.aox, Y0 = Math.floor(y * AP) - this.aoy;
+    for (let Y = Math.max(0, Y0); Y < Math.min(this.H, Y0 + AP); Y++) for (let X = Math.max(0, X0); X < Math.min(this.W, X0 + AP); X++) { const o = (Y * this.W + X) * 4; if (!this.c[o + 3]) continue; this.c[o] = lerp(this.c[o], col[0], k); this.c[o + 1] = lerp(this.c[o + 1], col[1], k); this.c[o + 2] = lerp(this.c[o + 2], col[2], k); }
+  }
   // a painted area: inside(x, y) says what's in it, v(x, y) its value (0..1)
-  // read at each stroke's middle, so the area reads as brushwork
+  // read at each stroke's middle, so the area reads as brushwork. Sampled at
+  // every art px (x, y the art px's top left, in world px); strokes are as
+  // long in the world at any grain
   area(ax0, ay0, ax1, ay1, ramp, v, o = {}) {
     const seed = o.seed === undefined ? this.n * 13 + 5 : o.seed; this.n++;
     ax0 = Math.floor(ax0); ay0 = Math.floor(ay0); ax1 = Math.ceil(ax1); ay1 = Math.ceil(ay1);
-    const x0 = Math.max(this.ox, ax0), y0 = Math.max(this.oy, ay0), x1 = Math.min(this.ox + this.w - 1, ax1), y1 = Math.min(this.oy + this.h - 1, ay1);
-    if (x1 < x0 || y1 < y0) return;
-    const inside = o.inside || null, J = o.jit === undefined ? 0.45 : o.jit, n = x1 - x0 + 1, glow = o.glow || 0, fog = o.fog || 0, fogc = o.fogc || [20, 16, 30];
-    for (let y = y0; y <= y1; y++) {
-      strokeRow(this.mid, this.jit, x0, n, y, seed);
+    const X0 = Math.max(this.aox, ax0 * AP), Y0 = Math.max(this.aoy, ay0 * AP), X1 = Math.min(this.aox + this.W - 1, ax1 * AP + AP - 1), Y1 = Math.min(this.aoy + this.H - 1, ay1 * AP + AP - 1);
+    if (X1 < X0 || Y1 < Y0) return;
+    const inside = o.inside || null, J = o.jit === undefined ? 0.45 : o.jit, n = X1 - X0 + 1, glow = o.glow || 0, fog = o.fog || 0, fogc = o.fogc || [20, 16, 30];
+    for (let Y = Y0; Y <= Y1; Y++) {
+      const y = Y / AP, row = (Y - this.aoy) * this.W - this.aox;
+      // (the strokes' layout row by world px row, so a stroke is as tall in the world at any grain)
+      if (AP === 1 || Y === Y0 || Y % AP === 0) strokeRow(this.mid, this.jit, X0, n, Math.floor(Y / AP), seed, 8 * AP);
       for (let i = 0; i < n; i++) {
-        const x = x0 + i; if (inside && !inside(x, y)) continue;
-        const m = x0 + this.mid[i], vx = v(x, y), vm = m >= ax0 && m <= ax1 && (!inside || inside(m, y)) ? v(m, y) : vx;
+        const X = X0 + i, x = X / AP; if (inside && !inside(x, y)) continue;
+        const m = (X0 + this.mid[i]) / AP, vx = v(x, y), vm = m >= ax0 && m <= ax1 + 1 - 1 / AP && (!inside || inside(m, y)) ? v(m, y) : vx;
         let c = tone(ramp, clamp(vm * 0.6 + vx * 0.4, 0, 1), this.jit[i] * J);
         if (fog) c = mixRgb(c, fogc, fog);
-        this.put(x, y, c, glow);
+        this.dot(row + X, c, glow);
       }
     }
   }
   block(x0, y0, x1, y1, ramp, o = {}) { this.area(x0, y0, x1, y1, ramp, blockV(x0, y0, x1, y1, o), o); }
+  // every art px in a world box: fn(x, y) at each (its top left, in world px)
+  // gives [colour, glow] or nothing; how small round things come out round
+  each(x0, y0, x1, y1, fn) {
+    const X0 = Math.max(0, Math.floor(x0 * AP) - this.aox), Y0 = Math.max(0, Math.floor(y0 * AP) - this.aoy), X1 = Math.min(this.W, Math.ceil(x1 * AP) - this.aox), Y1 = Math.min(this.H, Math.ceil(y1 * AP) - this.aoy);
+    for (let Y = Y0; Y < Y1; Y++) for (let X = X0; X < X1; X++) { const r = fn((X + this.aox) / AP, (Y + this.aoy) / AP); if (r) this.dot(Y * this.W + X, r[0], r[1] || 0); }
+  }
   // does a world box touch this buffer?
   sees(x0, y0, x1, y1) { return x1 >= this.ox && y1 >= this.oy && x0 < this.ox + this.w && y0 < this.oy + this.h; }
   canvases() {
-    const [c, g] = canvasOf(this.w, this.h); g.putImageData(new ImageData(this.c, this.w, this.h), 0, 0);
-    let e = null; if (this.glowed) { const [ec, eg] = canvasOf(this.w, this.h); eg.putImageData(new ImageData(this.g, this.w, this.h), 0, 0); e = ec; }
+    const [c, g] = canvasOf(this.W, this.H); g.putImageData(new ImageData(this.c, this.W, this.H), 0, 0);
+    let e = null; if (this.glowed) { const [ec, eg] = canvasOf(this.W, this.H); eg.putImageData(new ImageData(this.g, this.W, this.H), 0, 0); e = ec; }
     return { c, e };
   }
 }
@@ -106,7 +131,9 @@ function windows(P, x0, y0, x1, y1, o = {}) {
     if (!P.sees(x - 1, y, x + ww + 1, y + wh + 1)) continue;
     const h = hash(x, y, s), on = h < lit, p = pal[Math.floor(hash(x, y, s + 1) * pal.length)];
     if (!on && o.unlit === false) continue;
-    for (let j = 0; j < wh; j++) for (let i = 0; i < ww; i++) {
+    // at a fine grain, the pane's light graded smoothly down it
+    if (AP > 1) P.each(x, y, x + ww, y + wh, (xa, ya) => { const i = xa - x, j = ya - y, fi = Math.floor(i), fj = Math.floor(j); let c; if (on) { c = mixRgb(col3(p[0]), col3(p[1]), j / wh); if (o.blinds && fj % 2) c = mixRgb(c, [0, 0, 0], 0.5); if (hash(x, y, s + 2) > 0.8 && fi > 0 && fi < ww - 1 && fj > 1) c = mixRgb(c, [10, 8, 12], 0.85); } else c = mixRgb(dark, [60, 80, 100], (i + j < 2 ? 0.25 : 0) + hash(x + fi, y + fj, s) * 0.08); return [c, on ? o.glow || 0.35 : 0]; });
+    else for (let j = 0; j < wh; j++) for (let i = 0; i < ww; i++) {
       let c;
       if (on) { c = mixRgb(col3(p[0]), col3(p[1]), j / wh); if (o.blinds && j % 2) c = mixRgb(c, [0, 0, 0], 0.5); if (hash(x, y, s + 2) > 0.8 && i > 0 && i < ww - 1 && j > 1) c = mixRgb(c, [10, 8, 12], 0.85); }
       else c = mixRgb(dark, [60, 80, 100], (i + j < 2 ? 0.25 : 0) + hash(x + i, y + j, s) * 0.08);
@@ -220,18 +247,29 @@ function stairsPaint(P, x0, y0, x1, y1, ramp) {
 function water(P, x0, x1, y, depth, ramp) { P.area(x0, y, x1, y + depth, ramp, (x, yy) => 0.25 + (noise(x / 20, yy / 2, 61) - 0.5) * 0.2 + ((yy - y) < 1 ? 0.3 : 0)); }
 
 // ---- the chunk cache ----------------------------------------------------------
+// A chunk is CS world px square: T.chunk, or 64 at a fine grain, where each
+// world px costs AP x AP times the pixels to paint and to keep: a 192 art px
+// chunk paints in about the time a normal one does, so walking into new
+// ground costs no bigger a stall. At a fine grain the cache keeps the 160
+// chunks used last (about 45 MB of canvas, under iOS Safari's limits) and
+// lets the rest go.
 const Paint = {
-  chunks: new Map(), level: null, queue: [],
+  chunks: new Map(), level: null, queue: [], CS: AP > 1 ? 64 : T.chunk, MAX: AP > 1 ? 160 : Infinity,
   reset(level) { this.chunks.clear(); this.level = level; },
   key: (cx, cy) => cx + ',' + cy,
   has(cx, cy) { return this.chunks.has(this.key(cx, cy)); },
-  get(cx, cy) { const k = this.key(cx, cy); let c = this.chunks.get(k); if (!c) { c = paintChunk(this.level, cx, cy); this.chunks.set(k, c); } return c; },
+  get(cx, cy) {
+    const k = this.key(cx, cy); let c = this.chunks.get(k);
+    if (!c) { c = paintChunk(this.level, cx, cy); this.chunks.set(k, c); if (this.chunks.size > this.MAX) this.chunks.delete(this.chunks.keys().next().value); }
+    else if (this.MAX !== Infinity) { this.chunks.delete(k); this.chunks.set(k, c); }
+    return c;
+  },
   // paint one chunk not yet painted near (x, y), if there is one: a frame's
   // spare work, so walking into new ground doesn't stall
   ahead(x, y) {
-    const CS = T.chunk, L = this.level, cx0 = Math.floor(x / CS), cy0 = Math.floor(y / CS);
+    const CS = this.CS, L = this.level, cx0 = Math.floor(x / CS), cy0 = Math.floor(y / CS), rx = AP > 1 ? 6 : 3, ry = AP > 1 ? 3 : 2; // (at a fine grain, 91 small chunks: inside the cache)
     let best = null, bd = 1e9;
-    for (let cy = cy0 - 2; cy <= cy0 + 2; cy++) for (let cx = cx0 - 3; cx <= cx0 + 3; cx++) {
+    for (let cy = cy0 - ry; cy <= cy0 + ry; cy++) for (let cx = cx0 - rx; cx <= cx0 + rx; cx++) {
       if (cx < 0 || cy < 0 || cx * CS >= L.w || cy * CS >= L.h || this.has(cx, cy)) continue;
       const d = Math.abs(cx - cx0) + Math.abs(cy - cy0); if (d < bd) { bd = d; best = [cx, cy]; }
     }
@@ -239,8 +277,8 @@ const Paint = {
     return !!best;
   },
 };
-function paintChunk(L, cx, cy) {
-  const CS = T.chunk, P = new Pix(CS, CS, cx * CS, cy * CS);
+function paintChunk(L, cx, cy, CS = Paint.CS) {
+  const P = new Pix(CS, CS, cx * CS, cy * CS);
   for (const op of L.ops) if (P.sees(op.x0, op.y0, op.x1, op.y1)) { P.n = op.seed; op.fn(P); }
   const { c, e } = P.canvases();
   return { c, e, x: cx * CS, y: cy * CS };

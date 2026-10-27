@@ -70,7 +70,8 @@ async function run(B, url, vp, name, failures) {
   await page.evaluate(HELPERS);
   const shot = (n) => page.screenshot({ path: path.join(OUT, `${name}-${n}.png`) });
   const E = (fn, arg) => page.evaluate(fn, arg);
-  console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))));
+  console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))) + ', ' + (await E(() => AP)) + ' art px a world px');
+  if (/[?&]fine/.test(url) && (await E(() => AP)) !== 3) fail('?fine did not set the grain');
   const st = await E(() => ({ level: Game.s.level, x: Player.x, frame: Game.frame }));
   if (st.level !== 'home' || Math.abs(st.x - 116) > 40) fail('the runner does not start by the bed ' + JSON.stringify(st));
   if (!st.frame) fail('the loop is not running');
@@ -203,6 +204,7 @@ async function run(B, url, vp, name, failures) {
   try {
     await run(B, url, PHONE, 'phone', failures);
     await run(B, url + '?nogl', DESKTOP, 'desktop', failures); // the 2D path, as without WebGL2
+    await run(B, url + '?fine', PHONE, 'fine', failures); // FINE GRAIN: 3 art px to a world px
   } catch (e) { failures.push('crashed: ' + (e.stack || e)); }
   await B.b.close(); server.close();
   if (failures.length) {

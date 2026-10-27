@@ -12,12 +12,21 @@ const MapView = {
   picture() {
     const L = World.L; if (this.cache[L.id]) return this.cache[L.id];
     this.cache = {}; // one level's picture at a time
-    const [c, g] = canvasOf(L.w, L.h), CS = T.chunk;
+    // (in world px: the painted chunks and sprites come down from their art px)
+    const [c, g] = canvasOf(L.w, L.h), z = 1 / AP; g.imageSmoothingEnabled = AP > 1;
     g.fillStyle = '#0a0c14'; g.fillRect(0, 0, L.w, L.h);
-    for (let ky = 0; ky * CS < L.h; ky++) for (let kx = 0; kx * CS < L.w; kx++) { const ch = Paint.get(kx, ky); g.drawImage(ch.c, ch.x, ch.y); }
-    for (const p of World.props) { const s = Props.sprite(p); if (s) g.drawImage(s.c, Math.round(p.x - s.ax), Math.round(p.y - s.ay)); }
-    g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.6;
-    for (let ky = 0; ky * CS < L.h; ky++) for (let kx = 0; kx * CS < L.w; kx++) { const ch = Paint.get(kx, ky); if (ch.e) g.drawImage(ch.e, ch.x, ch.y); }
+    // the ground painted for this alone, a chunk at a time, at the coarse
+    // grain: the map shows a world px as a px at most, so a fine grain would
+    // only cost nine times the painting (seconds) for the same picture.
+    // The glow is laid on after.
+    const [ec, eg] = canvasOf(L.w, L.h), fine = AP; AP = 1;
+    try {
+      for (let ky = 0; ky * T.chunk < L.h; ky++) for (let kx = 0; kx * T.chunk < L.w; kx++) {
+        const ch = paintChunk(L, kx, ky, T.chunk); g.drawImage(ch.c, ch.x, ch.y); if (ch.e) eg.drawImage(ch.e, ch.x, ch.y);
+      }
+    } finally { AP = fine; }
+    for (const p of World.props) { const s = Props.sprite(p); if (s) g.drawImage(s.c, Math.round(p.x - s.ax * z), Math.round(p.y - s.ay * z), s.w * z, s.h * z); }
+    g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.6; g.drawImage(ec, 0, 0);
     return (this.cache[L.id] = c);
   },
   attach() {

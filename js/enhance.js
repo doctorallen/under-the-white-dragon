@@ -22,13 +22,14 @@ const Enhancer = {
   make(x, y) {
     // the still has the shape of the screen it's shown on
     PHOTO_H = 180; PHOTO_W = Math.round(clamp(PHOTO_H * Math.max(1, innerWidth - 32) / Math.max(1, innerHeight - 150), 300, 640));
-    const L = World.L, w = PHOTO_W, h = PHOTO_H, CS = T.chunk;
+    const L = World.L, w = PHOTO_W, h = PHOTO_H, CS = Paint.CS, z = 1 / AP;
     const x0 = clamp(Math.round(x - w / 2), 0, Math.max(0, L.w - w)), y0 = clamp(Math.round(y - h + 24), 0, Math.max(0, L.h - h));
-    const [c, g] = canvasOf(w, h); g.fillStyle = '#0a0c14'; g.fillRect(0, 0, w, h);
-    for (const F of World.layers) g.drawImage(F.c, -Math.round(x0 * F.f) % F.c.width, -Math.round(y0 * F.fy));
-    for (let ky = Math.floor(y0 / CS); ky * CS < y0 + h; ky++) for (let kx = Math.floor(x0 / CS); kx * CS < x0 + w; kx++) { if (kx < 0 || ky < 0 || kx * CS >= L.w || ky * CS >= L.h) continue; const ch = Paint.get(kx, ky); g.drawImage(ch.c, ch.x - x0, ch.y - y0); }
-    for (const p of World.props) { if (p.dyn) continue; const s = Props.sprite(p); if (s) g.drawImage(s.c, Math.round(p.x - s.ax - x0), Math.round(p.y - s.ay - y0)); }
-    for (const n of Actors.npcs) { if (n.hidden || n.x < x0 - 20 || n.x > x0 + w + 20) continue; const s = person(Object.assign({}, n.def.look, { pose: 'stand', seed: 40 + n.i })); g.drawImage(s.c, Math.round(n.x - s.ax - x0), Math.round(n.y - s.ay - y0)); }
+    // (in world px: what's painted and the sprites come down from their art px)
+    const [c, g] = canvasOf(w, h); g.fillStyle = '#0a0c14'; g.fillRect(0, 0, w, h); g.imageSmoothingEnabled = AP > 1;
+    for (const F of World.layers) g.drawImage(F.c, -Math.round(x0 * F.f) % (F.c.width * z), -Math.round(y0 * F.fy), F.c.width * z, F.c.height * z);
+    for (let ky = Math.floor(y0 / CS); ky * CS < y0 + h; ky++) for (let kx = Math.floor(x0 / CS); kx * CS < x0 + w; kx++) { if (kx < 0 || ky < 0 || kx * CS >= L.w || ky * CS >= L.h) continue; const ch = Paint.get(kx, ky); g.drawImage(ch.c, ch.x - x0, ch.y - y0, ch.c.width * z, ch.c.height * z); }
+    for (const p of World.props) { if (p.dyn) continue; const s = Props.sprite(p); if (s) g.drawImage(s.c, Math.round(p.x - s.ax * z - x0), Math.round(p.y - s.ay * z - y0), s.w * z, s.h * z); }
+    for (const n of Actors.npcs) { if (n.hidden || n.x < x0 - 20 || n.x > x0 + w + 20) continue; const s = person(Object.assign({}, n.def.look, { pose: 'stand', seed: 40 + n.i })); g.drawImage(s.c, Math.round(n.x - s.ax * z - x0), Math.round(n.y - s.ay * z - y0), s.w * z, s.h * z); }
     // the spots: one is the clue, the rest are nothing; each a little
     // picture of its own, drawn into the still too small to read
     const C = Cases.def(this.id), K = C.clues[this.cid], seed = (this.id.length * 31 + this.cid.length * 7 + Math.round(x)) | 0, r = new Rng(seed);

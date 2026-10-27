@@ -82,13 +82,23 @@ function cloudBands(P, x0, x1, y0, y1, ramp, seed) {
 // ---- what moves on the layers: holograms and the train -----------------------
 const Skyline = {
   // draw the moving things on layer `li` (its offset ox, oy on screen)
+  // (ox, oy in art px; what's drawn here is in world px, as blocks, on a
+  // context scaled by AP whose origin is on the layer's grid)
   draw(li, g, gg, ox, oy) {
     const L = World.L, t = Game.t;
     for (const h of L.holos) if (h.layer === li) this.holo(h, g, gg, ox, oy, t);
     if (L.train && L.train.layer === li) this.train(L.train, g, gg, ox, oy, t);
   },
-  holo(h, g, gg, ox, oy, t) {
-    const x0 = Math.round(h.x + ox), y0 = Math.round(h.y + oy); if (x0 > View.w || y0 > View.h || x0 + h.w < 0 || y0 + h.h < 0) return;
+  grid(g, gg, ox, oy, fn) {
+    if (AP === 1) { fn(ox, oy); return; }
+    const qx = Math.floor(ox / AP), qy = Math.floor(oy / AP);
+    for (const c of [g, gg]) c.setTransform(AP, 0, 0, AP, ox - qx * AP, oy - qy * AP);
+    fn(qx, qy);
+    for (const c of [g, gg]) c.setTransform(1, 0, 0, 1, 0, 0);
+  },
+  holo(h, g, gg, ox, oy, t) { this.grid(g, gg, ox, oy, (qx, qy) => this.holoAt(h, g, gg, qx, qy, t)); },
+  holoAt(h, g, gg, ox, oy, t) {
+    const x0 = Math.round(h.x + ox), y0 = Math.round(h.y + oy); if (x0 > View.w / AP || y0 > View.h / AP || x0 + h.w < 0 || y0 + h.h < 0) return;
     const c = h.cols[Math.floor(t / 6) % h.cols.length], a = 0.75 + Math.sin(t * 1.7 + h.x) * 0.1;
     // now and then a glitch: a band of rows slides sideways
     const glitchY = hash(Math.floor(t * 3), h.x, 41) < 0.05 ? Math.floor(hash(Math.floor(t * 3), h.x, 42) * h.h) : -99;
@@ -158,10 +168,11 @@ const Skyline = {
     gg.globalAlpha = 1;
   },
   // the monorail: a train of lit carriages along the layer's track
-  train(tr, g, gg, ox, oy, t) {
+  train(tr, g, gg, ox, oy, t) { this.grid(g, gg, ox, oy, (qx, qy) => this.trainAt(tr, g, gg, qx, qy, t)); },
+  trainAt(tr, g, gg, ox, oy, t) {
     const span = tr.span, len = tr.cars * 22, x = ((t * tr.speed) % (span + len)) - len, y0 = Math.round(tr.y + oy);
     for (let k = 0; k < tr.cars; k++) {
-      const cx0 = Math.round(x + k * 22 + ox); if (cx0 > View.w || cx0 + 21 < 0) continue;
+      const cx0 = Math.round(x + k * 22 + ox); if (cx0 > View.w / AP || cx0 + 21 < 0) continue;
       g.fillStyle = '#1a2032'; g.fillRect(cx0, y0 - 8, 20, 8); g.fillStyle = '#2a3450'; g.fillRect(cx0, y0 - 8, 20, 1); g.fillStyle = '#0a0e18'; g.fillRect(cx0, y0 - 1, 20, 1);
       for (let w = 2; w < 18; w += 3) { gg.fillStyle = hash(k, w, 3) < 0.8 ? '#ffd8a0' : '#9af0ff'; gg.fillRect(cx0 + w, y0 - 6, 2, 3); }
       if (k === 0) { gg.fillStyle = '#ffffff'; gg.fillRect(cx0 + (tr.speed > 0 ? 19 : 0), y0 - 4, 1, 1); }
