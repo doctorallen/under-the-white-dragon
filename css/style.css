@@ -298,3 +298,12 @@ i.mark { color: var(--sodium); font-style: normal; }
 #benchtray { display: grid; gap: 4px; }
 .parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
 @media (max-height: 420px) { .benchside { width: 168px; } .benchside .tools button { padding: 7px 2px; } }
+
+/* ---- heat: how close the precinct is to your door ---- */
+#heat { display: flex; align-items: center; gap: 4px; color: var(--sodium); font-size: 9px; letter-spacing: 0.14em; }
+#heat::before { content: "HEAT"; }
+#heat > div { width: 92px; height: 5px; background: rgba(0, 0, 0, 0.6); border: 1px solid #5a3a1a; }
+#heatfill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--sodium), #ff6a3a); transition: width 0.4s; }
+#heat.hot { color: #ff6a3a; }
+#heat.hot #heatfill { background: linear-gradient(90deg, #ff6a3a, var(--red)); box-shadow: 0 0 6px var(--red); }
+#heat.none { opacity: 0.5; }

@@ -11,6 +11,7 @@ const NPC_ROLE = {
   vendor: { verb: 'Trade', prompt: (n) => 'Trade with ' + n.def.name, use: (n) => Hud.toggle('vendor', n) },
   fixer: { verb: 'Cases', prompt: (n) => 'Talk to ' + n.def.name, use: (n) => Hud.toggle('fixer', n) },
   qm: { verb: 'Gadgets', prompt: () => 'The quartermaster', use: (n) => Hud.toggle('qm', n) },
+  parts: { verb: 'Trade', prompt: (n) => 'Parts from ' + n.def.name, use: (n) => Hud.toggle('partshop', n) },
   fab: { verb: 'Craft', prompt: () => 'Mags · make, upgrade, break down', use: (n) => Hud.toggle('fab', n) },
 };
 const GANG_LOOKS = [
@@ -52,6 +53,7 @@ const Actors = {
     for (const k of Quests.elites(L.id)) add(k, ELITES[k], ELITES[k].name, {});
     for (const w of Warrants.here(L.id)) add('w' + w.id, w, w.name, { warrant: w.id });
     this.caseNpcs();
+    Jobs.spawn();
   },
   entry(n) { const h = Game.hour(); for (const e of n.def.sched) if (h >= e[0] && h < e[1]) return e; return n.def.sched[0]; },
   nearest(test, r) { let best = null, bd = r; for (const e of this.enemies) { if (!test(e)) continue; const d = Math.hypot(e.x - Player.x, (e.y - 10) - (Player.y - 16)); if (d < bd) { bd = d; best = e; } } return best; },
@@ -59,7 +61,7 @@ const Actors = {
   talk(n) {
     // a case or a quest has something to say through them: the talk panel
     // (someone with a trade and only work to offer opens their trade, the work on top)
-    const acts = Cases.actionsFor(n.def.name).concat(Quests.actionsFor(n.def.name)), trade = ['vendor', 'qm', 'fab'].includes(n.def.role);
+    const acts = Cases.actionsFor(n.def.name).concat(Quests.actionsFor(n.def.name), Jobs.actionsFor(n.def.name)), trade = ['vendor', 'qm', 'fab', 'parts'].includes(n.def.role);
     if (n.def.role === 'fixer' || acts.some((a) => a.kind !== 'offer') || (acts.length && !trade)) { n.face = Math.sign(Player.x - n.x) || n.face; Hud.toggle('talk', n); return; }
     if (n.def.role) { NPC_ROLE[n.def.role].use(n); return; }
     const L = n.def.lines; this.say(n, L[n.line % L.length]); n.line++;

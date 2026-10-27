@@ -177,7 +177,7 @@ addDistrict('d_overpass', 'Overpass Market', 2, -40, 300, 'A market packed under
     // bay 3: the mechanic's garage, a car on the lift
     L.paint(1100, G - 80, 1300, G, (P) => stGarage(P, 1100, 1300, G, { h: 58, car: '#2a4a6a', sparks: true, wall: KMAT.concreteL }));
     L.sign(1150, G - 76, 8, '#ff8a3a', { r: 60, seed: 4 }); L.light(1200, G - 30, 100, [1, 0.8, 0.55], 0.95);
-    L.npc({ name: 'Mechanic Ana', look: { skin: SKINS[3], hair: 'bun', hairCol: '#2a1a14', top: '#3a4a5a', apron: '#2a2a2a', legs: '#2a2a2a', goggles: '#ffb040', hands: { fx: 26, fy: 38 } }, x: 1230, y: G, face: -1, sched: [[0, 24, 1230, 'work']], behind: true, lines: ['Ground cars, spinners, fridges. If it has a motor I\'ll fix it.', 'Somebody brought me a dog to fix once. A synth dog. It bit me.'] });
+    L.npc({ name: 'Mechanic Ana', role: 'parts', stock: 'ana', look: { skin: SKINS[3], hair: 'bun', hairCol: '#2a1a14', top: '#3a4a5a', apron: '#2a2a2a', legs: '#2a2a2a', goggles: '#ffb040', hands: { fx: 26, fy: 38 } }, x: 1230, y: G, face: -1, sched: [[0, 24, 1230, 'work']], behind: true, lines: ['Cells, coils, boards. Street grade: nothing fancy, nothing traceable.', 'Ground cars, spinners, fridges. If it has a motor I\'ll fix it.', 'Somebody brought me a dog to fix once. A synth dog. It bit me.'] });
     kStallAt(L, 1340, G, 'skewers'); kStallAt(L, 1410, G, 'masks', { col: '#2a5a8a' });
     // bay 4: the thick of it
     kStallAt(L, 1550, G, 'flowers'); kStallAt(L, 1620, G, 'herbs'); kStallAt(L, 1690, G, 'parts', { col: '#5a2a5a' }); kStallAt(L, 1760, G, 'robot', { col: '#ffd040' }); kStallAt(L, 1835, G, 'med');
@@ -413,6 +413,8 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     const queue = [['Patient', SKINS[1], '#5a3a3a', 'long'], ['Old patient', SKINS[5], '#3a3a5a', 'bun'], ['Patient', SKINS[3], '#3a5a3a', 'cap'], ['Mother', SKINS[2], '#6a3a5a', 'bob']];
     queue.forEach(([n, sk, t, h], i) => L.npc({ name: n, look: { skin: sk, hair: h, top: t, legs: '#2a2a2a', coat: i % 2 ? 'long' : 'jacket', tall: i === 3 ? 0.9 : 1 }, x: 860 - i * 18, y: G, face: 1, sched: [[0, 24, 860 - i * 18, 'stand']], lines: [['Don\'t cut in. I\'ve been here since noon.', 'It\'s my lungs. It\'s everyone\'s lungs.', 'They took my blood last time. I\'m back for the change.', 'My boy swallowed a battery. He\'s fine. Probably.'][i]] }));
     // the street medics and the blood bank
+    L.npc({ name: 'Nurse Kade', role: 'parts', stock: 'kade', look: { skin: SKINS[2], hair: 'short', hairCol: '#2a1a1a', top: '#7ae8d8', legs: '#3a4a4a', coat: 'jacket' }, x: 1100, y: G, face: 1, sched: [[0, 24, 1100, 'stand']], lines: ['Night shift. Things fall off the trolley on night shift.', 'I don\'t ask what it\'s for. Don\'t tell me.'] });
+    L.prop('cabinet', 1700, G - 82, { label: 'parts cabinet' }); L.light(1700, G - 112, 30, [0.8, 0.95, 1], 0.5);
     kStallAt(L, 1290, G, 'med', { npc: { name: 'Street medic', lines: ['Patches, painkillers, stitches. No chrome. I\'m legal.', 'Bleeding? Sit. Pay after.'] } });
     kStallAt(L, 1360, G, 'med', { npc: false });
     bShophouse(L, 1400, 1540, G, { floors: 4, wall: KMAT.pink, shops: [['clinic', '#ff3a4a']], roof: 'tank', blade: '#ff3a4a', bladeLeft: true, seed: 505 }); stWait(L, 1400, 1540, G);

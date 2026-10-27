@@ -38,6 +38,8 @@ const PANELS = {
       if (a.kind === 'deliver') h += `<div class="ask"><h3>${Q.title}</h3><p class="dim">${st.text}: ${Hud.cost(st.items)}</p><div class="buttons"><button data-deliver="${a.id}" class="go" ${a.ok ? '' : 'disabled'}>Hand it over</button></div></div>`;
       if (a.kind === 'choice') h += `<div class="ask"><h3>${Q.title}</h3>${st.lines.map((l) => `<p class="sub">"${l}"</p>`).join('')}<div class="buttons">${st.options.map((o, i) => `<button data-choose="${a.id}:${i}">${o.label}</button>`).join('')}</div></div>`;
     }
+    // jobs for the bench: an offer, a wait, a hand-back
+    for (const a of Jobs.actionsFor(name)) h += Jobs.html(a);
     // the lieutenant: the cases, the night desk, the warrants board
     if (n.def.role === 'fixer') {
       const offers = CASE_ORDER.filter((id) => Cases.available(id));
@@ -81,6 +83,15 @@ const PANELS = {
     return ['Case board · ' + C.title, h];
   },
   net() { return [(Hack.p && Hack.p.term ? 'Terminal' : 'Data node') + ' · jacked in', Hack.html()]; },
+  // the morning after: what your fixes did overnight
+  morning(s) { return ['Morning · day ' + s.day, Jobs.news.map((l) => `<p class="sub">${l}</p>`).join('') + '<div class="buttons"><button data-act="resume" class="go">Get up</button></div>']; },
+  // a parts stall: what they sell, by grade
+  partshop(s) {
+    const n = Hud.who, stock = PART_STOCK[n.def.stock];
+    let h = `<p class="sub">"${n.def.lines[n.line % n.def.lines.length]}"</p><div class="parts">`;
+    h += stock.map(([k, g, cr, gauge, note], i) => `<div class="part" style="--r:${GRADE[g].col}"><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr} cr</button></div></div>`).join('');
+    return [n.def.name + '\'s parts', h + '</div>'];
+  },
   bench() { return ['The bench · ' + Bench.b.name, Bench.html()]; },
   // the shelf: the parts you have, and the notebook
   shelf(s) {
@@ -151,6 +162,8 @@ function itemsTab(s) {
 }
 function panelBind(body, which) {
   const s = Game.s, n = Hud.who, re = () => Hud.panel(Hud.open);
+  body.querySelectorAll('button[data-buypart]').forEach((b) => (b.onclick = () => { const [k, g, cr, gauge] = PART_STOCK[n.def.stock][+b.dataset.buypart]; if (!Game.pay({ cr })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); }));
+  body.querySelectorAll('button[data-job]').forEach((b) => (b.onclick = () => { const c = b.dataset.job; Jobs.act(c); if (!c.startsWith('back')) re(); }));
   body.querySelectorAll('button[data-ask]').forEach((b) => (b.onclick = () => { const [id, cid] = b.dataset.ask.split(':'); Cases.ask(id, cid); re(); }));
   body.querySelectorAll('button[data-net]').forEach((b) => (b.onclick = () => { Hack.go(+b.dataset.net); re(); }));
   body.querySelectorAll('button[data-netact]').forEach((b) => (b.onclick = () => { const a = b.dataset.netact; Hack.act(a); if (a !== 'out') re(); }));

@@ -50,6 +50,7 @@ const FILES = [
   'js/hack.js',
   'js/parts.js',
   'js/bench.js',
+  'js/jobs.js',
   'js/life.js',
   'js/skyline.js',
   'js/flight.js',

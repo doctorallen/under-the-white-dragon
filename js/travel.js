@@ -35,7 +35,8 @@ const Travel = {
     if (id === 'oldtown') return Game.s.pack.subwaypass > 0 && f('been:street');
     const b = this.band(id);
     if (b === 'high') return true;
-    if (b === 'street' || b === 'under') return f('been:street');
+    if (b === 'street') return true;
+    if (b === 'under') return f('been:street');
     if (b === 'old') return f('been:oldtown');
     if (b === 'works') return f('been:works');
     if (b === 'bowels') return f('been:bowels');

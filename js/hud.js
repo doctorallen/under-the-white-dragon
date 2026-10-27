@@ -51,6 +51,7 @@ const Hud = {
     $('ram').innerHTML = '<i class="on"></i>'.repeat(s.ram) + '<i></i>'.repeat(T.ram.max - s.ram);
     $('charge').innerHTML = '<i class="on"></i>'.repeat(Player.charge) + '<i></i>'.repeat(Math.max(0, Game.weapon().shots - Player.charge));
     $('cr').textContent = s.cr + ' cr';
+    $('heatfill').style.width = s.heat + '%'; $('heat').classList.toggle('hot', s.heat >= 40); $('heat').classList.toggle('none', !s.heat);
     const q = Game.quickItem(); $('bItem').textContent = q ? ITEM[q].name.split(' ')[0] + ' ' + s.pack[q] : 'Item'; $('bItem').classList.toggle('none', !q);
     $('bProg').textContent = s.prog ? PROGRAMS[s.prog].name : 'No program';
     $('bProg').classList.toggle('none', !s.prog);
@@ -189,7 +190,7 @@ const Hud = {
     } else if (which === 'cab') {
       const fare = Flight.cabFare(), home = World.L.id === 'd_dragon';
       title.textContent = 'Call a cab';
-      h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down on your pad.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>Call a cab · ${fare} cr</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
+      h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down on your pad.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>${fare ? `Call a cab · ${fare} cr` : 'Call Ozzy · free'}</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
     } else if (which === 'fab') {
       title.textContent = 'Mags · fabricator';
       h += this.fab();
@@ -227,13 +228,13 @@ const Hud = {
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
     body.innerHTML = h; body.scrollTop = keep;
     // where money changes hands, what you have is in the header
-    const crEl = $('panelCr'); crEl.hidden = !['vendor', 'fab', 'qm', 'cab', 'pack', 'fixer'].includes(which); crEl.textContent = s.cr + ' cr';
+    const crEl = $('panelCr'); crEl.hidden = !['vendor', 'fab', 'qm', 'cab', 'pack', 'fixer', 'partshop'].includes(which); crEl.textContent = s.cr + ' cr';
     // the buttons
-    const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(((8 - h0) + 24) % 24 || 24); Actors.load(); Game.toast('You sleep. Morning, or what passes for it. You wake healed, your RAM full.', 'good'); this.toggle(null); this.refresh(); Save.write(); },
+    const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(((8 - h0) + 24) % 24 || 24); const news = Jobs.morning(); Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => this.toggle('dev'),
-      cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'd_dragon' || !Game.pay({ cr: fare })) return; Flight.start('d_dragon', 'enter', true); },
+      cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'd_dragon' || (fare && !Game.pay({ cr: fare }))) return; Flight.start('d_dragon', 'enter', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     panelBind(body, which);

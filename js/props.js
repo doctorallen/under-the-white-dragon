@@ -386,3 +386,13 @@ function partsShelf() {
   S.px(9, 43, '#3af0e0', true); S.px(20, 45, '#ff8a30', true); S.box(6, 44, 16, 47, rp('#4a4a50', 5), { lo: 1, hi: 4 });
   return S.done();
 }
+// a clinic's parts cabinet: white steel, a red cross, a keypad, Meridian's
+// stripe; jimmied, the door hangs open on empty racks
+function medCabinet(open) {
+  const W = 22, H = 34, S = new Spr(W, H, 442 + (open ? 1 : 0)); S.ax = W / 2; S.ay = H - 1; const wh = rp('#e0e8e8', 6);
+  S.box(1, 0, W - 2, H - 1, wh, { lo: 1, hi: 5 }); S.box(1, H - 4, W - 2, H - 1, MAT.steelD, { lo: 1, hi: 4 });
+  if (open) { S.box(3, 2, W - 4, H - 6, rp('#2a3034', 5), { lo: 0, hi: 3 }); for (const y of [10, 19]) S.box(3, y, W - 4, y + 1, MAT.steel, { lo: 2, hi: 5 }); S.box(W - 4, 2, W - 1, H - 6, wh, { lo: 2, hi: 5 }); return S.done(); }
+  S.box(8, 6, 13, 7, rp('#ff3a4a', 4)); S.box(10, 4, 11, 9, rp('#ff3a4a', 4)); S.box(3, H - 8, W - 4, H - 7, rp('#ff4a5a', 4));
+  S.box(15, 14, 18, 19, rp('#1a1e22', 4), { lo: 1, hi: 3 }); S.px(16, 15, '#3aff80', true); S.px(17, 17, '#3af0e0', true);
+  return S.done();
+}

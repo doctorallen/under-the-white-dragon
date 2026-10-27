@@ -102,7 +102,20 @@ async function run(B, url, vp, name, failures) {
   });
   await shot('bench');
   if (fix.open !== 'bench' || !fix.learnt || fix.res !== 'works' || fix.loose || fix.scorch) fail('the bench repair did not work ' + JSON.stringify(fix));
-  await E(() => { Hud.toggle(null); Bench.clear(); T_.walkTo(300); });
+  // a job: Ozzy's waiting in the back room; take it, fix it, hand it back, sleep on it
+  const job = await E(() => {
+    Hud.toggle(null); Bench.clear(); const oz = Actors.npcs.find((n) => n.def.name === 'Ozzy'); if (!oz) return { oz: false };
+    Actors.talk(oz); const talk = Hud.open; Jobs.take('ozzy'); const on = Bench.b && Bench.b.job;
+    Parts.give(Parts.make('cell', 'street'), true); Parts.give(Parts.make('aerial', 'street'), true);
+    const B = Bench; B.b.open = true; for (const k of ['cell', 'aerial']) { B.b.slots[k].j = ['open', 'open']; B.sel = k; Parts.give(B.b.slots[k].p, true); B.b.slots[k].p = null; B.fit(Parts.have(k).find((p) => p.st === 'ok').id); B.b.slots[k].j = ['solid', 'solid']; }
+    B.close(); B.b.screws.forEach((s) => (s.st = 'in')); B.test(); const res = B.b.tested.res, cr = Game.s.cr;
+    Jobs.handBack('ozzy'); const paid = Game.s.cr - cr;
+    Hud.toggle('bed'); document.querySelector('button[data-act="sleep"]').click();
+    return { oz: true, talk, on, res, paid, morning: Hud.open, rides: Game.flag('ozzy:rides'), fare: Flight.cabFare() };
+  });
+  await shot('morning');
+  if (!job.oz || job.talk !== 'talk' || job.on !== 'ozzy' || job.res !== 'works' || job.paid !== 80 || job.morning !== 'morning' || !job.rides || job.fare) fail('Ozzy\'s job did not play through ' + JSON.stringify(job));
+  await E(() => { Hud.toggle(null); T_.walkTo(300); });
   await shot('frontage');
   // (the old slice from the apartment, until the jobs replace it)
   await E(() => { Game.go('home', 'bed'); T_.run({}, 90); });
@@ -118,7 +131,7 @@ async function run(B, url, vp, name, failures) {
   if (qm.o !== 'qm' || !qm.has) fail('the quartermaster did not build the lenses ' + JSON.stringify(qm));
   // a cab home
   const cab = await E(() => { Game.s.cr += 30; const c0 = Game.s.cr; Hud.toggle('cab'); const b = document.querySelector('button[data-act="cab"]'); if (b) b.click(); T_.run({}, 330); return { level: Game.s.level, paid: c0 - Game.s.cr, x: Math.round(Player.x) }; });
-  if (cab.level !== 'd_dragon' || cab.paid !== 30) fail('the cab did not take the runner home to the White Dragon ' + JSON.stringify(cab));
+  if (cab.level !== 'd_dragon' || cab.paid !== 0) fail('Ozzy did not fly the runner home to the White Dragon for free ' + JSON.stringify(cab));
   await E(() => { Game.go('home', 'bed'); T_.run({}, 90); }); // (the old apartment's elevator, for now)
   // down the hall to the elevator, and down to the Stack
   const lift = await E(() => { T_.walkTo(1470); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-floor="stack"]'); if (b) b.click(); T_.run({}, 90); return { o, level: Game.s.level, x: Math.round(Player.x) }; });

@@ -62,6 +62,9 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'The noodle bar on the co
     L.spawns.bed = [1000, G];
     L.dry.push([330, 0, 1120, L.h]); // (no rain indoors, nor under the eaves)
     for (const w of L.wet) w.x1 = Math.min(w.x1, 330); // (the street is wet; the bar's floor isn't)
+    // ---- the street out front: a machine and a junk pile to strip
+    L.prop('vending', 250, G, { look: { col: '#3af0e0', body: '#2a3a4a' }, label: 'vending machine' }); L.light(250, G - 12, 30, [0.3, 0.9, 1], 0.5);
+    L.prop('junk', 186, G, { label: 'junk pile' });
     // ---- the sign: on the corner, over the street
     L.prop('deco', 296, G - 10, { art: () => dragonSign(), id: 'wdsign' });
     L.light(296, G - 80, 110, [0.75, 0.9, 1], 0.9); L.light(266, G - 130, 50, [1, 0.3, 0.38], 0.6);

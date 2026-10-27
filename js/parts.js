@@ -56,6 +56,14 @@ const DEVICE = {
   },
 };
 
+// what a stall sells: [kind, grade, price, gauge, a line about it]
+const PART_STOCK = {
+  ana: [['cell', 'street', 25], ['aerial', 'street', 30], ['board', 'street', 45], ['relay', 'street', 20]],
+  kade: [['servo', 'scrap', 80, 'heavy', 'Refurbished. It\'s been in three arms already. It might have one more in it.'], ['servo', 'clinic', 70, 'light', 'Clinic grade, light gauge: made for a nurse\'s hand, not a soldier\'s.'], ['cell', 'clinic', 40]],
+};
+// what stripping a machine gets you, besides salvage: one tired part
+const PART_YIELD = { vending: 'cell', car: 'aerial', ac: 'relay', rack: 'board', wreck: 'board', junk: 'cell' };
+
 const Parts = {
   make(k, g, o = {}) { const s = Game.s; s.pid = (s.pid || 1) + 1; return Object.assign({ id: s.pid, k, g, st: 'ok', from: World.L ? World.L.id : 'd_dragon', how: 'strip' }, o); },
   give(p, quiet) { Game.s.parts.push(p); if (!quiet) Game.toast('Onto the shelf: ' + this.name(p) + '.', 'good'); return p; },
@@ -70,6 +78,8 @@ const Parts = {
     if (slot && slot.gauge && p.gauge !== slot.gauge && p.st !== 'dead' && p.st !== 'burnt') r += ` But it's ${p.gauge || 'light'} gauge in a ${slot.gauge} mount: it'll strain.`;
     return r;
   },
+  // a part from a machine you've stripped: scrap, and maybe worn
+  strip(p) { const k = PART_YIELD[p.kind]; if (!k) return null; return this.give(this.make(k, 'scrap', { st: hash(p.x, p.y, 77) < 0.7 ? 'ok' : 'worn' }), true); },
   // ---- the notebook ----
   knows(dev) { return !!Game.s.notes.known[dev]; },
   learn(dev) { if (this.knows(dev)) return; Game.s.notes.known[dev] = 1; Game.toast('Notebook: how a ' + DEVICE[dev].name.toLowerCase() + ' is put together.', 'good'); },

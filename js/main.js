@@ -14,7 +14,7 @@ function boot() {
   Game.cam.x = Player.x; Game.cam.y = Player.y - 30;
   Hud.init();
   Game.toast(loaded ? 'Back on ' + World.L.name + '.' : 'Detective. Four synths walked off a corp transport in the Spires three nights ago and dropped out of sight. Last ping: the Stack, heading down.');
-  if (!loaded) setTimeout(() => Game.toast('Behind the White Dragon. The back room is yours: the bench, the parts shelf, the cot. Auntie Lin keeps the bar out front, and people know where to find you.', 'good'), 1200);
+  if (!loaded) setTimeout(() => Game.toast('Behind the White Dragon. The back room is yours: the bench, the parts shelf, the cot. Auntie Lin keeps the bar out front, and people know where to find you. Someone\'s already waiting.', 'good'), 1200);
   addEventListener('visibilitychange', () => { if (document.hidden) Save.write(); });
   addEventListener('pagehide', () => Save.write());
   $('loading').hidden = true;

@@ -9,7 +9,7 @@ const PROP_ART = {
   vending: (p) => vending(p.look || {}), ac: () => acUnit(), rack: (p) => rack({ h: 40, seed: p.x, warn: true }), car: (p) => car(p.look || {}),
   junk: (p) => junk({ seed: p.x % 7 }), wreck: () => wreck(), cache: () => { const S = new Spr(16, 12, 81); S.ax = 8; S.ay = 11; S.box(0, 0, 15, 11, MAT.concreteD, { lo: 1, hi: 5 }); for (let x = 2; x < 14; x += 3) S.px(x, 5, '#a85ad8', true); return S.done(); },
   grate: (p) => grate({ w: p.w || 12, h: p.h || 32 }), heavy: (p) => heavyShutter({ w: p.w || 30, h: p.h || 32 }), hatch: (p) => hatch({ w: p.w || 26, h: p.h || 34, stripe: true }),
-  node: (p) => node({ col: p.col }), workbench: () => workbench(), shelf: () => partsShelf(), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? spinner({}) : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
+  node: (p) => node({ col: p.col }), workbench: () => workbench(), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? spinner({}) : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
   keydoor: (p) => (p.mode === 'subway' ? subwayDoor() : hatch({ w: 40, h: 44, col: '#3a3a40', lock: Game.s.pack[p.key] > 0 ? '#3aff80' : '#ffb040', stripe: true })), locker: () => locker(), clue: (p) => marker({ col: p.K.kind === 'photo' ? '#3af0e0' : '#ffd040' }), pickup: () => marker({ col: '#ff9ad8' }), closet: () => closet(), elevator: (p) => elevator({ at: ELEVATOR.findIndex((f) => f.level === p.level) }), exit: () => null, deco: (p) => p.art(),
   sealed: (p) => hatch({ w: 40, h: 40, col: '#3a3a40', lock: '#ffb040', stripe: true }),
 };
@@ -56,6 +56,7 @@ const Props = {
     if (p.kind === 'lift') return Game.s.flags.lift ? { verb: 'Ride', text: 'Take the lift ' + (p.dir || ''), tap: true } : { verb: 'Repair', text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
     if (p.kind === 'bed') return { verb: 'Sleep', text: p.label || 'Your cot', tap: true };
     if (p.kind === 'workbench') return { verb: 'Work', text: 'Your bench', tap: true };
+    if (p.kind === 'cabinet') return p.done ? null : { verb: 'Jimmy', text: 'A locked parts cabinet: Meridian stock', hold: 1.6 };
     if (p.kind === 'shelf') return { verb: 'Look', text: 'The parts shelf', tap: true };
     if (p.kind === 'spinner') return { verb: 'Fly', text: 'Your spinner', tap: true };
     if (p.kind === 'transit') return { verb: p.mode === 'spinner' ? 'Fly' : p.mode === 'hatch' ? 'Climb' : p.mode === 'manhole' ? 'Climb down' : 'Ride', text: p.mode === 'spinner' ? 'Your spinner' : p.mode === 'subway' ? 'The subway' : p.mode === 'hatch' ? 'The ladder up to the street' : p.mode === 'manhole' ? 'The manhole, down into the undercity' : 'The lift cage', tap: true };
@@ -73,6 +74,7 @@ const Props = {
     if (YIELDS[p.kind]) {
       const got = [];
       for (const [item, a, b] of YIELDS[p.kind]) { const n = a + Math.floor(hash(p.x, p.y, item.length + Game.s.day) * (b - a + 1)); if (n <= 0) continue; if (item === 'cr') { Game.s.cr += n; got.push(n + ' cr'); } else { const took = Game.give(item, n); if (took) got.push(took + ' ' + SALVAGE[item].name.toLowerCase()); } }
+      const part = Parts.strip(p); if (part) got.push(Parts.name(part).toLowerCase() + (part.st === 'worn' ? ' (worn)' : ''));
       this.finish(p); Fx.sparks(p.x, p.y - 8, 10);
       Game.toast(got.length ? '+ ' + got.join(', ') : 'Nothing worth taking.');
       // some hold something to wear
@@ -93,6 +95,12 @@ const Props = {
     }
     if (p.kind === 'bed') { Hud.toggle('bed'); return; }
     if (p.kind === 'workbench') { Bench.open(); return; }
+    if (p.kind === 'cabinet') {
+      this.finish(p); Fx.sparks(p.x, p.y - 20, 6); Foes.noise(p.x, p.y, 90);
+      Parts.give(Parts.make('servo', 'military', { gauge: 'heavy', how: 'take' }));
+      const seen = Actors.enemies.some((e) => e.hp > 0 && Math.abs(e.x - p.x) < 240 && (e.alert || e.aware > 0.5));
+      Jobs.heat(seen ? 30 : 15, seen ? 'Someone saw you take it.' : 'Meridian counts its stock.'); return;
+    }
     if (p.kind === 'shelf') { Hud.toggle('shelf'); return; }
     if (p.kind === 'spinner') { Hud.mode = 'spinner'; Hud.toggle('travel'); return; }
     if (p.kind === 'transit') { Hud.mode = p.mode; Hud.toggle('travel'); return; }
