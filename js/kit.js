@@ -715,6 +715,7 @@ function district(o) {
   if (o.crowd) crowd(L, o.crowd, o.crowdFrom || 300, o.crowdTo || W - 200, G, o.id.length * 977 + W, o.rain === undefined ? o.sky !== false : !!o.rain);
   if (o.local) L.npc(Object.assign({ x: 260, y: G, sched: [[0, 24, 260, 'stand']] }, o.local, { look: Object.assign({ skin: SKINS[2], hair: 'short', top: '#3a4a5a', coat: 'jacket', legs: '#2a2a2a' }, o.local.look || {}) }));
   const amb = o.amb || [0.2, 0.17, 0.26];
+  L.open = o.sky !== false; // (under the sky: day comes here, day.js)
   if (o.sky !== false) L.ambient = (ax, ay) => { const t = clamp(1 - ay / 400, 0, 1); return [amb[0] + t * 0.08, amb[1] + t * 0.06, amb[2] + t * 0.1]; };
   else L.ambient = amb;
   L.rain = o.rain === undefined ? (o.sky !== false ? 1 : 0) : o.rain; if (!L.rain) L.dry = [[0, 0, W, H]];

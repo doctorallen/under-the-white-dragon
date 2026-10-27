@@ -55,6 +55,7 @@ const FILES = [
   'js/jobs.js', 'js/tips.js',
   'js/town.js',
   'js/life.js',
+  'js/day.js',
   'js/skyline.js',
   'js/flight.js',
   'js/map.js',

@@ -47,6 +47,7 @@ const Flight = {
         gg.fillStyle = dir > 0 ? '#fff0d0' : '#ff3040'; gg.fillRect(Math.round(x + (dir > 0 ? 3 + i * 2 : 0)), Math.round(y), 1, 1);
       }
     });
+    Day.haze(g, gg, w, h); // (by day the city goes pale behind)
     // the car, in the middle, banking and bobbing, its thrusters and lights glowing
     const s = this.art, cx = Math.round(w * 0.42), cy = Math.round(h * 0.55 + Math.sin(t * 2.3) * 3 + bank * 4);
     g.save(); g.translate(cx, cy); g.rotate(bank * 0.06 - 0.03); g.drawImage(s.c, -s.ax, -s.ay); g.restore();

@@ -55,6 +55,7 @@ function render() {
     Skyline.draw(i, g, gg, fx, fy); Life.drawTraffic(g, gg, cx, cy, i);
   });
   if (!World.layers.length) Life.drawTraffic(g, gg, cx, cy);
+  if (Day.open(L)) Day.haze(g, gg, w, h); // (by day, the overcast over the city behind)
   // the painted chunks
   const CS = T.chunk;
   for (let ky = Math.floor(cy / CS); ky <= Math.floor((cy + h) / CS); ky++) for (let kx = Math.floor(cx / CS); kx <= Math.floor((cx + w) / CS); kx++) {
@@ -143,6 +144,7 @@ function render() {
   // the wet strips in view (view px)
   const wets = [];
   for (const wt of L.wet) { const y0 = wt.y - cy, x0 = Math.max(0, wt.x0 - cx), x1 = Math.min(w, wt.x1 - cx); if (y0 >= 0 && y0 <= h && x1 > x0) wets.push({ x0, y0, x1, depth: wt.depth, k: wt.k }); }
+  if (Day.open(L)) Day.dim(gg, w, h);
   finishFrame(wets);
 }
 // the frame's finish: glow, bloom, reflections, the fade, scaled up
@@ -228,8 +230,8 @@ function lightMap(cx, cy) {
   const low = Game.has('scanner') ? T.light.lowlight : 0, amb = L.ambient, n = lw * lh;
   // ambient first, then each light adds itself over just the cells it reaches
   if (!V.lR || V.lR.length !== n) { V.lR = new Float32Array(n); V.lG = new Float32Array(n); V.lB = new Float32Array(n); }
-  const R = V.lR, G = V.lG, B = V.lB, fn = typeof amb === 'function';
-  for (let j = 0, o = 0; j < lh; j++) { const wy = (gy0 + j) * LC + LC / 2; for (let i = 0; i < lw; i++, o++) { const a = fn ? amb((gx0 + i) * LC + LC / 2, wy) : amb; R[o] = a[0]; G[o] = a[1]; B[o] = a[2]; } }
+  const R = V.lR, G = V.lG, B = V.lB, fn = typeof amb === 'function', dl = Day.open(L) ? Day.light() : 0, dw = dl ? Day.warmth() : 0; // (outdoors by day, the overcast lifts it all)
+  for (let j = 0, o = 0; j < lh; j++) { const wy = (gy0 + j) * LC + LC / 2; for (let i = 0; i < lw; i++, o++) { const a = Day.amb(fn ? amb((gx0 + i) * LC + LC / 2, wy) : amb, dl, dw); R[o] = a[0]; G[o] = a[1]; B[o] = a[2]; } }
   for (const l of lights) {
     const fl = l.flat || 1, r = l.r, r2 = r * r, c0 = l.c[0] * l.k, c1 = l.c[1] * l.k, c2 = l.c[2] * l.k, inv = 1 / r;
     const i0 = Math.max(0, Math.floor((l.x - r) / LC) - gx0), i1 = Math.min(lw - 1, Math.ceil((l.x + r) / LC) - gx0);
