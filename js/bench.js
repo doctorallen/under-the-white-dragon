@@ -22,7 +22,7 @@
 const BW = 172, BH = 98;
 const BENCH_TOOLS = { driver: 'Driver', probe: 'Probe', iron: 'Iron', hands: 'Hands' };
 const Bench = {
-  tool: 'driver', lens: false, hold: null, heat: {}, rt: {}, lit: {}, sel: null, msg: '', fx: null, raf: 0, last: 0, c: null, k: 1, offx: 0, offy: 0, mat: null,
+  tool: 'driver', lens: false, hold: null, rings: [], heat: {}, rt: {}, lit: {}, sel: null, msg: '', fx: null, raf: 0, last: 0, c: null, k: 1, offx: 0, offy: 0, mat: null,
   get b() { return Game.s.bench; },
   get D() { return DEVICE[this.b.dev]; },
   // ---- what's on the bench ----
@@ -104,7 +104,7 @@ const Bench = {
     }
     const binds = sc.strip ? [] : this.binds(h.i, out);
     r.p += dt / (sc.strip ? 1.1 : 0.7);
-    if (r.bi < binds.length && r.p >= binds[r.bi]) { r.p = binds[r.bi]; r.bind = 0; return; }
+    if (r.bi < binds.length && r.p >= binds[r.bi]) { r.p = binds[r.bi]; r.bind = 0; this.say('It\'s binding. Ease off, now, or you\'ll strip it.'); return; }
     if (r.p >= 1) {
       sc.st = out ? 'out' : 'in'; this.rt[h.i] = null; h.done = true;
       const left = this.b.screws.filter((s) => s.st === 'in').length;
@@ -230,7 +230,7 @@ const Bench = {
   },
   // ---- drawing ----
   draw() {
-    const cv = $('benchcv'); if (!cv || !this.b) return; const g = this.g, b = this.b, D = this.D, t = performance.now();
+    const cv = $('benchcv'); if (!cv || !this.b) return; const g = this.g, b = this.b, D = this.D, t = performance.now(); this.rings = [];
     g.drawImage(this.matCanvas(), 0, 0);
     const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
     const ox = this.ox, oy = this.oy;
@@ -251,7 +251,7 @@ const Bench = {
         this.joints(k).forEach(([x, y], ji) => {
           if (s.j[ji] === 'solid') { R(x - 2, y - 2, 5, 5, '#5a6068'); R(x - 1, y - 2, 3, 4, '#c8ccd4'); R(x - 1, y - 1, 1, 1, '#ffffff'); }
           else { R(x - 2, y - 2, 5, 5, '#c87a3a'); R(x - 1, y - 1, 3, 3, '#5a2a0e'); R(x, y, 1, 1, '#06080a'); }
-          const v = this.heat[k + ':' + ji]; if (v) ring(g, x, y, 5, Math.min(1, v), v > 1 ? '#ff3a2a' : '#ffa040', v > 1 ? (v - 1) / 0.8 : 0);
+          const v = this.heat[k + ':' + ji]; if (v) ring(g, x, y, 5, Math.min(1, v), v > 1 ? '#ff3a2a' : '#ffa040', v > 1 ? (v - 1) / 0.8 : 0, v > 1.25 ? 'TOO HOT' : '');
         });
         if (this.lit[k] && this.tool === 'probe') { const c = { ok: '#3aff80', worn: '#ffb040', dead: '#ff4a6a' }[this.lit[k]]; R(X + S.w - 3, Y - 4, 3, 3, c); g.globalAlpha = 0.35; R(X + S.w - 4, Y - 5, 5, 5, c); g.globalAlpha = 1; }
         if (this.sel === k) { const a = 0.5 + Math.sin(t / 180) * 0.5; g.strokeStyle = `rgba(58,240,224,${0.4 + a * 0.6})`; g.lineWidth = 1; g.strokeRect(X - 2.5, Y - 2.5, S.w + 5, S.h + 5); }
@@ -262,7 +262,7 @@ const Bench = {
       const [x, y] = this.screwAt(i), r = this.rt[i];
       if (sc.st === 'in' || (r && r.p > 0)) { R(x - 3, y - 3, 7, 7, '#2a2e34'); R(x - 2, y - 3, 5, 7, '#9aa0aa'); R(x - 3, y - 2, 7, 5, '#9aa0aa'); R(x - 2, y - 2, 2, 2, '#d8dce4'); const a = r ? r.p * (r.out ? 1 : -1) * 3 : 0; if (sc.strip) R(x - 1, y - 1, 3, 3, '#4a4e56'); else if ((Math.round(a * 2) & 1) === 0) { R(x - 2, y, 5, 1, '#3a3e46'); R(x, y - 2, 1, 5, '#3a3e46'); } else { R(x - 1, y - 1, 1, 1, '#3a3e46'); R(x + 1, y + 1, 1, 1, '#3a3e46'); R(x + 1, y - 1, 1, 1, '#3a3e46'); R(x - 1, y + 1, 1, 1, '#3a3e46'); R(x, y, 1, 1, '#3a3e46'); } }
       else { R(x - 2, y - 2, 5, 5, '#14161a'); R(x - 1, y - 1, 3, 3, '#040506'); }
-      if (r && (r.p > 0 || r.bind >= 0)) ring(g, x, y, 6, r.out ? r.p : 1 - r.p, r.bind >= 0 ? '#ff3a4a' : '#3af0e0', 0);
+      if (r && (r.p > 0 || r.bind >= 0)) ring(g, x, y, 6, r.out ? r.p : 1 - r.p, r.bind >= 0 ? '#ff3a4a' : '#3af0e0', 0, r.bind >= 0 ? 'BINDING · EASE OFF' : '');
     });
     // the tool in your hand
     const h = this.hold;
@@ -278,6 +278,7 @@ const Bench = {
     // onto the screen, scaled up flat
     const out = cv.getContext('2d'); out.imageSmoothingEnabled = false; out.fillStyle = '#05070a'; out.fillRect(0, 0, cv.width, cv.height);
     out.drawImage(this.c, this.offx, this.offy, BW * this.k, BH * this.k);
+    bigRings(out, this);
   },
   // the cutting mat under the lamp (made once)
   matCanvas() {
@@ -289,10 +290,25 @@ const Bench = {
 
 // a ring around a screw or joint: how far along it is (0..1), and past it,
 // how far into the red
-function ring(g, x, y, r, f, col, over) {
-  g.lineWidth = 1.5; g.strokeStyle = 'rgba(0,0,0,0.5)'; g.beginPath(); g.arc(x + 0.5, y + 0.5, r, 0, Math.PI * 2); g.stroke();
-  g.strokeStyle = col; g.beginPath(); g.arc(x + 0.5, y + 0.5, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f); g.stroke();
-  if (over > 0) { g.strokeStyle = '#ffffff'; g.beginPath(); g.arc(x + 0.5, y + 0.5, r + 2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, over)); g.stroke(); }
+// how far along it is (0..1), and past it, how far into the red. Drawn on
+// the screen, not the bench, and big: a thumb covers the screw, so the ring
+// sits well outside it, with a word over it when it binds or burns
+function ring(g, x, y, r, f, col, over, word) { Bench.rings.push({ x, y, f, col, over, word }); }
+function bigRings(out, B) {
+  const dpr = window.devicePixelRatio || 1, R = 40 * dpr, t = performance.now();
+  for (const q of B.rings) {
+    const cx = B.offx + (q.x + 0.5) * B.k, cy = B.offy + (q.y + 0.5) * B.k, a0 = -Math.PI / 2;
+    out.lineCap = 'round';
+    out.lineWidth = 9 * dpr; out.strokeStyle = 'rgba(0,0,0,0.6)'; out.beginPath(); out.arc(cx, cy, R, 0, Math.PI * 2); out.stroke();
+    out.lineWidth = 6 * dpr; out.strokeStyle = q.col; out.beginPath(); out.arc(cx, cy, R, a0, a0 + Math.PI * 2 * Math.max(0.01, q.f)); out.stroke();
+    if (q.over > 0) { out.strokeStyle = '#ffffff'; out.lineWidth = 4 * dpr; out.beginPath(); out.arc(cx, cy, R + 9 * dpr, a0, a0 + Math.PI * 2 * Math.min(1, q.over)); out.stroke(); }
+    if (q.word) {
+      const blink = 0.8 + Math.sin(t / 70) * 0.2; out.font = `bold ${13 * dpr}px ui-monospace, monospace`; out.textAlign = 'center';
+      const ty = cy - R - 30 * dpr > 4 * dpr ? cy - R - 30 * dpr : cy + R + 12 * dpr, w = out.measureText(q.word).width + 12 * dpr, tx = clamp(cx, w / 2 + 4 * dpr, out.canvas.width - w / 2 - 4 * dpr); out.fillStyle = 'rgba(0,0,0,0.75)'; out.fillRect(tx - w / 2, ty, w, 20 * dpr);
+      out.fillStyle = `rgba(255,${q.over ? 230 : 110},${q.over ? 200 : 120},${blink})`; out.fillText(q.word, tx, ty + 15 * dpr); out.textAlign = 'left';
+    }
+    out.lineCap = 'butt';
+  }
 }
 
 // a part in its mount, flat: its body by kind, its grade's marks, and under
