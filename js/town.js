@@ -227,6 +227,8 @@ const Town = {
     const line = this.talkLine(n);
     // the clerk at the till sells you things
     if (R.job === 'grocery' && st.act === 'work' && !st.moving) { n.face = Math.sign(Player.x - n.x) || n.face; Hud.toggle('grocer', n); return; }
-    Actors.say(n, line); n.face = Math.sign(Player.x - n.x) || n.face;
+    n.face = Math.sign(Player.x - n.x) || n.face;
+    if (Tips.talk(n)) return; // (something they've heard of, for you)
+    Actors.say(n, line);
   },
 };

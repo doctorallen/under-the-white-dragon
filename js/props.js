@@ -415,6 +415,40 @@ function innerDoor(o = {}) {
   for (let x = 6; x < W - 6; x += 2) S.px(x, 1, '#f4ffe8', true);
   return S.done();
 }
+// ---- what the residents tip you off about ----
+// a crashed courier drone: an orange shell on its side, two rotor arms bent,
+// a cracked camera eye, one light still going
+function droneWreck() {
+  const W = 40, H = 16, S = new Spr(W, H, 447); S.ax = W / 2; S.ay = H - 1;
+  const sh = rp('#e8702a', 6), dk = rp('#2a2e36', 5);
+  S.limb(4, 13, 12, 8, 1.2, dk); S.limb(36, 4, 28, 8, 1.2, dk); S.box(0, 12, 9, 13, rp('#5a6070', 5)); S.box(31, 2, 39, 3, rp('#5a6070', 5)); // the arms and their rotors
+  S.part(); S.ell(20, 10, 11, 5, sh); S.box(12, 12, 28, 15, dk, { lo: 1, hi: 4 }); // the shell, the cargo pod under it
+  S.part(); S.ell(28, 9, 3, 3, rp('#14161c', 4)); S.px(27, 8, '#3af0e0', true); S.px(29, 10, '#8a909c');
+  for (let x = 13; x < 22; x += 3) S.px(x, 8, '#ffd8a0'); S.px(15, 11, '#ff3040', true);
+  return S.done();
+}
+// a junction box the city forgot: grey steel, its door hanging open, a
+// hazard stripe, relays in rows inside
+function junctionBox() {
+  const W = 30, H = 36, S = new Spr(W, H, 448); S.ax = 13; S.ay = H - 1;
+  const st = rp('#6a7078', 6), dk = rp('#1a1c22', 4);
+  S.box(2, 2, 24, H - 1, st, { lo: 1, hi: 5 }); S.box(4, 5, 22, H - 4, dk);
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) { S.box(6 + c * 5, 8 + r * 6, 9 + c * 5, 11 + r * 6, rp('#3a5ac8', 5)); if ((r + c) % 3 === 0) S.px(7 + c * 5, 9 + r * 6, '#3aff80', true); }
+  S.part(); S.box(24, 4, 29, H - 3, st, { lo: 1, hi: 5 }); // the door, swung open
+  for (let y = 2; y < 6; y++) for (let x = 2; x < 25; x++) if (((x + y) >> 1) % 2) S.px(x, y, '#ffc020');
+  return S.done();
+}
+// an autodoc a clinic threw out: a white pod on its back, a cracked teal
+// canopy, a jointed arm folded on top, a status light
+function autodoc() {
+  const W = 50, H = 22, S = new Spr(W, H, 449); S.ax = W / 2; S.ay = H - 1;
+  const wh = rp('#d8dce0', 6), dk = rp('#3a4048', 5), gl = rp('#3ab8c8', 5);
+  S.box(3, 12, 47, H - 1, wh, { lo: 1, hi: 5 }); S.box(6, H - 3, 44, H - 1, dk); // the pod
+  S.part(); S.ell(25, 12, 20, 6, gl); for (let k = 0; k < 7; k++) S.px(18 + k * 2, 9 + (k % 3), '#e8ffff'); // the canopy, cracked
+  S.part(); S.limb(40, 9, 34, 3, 1.4, wh); S.limb(34, 3, 26, 4, 1.2, wh); S.box(24, 3, 27, 6, dk); // the arm, folded
+  S.box(8, 14, 13, 17, rp('#14161c', 4)); S.px(10, 15, '#ff4a6a', true); S.px(12, 15, '#3aff80', true);
+  return S.done();
+}
 function rug() {
   const W = 40, H = 4, S = new Spr(W, H, 443); S.ax = W / 2; S.ay = H - 1;
   for (let x = 2; x < W - 2; x++) for (let y = 0; y < H; y++) S.px(x, y, y === 0 || x === 2 || x === W - 3 ? '#c8a050' : (x + y) % 6 < 3 ? '#8a2228' : y === 2 && x % 4 === 0 ? '#e8c070' : '#621a1e');

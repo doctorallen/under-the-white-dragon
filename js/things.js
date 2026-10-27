@@ -9,7 +9,7 @@ const PROP_ART = {
   vending: (p) => vending(p.look || {}), ac: () => acUnit(), rack: (p) => rack({ h: 40, seed: p.x, warn: true }), car: (p) => car(p.look || {}),
   junk: (p) => junk({ seed: p.x % 7 }), wreck: () => wreck(), cache: () => { const S = new Spr(16, 12, 81); S.ax = 8; S.ay = 11; S.box(0, 0, 15, 11, MAT.concreteD, { lo: 1, hi: 5 }); for (let x = 2; x < 14; x += 3) S.px(x, 5, '#a85ad8', true); return S.done(); },
   grate: (p) => grate({ w: p.w || 12, h: p.h || 32 }), heavy: (p) => heavyShutter({ w: p.w || 30, h: p.h || 32 }), hatch: (p) => hatch({ w: p.w || 26, h: p.h || 34, stripe: true }),
-  door: (p) => (p.out ? innerDoor({ kind: p.look, seed: p.x }) : null), node: (p) => node({ col: p.col }), workbench: () => workbench(), trapdoor: (p) => (p.up ? null : rug()), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? cabStand() : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
+  dronewreck: () => droneWreck(), substation: () => junctionBox(), autodoc: () => autodoc(), door: (p) => (p.out ? innerDoor({ kind: p.look, seed: p.x }) : null), node: (p) => node({ col: p.col }), workbench: () => workbench(), trapdoor: (p) => (p.up ? null : rug()), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? cabStand() : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
   keydoor: (p) => (p.mode === 'subway' ? subwayDoor() : hatch({ w: 40, h: 44, col: '#3a3a40', lock: Game.s.pack[p.key] > 0 ? '#3aff80' : '#ffb040', stripe: true })), locker: () => locker(), clue: (p) => marker({ col: p.K.kind === 'photo' ? '#3af0e0' : '#ffd040' }), pickup: () => marker({ col: '#ff9ad8' }), closet: () => closet(), elevator: (p) => elevator({ at: ELEVATOR.findIndex((f) => f.level === p.level) }), exit: () => null, deco: (p) => p.art(),
   sealed: (p) => hatch({ w: 40, h: 40, col: '#3a3a40', lock: '#ffb040', stripe: true }),
 };
@@ -17,9 +17,9 @@ const PROP_ART = {
 const YIELDS = {
   vending: [['wire', 1, 2], ['glass', 1, 1], ['cr', 3, 12]], ac: [['alloy', 1, 2], ['coolant', 0, 1]], rack: [['chips', 1, 2], ['wire', 1, 2]],
   car: [['coolant', 1, 2], ['alloy', 1, 2], ['wire', 0, 1]], junk: [['alloy', 1, 2], ['wire', 0, 1]], wreck: [['chips', 0, 1], ['glass', 1, 1], ['wire', 1, 1]],
-  cache: [['chips', 2, 3], ['cr', 30, 60]], stash: [['chips', 2, 3], ['coolant', 1, 1], ['cr', 60, 90]],
+  cache: [['chips', 2, 3], ['cr', 30, 60]], dronewreck: [['wire', 1, 2], ['chips', 0, 1]], substation: [['wire', 2, 3], ['alloy', 1, 1]], autodoc: [['chips', 1, 2], ['glass', 1, 1]], stash: [['chips', 2, 3], ['coolant', 1, 1], ['cr', 60, 90]],
 };
-const STRIP_TIME = { vending: 1.6, ac: 1.2, rack: 1.8, car: 2.4, junk: 1.0, wreck: 1.0, cache: 1.4, stash: 1.2 };
+const STRIP_TIME = { dronewreck: 1.8, substation: 2.0, autodoc: 2.6, vending: 1.6, ac: 1.2, rack: 1.8, car: 2.4, junk: 1.0, wreck: 1.0, cache: 1.4, stash: 1.2 };
 
 const Props = {
   init(p) {
@@ -43,7 +43,7 @@ const Props = {
   prompt(p) {
     if (p.kind === 'deco') return null;
     if (p.kind === 'cache' && !Game.has('scanner')) return null;
-    if (YIELDS[p.kind]) return p.done ? null : { verb: 'Strip', text: 'Strip ' + (p.label || p.kind), hold: STRIP_TIME[p.kind] };
+    if (YIELDS[p.kind]) return p.done ? null : Tips.canStrip(p.kind) ? { verb: 'Strip', text: 'Strip ' + (p.label || p.kind), hold: STRIP_TIME[p.kind] } : { verb: 'Strip', text: (p.label || p.kind)[0].toUpperCase() + (p.label || p.kind).slice(1) + ': it needs the ' + Tips.need(p.kind).name.toLowerCase(), tap: true, no: true };
     if (p.kind === 'grate') return p.done ? null : { verb: 'Cut', text: 'Cut the grate', hold: 1.3 };
     if (p.kind === 'heavy') return p.done ? null : Game.has('cutter') ? { verb: 'Cut', text: 'Cut the shutter', hold: 2.0 } : { verb: 'Cut', text: 'Too heavy for a hand cutter: it needs a plasma cutter', tap: true, no: true };
     if (p.kind === 'hatch') {
@@ -77,7 +77,7 @@ const Props = {
     if (YIELDS[p.kind]) {
       const got = [];
       for (const [item, a, b] of YIELDS[p.kind]) { const n = a + Math.floor(hash(p.x, p.y, item.length + Game.s.day) * (b - a + 1)); if (n <= 0) continue; if (item === 'cr') { Game.s.cr += n; got.push(n + ' cr'); } else { const took = Game.give(item, n); if (took) got.push(took + ' ' + SALVAGE[item].name.toLowerCase()); } }
-      const part = Parts.strip(p); if (part) got.push(Parts.name(part).toLowerCase() + (part.st === 'worn' ? ' (worn)' : ''));
+      for (const part of Parts.strip(p)) got.push(Parts.name(part).toLowerCase() + (part.gauge ? ' (' + part.gauge + ')' : '') + (part.st === 'worn' ? ' (worn)' : ''));
       this.finish(p); Fx.sparks(p.x, p.y - 8, 10);
       Game.toast(got.length ? '+ ' + got.join(', ') : 'Nothing worth taking.');
       // some hold something to wear

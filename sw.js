@@ -52,7 +52,7 @@ const FILES = [
   'js/hack.js',
   'js/parts.js',
   'js/bench.js',
-  'js/jobs.js',
+  'js/jobs.js', 'js/tips.js',
   'js/town.js',
   'js/life.js',
   'js/skyline.js',

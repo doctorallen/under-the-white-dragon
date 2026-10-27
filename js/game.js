@@ -17,7 +17,7 @@ const Game = {
       v: 1, level: 'd_cellar', spawn: 'bed', px: 0, py: 0, hp: T.player.hp, cr: 40, ram: T.ram.max,
       pack: {}, gadgets: {}, quick: null, quests: {}, gear: { owned: Object.fromEntries(Object.values(GEAR_START).map((g) => [g, 1])), on: Object.assign({}, GEAR_START), lvl: {} }, programs: {}, prog: null,
       done: {}, flags: {}, track: null, warrants: { day: 0, list: [] }, cases: {}, xp: 0, closed: 0, night: null, time: T.day.start, day: 1, deaths: 0,
-      parts: [], pid: 1, notes: { known: {}, log: [] }, bench: null, aside: {}, jobs: {}, heat: 0,
+      parts: [], pid: 1, notes: { known: {}, log: [] }, bench: null, aside: {}, jobs: {}, heat: 0, tools: 1, tips: {},
     };
   },
   // ---- ware ----

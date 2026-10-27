@@ -196,6 +196,7 @@ const Jobs = {
     if (busy.length) out += '<h3>In the basement</h3>' + busy.map(doing).join('');
     const asks = this.oddToday().filter((id) => !Game.s.jobs[id]), story = JOB_ORDER.filter((id) => this.st(id).st === 'offer');
     if (asks.length || story.length) out += '<h3>Asking for you</h3>' + story.map((id) => card(id, 'new', `${JOBS[id].name} is waiting at the bar upstairs. ${JOBS[id].pay ? JOBS[id].pay + ' cr.' : 'A favour.'}`)).join('') + asks.map((id) => { const c = this.oddMake(id), R = RESIDENTS[c.res]; return card(id, 'today', `${R.name}'s ${ODD[c.tpl].name} is broken. Find ${R.name}: ${place(c.res)} right now. Pays about ${c.pay} cr.`); }).join('');
+    out += Tips.list();
     const past = Object.keys(Game.s.jobs).filter((id) => ['back', 'done', 'seized'].includes(Game.s.jobs[id].st));
     if (past.length) out += '<h3>Done</h3>' + past.slice(-6).map((id) => card(id, Game.s.jobs[id].st === 'seized' ? 'seized' : 'done', Game.s.jobs[id].st === 'back' ? 'You\'ll hear how it went in the morning.' : Game.s.jobs[id].st === 'seized' ? 'Taken by the precinct.' : 'Done.', '', 'done')).join('');
     return out;
@@ -204,7 +205,7 @@ const Jobs = {
   objective() {
     const b = Game.s.bench, ready = Object.keys(Game.s.jobs).find((id) => Game.s.jobs[id].st === 'bench' && this.ready(id));
     if (ready) { const J = this.def(ready); return `▸ Hand ${J.title.replace(/^.*?'s /, 'the ')} back to ${J.name}`; }
-    if (!b) { const id = JOB_ORDER.find((k) => this.st(k).st === 'offer'); if (id) return `▸ ${JOBS[id].name} is waiting at the bar upstairs`; const waiting = Object.keys(Game.s.aside)[0]; if (waiting) return `▸ ${Game.s.aside[waiting].name} is waiting on your bench`; const ask = this.oddToday().find((j) => !Game.s.jobs[j]); return ask ? `▸ ${RESIDENTS[ask.split(':')[2]].name} has something broken` : ''; }
+    if (!b) { const id = JOB_ORDER.find((k) => this.st(k).st === 'offer'); if (id) return `▸ ${JOBS[id].name} is waiting at the bar upstairs`; const waiting = Object.keys(Game.s.aside)[0]; if (waiting) return `▸ ${Game.s.aside[waiting].name} is waiting on your bench`; const ask = this.oddToday().find((j) => !Game.s.jobs[j]); return ask ? `▸ ${RESIDENTS[ask.split(':')[2]].name} has something broken` : Tips.objective(); }
     const need = Object.keys(DEVICE[b.dev].slots).filter((k) => b.probed[k] && b.slots[k].p && (b.slots[k].p.st !== 'ok' || (DEVICE[b.dev].slots[k].gauge && b.slots[k].p.gauge !== DEVICE[b.dev].slots[k].gauge))).map((k) => PART[DEVICE[b.dev].slots[k].kind].took);
     return need.length ? `▸ ${b.name} needs ${need.join(' and ')}` : `▸ ${b.name} is on your bench`;
   },
@@ -238,6 +239,7 @@ const Jobs = {
       else news.push('He stands on the rug for a while, talking to Lin about the weather. Then he leaves.');
       this.heat(-30);
     } else this.heat(-5);
+    Tips.morning(news);
     this.news = news; return news;
   },
 };

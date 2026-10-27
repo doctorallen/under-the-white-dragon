@@ -63,6 +63,12 @@ const PART_STOCK = {
 };
 // what stripping a machine gets you, besides salvage: one tired part
 const PART_YIELD = { vending: 'cell', car: 'aerial', ac: 'relay', rack: 'board', wreck: 'board', junk: 'cell' };
+// what the machines residents tip you off about hold: [kind, grade, gauge, chance]
+const TIP_YIELD = {
+  dronewreck: [['aerial', 'street'], ['board', 'street', null, 0.6]],
+  substation: [['relay', 'street'], ['relay', 'street', null, 0.5], ['cell', 'street', null, 0.5]],
+  autodoc: [['servo', 'clinic', 'heavy'], ['cell', 'clinic', null, 0.7]],
+};
 
 // the everyday things the block's residents bring in (jobs.js, ODD)
 Object.assign(DEVICE, {
@@ -95,7 +101,15 @@ const Parts = {
     return r;
   },
   // a part from a machine you've stripped: scrap, and maybe worn
-  strip(p) { const k = PART_YIELD[p.kind]; if (!k) return null; return this.give(this.make(k, 'scrap', { st: hash(p.x, p.y, 77) < 0.7 ? 'ok' : 'worn' }), true); },
+  // (better tools get them out cleaner: with the precision kit, a rack's board
+  // and some of the rest come out street grade)
+  strip(p) {
+    const T = TIP_YIELD[p.kind];
+    if (T) return T.filter(([, , , ch], i) => !ch || hash(p.x, i, 78) < ch).map(([k, g, gauge]) => this.give(this.make(k, g, gauge ? { gauge } : {}), true));
+    const k = PART_YIELD[p.kind]; if (!k) return [];
+    const t = Tips.tier(), g = p.kind === 'rack' || (t >= 2 && hash(p.x, p.y, 79) < 0.4) ? 'street' : 'scrap';
+    return [this.give(this.make(k, g, { st: hash(p.x, p.y, 77) < (t >= 2 ? 0.9 : 0.7) ? 'ok' : 'worn' }), true)];
+  },
   // a part's picture, as on the bench (made once a kind and grade)
   icons: {},
   icon(k, g = 'street') { const key = k + g; if (this.icons[key]) return this.icons[key]; const [c, x] = canvasOf(40, 24); partArt(x, { id: 3, k, g, st: 'ok' }, 2, 4, 36, 16, false, 0); return (this.icons[key] = c.toDataURL()); },
@@ -106,6 +120,7 @@ const Parts = {
     for (const s in PART_STOCK) for (const [kk, g, cr, ga] of PART_STOCK[s]) if (kk === k && (!gauge || ga === gauge)) out.push(`${WHO[s]}: ${GRADE[g].name.toLowerCase()}, ${cr} cr`);
     const strip = Object.keys(PART_YIELD).filter((m) => PART_YIELD[m] === k);
     if (strip.length && !gauge) out.push('strip a ' + strip.map((m) => ({ vending: 'vending machine', car: 'parked car', ac: 'air conditioner', rack: 'server rack', wreck: 'wreck', junk: 'junk pile' }[m] || m)).join(' or ') + ' (scrap)');
+    for (const m in TIP_YIELD) if (TIP_YIELD[m].some(([kk, , ga]) => kk === k && (!gauge || ga === gauge))) out.push(`a ${({ dronewreck: 'crashed drone', substation: 'junction box', autodoc: 'dumped autodoc' })[m]}, if someone tips you off (${TOOLS[STRIP_TIER[m]].name.toLowerCase()})`);
     if (k === 'servo' && gauge === 'heavy') out.push('the parts cabinet on Clinic Row: Meridian, taken (heat)');
     return out;
   },

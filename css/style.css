@@ -412,3 +412,4 @@ body:not(.legacy) #hp, body:not(.legacy) #ram, body:not(.legacy) #bItem, body:no
 body.touch #stickhint { display: flex; }
 body:has(#stick.on) #stickhint, body:has(#hud.flying) #stickhint { visibility: hidden; }
 #promptwrap { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 14px); }
+.parts .part.tool { grid-column: 1 / -1; }

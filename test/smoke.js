@@ -130,6 +130,15 @@ async function run(B, url, vp, name, failures) {
     Jobs.handBack(a); return { n: ids.length, res, paid: Game.s.cr - c0, st: Game.s.jobs[a].st, bench: Game.s.bench };
   });
   if (odd.n < 1 || odd.res !== 'works' || odd.paid <= 0 || odd.st !== 'done' || odd.bench) fail('a resident\'s odd job did not play through ' + JSON.stringify(odd));
+  // a tip: a resident's message in the morning puts a wreck in the city, and it
+  // needs better tools than the hand kit (the morning after Ozzy's job may have brought it already)
+  const tip = await E(() => {
+    const s = Game.s, day = s.day, news = []; s.day = Math.max(day, 2); Tips.morning(news); const id = Object.keys(s.tips)[0]; if (!id) return { id };
+    const T = TIPS[id], here = s.level; World.load(T.level); const w = World.props.find((q) => q.id === 'tip:' + id), locked = !!(w && Props.prompt(w).no);
+    s.tools = 2; const open = !!(w && !Props.prompt(w).no), n0 = s.parts.length; if (w) Props.use(w); const got = s.parts.length - n0;
+    const st = Tips.st(id); s.tools = 1; s.day = day; World.load(here); return { id, msg: news.length, w: !!w, locked, open, got, st };
+  });
+  if (!tip.id || !tip.w || !tip.locked || !tip.open || tip.got < 1 || tip.st !== 'done') fail('a resident\'s tip did not lead to a wreck to strip ' + JSON.stringify(tip));
   // out through the dining room and the front door, onto the street: the sign, the cab stand
   await E(() => { Hud.toggle(null); T_.walkTo(300); });
   await shot('diningroom');

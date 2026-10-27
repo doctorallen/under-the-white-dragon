@@ -14,6 +14,7 @@ There are no enemies and no gun: the danger is heat. The game grew out of Downle
 - **The bench** (`bench.js`): Driver, Probe, Iron, Hands and the Lens on a close-up of the thing.
 - **Parts and the notebook** (`parts.js`): `PART`, `GRADE`, `DEVICE` (frames with slots), stall stock, what stripping a machine gives.
 - **Jobs and heat** (`jobs.js`): Ozzy (an honest repair) and Vey (a synth's arm: a scrap servo from Nurse Kade, or a Meridian one from the clinic cabinet that can be traced). At 40 heat the block starts to talk; at 70 a detective knocks before dawn and searches upstairs; at 90 he finds the trapdoor and takes any illegal work off the bench.
+- **Tips and tools** (`tips.js`): residents message you in the morning (or tell you to your face) about a crashed drone, a forgotten junction box, a dumped autodoc. It's there to strip until you do, but the good ones need better tools: the precision kit (150 cr, Ana) and the clinic micro-kit (400 cr, Kade). Better tools also strip server racks and get cleaner parts out of everything.
 
 Take a case from Lieutenant Hale at the precinct, fly out in your spinner, find the clues (pick things up, enhance a photo, ask people and catch their lies with evidence), work out the leads on the case board, follow them to the suspect, run the baseline test, and decide: retire, arrest or let go. A case takes a few minutes; the night desk always has another. Strip machines for parts, cut through grates and shutters, jack into data nodes for programs, and take side work from the people you meet. Implants are illegal and you hunt the people who carry them; you carry gadgets instead, built by the precinct's quartermaster, and gear made and upgraded by Mags the fabricator. The way down from each level is guarded.
 
@@ -95,7 +96,8 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/hack.js` | Jacking in |
 | `js/parts.js` | Parts, devices, stall stock and the notebook (`Parts`) |
 | `js/bench.js` | The bench: the repair, its tools and its drawing (`Bench`) |
-| `js/jobs.js` | Jobs at the White Dragon, heat, the morning after (`Jobs`) |
+| `js/jobs.js` | Jobs at the White Dragon, residents' odd jobs, heat, the morning after (`Jobs`) |
+| `js/tips.js` | Residents' tips about parts out in the city, and the tool tiers that strip them (`Tips`, `TOOLS`, `TIPS`) |
 | `js/town.js` | The block's residents: homes, jobs, friends, a day plan each, walked out from the clock (`Town`, `RESIDENTS`) |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
 | `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |
