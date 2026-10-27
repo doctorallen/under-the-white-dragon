@@ -162,6 +162,24 @@ async function run(B, url, vp, name, failures) {
     return { mo: !!(mo && mo.act === 'work'), shoppers, said, till, eating };
   });
   if (!town.mo || !town.shoppers || !town.said || town.till !== 'grocer' || town.eating < 2) fail('the block\'s people are not keeping their days ' + JSON.stringify(town));
+  // the residents' minds are Tyrell's: everyone's there, they remember what they
+  // saw you do and what you fixed, a rewind gives back the very same block, and
+  // the minds go in the save
+  const minds = await E(() => {
+    const w = City.w, out = { on: City.on, people: w ? w.people().length : 0, n: TOWN_ORDER.length };
+    const oddRes = Object.values(Game.s.jobs).map((c) => c.res).find((r) => r && RESIDENTS[r]);
+    out.fixed = oddRes ? (w.reverie.file(oddRes, 'player') || { tally: {} }).tally.fixed || 0 : -1;
+    City.did('talked', 'okonkwo'); // he knows your face
+    w.sense({ kind: 'strip', actor: 'player', what: 'till', seenBy: ['okonkwo'] });
+    City.remarked = {}; out.remark = City.remark('okonkwo');
+    City.sync(); const t0 = Game.s.time, d0 = Game.s.day, h0 = City.w.hash(), at0 = JSON.stringify(City.state('sato'));
+    Game.pass(2); T_.run({}, 3); const moved = City.w.hash() !== h0;
+    Game.s.time = t0; Game.s.day = d0; City.sync();
+    out.rewound = moved && City.w.hash() === h0 && JSON.stringify(City.state('sato')) === at0;
+    City.stash(); const copy = JSON.parse(JSON.stringify(Game.s.city)); out.saved = copy.s.now === w.s.now && Object.keys(copy.s.people).length === out.people;
+    return out;
+  });
+  if (!minds.on || minds.people !== minds.n || minds.fixed === 0 || !/saw you take the till apart/.test(minds.remark || '') || !minds.rewound || !minds.saved) fail('the residents\' minds (Tyrell) are not working ' + JSON.stringify(minds));
   // the machine out front, stripped: salvage and a scrap part
   const strip = await E(() => { const v = World.props.find((p) => p.kind === 'vending'); T_.walkTo(v.x); T_.hold(200); return { done: v.done, parts: Game.s.parts.filter((p) => p.how === 'strip' && p.g === 'scrap').length }; });
   if (!strip.done || !strip.parts) fail('stripping the vending machine gave no part ' + JSON.stringify(strip));

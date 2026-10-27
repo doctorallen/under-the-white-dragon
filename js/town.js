@@ -6,8 +6,9 @@
 // somewhere with a friend, go home. Nobody wanders: everyone is on their way
 // to something.
 //
-// Nothing about them is saved or stepped off screen. Where a person is comes
-// from the clock: their plan says when they set out for each thing, the route
+// Their minds are Tyrell's (city.js): it keeps their days as routines, lets
+// needs bend them, remembers, and saves them. Without the engine, where a
+// person is comes from the clock alone: their plan says when they set out for each thing, the route
 // goes out of one place's door, along the street and in at another's (up the
 // stairs, in the flats), and they walk it at a walking pace from the moment
 // they set out. So whenever you walk into the grocery, the people whose errand
@@ -38,7 +39,7 @@ function townEnd(street, side) { const L = LEVELS[street].built || (LEVELS[stree
 const NOODLE_SEAT = [144, 214, 284, 400, 450, 500, 550];
 const SHELF = [175, 259, 335, 392, 424]; // the grocery's shelves and fridges
 // what they're up to, in a word, for their poses: sit, work (hands busy) or stand
-const TOWN_POSE = { eat: 'sit', home: 'sit', visit: 'sit', host: 'sit', work: 'work', browse: 'work', stock: 'work', sweep: 'work', pay: 'stand', play: 'stand', sleep: 'stand', drink: 'sit', pachi: 'sit', watch: 'sit', pray: 'stand' };
+const TOWN_POSE = { eat: 'sit', home: 'sit', visit: 'sit', host: 'sit', work: 'work', browse: 'work', stock: 'work', sweep: 'work', pay: 'stand', play: 'stand', sleep: 'stand', drink: 'sit', pachi: 'sit', watch: 'sit', pray: 'stand', eat_home: 'sit' };
 
 // The residents. `plan`: [hour they set out, where, what, extra]. `where` is
 // home, visit:<id>, noodles, grocery, street (with an x), or away:east/west
@@ -192,8 +193,11 @@ const Town = {
     return legs;
   },
   length(legs) { let n = 0; for (const L of legs) if (L.len) n += L.len; else for (let i = 1; i < L.pts.length; i++) n += Math.hypot(L.pts[i].x - L.pts[i - 1].x, L.pts[i].y - L.pts[i - 1].y); return n; },
-  // where someone is at an hour: walking a leg, or there and at it
-  state(id, hour) {
+  // where someone is: from Tyrell's minds when the engine's there (city.js),
+  // otherwise from the clock alone
+  state(id, hour) { return City.on ? City.state(id) : this.clockState(id, hour); },
+  // where someone is at an hour, by the clock: walking a leg, or there and at it
+  clockState(id, hour) {
     const plan = this.plans[id], n = plan.length;
     let i = n - 1; for (let k = 0; k < n; k++) if (plan[k].h <= hour) i = k;
     const e = plan[i], prev = plan[(i - 1 + n) % n], a = this.point(id, prev), b = this.point(id, e);
@@ -213,6 +217,7 @@ const Town = {
   // ---- the people here, now: in the level you're in, moved to where the clock says
   sync() {
     if (!World.L || !this.plans) return;
+    City.sync(); // the minds keep up with the clock
     const here = World.L.id, hour = Game.hour();
     for (const id of TOWN_ORDER) {
       const R = RESIDENTS[id], st = this.state(id, hour), on = st.level === here && !st.hidden;
@@ -258,10 +263,12 @@ const Town = {
   // when you stop someone: where they're going, or what they're at
   talkLine(n) {
     const id = n.def.town, R = RESIDENTS[id], st = n.townState || this.state(id, Game.hour());
+    const remark = City.remark(id); if (remark) return remark; // (something they saw, heard or remember of you)
     if (st.moving) return (st.e.act === 'browse' || st.e.act === 'pay' ? R.say.shop : R.say[st.e.act]) || TOWN_GOING[st.e.act] || 'Busy. Sorry.';
     return (st.act === 'browse' || st.act === 'pay' ? R.say.shop : R.say[st.act]) || R.who;
   },
   talk(n) {
+    City.did('talked', n.def.town); // (they know your face now)
     // something broken to ask you about, or something of theirs you've fixed: the talk panel
     if (Jobs.actionsFor(n.def.name).length) { n.face = Math.sign(Player.x - n.x) || n.face; Hud.toggle('talk', n); return; }
     const id = n.def.town, R = RESIDENTS[id], st = n.townState || this.state(id, Game.hour());

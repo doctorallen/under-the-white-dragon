@@ -154,6 +154,7 @@ const Jobs = {
     const J = this.def(id), c = this.st(id), b = this.dev(id); if (!b || !b.tested) return;
     const t = b.tested, pay = J.pay ? (t.res === 'works' ? J.pay : Math.round(J.pay / 2)) : 0;
     if (!J.odd) Object.assign(c, { st: 'back', day: Game.s.day, res: t.res, loose: t.loose, scorch: b.scorch.length, traced: this.traced(b), parts: Object.fromEntries(Object.entries(b.slots).map(([k, s]) => [k, s.p && { g: s.p.g, how: s.p.how, st: s.p.st, gauge: s.p.gauge }])) });
+    if (J.odd) City.did(t.res === 'works' ? 'fixed' : 'botched', c.res, ODD[c.tpl].name);
     if (J.odd) Object.assign(c, { st: 'done', back: Game.s.day, fitted: Object.values(b.slots).filter((s) => s.p && s.p.how !== 'pull').map((s) => ({ k: s.p.k, g: s.p.g })) });
     if (pay) { Game.s.cr += pay; Game.toast(J.odd ? `"${J.thanks}" ${J.name} pays you ${pay} cr.` : `${J.name} pays you ${pay} cr.`, 'good'); }
     else Game.toast(`${J.name} flexes the hand, slowly. "I owe you."`, 'good');
@@ -244,9 +245,10 @@ const Jobs = {
     for (const id in s.jobs) {
       const c = s.jobs[id]; if (!id.startsWith('odd:') || c.st !== 'done' || c.checked || c.back === undefined || c.back >= s.day) continue;
       c.checked = true; const R = RESIDENTS[c.res], bad = (c.fitted || []).find((p, i) => p.g === 'scrap' && hash(s.day, i, id.length + 107) < 0.35);
-      if (bad) { s.flags['sour:' + c.res] = s.day + 3; news.push(`${R.name}'s ${ODD[c.tpl].name} died again overnight: the scrap ${PART[bad.k].name.toLowerCase()} you fitted gave out. ${R.name} isn't asking for the money back, but won't be bringing you anything for a few days.`); }
+      if (bad) { s.flags['sour:' + c.res] = s.day + 3; City.did('botched', c.res, ODD[c.tpl].name); news.push(`${R.name}'s ${ODD[c.tpl].name} died again overnight: the scrap ${PART[bad.k].name.toLowerCase()} you fitted gave out. ${R.name} isn't asking for the money back, but won't be bringing you anything for a few days.`); }
     }
     Tips.morning(news);
+    City.morning(news); // (what's going round the block about you)
     this.news = news; return news;
   },
 };

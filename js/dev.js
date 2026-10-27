@@ -10,6 +10,8 @@ const Dev = {
   fps: 0, fa: 0, fn: 0,
   load() { try { Object.assign(this.s, JSON.parse(localStorage.getItem('downlevel.dev') || '{}')); } catch (e) { /* storage unavailable */ } if (/[?&]dev\b/.test(location.search) && !this.s.shown) { this.s.shown = true; this.save(); } },
   save() { try { localStorage.setItem('downlevel.dev', JSON.stringify(this.s)); } catch (e) { /* storage unavailable */ } },
+  // a Tyrell time (game minutes) as day and clock
+  when(t) { const h = (t / 60) % 24; return 'day ' + Math.floor(t / 1440) + ' ' + String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0'); },
   frame(dt) { this.fa += dt; this.fn++; if (this.fa >= 0.5) { this.fps = Math.round(this.fn / this.fa); this.fa = 0; this.fn = 0; } },
   html() {
     const s = Game.s, tog = (k, name, note) => `<label class="tog"><input type="checkbox" data-dev="${k}" ${this.s[k] ? 'checked' : ''}><span><b>${name}</b><small>${note}</small></span></label>`;
@@ -22,6 +24,7 @@ const Dev = {
       <h3>Time of day · ${Game.clock()}</h3><input type="range" min="0" max="23.99" step="0.25" value="${Game.hour()}" data-devrange="time">
       <h3>Give</h3><div class="buttons">${btn('cr', '+1000 cr')}${btn('parts', '+10 of every part')}${btn('gear', 'All gear')}${btn('gadgets', 'All gadgets')}${btn('programs', 'All programs')}${btn('heal', 'Heal, fill RAM')}${btn('levels', 'Every piece +1')}</div>
       <h3>The world</h3><div class="buttons">${btn('warden', 'Warden down')}${btn('lift', 'Lift restored')}${btn('been', 'Been everywhere')}${btn('nextcase', 'Skip to the next suspect')}${btn('cases', 'Close every case')}${btn('resetcases', 'Reset the cases')}${btn('kill', 'Kill everything here')}${btn('respawn', 'Respawn enemies')}${btn('undo', 'Restore stripped machines')}</div>
+      ${City.on ? `<h3>The block's minds · Tyrell</h3><div class="buttons">${btn('back', 'Back an hour (time walk)')}${btn('fwd', 'On an hour')}</div><p class="dim">The block remembers back to ${this.when(City.w.esper.earliest())}. Tap someone to see what's on their mind:</p><div class="buttons">${TOWN_ORDER.map((id) => `<button data-devmind="${id}">${RESIDENTS[id].name}</button>`).join('')}</div><pre class="mind" id="devMind"></pre>` : ''}
       <h3>Go to</h3><div class="buttons">${spawns}</div>
       <p class="dim">Credits ${s.cr} · day ${s.day} · level ${World.L.id} at ${Math.round(Player.x)}, ${Math.round(Player.y)}</p>`;
   },
@@ -39,9 +42,11 @@ const Dev = {
       cases: () => { for (const id of QUEST_ORDER) s.quests[id] = { st: QUESTS[id].steps.length, n: 0, done: true }; for (const id of CASE_ORDER) s.cases[id] = { found: {}, leads: {}, done: true, verdict: 'arrest', synth: true }; }, resetcases: () => { s.quests = {}; s.cases = {}; s.night = null; s.track = null; },
       nextcase: () => { const id = CASE_ORDER.find((q) => !Cases.closed(q)); if (!id) return; if (!Cases.st(id)) { const C = CASES[id]; for (const a of C.after || []) if (QUESTS[a]) s.quests[a] = { st: 9, n: 0, done: true }; else s.cases[a] = { found: {}, leads: {}, done: true, verdict: 'arrest', synth: true }; Cases.start(id); } const C = CASES[id], c = Cases.st(id); for (const k in C.clues) c.found[k] = 1; for (const L of C.leads) c.leads[L.id] = 1; if (C.gate) s.flags[ENEMY[C.gate.boss].flag] = true; World.questProps(); Actors.questSpawns(); },
       kill: () => { for (const e of Actors.enemies.slice()) if (!e.ally) Actors.damage(e, 1e6, 1); }, respawn: () => Actors.load(),
+      back: () => { s.time -= 1; if (s.time < 0) { s.time += 24; s.day--; } City.sync(); Actors.load(); }, fwd: () => { Game.pass(1); City.sync(); Actors.load(); },
       undo: () => { for (const p of World.props) if (p.done) { p.done = false; delete s.done[p.id]; p.spr = null; Props.init(p); } },
     };
     body.querySelectorAll('button[data-devdo]').forEach((b) => (b.onclick = () => { act[b.dataset.devdo](); Game.toast('Dev: ' + b.textContent + '.'); Hud.refresh(); Save.write(); }));
+    body.querySelectorAll('button[data-devmind]').forEach((b) => (b.onclick = () => { const m = body.querySelector('#devMind'); if (m) m.textContent = City.inspect(b.dataset.devmind); }));
     body.querySelectorAll('button[data-devres]').forEach((b) => (b.onclick = () => { this.s.res = b.dataset.devres; if (this.s.res === 'auto') View.q = 3; this.save(); View.resize(); Hud.panel('dev'); }));
     body.querySelectorAll('button[data-devgo]').forEach((b) => (b.onclick = () => { const [l, sp] = b.dataset.devgo.split(':'); Hud.toggle(null); Game.go(l, sp); }));
   },

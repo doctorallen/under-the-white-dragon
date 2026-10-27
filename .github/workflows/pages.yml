@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -28,7 +30,9 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site
-          cp -r index.html css js icons manifest.webmanifest sw.js _site/
+          cp -r index.html css js fonts icons manifest.webmanifest sw.js _site/
+          # Tyrell, the minds engine (a git submodule): only its built script
+          mkdir -p _site/vendor/tyrell/dist && cp vendor/tyrell/dist/tyrell.js _site/vendor/tyrell/dist/
           touch _site/.nojekyll
           # stamp this deploy: a new service worker each time, and a build id
           BUILD=$(echo "$GITHUB_SHA" | cut -c1-7)
@@ -43,6 +47,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22

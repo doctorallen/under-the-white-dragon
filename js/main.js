@@ -6,6 +6,7 @@
 function boot() {
   Dev.load(); Town.init();
   const loaded = Save.start();
+  City.init(); // the residents' minds (Tyrell), from the save if there is one
   View.init(); Input.init();
   World.load(Game.s.level);
   const sp = World.L.spawns[Game.s.spawn] || Object.values(World.L.spawns)[0];

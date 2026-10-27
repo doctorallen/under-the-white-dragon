@@ -2,7 +2,8 @@
 // ---------------------------------------------------------------------------
 // Saving: Game.s, in localStorage. The levels are built from code, so a save
 // only needs what's changed: props done by id, flags, what you carry and
-// wear, the parts, the notebook, what's on the bench, the jobs and the heat.
+// wear, the parts, the notebook, what's on the bench, the jobs and the heat,
+// and the residents' minds (city).
 // Every read and write is guarded, since storage can be missing or full.
 // ---------------------------------------------------------------------------
 const Save = {
@@ -12,6 +13,7 @@ const Save = {
   write() {
     if (!Game.s || this.off) return;
     if (World.L) { Game.s.px = Player.x; Game.s.py = Player.y; }
+    City.stash(); // the residents' minds (Tyrell's state), as they are
     try { localStorage.setItem(this.key, JSON.stringify(Game.s)); } catch (e) { /* storage unavailable */ }
     this.last = Game.t;
   },

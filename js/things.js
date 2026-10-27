@@ -83,7 +83,7 @@ const Props = {
       for (const part of Parts.strip(p)) got.push(Parts.name(part).toLowerCase() + (part.gauge ? ' (' + part.gauge + ')' : '') + (part.st === 'worn' ? ' (worn)' : ''));
       this.finish(p); Fx.sparks(p.x, p.y - 8, 10);
       Game.toast(got.length ? '+ ' + got.join(', ') : 'Nothing worth taking.');
-      if (OWNED[p.kind]) { const seen = Actors.npcs.some((n) => !n.hidden && Math.abs(n.x - p.x) < 150 && Math.abs(n.y - p.y) < 40); Jobs.heat(OWNED[p.kind] + (seen ? 4 : 0), seen ? 'Somebody saw you do it.' : 'That was somebody\'s.'); }
+      if (OWNED[p.kind]) { const seen = Actors.npcs.some((n) => !n.hidden && Math.abs(n.x - p.x) < 150 && Math.abs(n.y - p.y) < 40); Jobs.heat(OWNED[p.kind] + (seen ? 4 : 0), seen ? 'Somebody saw you do it.' : 'That was somebody\'s.'); City.strip(p); }
       // some hold something to wear
       if (p.gear) for (const g of [].concat(p.gear)) Game.giveGear(g);
       return;

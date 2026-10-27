@@ -19,6 +19,10 @@ There are no enemies and no gun: the danger is heat. The game grew out of Downle
 
 Take a case from Lieutenant Hale at the precinct, fly out in your spinner, find the clues (pick things up, enhance a photo, ask people and catch their lies with evidence), work out the leads on the case board, follow them to the suspect, run the baseline test, and decide: retire, arrest or let go. A case takes a few minutes; the night desk always has another. Strip machines for parts, cut through grates and shutters, jack into data nodes for programs, and take side work from the people you meet. Implants are illegal and you hunt the people who carry them; you carry gadgets instead, built by the precinct's quartermaster, and gear made and upgraded by Mags the fabricator. The way down from each level is guarded.
 
+## Running it
+
+The residents' minds come from Tyrell, a separate engine pulled in as a git submodule. After cloning, `git submodule update --init` (or clone with `--recurse-submodules`), then serve the folder: `python3 -m http.server 8000`.
+
 ## Install
 
 On Android the browser offers to install it the first time you tap; after that, use Install in the pause menu (or the browser's menu). On iPhone, Share, then Add to Home Screen. The installed game plays offline, and always checks for a new version: whenever it comes back to the foreground it looks for one, and if there is one it saves and reloads onto it. The pause menu shows the build.
@@ -99,7 +103,9 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/bench.js` | The bench: the repair, its tools and its drawing (`Bench`) |
 | `js/jobs.js` | Jobs at the White Dragon, residents' odd jobs, heat, the morning after (`Jobs`) |
 | `js/tips.js` | Residents' tips about parts out in the city, and the tool tiers that strip them (`Tips`, `TOOLS`, `TIPS`) |
-| `js/town.js` | The block's residents: homes, jobs, friends, a day plan each, walked out from the clock (`Town`, `RESIDENTS`) |
+| `js/town.js` | The block's residents: homes, jobs, friends, a day plan each, walked along their routes (`Town`, `RESIDENTS`) |
+| `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which keeps their days, needs, memories and gossip, and saves them (`City`) |
+| `vendor/tyrell/` | Tyrell, the minds engine (a git submodule; the game loads `dist/tyrell.js`) |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
 | `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |
 | `js/worldmap.js` | The city map: the city in cross-section, every place at its depth; travel from it |
