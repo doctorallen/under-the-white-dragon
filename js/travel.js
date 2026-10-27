@@ -53,6 +53,20 @@ const Travel = {
     if (b === 'sky' || b === 'high' || b === 'street') { const f = Flight.cabFare(); if (f && !Game.pay({ cr: f })) { Game.toast('You can\'t afford the fare: ' + f + ' cr.'); return; } Flight.start(id, sp, true); }
     else { Game.toast({ under: 'You climb down the ladder into the dark and the drip.', old: 'The old train lurches off into the dark.', works: 'The cage drops, and keeps dropping.', bowels: 'The cage drops past the last of the lights.' }[b]); Game.go(id, sp); }
   },
+  // ---- on foot: the places at one depth run on from each other, west to east
+  // as they sit on the city map, so walking off the end of one street takes
+  // you onto the next
+  row(b) { return Object.keys(LEVELS).filter((k) => LEVELS[k].district && !LEVELS[k].hidden && LEVELS[k].metres !== undefined && this.band(k) === b).sort((a, c) => LEVELS[a].mapX - LEVELS[c].mapX || (a < c ? -1 : 1)); },
+  neighbours(id) { const L = LEVELS[id]; if (!L || !L.district || L.hidden) return {}; const row = this.row(this.band(id)), i = row.indexOf(id); return { west: row[i - 1], east: row[i + 1] }; },
+  // near an end: where it goes (for the prompt), and walking off it
+  edgeAhead() { const L = World.L, nb = this.neighbours(L.id), x = Player.x; if (x < 60 && nb.west) return { dir: 'west', to: nb.west }; if (x > L.w - 60 && nb.east) return { dir: 'east', to: nb.east }; return null; },
+  edge() {
+    if (Game.fadeTo || Flight.on || Game.paused || !World.L) return;
+    const e = this.edgeAhead(); if (!e) return;
+    const off = e.dir === 'west' ? Player.x < 16 && Input.ax < 0 : Player.x > World.L.w - 16 && Input.ax > 0;
+    if (!off) return;
+    Game.pass(0.15); Game.go(e.to, e.dir === 'west' ? 'east' : 'west');
+  },
   // where a key door leads
   KEYS: { subwaypass: 'oldtown', mayorkey: 'works', workspass: 'bowels' },
 };

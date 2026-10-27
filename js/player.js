@@ -123,6 +123,7 @@ const Player = {
     const rg = Game.perk('regen'); if (rg && Game.s.hp < T.player.hp && Game.s.hp > 0) { Game.s.hp = Math.min(T.player.hp, Game.s.hp + rg * dt); if (Game.frame % 30 === 0) Hud.refresh(); }
     this.questT = (this.questT || 0) - dt; if (this.questT <= 0) { this.questT = 0.25; Quests.tick(); }
     this.interact(dt);
+    Travel.edge();
   },
   // Take down: behind one that hasn't seen you, a quiet takedown. There's
   // no gun and no fighting back: if they've seen you, run.

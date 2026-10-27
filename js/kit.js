@@ -698,6 +698,8 @@ function district(o) {
   if (mode === 'spinner') L.light(66, G - 40, 40, [1, 0.85, 0.4], 0.6); else L.light(70, G - 40, 50, [1, 0.8, 0.5], 0.6);
   L.spawns = { enter: [140, G] };
   o.build(L, G);
+  // the ends of the street, where you walk on to the next place
+  L.spawns.west = L.spawns.west || [26, G]; L.spawns.east = L.spawns.east || [W - 26, G];
   // the spots: the ones the place gave, then the ground shared out
   for (let x = 300; L.spots.length < 10 && x < W - 150; x += Math.max(140, Math.floor((W - 450) / 10))) if (!L.spots.some((s) => Math.abs(s[0] - x) < 60 && s[1] === G)) L.spots.push([x, G]);
   // a terminal on the ground, by one of the spots: a network to jack into

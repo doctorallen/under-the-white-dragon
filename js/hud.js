@@ -28,7 +28,8 @@ const Hud = {
     const tg = Player.target;
     // behind someone who hasn't seen you: Fire takes them down quietly
     const tk = !Game.paused && Actors.enemies.some((e) => e.hp > 0 && Math.sign(e.x - Player.x) === Player.face && Foes.canTakedown(e));
-    this.set('prompt', tk ? 'Take them down quietly' : tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : '');
+    const edge = !tg && !tk && !Game.paused ? Travel.edgeAhead() : null;
+    this.set('prompt', tk ? 'Take them down quietly' : tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : edge ? (edge.dir === 'west' ? '← On foot to ' : 'On foot to ') + LEVELS[edge.to].name + (edge.dir === 'east' ? ' →' : '') : '');
     $('bStrike').classList.toggle('gone', !tk);
     // the Use button says what it would do, in a word
     const verb = tg && !Game.paused ? tg.pr.verb || 'Use' : 'Use';
