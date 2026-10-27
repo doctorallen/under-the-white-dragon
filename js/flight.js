@@ -1,6 +1,6 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// Flying: your spinner, or a cab you pay for. A flight is a few seconds
+// Flying: a cab you pay for (Ozzy flies you free once you've fixed his nav). A flight is a few seconds
 // through the city: the three layers of towers streaming past at their own
 // depths, holograms and the monorail among them, traffic in the lanes, rain
 // in streaks; the car banks and bobs in the middle. Tap to skip. Then you
@@ -19,7 +19,7 @@ const Flight = {
     Object.assign(this, { on: true, t: 0, to: level, spawn, cab: !!cab, skip: false });
     Input.useHit = Input.jumpHit = Input.strikeHit = false;
     this.art = spinner({ cab }); Hud.toggle(null); $('hud').classList.add('flying');
-    Game.toast(cab ? 'The cab lifts off. "Where to? Home? Home."' : 'You lift off.');
+    Game.toast(Game.flag('ozzy:rides') ? 'Ozzy\'s cab lifts off. "Anywhere you want. On me."' : 'The cab lifts off.');
   },
   step(dt) {
     this.t += dt;

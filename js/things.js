@@ -9,7 +9,7 @@ const PROP_ART = {
   vending: (p) => vending(p.look || {}), ac: () => acUnit(), rack: (p) => rack({ h: 40, seed: p.x, warn: true }), car: (p) => car(p.look || {}),
   junk: (p) => junk({ seed: p.x % 7 }), wreck: () => wreck(), cache: () => { const S = new Spr(16, 12, 81); S.ax = 8; S.ay = 11; S.box(0, 0, 15, 11, MAT.concreteD, { lo: 1, hi: 5 }); for (let x = 2; x < 14; x += 3) S.px(x, 5, '#a85ad8', true); return S.done(); },
   grate: (p) => grate({ w: p.w || 12, h: p.h || 32 }), heavy: (p) => heavyShutter({ w: p.w || 30, h: p.h || 32 }), hatch: (p) => hatch({ w: p.w || 26, h: p.h || 34, stripe: true }),
-  node: (p) => node({ col: p.col }), workbench: () => workbench(), trapdoor: (p) => (p.up ? null : rug()), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? spinner({}) : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
+  node: (p) => node({ col: p.col }), workbench: () => workbench(), trapdoor: (p) => (p.up ? null : rug()), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), lift: (p) => liftCage({ on: Game.s.flags.lift }), bed: () => bed(), spinner: () => spinner({}), transit: (p) => (p.mode === 'spinner' ? cabStand() : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
   keydoor: (p) => (p.mode === 'subway' ? subwayDoor() : hatch({ w: 40, h: 44, col: '#3a3a40', lock: Game.s.pack[p.key] > 0 ? '#3aff80' : '#ffb040', stripe: true })), locker: () => locker(), clue: (p) => marker({ col: p.K.kind === 'photo' ? '#3af0e0' : '#ffd040' }), pickup: () => marker({ col: '#ff9ad8' }), closet: () => closet(), elevator: (p) => elevator({ at: ELEVATOR.findIndex((f) => f.level === p.level) }), exit: () => null, deco: (p) => p.art(),
   sealed: (p) => hatch({ w: 40, h: 40, col: '#3a3a40', lock: '#ffb040', stripe: true }),
 };
@@ -56,10 +56,12 @@ const Props = {
     if (p.kind === 'lift') return Game.s.flags.lift ? { verb: 'Ride', text: 'Take the lift ' + (p.dir || ''), tap: true } : { verb: 'Repair', text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
     if (p.kind === 'bed') return { verb: 'Sleep', text: p.label || 'Your cot', tap: true };
     if (p.kind === 'workbench') return { verb: 'Work', text: 'Your bench', tap: true };
+    if (p.kind === 'door') return p.out ? { verb: 'Leave', text: p.label, tap: true } : { verb: 'Enter', text: p.label, tap: true };
     if (p.kind === 'trapdoor') return p.up ? { verb: 'Climb', text: 'Up the ladder, into the storeroom', tap: true } : { verb: 'Climb down', text: 'The rug, and the trapdoor under it', tap: true };
     if (p.kind === 'cabinet') return p.done ? null : { verb: 'Jimmy', text: 'A locked parts cabinet: Meridian stock', hold: 1.6 };
     if (p.kind === 'shelf') return { verb: 'Look', text: 'The parts shelf', tap: true };
     if (p.kind === 'spinner') return { verb: 'Fly', text: 'Your spinner', tap: true };
+    if (p.kind === 'transit' && p.mode === 'spinner') { const f = Flight.cabFare(); return { verb: 'Hail', text: f ? `A cab: ${f} cr a ride` : 'Ozzy\'s cab: free', tap: true }; }
     if (p.kind === 'transit') return { verb: p.mode === 'spinner' ? 'Fly' : p.mode === 'hatch' ? 'Climb' : p.mode === 'manhole' ? 'Climb down' : 'Ride', text: p.mode === 'spinner' ? 'Your spinner' : p.mode === 'subway' ? 'The subway' : p.mode === 'hatch' ? 'The ladder up to the street' : p.mode === 'manhole' ? 'The manhole, down into the undercity' : 'The lift cage', tap: true };
     if (p.kind === 'keydoor') return Game.s.pack[p.key] > 0 ? { verb: 'Ride', text: p.label, tap: true } : { verb: 'Locked', text: p.label + ': it needs the ' + ITEM[p.key].name.toLowerCase(), tap: true, no: true };
     if (p.kind === 'locker') return p.done ? null : { verb: 'Open', text: 'Open the ' + (p.label || 'locker'), hold: 0.8 };
@@ -96,7 +98,7 @@ const Props = {
     }
     if (p.kind === 'bed') { Hud.toggle('bed'); return; }
     if (p.kind === 'workbench') { Bench.open(); return; }
-    if (p.kind === 'trapdoor') { Game.go(p.to[0], p.to[1]); return; }
+    if (p.kind === 'trapdoor' || p.kind === 'door') { Game.go(p.to[0], p.to[1]); return; }
     if (p.kind === 'cabinet') {
       this.finish(p); Fx.sparks(p.x, p.y - 20, 6); Foes.noise(p.x, p.y, 90);
       Parts.give(Parts.make('servo', 'military', { gauge: 'heavy', how: 'take' }));

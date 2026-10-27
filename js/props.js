@@ -428,3 +428,15 @@ function toolTray() {
   for (const [x, y, c] of [[3, 4, '#e8ecf4'], [4, 3, '#e8ecf4'], [5, 4, '#c8ccd4'], [8, 4, '#c8ccd4'], [9, 3, '#e8ecf4'], [10, 4, '#e8ecf4'], [13, 4, '#ff8a3a'], [14, 4, '#ff8a3a'], [15, 3, '#c8ccd4'], [16, 2, '#c8ccd4']]) S.px(x, y, c);
   return S.done();
 }
+// a cab stand: a pole with a lit CAB box on top and a hailing button, the bay
+// marked on the ground beside it
+function cabStand() {
+  const W = 40, H = 46, S = new Spr(W, H, 446); S.ax = 8; S.ay = H - 1;
+  S.limb(8, 12, 8, H - 2, 1.2, MAT.steelD); S.box(5, H - 2, 11, H - 1, MAT.steelD, { lo: 1, hi: 4 });
+  S.box(2, 2, 14, 11, rp('#e0b028', 6), { lo: 1, hi: 6 }); for (let x = 4; x < 13; x++) S.px(x, 6, x % 4 === 3 ? '#e0b028' : '#1a1a1a', false);
+  for (const [x, y] of [[4, 5], [5, 4], [5, 7], [7, 4], [7, 7], [8, 5], [8, 6], [9, 4], [9, 7], [11, 4], [11, 5], [11, 6], [11, 7], [12, 4], [12, 7]]) S.px(x, y, '#1a1a1a');
+  for (let x = 3; x < 14; x++) S.px(x, 2, '#fff4c0', true);
+  S.box(9, 24, 12, 28, rp('#2a2a30', 4), { lo: 1, hi: 3 }); S.px(10, 26, '#3aff80', true);
+  for (let x = 16; x < W; x += 3) S.px(x, H - 1, '#e0b028');
+  return S.done();
+}

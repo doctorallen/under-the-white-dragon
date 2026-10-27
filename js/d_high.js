@@ -306,7 +306,7 @@ addDistrict('d_skybridge', 'The Skybridge', 1, 140, 760, 'A deck slung between t
 // greenhouses, a temple, gardeners. Quiet; the quietest place up high.
 addDistrict('d_gardens', 'Arcology Gardens', 1, 110, 660, 'The arcology\'s terraced garden under glass: cherry trees, a pond, a tea house, greenhouses, a temple.', 'Gardens', () => district({
   id: 'd_gardens', name: 'Arcology Gardens', tier: 1, W: 2600, crowd: 6, layerDy: 80, floor: R(['#1a1410', '#2e2418', '#4a3c2a', '#8a7a5a']), amb: [0.3, 0.32, 0.32], rain: 0,
-  local: { name: 'Gardener', lines: ['Every tree in here costs more than your spinner.', 'The cherries bloom on a timer. They\'re never wrong.', 'Mind the moss. It\'s older than me.'], look: { hair: 'cap', capCol: '#3a5a2a', top: '#3a5a3a', apron: '#4a3a2a', legs: '#2a2a2a' } },
+  local: { name: 'Gardener', lines: ['Every tree in here costs more than your rent.', 'The cherries bloom on a timer. They\'re never wrong.', 'Mind the moss. It\'s older than me.'], look: { hair: 'cap', capCol: '#3a5a2a', top: '#3a5a3a', apron: '#4a3a2a', legs: '#2a2a2a' } },
   build(L, G) {
     // the glass roof of the arcology over all of it: ribs and panes
     L.paint(0, 0, 2600, 90, (P) => { P.area(0, 0, 2600, 90, MAT.glass, (x, y) => 0.3 + ((x + y * 2) % 37 < 2 ? 0.2 : 0) - y / 400); for (let x = 0; x < 2600; x += 80) for (let y = 0; y < 90; y++) P.put(x + Math.round(y * 0.3), y, tone(KMAT.whitepanel, 0.6)); for (let x = 0; x < 2600; x++) { P.put(x, 88, tone(KMAT.whitepanel, 0.7)); P.put(x, 89, tone(KMAT.whitepanel, 0.4)); } });

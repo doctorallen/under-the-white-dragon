@@ -187,7 +187,7 @@ const Hud = {
       title.textContent = 'Elevator';
       h += `<p class="sub">A lift cage that groans. Buttons for the floors you know.</p><div class="rows">` + ELEVATOR.map((f) => { const here = World.L.id === f.level, known = !f.needs || Game.flag(f.needs); return `<div class="row ${known ? '' : 'passed'}"><div><b>${f.name}</b><small>${known ? f.note : 'The button is dead. You haven\'t found a way there yet.'}</small></div>${here ? '<span class="tag">you\'re here</span>' : `<button data-floor="${f.level}" ${known ? '' : 'disabled'}>Go</button>`}</div>`; }).join('') + '</div>';
     } else if (which === 'cab') {
-      const fare = Flight.cabFare(), home = World.L.id === 'd_dragon' || World.L.id === 'd_cellar';
+      const fare = Flight.cabFare(), home = ['d_dragon', 'd_noodles', 'd_cellar'].includes(World.L.id);
       title.textContent = 'Call a cab';
       h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down on your pad.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>${fare ? `Call a cab · ${fare} cr` : 'Call Ozzy · free'}</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
     } else if (which === 'fab') {
@@ -221,7 +221,7 @@ const Hud = {
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
         <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Use</b> E (hold it to strip machines). <b>Take down</b> J, from behind someone who hasn\'t seen you. <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Jobs</b> I. <b>Map</b> M.</p>
         <p>You fix what the city breaks, in a hidden basement under the White Dragon, a noodle bar in the Stack, and some of what you fix is illegal. The way down is a trapdoor under the rug in Auntie Lin\'s storeroom. People bring their broken things to the bar: talk to them, take the job down to your bench, and open it up. Hold the driver on the screws (ease off when one binds), probe the parts, melt the bad one free with the iron, seat a good one, solder it, close it up and power it up. Parts come from machines you strip, from the stalls (Mechanic Ana at the Overpass Market, Nurse Kade on Clinic Row), or from places you shouldn\'t be. Hand the fix back at the counter, and sleep on it: in the morning you hear what it did.</p>
-        <p>Heat is how close the precinct is to your trapdoor. Illegal work, stolen parts and traceable serials raise it; honest repairs and time bring it down. You carry no gun: if you\'re seen, run. Your spinner is out front; a cab gets you home from anywhere.</p></div>
+        <p>Heat is how close the precinct is to your trapdoor. Illegal work, stolen parts and traceable serials raise it; honest repairs and time bring it down. You carry no gun: if you\'re seen, run. There\'s a cab stand out front, and a cab gets you home from anywhere: you pay the fare, until someone owes you a ride.</p></div>
         <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     if (['vendor', 'qm', 'fab'].includes(which) && this.who) h = workHtml(this.who.def.name) + h;
@@ -234,7 +234,7 @@ const Hud = {
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => this.toggle('dev'),
-      cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'd_dragon' || World.L.id === 'd_cellar' || (fare && !Game.pay({ cr: fare }))) return; Flight.start('d_dragon', 'enter', true); },
+      cab: () => { const fare = Flight.cabFare(); if (['d_dragon', 'd_noodles', 'd_cellar'].includes(World.L.id) || (fare && !Game.pay({ cr: fare }))) return; Flight.start('d_dragon', 'enter', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     panelBind(body, which);

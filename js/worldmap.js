@@ -152,7 +152,7 @@ const WorldMap = {
     let act = '';
     if (here) act = '<span class="tag">You are here</span>';
     else if (!ok) act = `<span class="tag lock">${lockText(this.sel)}</span>`;
-    else if (this.browse) act = '<span class="tag">Travel from a spinner pad, a subway platform, a lift or a manhole</span>';
+    else if (this.browse) act = '<span class="tag">Travel from a cab stand, a subway platform, a lift or a manhole</span>';
     else act = `<button data-go="${this.sel}" class="go">Go · ${Travel.how(this.sel)}</button>`;
     el.innerHTML = `<div class="wmcard"><div><b>${L.name}${want ? ' <i class="mark">◆</i>' : ''}</b><small>${S.name} · ${L.depth || ''}${L.label ? ' · ' + L.label : ''}</small><p>${ok || here ? L.blurb || '' : 'You haven\'t been there yet.'}</p></div>${act}</div>`;
     el.querySelectorAll('button[data-go]').forEach((b) => (b.onclick = () => Travel.go(b.dataset.go)));

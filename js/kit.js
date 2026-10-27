@@ -694,8 +694,8 @@ function district(o) {
   if (o.sky !== false && o.wet !== false) L.wet.push({ y: G + 1, x0: 0, x1: W, depth: 22, k: 0.35 });
   // the way in
   const mode = o.transit || 'spinner';
-  L.prop('transit', 70, G, { mode, label: { spinner: 'your spinner', subway: 'subway platform', lift: 'lift cage', hatch: 'ladder up to the street' }[mode] || 'the way out' });
-  if (mode === 'spinner') L.light(70, G + 2, 50, [0.3, 0.9, 1], 0.6, 2.5); else L.light(70, G - 40, 50, [1, 0.8, 0.5], 0.6);
+  L.prop('transit', 70, G, { mode, label: { spinner: 'a cab stand', subway: 'subway platform', lift: 'lift cage', hatch: 'ladder up to the street' }[mode] || 'the way out' });
+  if (mode === 'spinner') L.light(66, G - 40, 40, [1, 0.85, 0.4], 0.6); else L.light(70, G - 40, 50, [1, 0.8, 0.5], 0.6);
   L.spawns = { enter: [140, G] };
   o.build(L, G);
   // the spots: the ones the place gave, then the ground shared out

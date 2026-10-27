@@ -3,10 +3,11 @@
 // it boots without an error in the basement under the White Dragon (the
 // desktop run without WebGL2, so the 2D path is played too); the bench and the
 // shelf answer Use, and the basement isn't on the city map; a nav unit is opened, probed, fixed and powered up on the bench;
-// the ladder leads up through the trapdoor into the storeroom; Ozzy's job is
-// taken, fixed, handed back and slept on; the vending machine
+// the ladder leads up through the trapdoor into the noodle bar's storeroom,
+// where people eat; Ozzy's job is taken, fixed, handed back and slept on; the
+// front door leads out onto the street; the vending machine
 // out front gives a scrap part; there's no gun, and the help and the pack talk
-// about the basement; the spinner flies to the Overpass Market, where Ana
+// about the basement; a cab flies from the stand to the Overpass Market, where Ana
 // sells a part; the map and dev settings work; on Clinic Row Kade's stall
 // opens, a ganger is taken down from behind and one in front notices, and the
 // cabinet gives a Meridian servo and heat; a terminal is jacked into; Ozzy's
@@ -103,9 +104,9 @@ async function run(B, url, vp, name, failures) {
   // up the ladder, through the trapdoor, into the storeroom: Lin at the bar, the sign out front
   const up = await E(() => {
     Hud.toggle(null); Bench.clear(); T_.walkTo(World.props.find((p) => p.kind === 'trapdoor').x); const pr = Player.target && Player.target.p && Player.target.p.kind; T_.tap('useHit'); T_.run({}, 90);
-    return { pr, level: Game.s.level, x: Math.round(Player.x), rug: !!World.props.find((p) => p.kind === 'trapdoor'), sign: !!World.props.find((p) => p.id === 'wdsign'), lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
+    return { pr, level: Game.s.level, x: Math.round(Player.x), rug: !!World.props.find((p) => p.kind === 'trapdoor'), diners: Actors.npcs.filter((n) => n.def.sched[0][3] === 'sit').length, lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
   });
-  if (up.pr !== 'trapdoor' || up.level !== 'd_dragon' || Math.abs(up.x - 1010) > 30 || !up.rug || !up.sign || !up.lin) fail('the ladder did not lead up to the storeroom ' + JSON.stringify(up));
+  if (up.pr !== 'trapdoor' || up.level !== 'd_noodles' || Math.abs(up.x - 846) > 30 || !up.rug || up.diners < 4 || !up.lin) fail('the ladder did not lead up to the storeroom of the noodle bar ' + JSON.stringify(up));
   await shot('storeroom');
   // a job: Ozzy's waiting at the bar; take it, fix it, hand it back, sleep on it
   const job = await E(() => {
@@ -120,7 +121,12 @@ async function run(B, url, vp, name, failures) {
   });
   await shot('morning');
   if (!job.oz || job.talk !== 'talk' || job.on !== 'ozzy' || job.res !== 'works' || job.paid !== 80 || job.morning !== 'morning' || !job.rides || job.fare) fail('Ozzy\'s job did not play through ' + JSON.stringify(job));
+  // out through the dining room and the front door, onto the street: the sign, the cab stand
   await E(() => { Hud.toggle(null); T_.walkTo(300); });
+  await shot('diningroom');
+  const out = await E(() => { const d = World.props.find((p) => p.kind === 'door'); T_.walkTo(d.x); const pr = Player.target && Player.target.p && Player.target.p.kind; T_.tap('useHit'); T_.run({}, 90); return { pr, level: Game.s.level, x: Math.round(Player.x), sign: !!World.props.find((p) => p.id === 'wdsign'), door: !!World.props.find((p) => p.kind === 'door') }; });
+  if (out.pr !== 'door' || out.level !== 'd_dragon' || Math.abs(out.x - 424) > 30 || !out.sign || !out.door) fail('the front door did not lead out to the street ' + JSON.stringify(out));
+  await E(() => { T_.walkTo(380); });
   await shot('frontage');
   // the machine out front, stripped: salvage and a scrap part
   const strip = await E(() => { const v = World.props.find((p) => p.kind === 'vending'); T_.walkTo(v.x); T_.hold(200); return { done: v.done, parts: Game.s.parts.filter((p) => p.how === 'strip' && p.g === 'scrap').length }; });

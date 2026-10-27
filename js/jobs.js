@@ -14,7 +14,7 @@
 // ---------------------------------------------------------------------------
 const JOBS = {
   ozzy: {
-    name: 'Ozzy', title: 'Ozzy\'s nav unit', dev: 'navunit', at: 500, wait: 520, pay: 80, honest: true,
+    name: 'Ozzy', title: 'Ozzy\'s nav unit', dev: 'navunit', at: 350, wait: 356, pay: 80, honest: true,
     look: { skin: SKINS[1], hair: 'cap', capCol: '#ffd040', top: '#4a4430', coat: 'jacket', legs: '#2a2a34', wide: 1 },
     parts: { board: ['street', 'ok'], cell: ['street', 'dead'], aerial: ['street', 'burnt'] },
     lines: ['Rain\'s bad for business. Good for yours, I guess.'],
@@ -22,7 +22,7 @@ const JOBS = {
     waiting: '"I\'ll be at the counter. Lin\'s noodles are the only thing in this city that still works."',
   },
   vey: {
-    name: 'Vey', title: 'Vey\'s arm', dev: 'arm', at: 690, wait: 690, pay: 0, illegal: true, rusty: true,
+    name: 'Vey', title: 'Vey\'s arm', dev: 'arm', at: 592, wait: 592, pay: 0, illegal: true, rusty: true,
     look: { skin: SKINS[0], hair: 'bob', hairCol: '#e8e8f2', top: '#2a2a3a', coat: 'long', legs: '#1a1a24', cyArm: true },
     parts: { servo: ['military', 'dead', 'heavy'], board: ['clinic', 'ok'], cell: ['clinic', 'worn'] },
     lines: ['Don\'t look at the arm. Everyone looks at the arm.'],
@@ -52,7 +52,7 @@ const Jobs = {
   },
   spawn() {
     if (!World.L) return;
-    const here = World.L.id === 'd_dragon', G = World.L.ground;
+    const here = World.L.id === 'd_noodles', street = World.L.id === 'd_dragon', G = World.L.ground;
     Actors.npcs = Actors.npcs.filter((n) => !n.def.job || (here && this.where(n.def.job) === n.x));
     if (here) for (const id of JOB_ORDER) {
       const x = this.where(id); if (x === null || Actors.npcs.some((n) => n.def.job === id)) continue;
@@ -60,7 +60,7 @@ const Jobs = {
       Actors.npcs.push({ def, i: 80 + JOB_ORDER.indexOf(id), x, y: G - 2, face: id === 'ozzy' ? 1 : -1, hidden: false, tx: x, wt: 0, bubble: null, line: 0, art: new Map() });
     }
     // a drone on the street when the heat's up
-    const want = here && Game.s.heat >= 40;
+    const want = street && Game.s.heat >= 40;
     if (want && !Actors.enemies.some((e) => e.heatDrone)) { const e = Actors.spawn('drone', 200, G - 70, { range: [40, 320] }); e.heatDrone = true; }
     if (!want) Actors.enemies = Actors.enemies.filter((e) => !e.heatDrone);
   },

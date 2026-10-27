@@ -1,79 +1,129 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// The White Dragon: the noodle bar on the corner, and your workshop under it.
-// The street out front with the neon sign on the corner; through the curtain,
-// the bar, Auntie Lin at the pots; through the next curtain, her storeroom, and
-// under a rug in it the trapdoor down to the basement (d_cellar, its own place,
-// hidden from the city map): the bench, the parts shelf, the cot. Home.
+// The White Dragon: a noodle bar on a street of the Stack, one shopfront among
+// the others, and your workshop under it. Three places, each its own level:
+//   d_dragon, the street: the buildings, the White Dragon's front with its
+//     neon sign over the door, a machine and a junk pile, a cab stand.
+//   d_noodles, the shop (hidden from the city map): through the front door,
+//     the dining room with people eating, Auntie Lin at the counter, and
+//     through the curtain her storeroom, with a rug over the trapdoor.
+//   d_cellar, the basement (hidden too): down the ladder from the trapdoor.
 // Helpers carry the prefix `wd`.
 // ---------------------------------------------------------------------------
-const WD = { IN: 380, PART: 762, BACK: 774, END: 1092, CEIL: 122 };
+const WD = { FRONT: 300, DOOR: 424, END: 470, CEIL: 122 };
 
-addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'The noodle bar on the corner, and what nobody knows is under it.', 'The White Dragon', () => district({
-  id: 'd_dragon', name: 'The White Dragon', tier: 1, W: 1120, crowd: 3, crowdFrom: 150, crowdTo: 330, amb: [0.2, 0.17, 0.26], layerDy: 0,
+addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, and on it a noodle bar with what nobody knows under it.', 'The White Dragon', () => district({
+  id: 'd_dragon', name: 'The White Dragon', tier: 1, W: 1500, crowd: 7, crowdFrom: 150, crowdTo: 1400, amb: [0.2, 0.17, 0.26], layerDy: 0,
   build(L, G) {
     const C = G - WD.CEIL;
-    // next door: a shophouse, flats above
+    // the street: a shophouse, then an alley, the White Dragon, then the rest of the block
     bShophouse(L, 150, 282, G, { floors: 4, wall: KMAT.teal, shops: [['glass', '#9af0ff']], roof: 'tank', seed: 911 });
-    // a gap between the buildings: pipes, a drainpipe, the dark
     L.paint(282, G - 330, 300, G, (P) => { kFill(P, 282, G - 330, 300, G, '#08070c'); for (let y = G - 330; y < G; y++) { P.put(286, y, [26, 28, 34]); P.put(287, y, [44, 48, 56]); } for (let y = G - 300; y < G; y += 46) for (let x = 282; x < 300; x++) P.put(x, y, [30, 30, 38]); });
-    // the White Dragon's building: flats above the bar, a slab between
-    L.paint(300, G - 330, WD.END + 28, C + 6, (P) => {
-      P.block(300, G - 320, WD.END + 28, C, KMAT.plaster, { base: 0.4, panels: [60, 34], drips: 0.12, dripLen: 24 });
-      for (let fy = G - 306; fy < C - 24; fy += 34) for (let fx = 316; fx < WD.END + 10; fx += 26) if (fx > 352 || fy + 18 < G - 150) kWin(P, fx, fy, 14, 18, { lit: hash(fx, fy, 31) < 0.45 ? (hash(fx, fy, 32) < 0.5 ? '#ffd8a0' : '#a8e0ff') : null, blinds: hash(fx, fy, 33) < 0.4, curtain: hash(fx, fy, 34) < 0.3 ? '#5a2a3a' : null });
-      P.block(296, G - 330, WD.END + 30, G - 320, KMAT.kawara, { base: 0.5 });
-      P.block(300, C, WD.END + 28, C + 6, MAT.concreteD, { base: 0.5 });
+    bCapsules(L, 490, 650, G, { h: 300, sign: '#ffd040', seed: 913 });
+    bMachiya(L, 666, 780, G, { noren: '#2a3a6a', seed: 915 });
+    bArcade(L, 796, 940, G, { col: '#3af0e0', h: 130, seed: 917 });
+    bShophouse(L, 956, 1120, G, { floors: 3, wall: KMAT.mint, shops: [['noren', '#ff4ab0'], ['glass', '#ffd040']], roof: 'flat', seed: 919 });
+    bStack(L, 1136, 1400, G, { levels: 4, blade: '#ff4ab0', shop: 'pawn', shopCol: '#ffb040', seed: 921 });
+    // the White Dragon's building: flats above, the shop below
+    L.paint(WD.FRONT, G - 330, WD.END + 6, G, (P) => {
+      P.block(WD.FRONT, G - 320, WD.END, C, KMAT.plaster, { base: 0.4, panels: [60, 34], drips: 0.12, dripLen: 24 });
+      for (let fy = G - 306; fy < C - 24; fy += 34) for (let fx = 316; fx < WD.END - 14; fx += 26) if (fx > 352 || fy + 18 < G - 150) kWin(P, fx, fy, 14, 18, { lit: hash(fx, fy, 31) < 0.45 ? (hash(fx, fy, 32) < 0.5 ? '#ffd8a0' : '#a8e0ff') : null, blinds: hash(fx, fy, 33) < 0.4, curtain: hash(fx, fy, 34) < 0.3 ? '#5a2a3a' : null });
+      P.block(WD.FRONT - 4, G - 330, WD.END + 4, G - 320, KMAT.kawara, { base: 0.5 });
+      P.block(WD.FRONT, C, WD.END, C + 6, MAT.concreteD, { base: 0.5 });
+      // the pier at the corner, the shop window, the door with its curtain, a pier at the end
+      P.block(WD.FRONT, C + 6, 330, G, KMAT.lacquer, { base: 0.42 });
+      P.block(WD.END - 12, C + 6, WD.END, G, KMAT.lacquer, { base: 0.42 });
+      P.block(330, C + 6, WD.END - 12, C + 16, KMAT.darkwood, { base: 0.5 }); // the fascia
+      // the window: warm light, steam on the glass, people eating at the counter inside
+      kFill(P, 336, C + 22, 404, G - 18, '#2a120a');
+      for (let y = C + 23; y < G - 19; y++) for (let x = 337; x < 403; x++) P.put(x, y, mixRgb([200, 110, 50], [120, 50, 24], (y - C) / 100 + hash(x >> 3, y >> 3, 81) * 0.2), 0.12);
+      for (const [x, h] of [[348, 18], [366, 20], [386, 17]]) { for (let y = G - 19 - h; y < G - 19; y++) for (let dx = 0; dx < 7; dx++) if (y > G - 19 - h + 3 || (dx > 1 && dx < 5)) P.put(x + dx, y, [40, 20, 14]); }
+      for (let x = 337; x < 403; x++) { P.put(x, G - 24, [60, 30, 18]); P.put(x, G - 23, [90, 50, 30]); }
+      for (let k = 0; k < 40; k++) P.tint(337 + Math.floor(hash(k, 1, 82) * 66), C + 23 + Math.floor(hash(k, 2, 82) * 20), [255, 240, 220], 0.3);
+      kFill(P, 334, G - 18, 406, G - 14, '#1a0e0a'); kFill(P, 334, G - 14, 406, G, '#2a1612');
+      // the door: dark wood, a lit gap, the curtain over it
+      kFill(P, 410, C + 18, 440, G, '#140c0a'); for (let y = C + 20; y < G; y++) P.put(425, y, [255, 180, 110], 0.4);
+      kNoren(P, 408, 442, C + 18, 26, '#e8e4dc');
     });
-    // the front: a pier at the corner, the entrance with its curtain
-    L.paint(300, C, WD.IN, G, (P) => {
-      P.block(300, C + 6, 330, G, KMAT.lacquer, { base: 0.42 });
-      kFill(P, 330, C + 6, WD.IN, G, '#140c0a');
-      kNoren(P, 334, WD.IN - 2, C + 10, 30, '#e8e4dc');
-    });
-    // ---- the bar: warm tiles, a counter, stools, lanterns, the menu
-    L.paint(WD.IN, C + 6, WD.PART, G, (P) => {
-      P.block(WD.IN, C + 6, WD.PART, G, KMAT.terracotta, { base: 0.36, lip: 0, panels: [8, 8] });
-      // the menu boards over the pots, steam stains on the tiles
-      for (const [x, w] of [[470, 60], [560, 80], [668, 50]]) { kFill(P, x, C + 18, x + w, C + 40, '#120806'); for (let k = 0; k < w - 10; k += 5) P.put(x + 5 + k, C + 24 + (k % 3) * 5, [255, 210, 150], 0.4); }
-      // the counter
-      P.block(440, G - 30, 720, G - 26, KMAT.darkwood, { base: 0.62 }); P.block(446, G - 26, 714, G, KMAT.lacquer, { base: 0.38, panels: [34, 26] });
-      // a skirting, the floor's edge
-      for (let x = WD.IN; x < WD.PART; x++) P.put(x, G - 2, [30, 14, 10]);
-    });
-    bLanterns(L, WD.IN + 10, WD.PART - 10, C + 10, ['#ff3a3a', '#ffb040'], { step: 26 });
-    for (const x of [470, 520, 570, 620, 670]) L.prop('deco', x, G, { art: () => stool(), id: 'wdstool' + x });
-    L.light(580, G - 50, 120, [1, 0.62, 0.38], 0.9); L.vents.push && L.vents.push({ x: 600, y: G - 34, kind: 'steam' });
-    L.npc({ name: 'Auntie Lin', role: 'noodles', look: { skin: SKINS[0], hair: 'bun', hairCol: '#c8c8c8', top: '#e8e0d0', apron: '#8a1a24', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 600, y: G - 2, face: 1, sched: [[0, 24, 600, 'work']], lines: ['Eat first. Then fix things.', 'The cellar is yours as long as the rent comes and nobody lifts that rug.', 'Nobody asks what you do down there. Nobody asks me what\'s in the broth either.'] });
-    // ---- the partition: a curtain through to the back
-    L.paint(WD.PART, C + 6, WD.BACK, G, (P) => { P.block(WD.PART, C + 6, WD.BACK, G - 40, MAT.concreteD, { base: 0.4 }); kNoren(P, WD.PART - 2, WD.BACK + 2, G - 40, 26, '#2a2a3a'); });
-    // ---- the storeroom: sacks and crates, the cold room, a mop, and a rug
-    L.paint(WD.BACK, C + 6, WD.END, G, (P) => {
-      P.block(WD.BACK, C + 6, WD.END, G, MAT.concreteD, { base: 0.3, lip: 0, panels: [46, 30], drips: 0.06, dripLen: 12 });
-      // shelves of sacks and tins along the wall
-      for (const y of [C + 40, C + 70]) { P.block(790, y, 900, y + 3, KMAT.darkwood, { base: 0.5 }); for (let x = 794; x < 896; x += 12) { const top = y - 12 + (x % 3), c = [[200, 184, 144], [168, 152, 112], [216, 200, 160]][(x >> 2) % 3]; for (let yy = top; yy < y; yy++) { const k = yy - top, inset = k < 2 ? 3 - k : 0; for (let xx = x + inset; xx < x + 10 - inset; xx++) P.put(xx, yy, k === 2 ? [90, 70, 50] : xx === x + inset ? mixRgb(c, [255, 240, 210], 0.3) : xx === x + 9 - inset ? mixRgb(c, [20, 14, 10], 0.4) : c); } for (let xx = x + 3; xx < x + 7; xx++) P.put(xx, top + 6, mixRgb(c, [120, 30, 30], 0.6)); } }
-      // the cold room's steel door, a strip of light under it
-      P.block(930, C + 24, 976, G, MAT.steelD, { base: 0.45, panels: [46, 24] }); kFill(P, 966, C + 60, 972, C + 76, '#8a909c'); for (let x = 930; x < 976; x++) P.put(x, G - 1, [120, 200, 230]);
-      for (let x = WD.BACK; x < WD.END; x++) P.put(x, C + 9 + Math.round(Math.sin(x * 0.05) * 1.5), [20, 20, 24]);
-      for (let x = WD.BACK; x < WD.END; x++) P.put(x, G - 2, [22, 22, 26]);
-    });
-    L.light(880, C + 16, 60, [1, 0.8, 0.55], 0.7); L.light(953, G - 4, 26, [0.5, 0.8, 1], 0.4);
-    for (const [x, w, h, col] of [[808, 14, 12, '#5a4a32'], [824, 12, 10, '#4a3a2a'], [814, 12, 9, '#6a5a3a'], [1050, 16, 14, '#4a4a3a'], [1068, 12, 10, '#5a4a32']]) L.prop('deco', x, x === 814 ? G - 12 : G, { art: () => crate({ w, h, col }), id: 'wdcrate' + x + h });
-    // the rug, and under it the trapdoor down
-    L.prop('trapdoor', 1010, G, { to: ['d_cellar', 'ladder'] });
-    L.spawns.trapdoor = [1010, G];
-    L.wall(WD.END, C, WD.END + 28, G, MAT.concreteD, { base: 0.35 });
-    L.dry.push([330, 0, 1120, L.h]); // (no rain indoors, nor under the eaves)
-    for (const w of L.wet) w.x1 = Math.min(w.x1, 330); // (the street is wet; the bar's floor isn't)
-    // ---- the street out front: a machine and a junk pile to strip
-    L.prop('vending', 250, G, { look: { col: '#3af0e0', body: '#2a3a4a' }, label: 'vending machine' }); L.light(250, G - 12, 30, [0.3, 0.9, 1], 0.5);
-    L.prop('junk', 186, G, { label: 'junk pile' });
-    // ---- the sign: on the corner, over the street
-    // a conduit from the sign down the pier into the wall
+    bLanterns(L, 336, 450, C + 8, ['#ff3a3a', '#ffb040'], { step: 22 });
+    L.light(370, G - 40, 50, [1, 0.6, 0.35], 0.7);
+    L.prop('door', WD.DOOR, G, { label: 'The White Dragon', to: ['d_noodles', 'door'] });
+    L.spawns.door = [WD.DOOR, G];
+    // the sign on the corner, over the street, a conduit down the pier
     L.paint(318, G - 48, 324, G, (P) => { for (let y = G - 48; y < G - 4; y++) { P.put(320, y, [20, 22, 28]); P.put(321, y, [58, 62, 72]); } for (const y of [G - 40, G - 24, G - 10]) { P.put(319, y, [90, 96, 108]); P.put(322, y, [90, 96, 108]); } });
     L.prop('deco', 312, G - 46, { art: () => dragonSign(), id: 'wdsign' });
     L.light(316, G - 100, 90, [0.75, 0.9, 1], 0.8); L.light(296, G - 120, 40, [1, 0.3, 0.38], 0.5);
+    // a machine and a junk pile to strip
+    L.prop('vending', 250, G, { look: { col: '#3af0e0', body: '#2a3a4a' }, label: 'vending machine' }); L.light(250, G - 12, 30, [0.3, 0.9, 1], 0.5);
+    L.prop('junk', 186, G, { label: 'junk pile' });
+    L.prop('vending', 1430, G, { look: { col: '#ff4ab0', body: '#3a2a3a' }, label: 'vending machine' }); L.light(1430, G - 12, 30, [1, 0.3, 0.7], 0.5);
   },
 }));
+
+// ---- the shop: through the front door. The dining room, Auntie Lin at the
+// counter, and through the curtain her storeroom with the rug and the trapdoor.
+const WN = { W: 940, CEIL: 128, PART: 618, BACK: 630, END: 912 };
+LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2, depth: '+2 m', mapX: 230, blurb: 'Auntie Lin\'s noodle bar.', label: 'Noodle bar', make: () => district({
+  id: 'd_noodles', name: 'The White Dragon', tier: 1, W: WN.W, sky: false, rain: 0, amb: [0.16, 0.12, 0.12], floor: KMAT.darkwood,
+  build(L, G) {
+    const C = G - WN.CEIL;
+    L.props = L.props.filter((p) => p.kind !== 'transit');
+    L.paint(0, 0, WN.W, G, (P) => {
+      P.block(0, 0, WN.W, C, MAT.concreteD, { base: 0.14, lip: 0, panels: [80, 40] }); // the flats' floor over the shop
+      kFill(P, 0, C, WN.W, C + 6, '#1a0e0a');
+      // the dining room: warm tile, the menu boards, steam stains
+      P.block(24, C + 6, WN.PART, G, KMAT.terracotta, { base: 0.36, lip: 0, panels: [8, 8] });
+      for (const [x, w] of [[380, 60], [460, 80], [552, 50]]) { kFill(P, x, C + 18, x + w, C + 40, '#120806'); for (let k = 0; k < w - 10; k += 5) P.put(x + 5 + k, C + 24 + (k % 3) * 5, [255, 210, 150], 0.4); }
+      for (let k = 0; k < 20; k++) P.tint(380 + Math.floor(hash(k, 1, 83) * 220), C + 44 + Math.floor(hash(k, 2, 83) * 30), [40, 20, 14], 0.25);
+      // the front window, from inside: the street, wet and neon
+      kFill(P, 40, C + 20, 120, G - 30, '#06080e');
+      for (let y = C + 21; y < G - 31; y++) for (let x = 41; x < 119; x++) { const v = hash(x >> 2, y >> 3, 84); P.put(x, y, v < 0.06 ? [255, 74, 176] : v < 0.1 ? [58, 240, 224] : mixRgb([10, 14, 24], [24, 30, 48], (y - C) / 90)); }
+      for (let k = 0; k < 30; k++) { const x = 42 + Math.floor(hash(k, 3, 84) * 76), y0 = C + 22 + Math.floor(hash(k, 4, 84) * 40); for (let y = y0; y < y0 + 5; y++) P.put(x, y, [120, 140, 170]); }
+      kFill(P, 36, G - 30, 124, G - 26, '#2a1610');
+      // the tables along the wall: dark wood, a bowl and chopsticks on each
+      for (const x of [150, 220, 290]) { P.block(x, G - 18, x + 26, G - 15, KMAT.darkwood, { base: 0.6 }); kFill(P, x + 11, G - 15, x + 15, G, '#1a0e0a'); kFill(P, x + 9, G - 21, x + 17, G - 18, '#e8e0d0'); kFill(P, x + 10, G - 22, x + 16, G - 21, '#c84a2a'); }
+      // the counter, the pots behind it
+      P.block(372, G - 30, 610, G - 26, KMAT.darkwood, { base: 0.62 }); P.block(378, G - 26, 604, G, KMAT.lacquer, { base: 0.38, panels: [34, 26] });
+      for (const x of [400, 430]) { P.block(x, G - 44, x + 22, G - 30, MAT.steel, { base: 0.5 }); }
+      for (const x of [470, 520, 560]) kFill(P, x, G - 33, x + 8, G - 30, '#e8e0d0');
+      for (let x = 24; x < WN.PART; x++) P.put(x, G - 2, [30, 14, 10]);
+      // the partition and its curtain through to the back
+      P.block(WN.PART, C + 6, WN.BACK, G - 40, MAT.concreteD, { base: 0.4 }); kNoren(P, WN.PART - 2, WN.BACK + 2, G - 40, 26, '#2a2a3a');
+      // ---- the storeroom: sacks and tins, the cold room, crates, and a rug
+      P.block(WN.BACK, C + 6, WN.END, G, MAT.concreteD, { base: 0.3, lip: 0, panels: [46, 30], drips: 0.06, dripLen: 12 });
+      for (const y of [C + 40, C + 70]) { P.block(646, y, 756, y + 3, KMAT.darkwood, { base: 0.5 }); for (let x = 650; x < 752; x += 12) { const top = y - 12 + (x % 3), c = [[200, 184, 144], [168, 152, 112], [216, 200, 160]][(x >> 2) % 3]; for (let yy = top; yy < y; yy++) { const k = yy - top, inset = k < 2 ? 3 - k : 0; for (let xx = x + inset; xx < x + 10 - inset; xx++) P.put(xx, yy, k === 2 ? [90, 70, 50] : xx === x + inset ? mixRgb(c, [255, 240, 210], 0.3) : xx === x + 9 - inset ? mixRgb(c, [20, 14, 10], 0.4) : c); } for (let xx = x + 3; xx < x + 7; xx++) P.put(xx, top + 6, mixRgb(c, [120, 30, 30], 0.6)); } }
+      P.block(780, C + 24, 826, G, MAT.steelD, { base: 0.45, panels: [46, 24] }); kFill(P, 816, C + 60, 822, C + 76, '#8a909c'); for (let x = 780; x < 826; x++) P.put(x, G - 1, [120, 200, 230]);
+      for (let x = WN.BACK; x < WN.END; x++) P.put(x, C + 9 + Math.round(Math.sin(x * 0.05) * 1.5), [20, 20, 24]);
+      for (let x = WN.BACK; x < WN.END; x++) P.put(x, G - 2, [22, 22, 26]);
+    });
+    L.wall(0, 0, 24, G, MAT.concreteD, { base: 0.3 }); L.wall(WN.END, 0, WN.W, G, MAT.concreteD, { base: 0.35 });
+    // the way out, under the front curtain
+    L.prop('door', 60, G, { label: 'Out to the street', out: true, to: ['d_dragon', 'door'] });
+    // the dining room's light: lanterns, the pots' steam, the window's neon
+    bLanterns(L, 140, 600, C + 10, ['#ff3a3a', '#ffb040'], { step: 26 });
+    L.light(480, G - 50, 130, [1, 0.62, 0.38], 0.9); L.light(220, G - 40, 110, [1, 0.6, 0.38], 0.7); L.light(80, G - 60, 60, [0.8, 0.4, 0.9], 0.5);
+    for (const x of [411, 441]) L.vents.push({ x, y: G - 46, kind: 'steam' });
+    for (const x of [163, 233, 303]) L.vents.push({ x, y: G - 23, kind: 'steam' });
+    for (const x of [400, 450, 500, 550]) L.prop('deco', x, G, { art: () => stool(), id: 'wnstool' + x });
+    L.npc({ name: 'Auntie Lin', role: 'noodles', look: { skin: SKINS[0], hair: 'bun', hairCol: '#c8c8c8', top: '#e8e0d0', apron: '#8a1a24', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 470, y: G - 2, face: 1, sched: [[0, 24, 470, 'work']], behind: true, lines: ['Eat first. Then fix things.', 'The cellar is yours as long as the rent comes and nobody lifts that rug.', 'Nobody asks what you do down there. Nobody asks me what\'s in the broth either.'] });
+    // people eating: at the tables and at the counter, chopsticks up
+    const DINE = [
+      ['Mr Okonkwo', 144, 1, { skin: SKINS[5], hair: 'bald', top: '#3a4a3a', coat: 'jacket', legs: '#2a2a2a' }, ['Best broth this side of the canal.', 'Don\'t talk to me while I eat.']],
+      ['A courier', 214, 1, { skin: SKINS[2], hair: 'cap', capCol: '#ff8a20', top: '#2a2a3a', legs: '#2a2a34' }, ['Ten minutes, then I\'m back on the bike.', 'Lin puts something in it. Don\'t ask.']],
+      ['Two shifts', 284, 1, { skin: SKINS[3], hair: 'bun', hairCol: '#1a1414', top: '#e0e8e8', legs: '#3a4a4a' }, ['Eighteen hours at the clinic. This is the good part.']],
+      ['A regular', 500, 1, { skin: SKINS[1], hair: 'short', hairCol: '#5a3a1a', top: '#5a2a2a', coat: 'long', legs: '#2a2a2a' }, ['Every night for eleven years. Same stool.', 'Lin\'s got a basement, you know. Wine, I think.']],
+      ['A ganger, off duty', 550, 1, { skin: SKINS[4], hair: 'mohawk', hairCol: '#3af0e0', hairGlow: true, top: '#1a1a1e', legs: '#2a1a1e', cyArm: true }, ['Even we eat.', 'Not here for trouble. Here for noodles.']],
+    ];
+    for (const x of [144, 214, 284]) L.prop('deco', x, G, { art: () => stool(), id: 'wnstoolt' + x });
+    for (const [name, x, face, look, lines] of DINE) L.npc({ name, look: Object.assign({ hands: { fx: 25, fy: 27 } }, look), x, y: G - 2, face, sched: [[0, 24, x, 'sit']], lines });
+    // the storeroom's light, crates, and the rug over the trapdoor
+    L.light(730, C + 16, 60, [1, 0.8, 0.55], 0.7); L.light(803, G - 4, 26, [0.5, 0.8, 1], 0.4);
+    for (const [x, w, h, col] of [[664, 14, 12, '#5a4a32'], [680, 12, 10, '#4a3a2a'], [670, 12, 9, '#6a5a3a'], [870, 16, 14, '#4a4a3a'], [888, 12, 10, '#5a4a32']]) L.prop('deco', x, x === 670 ? G - 12 : G, { art: () => crate({ w, h, col }), id: 'wncrate' + x + h });
+    L.prop('trapdoor', 846, G, { to: ['d_cellar', 'ladder'] });
+    L.spawns = { door: [90, G], trapdoor: [846, G] };
+    L.spots = Array.from({ length: 10 }, () => [870, G]);
+  },
+}) };
 
 // ---- the basement: under the storeroom, down the ladder. A ripper's den
 // made out of a cellar: grimy white tile under a red neon strip, the work chair
@@ -161,7 +211,7 @@ LEVELS.d_cellar = { name: 'Under the White Dragon', tier: 1, hidden: true, metre
     // the red strip: neon, across the work wall
     L.tube(198, TT - 4, 364, '#ff2a40', 0.42);
     // the ladder up
-    L.prop('trapdoor', 72, G, { up: true, to: ['d_dragon', 'trapdoor'] });
+    L.prop('trapdoor', 72, G, { up: true, to: ['d_noodles', 'trapdoor'] });
     L.light(72, C + 6, 44, [1, 0.8, 0.55], 0.5);
     // the chair under its lamps, the tray of tools, the monitors
     L.prop('deco', 340, G, { art: () => workChair(), id: 'clchair' });

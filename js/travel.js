@@ -19,9 +19,9 @@ const LOCAL_LINES = {
 };
 
 // ---- travel between places: what's open, and how you get there -----------------
-// Any way out (a spinner pad, a subway platform, a lift cage, a manhole)
+// Any way out (a cab stand, a subway platform, a lift cage, a manhole)
 // opens the city map, and from it you can go anywhere you've opened: the
-// spinner flies the sky and the street, a manhole ladder takes you down into
+// cab flies the sky and the street (for a fare, until Ozzy owes you), a manhole ladder takes you down into
 // the undercity, the old subway runs to Old Town, lift cages go deeper.
 const Travel = {
   // the band of the city a place is in, from its depth
@@ -45,12 +45,12 @@ const Travel = {
     return false;
   },
   // how you'd get there
-  how(id) { return { sky: 'Spinner', high: 'Spinner', street: 'Spinner', under: 'Down a manhole', old: 'Subway', works: 'Lift cage', bowels: 'Lift cage' }[this.band(id)]; },
+  how(id) { const f = Flight.cabFare(); const cab = f ? 'Cab · ' + f + ' cr' : 'Ozzy\'s cab'; return { sky: cab, high: cab, street: cab, under: 'Down a manhole', old: 'Subway', works: 'Lift cage', bowels: 'Lift cage' }[this.band(id)]; },
   spawnFor(id) { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); if (L.spawns.enter) return 'enter'; if (World.L && this.band(World.L.id) === 'under' && L.spawns.manhole) return 'manhole'; for (const k of ['pad', 'elevator', 'subway', 'lift']) if (L.spawns[k]) return k; return Object.keys(L.spawns)[0]; },
   go(id) {
     Hud.toggle(null);
     const sp = this.spawnFor(id), b = this.band(id);
-    if (b === 'sky' || b === 'high' || b === 'street') Flight.start(id, sp, false);
+    if (b === 'sky' || b === 'high' || b === 'street') { const f = Flight.cabFare(); if (f && !Game.pay({ cr: f })) { Game.toast('You can\'t afford the fare: ' + f + ' cr.'); return; } Flight.start(id, sp, true); }
     else { Game.toast({ under: 'You climb down the ladder into the dark and the drip.', old: 'The old train lurches off into the dark.', works: 'The cage drops, and keeps dropping.', bowels: 'The cage drops past the last of the lights.' }[b]); Game.go(id, sp); }
   },
   // where a key door leads
