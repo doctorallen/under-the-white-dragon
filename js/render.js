@@ -5,8 +5,9 @@
 // chunks and the props are drawn, then the light: a light map worked out on a
 // 4 px grid fixed to the world and scaled up smooth, multiplied over them. People are lit after that, each by the light where they stand
 // but never below a floor, so a figure always reads against the wall. Then
-// the parts of props in front of people, what glows (with a bloom), the wet
-// ground's reflections, and the rain.
+// the parts of props in front of people, what glows (with a bloom), the
+// reflections (water's, and wet ground's while it's wet: day.js's Weather),
+// and the rain, as hard as it's raining.
 // ---------------------------------------------------------------------------
 const View = {
   cv: null, g: null, low: null, lg: null, gl: null, gg: null, bl: null, bg: null, bl2: null, bg2: null, lc: null, lgc: null, limg: null, tmp: null, tg: null,
@@ -131,8 +132,9 @@ function render() {
   for (const p of Game.particles) { gg.fillStyle = css(p.c); gg.fillRect(Math.round(p.x - cx), Math.round(p.y - cy), 1, 1); }
   // rain, brighter where the light is: each drop two short strokes, drawn
   // in four batches by brightness
-  if (L.rain) {
-    const n = Math.round(w * h / 260), tt = Game.t, B = [[], [], [], []];
+  const rk = L.rain ? Weather.rain() : 0;
+  if (rk > 0.01) {
+    const n = Math.round((w * h / 260) * rk), tt = Game.t, B = [[], [], [], []];
     for (let k = 0; k < n; k++) {
       const sp = 220 + hash(k, 5, 31) * 80, y = ((hash(k, 2, 31) * (h + 40) + tt * sp) % (h + 40)) - 20, x = ((hash(k, 1, 31) * (w + 40) - cx * 0.9 + y * 0.35) % (w + 40) + w + 40) % (w + 40) - 20;
       if (L.dry && L.dry.some((r) => x + cx > r[0] && x + cx < r[2] && y + cy > r[1] && y + cy < r[3])) continue; // under cover
@@ -143,7 +145,9 @@ function render() {
   }
   // the wet strips in view (view px)
   const wets = [];
-  for (const wt of L.wet) { const y0 = wt.y - cy, x0 = Math.max(0, wt.x0 - cx), x1 = Math.min(w, wt.x1 - cx); if (y0 >= 0 && y0 <= h && x1 > x0) wets.push({ x0, y0, x1, depth: wt.depth, k: wt.k }); }
+  // (the street reflects only while it's wet; water always)
+  const wk = Weather.wet();
+  for (const wt of L.wet) { const y0 = wt.y - cy, x0 = Math.max(0, wt.x0 - cx), x1 = Math.min(w, wt.x1 - cx), k = wt.rain ? wt.k * wk : wt.k; if (k > 0.02 && y0 >= 0 && y0 <= h && x1 > x0) wets.push({ x0, y0, x1, depth: wt.depth, k }); }
   if (Day.open(L)) Day.dim(gg, w, h);
   finishFrame(wets);
 }

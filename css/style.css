@@ -421,3 +421,10 @@ body:has(#stick.on) #stickhint, body:has(#hud.flying) #stickhint { visibility: h
 /* the dev drawer's look into a resident's mind (Tyrell's Palantír) */
 pre.mind { white-space: pre-wrap; font: 12px/1.35 monospace; color: #cfe; background: #0008; padding: 6px 8px; margin: 6px 0 0; max-height: 180px; overflow: auto; }
 pre.mind:empty { display: none; }
+
+/* what Use just got: a line each over where it came from ("+1 coil") */
+#gains .gain { position: absolute; transform: translateY(-100%); white-space: nowrap; pointer-events: none; display: flex; align-items: center; gap: 5px; font-family: var(--px); font-size: 15px; color: #f4ecff; text-shadow: 1px 0 0 #120c18, -1px 0 0 #120c18, 0 1px 0 #120c18, 0 -1px 0 #120c18, 1px 1px 0 #120c18; }
+#gains .gain b { font-weight: normal; color: #ffd060; }
+#gains .gain.cr b { color: #6af0a0; }
+#gains .gain i { font-style: normal; color: #b0a6c0; }
+#gains .gain img { height: 12px; width: auto; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 #120c18); }

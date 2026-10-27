@@ -75,7 +75,8 @@ const Life = {
     for (const d of L.drips) if (hash(d.x, Math.floor(t * 2 + d.x), 10) < 0.5 && Math.floor(t * 2 + d.x) !== d.last) { d.last = Math.floor(t * 2 + d.x); this.drops.push({ x: d.x, y: d.y0, vy: 0, y1: d.y1 }); }
     for (const d of this.drops) { d.vy += 500 * dt; d.y += d.vy * dt; if (d.y >= d.y1) { d.done = true; this.splashes.push({ x: d.x, y: d.y1, t: 0 }); } }
     this.drops = this.drops.filter((d) => !d.done);
-    if (L.rain) for (const w of L.wet) for (let k = 0; k < 3; k++) { const x = Game.cam.x + (hash(Game.frame, k, 21) - 0.5) * View.w; if (x > w.x0 && x < w.x1 && !(L.dry || []).some((r) => x > r[0] && x < r[2] && w.y - 1 > r[1] && w.y - 1 < r[3])) this.splashes.push({ x, y: w.y - 1, t: 0 }); }
+    const rk = L.rain ? Weather.rain() : 0;
+    if (rk > 0.05) for (const w of L.wet) for (let k = 0; k < Math.ceil(3 * rk); k++) { const x = Game.cam.x + (hash(Game.frame, k, 21) - 0.5) * View.w; if (x > w.x0 && x < w.x1 && !(L.dry || []).some((r) => x > r[0] && x < r[2] && w.y - 1 > r[1] && w.y - 1 < r[3])) this.splashes.push({ x, y: w.y - 1, t: 0 }); }
     for (const s of this.splashes) s.t += dt;
     this.splashes = this.splashes.filter((s) => s.t < 0.18);
     if (this.splashes.length > 80) this.splashes.splice(0, this.splashes.length - 80);

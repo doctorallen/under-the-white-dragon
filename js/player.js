@@ -23,7 +23,7 @@ const RunnerArt = {
       // a pose can be the legs' and the arms' apart ('walk3+shot'): firing
       // while moving keeps the stride and changes only the arms
       const [legs, arms] = pose.split('+'), up = arms || legs;
-      const o = Object.assign({}, RUNNER, { pose: legs, hands: POSE_HANDS[up] || {}, fixedHands: !!arms, seed: 5, holding: true, gunDown: !['aim', 'shot', 'strike', 'cut'].includes(up) && !/^climb/.test(up) });
+      const o = Object.assign({}, RUNNER, { pose: legs, hands: POSE_HANDS[up] || {}, fixedHands: !!arms, seed: 5, holding: true, gunDown: !['aim', 'shot', 'strike', 'cut'].includes(up) && !/^climb/.test(up), view: /^climb/.test(legs) ? 'back' : undefined }); // (on a ladder, seen from behind)
       // the inner layer's colour shows as the body without a coat
       for (const slot of SLOT_ORDER) { const g = Game.worn(slot); if (g && g.look) Object.assign(o, g.look); }
       if (!Game.worn('outer') && o.shirt) o.top = o.shirt;

@@ -719,7 +719,9 @@ function district(o) {
   L.ground = G; L.spots = []; L.tier = o.tier;
   if (o.sky !== false) { cityLayers(L); L.layerDy = o.layerDy !== undefined ? o.layerDy : 0; }
   L.floor(0, W, G, H - G, o.floor || MAT.concrete, { base: 0.42, drips: 0 });
-  if (o.sky !== false && o.wet !== false) L.wet.push({ y: G + 1, x0: 0, x1: W, depth: 22, k: 0.35 });
+  // the street's reflection, when it rains here (Weather.wet says how wet it is)
+  const rains = o.rain === undefined ? o.sky !== false : !!o.rain;
+  if (rains && o.wet !== false) L.wet.push({ y: G + 1, x0: 0, x1: W, depth: 22, k: 0.35, rain: true });
   // the way in
   const mode = o.transit || 'spinner';
   L.prop('transit', 70, G, { mode, label: { spinner: 'a cab stand', subway: 'subway platform', lift: 'lift cage', hatch: 'ladder up to the street' }[mode] || 'the way out' });

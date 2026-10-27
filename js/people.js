@@ -5,6 +5,7 @@
 const rp = (h, n = 6) => { const c = col3(h); return rampOf([mixRgb(c, [6, 4, 10], 0.55), c, mixRgb(c, [255, 245, 230], 0.3)], n, 0.5, 0.25); };
 const SKINS = ['#e8b48a', '#c88a5a', '#8a5a3a', '#5a3a26', '#f0c8a8', '#b07850'];
 function person(o = {}) {
+  if (o.view === 'back') return personBack(o);
   // a canvas 40 x 50, the feet at the bottom middle; heights in units of a
   // 33 px adult, so `tall` scales the whole figure from the feet
   const S = Spr.figure(44, 52, o.seed || 1); S.ax = 20; S.ay = 51;
@@ -157,6 +158,67 @@ function person(o = {}) {
   if (o.umbrella) { const uc = rp(o.umbrella, 6); S.cap(hx, hy, hx, head - 9, 0.6, 0.6, ['#2a2a2a', '#5a5a5a', '#8a8a8a']); S.cap(hx - 9, head - 9, hx + 9, head - 9, 2.4, 2.4, uc, { mask: (x, y) => y <= head - 9 }); for (let x = -10; x <= 10; x++) S.px(hx + x, head - 8.6, o.umbrellaGlow ? col3(o.umbrellaGlow) : uc[0], !!o.umbrellaGlow && x % 2 === 0); }
   // a riot shield in front, a lit strip down its edge
   if (o.shield) { const sc = rp(o.shield, 6); S.box(hx + 2, hy - 13, hx + 6, hy + 9, sc, { lo: 1, hi: 4 }); for (let y = hy - 12; y < hy + 9; y += 2) S.px(hx + 6, y, col3(o.visor || '#3af0e0'), true); S.px(hx + 4, hy - 6, '#c8d8e8'); }
+  const out = S.done(); out.actor = true; return out;
+}
+// The same person from behind, as they climb a ladder: legs side by side,
+// one foot a rung up; the back of the coat with its seam (and a long coat's
+// vent); both arms reaching up to the rungs, the other way round from the
+// feet; and the back of the head, which is mostly hair (or a hood, a cap, a
+// hat). climb0 and climb1 are the two halves of a climb; anything else
+// stands with the arms down.
+function personBack(o = {}) {
+  const S = Spr.figure(44, 52, (o.seed || 1) + 7); S.ax = 20; S.ay = 51;
+  const F = 51, u = o.tall || 1, Y = (h) => F - h * u, cx = 20, wd = o.wide || 0, pose = o.pose || 'stand';
+  const sk = rp(o.skin || SKINS[0], 6), top = rp(o.top || '#3a3a48', 7), legs = rp(o.legs || '#2a2a34', 6), boots = rp(o.boots || '#18161c', 5);
+  const hair = rp(o.hairCol || '#1a1414', 6), chrome = MAT.chrome, acc = o.acc ? col3(o.acc) : null, dark = (r) => r.map((c) => mixRgb(c, [8, 6, 12], 0.3));
+  const climb = /^climb/.test(pose), side = pose === 'climb1' ? 1 : -1; // (the side whose foot is up a rung; its hand is down)
+  const head = Y(29.5), sh = Y(24), waist = Y(16), hip = Y(14), knee = Y(7.2), ank = Y(1.6);
+  // the legs, from the hips to the heels
+  for (const sd of [-1, 1]) {
+    const up = climb && sd === side ? 3.5 : 0, R = o.cyLegs ? chrome : legs, hx = cx + sd * 1.9, kx = cx + sd * 2.1, ky = knee - up * 0.8, ax = cx + sd * 2, ay = ank - up;
+    S.cap(hx, hip, kx, ky, 2.3 + wd * 0.3, 1.9, sd < 0 ? R : dark(R)); S.cap(kx, ky, ax, ay, 1.8, 1.4, sd < 0 ? R : dark(R));
+    S.part(); S.cap(ax - 1, ay + 0.3, ax + 1, ay + 0.3, 1.6, 1.3, boots);
+    if (o.cyLegs && acc) S.px(kx, ky, acc, true);
+  }
+  S.part();
+  // the arms: up to the rungs when climbing, else hanging
+  const w0 = 4.4 + wd, arm = (sd) => {
+    const cyb = o.cyArm === 'both' || (o.cyArm && sd > 0), R = cyb ? chrome : top, shx = cx + sd * (w0 - 1), hx = climb ? cx + sd * 5.6 : cx + sd * (w0 + 0.6), hy = climb ? (sd === side ? sh + 0.5 : head - 5.5) : hip + 0.5;
+    const ex = climb ? shx + sd * 2.6 : shx + sd * 0.8, ey = climb ? (sh + 1 + hy) / 2 + 1 : (sh + hy) / 2;
+    S.cap(shx, sh + 1, ex, ey, 1.9 + wd * 0.2, 1.6, R); S.cap(ex, ey, hx, hy, 1.6, 1.3, R);
+    S.part(); S.cap(hx, hy, hx, hy - 0.4, 1.3, 1.2, cyb ? chrome : sk);
+    if (cyb && acc) S.px(ex, ey, acc, true);
+  };
+  // the body: the back of a coat or a jacket, its seam, a collar, a belt
+  const hem = o.coat === 'long' ? Y(5.5) : hip + 0.8;
+  S.shape([[cx - w0 + 0.4, sh - 0.6], [cx + w0 - 0.4, sh - 0.6], [cx + w0 + 0.4, sh + 2], [cx + w0 - 0.4, waist], [cx + w0 + (o.coat === 'long' ? 1.2 : 0), hem], [cx - w0 - (o.coat === 'long' ? 1.2 : 0), hem], [cx - w0 + 0.4, waist], [cx - w0 - 0.4, sh + 2]], top, { down: 0.3, folds: o.coat === 'long' });
+  for (let y = Math.round(sh + 1); y < Math.round(o.coat === 'long' ? hem : hip); y++) if (S.get(cx, y)) S.px(cx, y, top[1]);
+  if (o.coat === 'long') for (let y = Math.round(hip + 3); y < Math.round(hem); y++) S.px(cx, y, top[0]);
+  if (o.coat !== 'long') for (let x = Math.round(cx - w0); x <= Math.round(cx + w0); x++) if (S.get(x, Math.round(hip))) S.px(x, hip, rp(o.belt || '#141216')[1]);
+  if (acc && o.trim !== false) for (let y = Math.round(sh + 1); y < Math.round(hem); y += 2) { S.px(cx - w0 + 0.6, y, acc, true); S.px(cx + w0 - 0.6, y, acc, true); }
+  if (o.armor) S.cap(cx - 3, sh + 2.5, cx + 3, sh + 2.5, 3.4, 3.4, rp(o.armor, 7));
+  if (o.pack) { const pk = rp(o.pack, 6); S.box(cx - 3.5, sh + 1, cx + 3.5, waist + 1, pk, { lo: 1, hi: 4 }); S.px(cx, sh + 4, pk[0]); if (acc) S.px(cx + 2, sh + 3, acc, true); }
+  if (o.sheath === 'katana') S.limb(cx - 5, sh - 4, cx + 5, waist + 2, 1.2, ['#1a1a20', '#3a3a44', '#5a5a66']);
+  S.part(); arm(-1); S.part(); arm(1);
+  // the collar and the head: the nape, the ears, and over them the hair
+  S.part();
+  if (o.collar) S.cap(cx - 3, sh - 1, cx + 3, sh - 1, 2, 1.6, top);
+  S.cap(cx, sh, cx, head + 3, 1.5, 1.4, sk);
+  S.cap(cx, head - 0.6, cx, head + 0.8, 3.7, 3.3, sk);
+  S.px(cx - 3.8, head + 0.4, sk[2]); S.px(cx + 3.8, head + 0.4, sk[1]);
+  S.part(false); const hs = o.hair || 'short';
+  if (hs === 'short' || hs === 'undercut') { S.cap(cx, head - 1.6, cx, head + 0.2, 3.6, 3.2, hair); if (hs === 'undercut') for (let x = -2; x <= 2; x++) S.px(cx + x, head + 2, sk[1]); }
+  if (hs === 'bob') { S.cap(cx, head - 1.4, cx, head + 2.2, 4, 3.6, hair); for (let x = -3; x <= 3; x++) S.px(cx + x, head + 3.6, hair[1]); }
+  if (hs === 'long') { S.cap(cx, head - 1.4, cx, head + 1.5, 4, 3.6, hair); S.shape([[cx - 3.6, head + 1], [cx + 3.6, head + 1], [cx + 3, sh + 6], [cx - 3, sh + 6]], hair, { down: 0.2 }); }
+  if (hs === 'bun') { S.cap(cx, head - 1.6, cx, head + 0.4, 3.8, 3.4, hair); S.cap(cx, head - 4.6, cx, head - 4.6, 2, 2, hair); S.px(cx - 1, head - 6.6, '#d83a3a'); }
+  if (hs === 'mohawk') { for (let y = 0; y < 8; y++) { const hy = head - 4 + y * 0.9; for (let x = -1; x <= 1; x++) S.px(cx + x, hy - (y < 2 ? 2 : 0), mixRgb(hair[4], [255, 255, 255], y < 1 ? 0.45 : 0), !!o.hairGlow && y < 1); } }
+  if (hs === 'hood') S.cap(cx, head - 0.6, cx, head + 1.6, 4.6, 4.4, top);
+  if (hs === 'cap') { const cc = rp(o.capCol || '#3a2a2a'); S.cap(cx, head - 2.6, cx, head - 2, 3.8, 2.4, cc); S.px(cx, head - 0.6, cc[0]); S.cap(cx, head + 0.6, cx, head + 1.4, 3, 2, hair); }
+  if (hs === 'helmet') S.cap(cx, head - 0.6, cx, head + 0.6, 4.4, 4.2, rp(o.armor || '#c8ccd4', 7));
+  if (hs === 'bald') { S.px(cx - 1, head - 3.2, sk[5]); S.px(cx, head - 3.4, sk[4]); }
+  if (o.hat === 'fedora') { const hc = rp(o.hatCol || '#3a3028', 6); S.cap(cx, head - 3.6, cx, head - 3.4, 3.2, 2, hc); for (let x = -6; x <= 6; x++) S.px(cx + x, head - 2 + (Math.abs(x) > 4 ? 0.6 : 0), hc[1]); }
+  if (o.goggles) { for (let x = -4; x <= 4; x++) S.px(cx + x, head - 0.4, '#1a1a20'); }
+  if (o.port && acc) S.px(cx, head + 2.4, acc, true);
   const out = S.done(); out.actor = true; return out;
 }
 // walking frames come from the same choices

@@ -11,7 +11,7 @@
 const LEGACY = false;
 const Game = {
   frame: 0, t: 0, acc: 0, last: 0, paused: false, fade: 0, fadeTo: null,
-  s: null, cam: { x: 0, y: 0 }, toasts: [], particles: [], ghost: 0,
+  s: null, cam: { x: 0, y: 0 }, toasts: [], gains: [], particles: [], ghost: 0,
   fresh() {
     return {
       v: 1, level: 'd_cellar', spawn: 'bed', px: 0, py: 0, hp: T.player.hp, cr: 40, ram: T.ram.max,
@@ -148,6 +148,8 @@ const Game = {
     this.toast('You wake on your cot, sore, six hours later. Somebody carried you home and down the ladder.', 'warn');
     this.go('d_cellar', 'bed');
   },
+  // what Use just got, a line each ("+1 coil"), rising over where it came from
+  gain(x, y, list) { list.forEach((g, i) => this.gains.push(Object.assign({ x, y, t: this.t + i * 0.12, i, of: list.length }, g))); },
   toast(text, kind = '') {
     const last = this.toasts[this.toasts.length - 1];
     if (last && last.text === text && this.t - last.t < 2.5) { last.t = this.t; return; }
