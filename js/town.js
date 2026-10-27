@@ -96,7 +96,7 @@ function townNews() {
   const out = [];
   if (Game.flag('ozzy:rides')) out.push(['Ozzy\'s cab is flying again.', 'Some fixer sorted it. Down here, someone said.']);
   if (Game.flag('vey:schematic')) out.push(['That girl with the arm\'s been about.', 'Walks like nothing\'s wrong now.']);
-  if (Game.s.heat >= 40) out.push(['There\'s a drone on the street every night now.', 'Somebody\'s been noticed.']);
+  if (Game.s.heat >= 40) out.push(['A detective was asking about the White Dragon.', 'Asking what? Lin\'s noodles?'], ['Somebody\'s been noticed round here.', 'Not me. I\'m never noticed.']);
   return out;
 }
 

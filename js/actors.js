@@ -27,7 +27,8 @@ const Actors = {
     this.npcs = L.npcs.filter((def) => !def.show || Quests.npcShown(def)).map((def, i) => ({ def, i, x: def.x, y: def.y, face: def.face || 1, hidden: false, tx: def.x, wt: 0, bubble: null, line: 0, art: new Map() }));
     for (const n of this.npcs) { const e = this.entry(n); if (e && e[3] === 'away') { n.x = e[2]; n.hidden = true; } else if (e) n.x = e[2]; }
     this.enemies = []; this.bolts = []; this.bodies = []; this.throws = []; this.boss = null; // the dead stay where they fell till you leave
-    L.enemies.forEach((d, i) => { const D = ENEMY[d.type]; if (D.boss && D.flag && Game.flag(D.flag)) return; this.spawn(d.type, d.x, d.y, d, i); });
+    // (no enemies any more: you fix things, you don't fight; Downlevel's are kept for LEGACY)
+    if (LEGACY) L.enemies.forEach((d, i) => { const D = ENEMY[d.type]; if (D.boss && D.flag && Game.flag(D.flag)) return; this.spawn(d.type, d.x, d.y, d, i); });
     this.questSpawns();
   },
   // the people a case puts here: witnesses, a suspect once you've found the lead
@@ -50,8 +51,7 @@ const Actors = {
     if (!World.L) return;
     const L = World.L, spots = L.spots && L.spots.length ? L.spots : [[L.w * 0.6, Object.values(L.spawns)[0][1]]];
     const add = (key, E, name, extra) => { if (this.enemies.some((q) => q.elite === key)) return; const sp = spots[Math.floor(hash(key.length, name.length, 5) * spots.length)]; this.spawn(E.type, sp[0], sp[1], Object.assign({ elite: key, named: name, hpx: E.hp || 2, look: E.look, range: [sp[0] - 90, sp[0] + 90] }, extra)); };
-    for (const k of Quests.elites(L.id)) add(k, ELITES[k], ELITES[k].name, {});
-    for (const w of Warrants.here(L.id)) add('w' + w.id, w, w.name, { warrant: w.id });
+    if (LEGACY) { for (const k of Quests.elites(L.id)) add(k, ELITES[k], ELITES[k].name, {}); for (const w of Warrants.here(L.id)) add('w' + w.id, w, w.name, { warrant: w.id }); }
     this.caseNpcs();
     Jobs.spawn(); Town.sync();
   },

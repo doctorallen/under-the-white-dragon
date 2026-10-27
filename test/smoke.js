@@ -10,8 +10,7 @@
 // out front gives a scrap part; there's no gun, and the help and the pack talk
 // about the basement; a cab flies from the stand to the Overpass Market, where Ana
 // sells a part; the map and dev settings work; on Clinic Row Kade's stall
-// opens, a ganger is taken down from behind and one in front notices, and the
-// cabinet gives a Meridian servo and heat; a terminal is jacked into; Ozzy's
+// opens, there are no enemies, and the cabinet gives a Meridian servo and heat; a terminal is jacked into; Ozzy's
 // cab flies home for free; a medpatch heals; every level loads and draws; a
 // reload brings it all back.
 // Screenshots go to test/out. Chrome comes from $CHROME (puppeteer-core), or,
@@ -161,17 +160,13 @@ async function run(B, url, vp, name, failures) {
   // the map draws the whole level, and a dev button works
   const mapdev = await E(() => { Hud.toggle('map'); const ok = !!MapView.cache.d_overpass && MapView.s > 0; Hud.toggle(null); Hud.toggle('dev'); const c0 = Game.s.cr; document.querySelector('button[data-devdo="cr"]').click(); Hud.toggle(null); return { ok, cr: Game.s.cr - c0 }; });
   if (!mapdev.ok || mapdev.cr !== 1000) fail('the map or dev settings failed ' + JSON.stringify(mapdev));
-  // Clinic Row: Kade's stall, a takedown from behind, one in front notices; the cabinet, for heat
+  // Clinic Row: Kade's stall, no enemies, and the cabinet, for heat
   await E(() => { Game.arrive('d_clinicrow', 'enter'); T_.run({}, 10); });
   const kade = await E(() => { const k = Actors.npcs.find((n) => n.def.name === 'Nurse Kade'); Player.place(k.x - 14, k.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });
   if (kade !== 'partshop') fail('Kade\'s stall did not open (' + kade + ')');
-  const sneak = await E(() => {
-    const g = Actors.enemies.find((q) => q.type === 'gang'); g.alert = false; g.aware = 0; g.state = 'idle'; g.range = [g.x - 1, g.x + 200]; g.face = 1; g.dir = 1;
-    Player.place(g.x - 14, g.y); Player.face = 1; T_.run({}, 2); Hud.tick(); const unseen = !g.alert, btn = !$('bStrike').classList.contains('gone'); Input.strikeHit = true; T_.run({}, 3);
-    const h = Actors.enemies.find((q) => q.type === 'gang' && q.hp > 0); h.alert = false; h.aware = 0; h.range = [h.x - 200, h.x + 1]; h.face = -1; h.dir = -1; Player.place(h.x - 45, h.y); T_.run({}, 240);
-    return { unseen, btn, down: g.hp <= 0, quiet: !!g.subdued, noticed: !!h.alert };
-  });
-  if (!sneak.unseen || !sneak.btn || !sneak.down || !sneak.quiet || !sneak.noticed) fail('sneaking did not work ' + JSON.stringify(sneak));
+  // no enemies anywhere: you fix things, you don't fight
+  const foes = await E(() => Actors.enemies.length);
+  if (foes) fail('there are still enemies on Clinic Row (' + foes + ')');
   const cab0 = await E(() => { for (const e of Actors.enemies) { e.alert = false; e.aware = 0; } const c = World.props.find((p) => p.kind === 'cabinet'), h0 = Game.s.heat; Player.place(c.x, c.y); T_.run({}, 4); T_.hold(140); return { done: c.done, servo: Game.s.parts.some((p) => p.k === 'servo' && p.g === 'military' && p.how === 'take'), heat: Game.s.heat - h0 }; });
   if (!cab0.done || !cab0.servo || cab0.heat < 15) fail('the cabinet did not give a Meridian servo and heat ' + JSON.stringify(cab0));
   await shot('clinicrow');
@@ -195,7 +190,7 @@ async function run(B, url, vp, name, failures) {
   if (items !== 75) fail('a medpatch did nothing (' + items + ')');
   // every level loads and draws
   if (name === 'phone') {
-    const lv = await E(() => { const bad = []; const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
+    const lv = await E(() => { const bad = []; const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); if (Actors.enemies.length) bad.push(id + ' has enemies'); for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
     if (lv.bad.length || lv.n < 30) fail('levels failed to load: ' + JSON.stringify(lv));
     const cm = await E(() => { Hud.toggle('citymap'); const ok = !!WorldMap.img && !!$('worldcv'); const off = Object.keys(LEVELS).filter((id) => LEVELS[id].metres === undefined || LEVELS[id].mapX === undefined); Hud.toggle(null); return { ok, off }; });
     if (!cm.ok || cm.off.length) fail('the city map did not open, or places are missing from it ' + JSON.stringify(cm));

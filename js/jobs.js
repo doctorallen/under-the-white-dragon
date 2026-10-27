@@ -9,7 +9,7 @@
 // Heat (Game.s.heat, 0 to 100) is how close the precinct is to your trapdoor:
 // illegal work on the bench, parts taken from where you shouldn't be, a
 // Meridian serial that gets traced. Honest repairs and time bring it down. At
-// 40 a patrol drone works your street; at 70 there's a knock before dawn,
+// 40 people on the block start to talk; at 70 there's a knock before dawn,
 // and a search of the bar and the storeroom; at 90 they find the trapdoor.
 // ---------------------------------------------------------------------------
 const JOBS = {
@@ -52,17 +52,13 @@ const Jobs = {
   },
   spawn() {
     if (!World.L) return;
-    const here = World.L.id === 'd_noodles', street = World.L.id === 'd_dragon', G = World.L.ground;
+    const here = World.L.id === 'd_noodles', G = World.L.ground;
     Actors.npcs = Actors.npcs.filter((n) => !n.def.job || (here && this.where(n.def.job) === n.x));
     if (here) for (const id of JOB_ORDER) {
       const x = this.where(id); if (x === null || Actors.npcs.some((n) => n.def.job === id)) continue;
       const J = JOBS[id], def = { name: J.name, look: J.look, x, y: G - 2, sched: [[0, 24, x, 'stand']], lines: J.lines, job: id };
       Actors.npcs.push({ def, i: 80 + JOB_ORDER.indexOf(id), x, y: G - 2, face: id === 'ozzy' ? 1 : -1, hidden: false, tx: x, wt: 0, bubble: null, line: 0, art: new Map() });
     }
-    // a drone on the street when the heat's up
-    const want = street && Game.s.heat >= 40;
-    if (want && !Actors.enemies.some((e) => e.heatDrone)) { const e = Actors.spawn('drone', 200, G - 70, { range: [40, 320] }); e.heatDrone = true; }
-    if (!want) Actors.enemies = Actors.enemies.filter((e) => !e.heatDrone);
   },
   // what someone at the counter has for you: an offer, a wait, a hand-back
   actionsFor(name) {
@@ -120,7 +116,7 @@ const Jobs = {
       const notes = c.st === 'bench' ? Game.s.notes.log.filter((e) => e.key.startsWith(id + ':')).map((e) => e.text.replace(/^[^:]*: /, '')).join(' ') : '';
       return `<div class="row ${c.st === 'done' || c.st === 'seized' ? 'passed' : ''}"><div><b>${J.title}</b><small>${st}${notes ? ' ' + notes : ''}</small></div></div>`;
     }).join('');
-    return `<p class="sub">Heat ${Game.s.heat} of 100.${Game.s.heat >= 70 ? ' Expect a knock.' : Game.s.heat >= 40 ? ' A drone is working your street.' : ''}</p><div class="rows">${rows}</div>`;
+    return `<p class="sub">Heat ${Game.s.heat} of 100.${Game.s.heat >= 70 ? ' Expect a knock.' : Game.s.heat >= 40 ? ' People on the block are talking.' : ''}</p><div class="rows">${rows}</div>`;
   },
   // the line at the top of the screen: what the job on the bench needs next
   objective() {

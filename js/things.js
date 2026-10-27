@@ -102,8 +102,7 @@ const Props = {
     if (p.kind === 'cabinet') {
       this.finish(p); Fx.sparks(p.x, p.y - 20, 6); Foes.noise(p.x, p.y, 90);
       Parts.give(Parts.make('servo', 'military', { gauge: 'heavy', how: 'take' }));
-      const seen = Actors.enemies.some((e) => e.hp > 0 && Math.abs(e.x - p.x) < 240 && (e.alert || e.aware > 0.5));
-      Jobs.heat(seen ? 30 : 15, seen ? 'Someone saw you take it.' : 'Meridian counts its stock.'); return;
+      Jobs.heat(15, 'Meridian counts its stock.'); return;
     }
     if (p.kind === 'shelf') { Hud.toggle('shelf'); return; }
     if (p.kind === 'spinner') { Hud.mode = 'spinner'; Hud.toggle('travel'); return; }
