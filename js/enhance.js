@@ -139,12 +139,9 @@ function enhanceArt(kind, C, seed) {
   const back = (cols) => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) S.px(x, y, mixRgb(col3(cols[0]), col3(cols[1]), y / H + (hash(x >> 2, y >> 2, 5) - 0.5) * 0.15)); };
   const win = (lit) => { back(lit ? ['#7a5a3a', '#3a2a1a'] : ['#1a2430', '#0a0e14']); for (let x = 0; x < W; x++) { S.px(x, 0, '#0a0a0e'); S.px(x, H - 1, '#3a3a3a'); } for (let y = 0; y < H; y++) { S.px(0, y, '#0a0a0e'); S.px(W - 1, y, '#0a0a0e'); } };
   const sk = rp('#c8906a', 6), hair = rp('#1a1414', 5), coat = rp('#2a2e3a', 6);
-  if (kind === 'snake') { // a reflection in a window: the back of a woman's neck, a snake coiled on it
-    win(false); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if ((x + y) % 11 === 0) S.px(x, y, '#3a5060');
-    S.ell(22, 12, 9, 10, hair); S.shape([[16, 18], [28, 18], [30, 36], [14, 36]], sk, { down: 0.2 }); S.shape([[8, 30], [36, 28], [42, 36], [4, 36]], coat);
-    for (let k = 0; k < 40; k++) { const a = k * 0.42, r = 4 - k * 0.07; S.px(22 + Math.cos(a) * r * 1.3, 25 + Math.sin(a) * r * 0.8 + k * 0.05, '#1a8a7a'); }
-    S.px(26, 22, '#3af0e0', true); S.px(27, 22, '#3af0e0', true);
-  } else if (kind === 'plate') { // a serial plate on a market cloth
+  if (kind === 'snake') return snakeNeckArt(seed);
+  if (kind === 'carry' || kind === 'girl' || kind === 'figure') return peopleArt(kind, seed);
+  if (kind === 'plate') { // a serial plate on a market cloth
     back(['#5a2a2a', '#2a1010']); S.box(6, 8, 41, 27, MAT.chrome, { lo: 1, hi: 6 });
     let x = 10; for (const ch of 'IR-4') { const f = PLATE_FONT[ch]; for (let j = 0; j < 5; j++) for (let i = 0; i < 3; i++) if (f[j][i] === '1') { S.px(x + i * 2, 13 + j * 2, '#141418'); S.px(x + i * 2 + 1, 13 + j * 2, '#141418'); S.px(x + i * 2, 14 + j * 2, '#141418'); S.px(x + i * 2 + 1, 14 + j * 2, '#141418'); } x += 8; }
     for (const [a, b] of [[8, 10], [39, 10], [8, 25], [39, 25]]) S.px(a, b, '#4a4a50');
@@ -169,5 +166,75 @@ function enhanceArt(kind, C, seed) {
   else if (kind === 'drone') { win(false); S.ell(24, 22, 10, 4, rp('#3a4048', 6)); S.limb(10, 18, 38, 18, 1, MAT.steel); S.ell(10, 17, 5, 1, ['#555', '#777']); S.ell(38, 17, 5, 1, ['#555', '#777']); S.px(28, 22, '#ff3040', true); }
   else if (kind === 'plant') { win(true); S.box(18, 24, 30, 34, rp('#8a4a2a', 6), { lo: 1, hi: 5 }); for (let k = 0; k < 9; k++) S.limb(24, 24, 24 + Math.cos(k) * 12, 22 - Math.abs(Math.sin(k * 1.7)) * 16, 1.4, ['#1a3a1a', '#2a5a2a', '#4a8a3a']); }
   else { back(['#30343c', '#14161c']); S.limb(0, 6, W, 6, 1, ['#111', '#222']); S.shape([[14, 7], [34, 7], [38, 14], [33, 14], [33, 32], [15, 32], [15, 14], [10, 14]], rp('#3a6aa8', 6)); }
+  return S.done();
+}
+
+// the clue in the Menagerie still: a woman reflected in a window, seen in
+// profile, a snake tattooed coiling up her neck under the ear; lit pink from
+// a sign on one side, the window's blue on the other
+function snakeNeckArt(seed) {
+  const W = 72, H = 54, S = new Spr(W, H, 650 + (seed % 5)); S.ax = 0; S.ay = 0;
+  // the glass: dark blue, streaks of reflection, a smear of pink sign
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { let c = mixRgb([14, 22, 36], [30, 44, 66], y / H); if ((x + y * 0.6) % 19 < 1.5) c = mixRgb(c, [90, 120, 150], 0.35); if (x > 56) c = mixRgb(c, [120, 30, 80], (x - 56) / 30); S.px(x, y, c); }
+  const skin = ['#3a2018', '#6a3a28', '#9a5a40', '#c88060', '#e8a888', '#ffd0b8'], hair = ['#06040a', '#120c14', '#22161e', '#3a2a30', '#5a4048'];
+  const coat = ['#081414', '#102424', '#1a3434', '#2a4a48', '#4a6a64'];
+  // shoulders and a coat collar turned up
+  S.shape([[2, 54], [8, 44], [22, 40], [34, 44], [46, 42], [62, 46], [70, 54]], coat, { down: 0.4 });
+  S.shape([[24, 40], [32, 34], [36, 44], [30, 47]], coat, { down: 0.2 });
+  // the neck, turned a little away: the side of it is where the tattoo is
+  S.shape([[30, 26], [44, 30], [46, 44], [32, 46], [28, 36]], skin, { down: 0.3, bias: 0.05 });
+  // the face in profile, looking right: brow, nose, lips, chin, jaw
+  S.shape([[34, 8], [44, 6], [50, 10], [52, 16], [51, 20], [55, 25], [52, 27], [53, 30], [51, 32], [52, 35], [48, 38], [42, 37], [36, 32], [32, 22]], skin, { down: 0.25, bias: 0.1 });
+  // the eye, a brow, the mouth's line, a nostril, the ear under the hair
+  for (const [x, y, c] of [[47, 16, '#1a1010'], [48, 16, '#1a1010'], [46, 17, '#3a2a28'], [48, 17, '#e8d8d0'], [45, 14, '#2a1a18'], [46, 14, '#2a1a18'], [47, 13, '#2a1a18'], [48, 13, '#2a1a18'], [52, 26, '#6a3028'], [50, 31, '#8a3a3a'], [51, 31, '#8a3a3a'], [49, 31, '#6a2a2a']]) S.px(x, y, c);
+  S.ell(37, 22, 2.6, 3.4, skin.slice(1));
+  // hair: a dark bob over the back of the head and the ear, a fringe
+  S.shape([[22, 10], [30, 3], [42, 2], [50, 6], [52, 10], [46, 9], [40, 10], [38, 16], [40, 22], [38, 30], [34, 34], [26, 34], [20, 26]], hair, { down: 0.2 });
+  for (let k = 0; k < 6; k++) S.px(30 + k * 3, 5 + (k % 2), '#6a5058');
+  // the snake: coiled from the collar up the side of the neck, its head under the ear
+  const body = [];
+  for (let k = 0; k <= 60; k++) { const t = k / 60; body.push([36 + Math.sin(t * Math.PI * 3.2) * 4.5 + t * 2, 45 - t * 17]); }
+  body.forEach(([x, y], k) => { const w = 1.6 - k / 80; for (let d = -w; d <= w; d += 0.5) S.px(x + d, y, k % 4 < 2 ? '#1a9a88' : '#127068', true); if (k % 6 === 0) S.px(x, y, '#3af0e0', true); });
+  const [hx, hy] = body[60]; S.ell(hx + 1.5, hy - 1, 2.4, 1.6, ['#0e6a60', '#1a9a88', '#3ac8b8'], { glow: true }); S.px(hx + 2.5, hy - 1.5, '#ff3040', true); S.px(hx + 4, hy - 0.5, '#ff4060'); S.px(hx + 5, hy - 0.2, '#ff4060');
+  // pink light from the sign along the face's edge
+  for (let y = 8; y < 38; y++) for (let x = W - 1; x > 30; x--) { const c = S.get(x, y); if (c && (skin.some((q) => rgb(q).join() === c.join()) || c[0] > 120)) { S.px(x, y, mixRgb(c, [255, 120, 190], 0.45)); break; } }
+  return S.done();
+}
+
+// the other clues that are people, at the same size: Halden carrying a woman
+// up through a lobby, a girl sitting in the Root's cables, a face in a hood
+function peopleArt(kind, seed) {
+  const W = 72, H = 54, S = new Spr(W, H, 660 + kind.length + (seed % 5)); S.ax = 0; S.ay = 0;
+  const skin = ['#3a2018', '#6a3a28', '#9a5a40', '#c88060', '#e8a888'], pale = ['#4a3a34', '#7a6058', '#b09080', '#d8c0b0', '#f0e0d8'];
+  const bg = (a, b) => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) S.px(x, y, mixRgb(col3(a), col3(b), y / H + (hash(x >> 2, y >> 2, 7) - 0.5) * 0.08)); };
+  if (kind === 'carry') {
+    // a lobby: a lit lift door behind, a floor line
+    bg('#1a2230', '#0a0e14'); panel(S, 46, 4, 66, 46, ['#8aa0b8', '#c8d8e8', '#e8f4ff'], { a: 0.5, b: 0.3, glow: true }); for (let y = 4; y < 46; y++) S.px(56, y, '#4a5a6a'); for (let x = 0; x < W; x++) S.px(x, 46, '#3a4450');
+    // Halden: tall, a long dark coat, walking right, head turned to the lift
+    S.shape([[22, 14], [32, 14], [36, 30], [38, 46], [30, 46], [27, 36], [24, 46], [16, 46], [19, 30]], ['#08080c', '#14141c', '#22222e', '#3a3a4a', '#5a5a6a'], { down: 0.3 });
+    S.ell(28, 9, 3.6, 4.4, pale); for (let x = 25; x < 32; x++) S.px(x, 5, '#d8d8e0'); S.px(30, 9, '#ff3040', true);
+    // the woman across his arms: her head hanging back, hair down, a pale dress
+    S.shape([[10, 22], [40, 21], [42, 26], [12, 28]], ['#5a5058', '#9a909a', '#c8c0c8', '#e8e0e8'], { down: 0.2 });
+    S.ell(9, 24, 3.4, 3, skin); S.limb(7, 26, 5, 36, 2.2, ['#1a1010', '#2a1a14', '#3a2418']); S.limb(40, 23, 46, 30, 1.2, skin); S.limb(42, 26, 48, 33, 1.2, skin);
+    S.limb(24, 18, 22, 27, 1.6, ['#14141c', '#22222e']); S.limb(32, 18, 34, 26, 1.6, ['#14141c', '#22222e']);
+  } else if (kind === 'girl') {
+    // the Root's chamber: dark violet, cables curling round her like a cat
+    bg('#1a0e26', '#06040a');
+    for (let k = 0; k < 4; k++) for (let a = -0.4; a < Math.PI * 1.6; a += 0.02) { const r = 18 + k * 5, x = 34 + Math.cos(a) * r * 1.2, y = 40 + Math.sin(a) * r * 0.45; S.px(x, y, k % 2 ? '#7a3ac8' : '#a86aff', k === 1); S.px(x, y + 1, '#2a103a'); }
+    // a small girl sitting hugging her knees, side on, facing right
+    S.shape([[26, 26], [36, 24], [42, 36], [38, 44], [24, 44], [22, 34]], ['#2a2a3a', '#4a4a5e', '#6a6a82', '#9a9ab0'], { down: 0.25 });
+    S.shape([[34, 30], [44, 30], [46, 40], [40, 44], [34, 40]], ['#3a3048', '#5a4a6a', '#7a6a8a'], { down: 0.2 });
+    S.ell(32, 18, 5, 5.6, skin); S.shape([[26, 12], [34, 10], [38, 14], [36, 16], [30, 16], [28, 26], [25, 22]], ['#06040a', '#140c14', '#2a1a20', '#4a3038']);
+    S.px(35, 18, '#1a1010'); S.px(36, 18, '#c8a0ff', true); S.limb(36, 30, 42, 34, 1.4, skin);
+    S.ell(34, 46, 9, 1.4, ['#140a20', '#24123a']);
+  } else {
+    // a face in a hood, three-quarters to the camera: shadow, and one eye lit wrong
+    bg('#202630', '#0a0c12');
+    S.shape([[18, 54], [20, 30], [26, 10], [38, 4], [50, 10], [56, 30], [58, 54]], ['#0a0a10', '#16161e', '#24242e', '#383844', '#50505e'], { down: 0.2 });
+    S.shape([[28, 18], [46, 16], [50, 30], [46, 42], [36, 46], [28, 40], [26, 28]], skin, { down: 0.35, bias: -0.05 });
+    for (let x = 26; x < 52; x++) for (let y = 14; y < 24; y++) { const c = S.get(x, y); if (c) S.px(x, y, mixRgb(c, [6, 4, 8], 0.55 - (y - 14) * 0.04)); }
+    S.px(32, 26, '#1a1010'); S.px(33, 26, '#1a1010'); S.px(42, 26, '#ffb040', true); S.px(43, 26, '#ffe0a0', true); S.px(42, 27, '#c86010', true);
+    S.limb(37, 27, 38, 34, 0.8, ['#6a3a28', '#9a5a40']); S.limb(33, 38, 42, 38, 0.8, ['#6a2a2a', '#8a3a3a']);
+  }
   return S.done();
 }
