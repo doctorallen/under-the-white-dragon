@@ -115,14 +115,15 @@ class Spr {
   done() {
     if (this.line) this.finish();
     const [c, g] = canvasOf(this.w, this.h), img = g.createImageData(this.w, this.h);
-    let glow = false; const [ec, eg] = canvasOf(this.w, this.h), eimg = eg.createImageData(this.w, this.h);
+    // (a glow canvas only for a sprite with something that glows)
+    let glow = false; const eimg = this.g.some((q) => q) ? new ImageData(this.w, this.h) : null;
     for (let i = 0; i < this.c.length; i++) {
       const col = this.c[i]; if (!col) continue;
       img.data[i * 4] = col[0]; img.data[i * 4 + 1] = col[1]; img.data[i * 4 + 2] = col[2]; img.data[i * 4 + 3] = 255;
-      if (this.g[i]) { glow = true; eimg.data[i * 4] = col[0]; eimg.data[i * 4 + 1] = col[1]; eimg.data[i * 4 + 2] = col[2]; eimg.data[i * 4 + 3] = 255; }
+      if (this.g[i] && eimg) { glow = true; eimg.data[i * 4] = col[0]; eimg.data[i * 4 + 1] = col[1]; eimg.data[i * 4 + 2] = col[2]; eimg.data[i * 4 + 3] = 255; }
     }
-    g.putImageData(img, 0, 0); if (glow) eg.putImageData(eimg, 0, 0);
-    return { c, e: glow ? ec : null, w: this.w, h: this.h, ax: this.ax, ay: this.ay };
+    g.putImageData(img, 0, 0); let ec = null; if (glow) { const [c2, eg] = canvasOf(this.w, this.h); eg.putImageData(eimg, 0, 0); ec = c2; }
+    return { c, e: ec, w: this.w, h: this.h, ax: this.ax, ay: this.ay };
   }
 }
 function flipSprite(s) {

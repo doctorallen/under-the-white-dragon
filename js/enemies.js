@@ -260,6 +260,7 @@ const Foes = {
     const v = e.look ? 'x' + e.i : (e.i % ((LOOKS[e.type] || GANG_LOOKS).length || 1));
     const k = e.type + v + pose + (left ? 'L' : 'R') + (e.ally ? 'a' : '');
     if (!this.cache) this.cache = new Map();
+    if (!this.cache.has(k) && e.lastArt && !Actors.budget()) return e.lastArt;
     let s = this.cache.get(k);
     if (!s) {
       if (e.type === 'drone') s = drone({ eye: e.ally ? '#3aff80' : '#ff3040', light: e.ally ? '#3aff80' : null });
@@ -278,7 +279,7 @@ const Foes = {
       if (left) s = flipSprite(s);
       this.cache.set(k, s);
     }
-    return s;
+    return (e.lastArt = s);
   },
   // what it leaves: bodies of people, loot by depth, a boss's drop and flag
   die(e) {

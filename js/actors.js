@@ -175,10 +175,17 @@ const Actors = {
     return s;
   },
   // sprites for each, cached
+  shared: new Map(),
+  // new sprites a frame may make: past it, a figure keeps its last one a
+  // frame or two longer, so a crowd walking into view doesn't stall a frame
+  built: 0, budget() { if (this.built < 3) { this.built++; return true; } return false; },
   art(n, pose, left) {
     const k = pose + (left ? 'L' : 'R'); let s = n.art.get(k);
-    if (!s) { const look = Object.assign({}, n.def.look, { pose: pose === 'work' ? 'breathe' : pose, seed: 20 + n.i }); if (pose === 'work') { const hd = look.hands || {}; look.hands = Object.assign({}, hd, { fy: (hd.fy || 38) - 3, fx: (hd.fx || 25) + 1 }); } if (n.def.smoke && pose !== 'work') look.hands = Object.assign({}, look.hands || {}, { fx: 26, fy: 27 }); s = person(look); if (left) s = flipSprite(s); n.art.set(k, s); }
-    return s;
+    if (!s) { if (!n.lookKey) n.lookKey = JSON.stringify(n.def.look) + (n.def.smoke ? 's' : ''); s = this.shared.get(n.lookKey + k); if (s) n.art.set(k, s); }
+    if (!s && n.lastArt && !this.budget()) return n.lastArt;
+    if (s) return (n.lastArt = s);
+    { const look = Object.assign({}, n.def.look, { pose: pose === 'work' ? 'breathe' : pose, seed: 20 + n.i }); if (pose === 'work') { const hd = look.hands || {}; look.hands = Object.assign({}, hd, { fy: (hd.fy || 38) - 3, fx: (hd.fx || 25) + 1 }); } if (n.def.smoke && pose !== 'work') look.hands = Object.assign({}, look.hands || {}, { fx: 26, fy: 27 }); s = person(look); if (left) s = flipSprite(s); n.art.set(k, s); if (this.shared.size > 900) this.shared.clear(); this.shared.set(n.lookKey + k, s); }
+    return (n.lastArt = s);
   },
   enemyArt(e) { return Foes.art(e); },
 };

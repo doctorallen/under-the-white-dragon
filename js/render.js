@@ -86,10 +86,15 @@ function render() {
   g.imageSmoothingEnabled = false;
   g.globalCompositeOperation = 'source-over';
   // people, enemies, the runner
-  const actor = (s, x, y, flash) => {
+  Actors.built = 0;
+  const actor = (s, x, y, flash, who) => {
     const sx = Math.round(x - s.ax - cx), sy = Math.round(y - s.ay - cy);
     if (sx > w || sy > h || sx + s.w < 0 || sy + s.h < 0) return;
-    const col = lightAt(sx + s.w / 2, sy + s.h * 0.55, ox, oy);
+    let col = lightAt(sx + s.w / 2, sy + s.h * 0.55, ox, oy);
+    // a figure keeps the light it had until the light where it stands changes
+    // by more than a step: walking under strings of lamps, it would otherwise
+    // need a new tinted copy every few paces
+    if (who) { const L = who.litCol; if (L && Math.abs(L[0] - col[0]) < 14 && Math.abs(L[1] - col[1]) < 14 && Math.abs(L[2] - col[2]) < 14) col = L; else who.litCol = col = col.map((q) => ((q >> 4) << 4) + 8); }
     // the sprite lit by that colour, kept: most figures stand in the same light frame after frame
     const key = flash ? 'f' : ((col[0] >> 3) << 10) | ((col[1] >> 3) << 5) | (col[2] >> 3);
     if (!s.lit) s.lit = new Map();
@@ -112,13 +117,13 @@ function render() {
   for (const n of Actors.npcs) if (!n.hidden) {
     // standing still, everyone breathes; vendors work their hands
     const br = (Game.t * 0.7 + n.i * 0.37) % 1 < 0.5, pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 4.6) % 6) : n.act === 'sit' ? 'sit' : n.act === 'work' && (Game.t * 1.6 + n.i) % 1 < 0.5 ? 'work' : br ? 'breathe' : 'stand';
-    actor(Actors.art(n, pose, n.face < 0), n.x, n.y);
+    actor(Actors.art(n, pose, n.face < 0), n.x, n.y, false, n);
     if (n.def.smoke) { const on = (Game.t * 0.4 + n.i) % 1 < 0.3; gg.fillStyle = on ? '#ffb040' : '#a83a10'; gg.fillRect(Math.round(n.x + n.face * 6 - cx), Math.round(n.y - 24 - cy), 1, 1); }
   }
   for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } }
   for (const b of Actors.bodies) { const s = Actors.bodyArt(b), x = Math.round(b.x - cx), y = Math.round(b.y - cy); g.fillStyle = 'rgba(60,4,10,0.55)'; g.fillRect(x - 9, y - 1, 18, 2); actor(s, b.x, b.y + 1); }
-  for (const e of Actors.enemies) { const s = Actors.enemyArt(e), at = actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0); if (at) tag(e, s, at[0], at[1]); }
-  if (Player.inv <= 0 || Math.floor(Game.t * 16) % 2) actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1);
+  for (const e of Actors.enemies) { const s = Actors.enemyArt(e), at = actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0, e); if (at) tag(e, s, at[0], at[1]); }
+  if (Player.inv <= 0 || Math.floor(Game.t * 16) % 2) actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1, false, Player);
   // bolts and sparks: all glow
   for (const b of Actors.bolts) { const x = Math.round(b.x - cx), y = Math.round(b.y - cy); gg.fillStyle = css(b.c); if (b.player) { const sp = Math.hypot(b.vx, b.vy), ux = b.vx / sp, uy = b.vy / sp; for (let k = 0; k < 7; k++) { gg.fillStyle = k < 2 ? '#fff4d8' : css(b.c.map((q) => q * (1 - k / 9))); gg.fillRect(Math.round(x - ux * k), Math.round(y - uy * k), 1, 1); } continue; } if (b.wave) gg.fillRect(x - 3, y - 8, 6, 10); else { gg.fillRect(x - 2, y - 1, 4, 2); gg.fillStyle = '#fff'; gg.fillRect(x - 1, y - 1, 2, 2); } }
   Life.drawGlints(gg, cx, cy);
