@@ -51,19 +51,20 @@ class Pix {
   }
   // mix what's there towards a colour (haze, steam)
   tint(x, y, col, k) { x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy; if (x < 0 || y < 0 || x >= this.w || y >= this.h) return; const o = (y * this.w + x) * 4; if (!this.c[o + 3]) return; this.c[o] = lerp(this.c[o], col[0], k); this.c[o + 1] = lerp(this.c[o + 1], col[1], k); this.c[o + 2] = lerp(this.c[o + 2], col[2], k); }
-  // a painted area: inside(x, y) says what's in it, v(x, y) its value (0..1)
-  // read at each stroke's middle, so the area reads as brushwork
+  // a painted area: inside(x, y) says what's in it, v(x, y) its value (0..1).
+  // Flat (PAINT_FLAT): each pixel its own tone, no brushwork; otherwise read at
+  // each stroke's middle with a little jitter, so the area reads as brushwork
   area(ax0, ay0, ax1, ay1, ramp, v, o = {}) {
     const seed = o.seed === undefined ? this.n * 13 + 5 : o.seed; this.n++;
     ax0 = Math.floor(ax0); ay0 = Math.floor(ay0); ax1 = Math.ceil(ax1); ay1 = Math.ceil(ay1);
     const x0 = Math.max(this.ox, ax0), y0 = Math.max(this.oy, ay0), x1 = Math.min(this.ox + this.w - 1, ax1), y1 = Math.min(this.oy + this.h - 1, ay1);
     if (x1 < x0 || y1 < y0) return;
-    const inside = o.inside || null, J = o.jit === undefined ? 0.45 : o.jit, n = x1 - x0 + 1, glow = o.glow || 0, fog = o.fog || 0, fogc = o.fogc || [20, 16, 30];
+    const inside = o.inside || null, J = PAINT_FLAT ? 0 : o.jit === undefined ? 0.45 : o.jit, n = x1 - x0 + 1, glow = o.glow || 0, fog = o.fog || 0, fogc = o.fogc || [20, 16, 30];
     for (let y = y0; y <= y1; y++) {
       strokeRow(this.mid, this.jit, x0, n, y, seed);
       for (let i = 0; i < n; i++) {
         const x = x0 + i; if (inside && !inside(x, y)) continue;
-        const m = x0 + this.mid[i], vx = v(x, y), vm = m >= ax0 && m <= ax1 && (!inside || inside(m, y)) ? v(m, y) : vx;
+        const m = x0 + this.mid[i], vx = v(x, y), vm = PAINT_FLAT ? vx : m >= ax0 && m <= ax1 && (!inside || inside(m, y)) ? v(m, y) : vx;
         let c = tone(ramp, clamp(vm * 0.6 + vx * 0.4, 0, 1), this.jit[i] * J);
         if (fog) c = mixRgb(c, fogc, fog);
         this.put(x, y, c, glow);
@@ -79,9 +80,21 @@ class Pix {
     return { c, e };
   }
 }
+// The city's painting is flat, like its people: one tone a surface, a crisp
+// lit edge on top and a shaded one under, no noise and no brushwork.
+const PAINT_FLAT = true;
 // side-on lighting for a block
 function blockV(x0, y0, x1, y1, o = {}) {
   const base = o.base === undefined ? 0.5 : o.base, s = o.seed || 3, grain = o.grain === undefined ? 0.06 : o.grain, lip = o.lip === undefined ? 1 : o.lip;
+  if (PAINT_FLAT) return (x, y) => {
+    let v = base;
+    const top = y - y0, bot = y1 - y, l = x - x0, r = x1 - x;
+    if (lip && top < 1) v = 0.9; if (bot < 1) v -= 0.3; if (l < 1) v += 0.1; if (r < 1) v -= 0.12;
+    if (o.drips) { const d = hash(x, 0, s + 5); if (d > 1 - o.drips && top < 3 + (d - 1 + o.drips) / o.drips * (o.dripLen || 40)) v -= 0.12; }
+    if (o.bands) { if ((y - y0) % o.bands === 0) v -= 0.16; }
+    if (o.panels) { const px = (x - x0) % o.panels[0], py = (y - y0) % o.panels[1]; if (px === 0 || py === 0) v -= 0.16; }
+    return v;
+  };
   return (x, y) => {
     let v = base + (noise(x / 40, y / 16, s) - 0.5) * 0.14 + (noise(x / 4, y / 30, s + 1) - 0.5) * grain;
     const top = y - y0, bot = y1 - y, l = x - x0, r = x1 - x;

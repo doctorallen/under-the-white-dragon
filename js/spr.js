@@ -1,13 +1,15 @@
 'use strict';
-// A sprite painted from shapes. Props and the city's pieces are shaded in
-// soft runs of close tones. Figures (people, enemies, machines) are flat
-// (`Spr.figure`): three hard tones a material (shadow, base, light) with no
-// noise, a shadow line where one part lies over another (`part`), and a dark
-// outline round the whole, so they read as drawn pixel art.
+// A sprite painted from shapes, flat: three hard tones a material (shadow,
+// base, light) with no noise, a box a flat panel (lit along its top and left
+// edges, shaded along its bottom and right), a shadow line where one part lies
+// over another (`part`), and a dark outline round the whole, so everything
+// reads as drawn pixel art, people and props alike. (`Spr.soft` paints the old
+// way, in soft runs of close tones, for anything that wants it.)
 class Spr {
-  constructor(w, h, seed = 1) { this.w = w; this.h = h; this.c = new Array(w * h).fill(null); this.g = new Uint8Array(w * h); this.p = new Uint8Array(w * h); this.seed = seed; this.n = 0; this.ax = w / 2; this.ay = h; this.flat = false; this.line = false; this.pid = 0; this.soft = new Set(); }
+  constructor(w, h, seed = 1) { this.w = w; this.h = h; this.c = new Array(w * h).fill(null); this.g = new Uint8Array(w * h); this.p = new Uint8Array(w * h); this.seed = seed; this.n = 0; this.ax = w / 2; this.ay = h; this.flat = true; this.line = true; this.pid = 0; this.soft = new Set(); }
   // a flat figure, outlined
   static figure(w, h, seed) { const S = new Spr(w, h, seed); S.flat = S.line = true; return S; }
+  static soft(w, h, seed) { const S = new Spr(w, h, seed); S.flat = S.line = false; return S; }
   // the next shapes are a new part, drawn over what came before; a part that
   // doesn't cast (hair on a face) leaves no shadow line on what's under it
   part(cast = true) { this.pid = Math.min(255, this.pid + 1); if (!cast) this.soft.add(this.pid); }
@@ -33,6 +35,15 @@ class Spr {
     }
   }
   box(x0, y0, x1, y1, ramp, o = {}) {
+    if (this.flat) {
+      // a flat panel: its base tone, a lit top and left edge, a shaded bottom and right
+      const R = ramp.map((c) => (typeof c === 'string' ? rgb(c) : c)), lo = o.lo || 0, hi = o.hi === undefined ? R.length - 1 : o.hi;
+      for (let y = Math.round(y0); y <= Math.round(y1); y++) for (let x = Math.round(x0); x <= Math.round(x1); x++) {
+        const s = y === Math.round(y0) || (x === Math.round(x0) && y1 - y0 > 1) ? 0.9 : y === Math.round(y1) || (x === Math.round(x1) && y1 - y0 > 1) ? 0.1 : 0.5 + (o.bias || 0);
+        this.px(x, y, R[this.band(s, lo, hi)], o.glow);
+      }
+      return;
+    }
     this.ell((x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2 + 0.7, (y1 - y0) / 2 + 0.7, ramp, Object.assign({}, o, { mask: (x, y) => x >= x0 && x <= x1 && y >= y0 && y <= y1 }));
     const R = ramp.map((c) => (typeof c === 'string' ? rgb(c) : c));
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (!this.get(x, y) || (this.flat && this.p[y * this.w + x] !== this.pid)) this.px(x, y, R[(o.lo || 0) + 1] || R[0], o.glow);
