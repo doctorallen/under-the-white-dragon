@@ -164,18 +164,37 @@ function kCross(P, cx, cy, s, col) { const c = col3(col); for (let j = -s; j <= 
 // a tree, painted: a cherry in blossom, a pine in layers, a willow, a dead one
 function kTree(P, x, G, kind, o = {}) {
   const s = o.seed || x, h = o.h || 60;
-  const trunk = (x0, y0, x1, y1, w) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0)); for (let k = 0; k <= n; k++) { const t = k / n, cx = lerp(x0, x1, t), cy = lerp(y0, y1, t), ww = w * (1 - t * 0.5); for (let i = -ww; i <= ww; i++) P.put(cx + i, cy, tone(KMAT.bark, 0.5 - i / (ww * 3) + hash(Math.round(cx + i), Math.round(cy), s) * 0.15)); } };
-  const blob = (cx, cy, rx, ry, ramp, k = 1) => P.area(cx - rx, cy - ry, cx + rx, cy + ry, ramp, (xx, yy) => 0.62 - (yy - cy) / ry * 0.25 - (xx - cx) / rx * 0.18 + (noise(xx / 3, yy / 3, s) - 0.5) * 0.5, { inside: (xx, yy) => { const d = ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2; return d < 1 - noise(xx / 4, yy / 4, s + 1) * 0.35 * k; } });
+  // flat, like everything: the trunk lit down its left edge and dark down its
+  // right; the leaves a few clumps in three hard tones (lit top, body, shade
+  // underneath) with scalloped edges and a dark outline round them all
+  const trunk = (x0, y0, x1, y1, w) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0)); for (let k = 0; k <= n; k++) { const t = k / n, cx = lerp(x0, x1, t), cy = lerp(y0, y1, t), ww = Math.max(0.6, w * (1 - t * 0.5)); for (let i = -ww; i <= ww; i++) P.put(cx + i, cy, tone(KMAT.bark, i <= -ww + 1 ? 0.62 : i >= ww - 1 ? 0.22 : 0.42)); } };
+  const clumps = [];
+  const blob = (cx, cy, rx, ry, ramp, k = 1) => clumps.push({ cx, cy, rx, ry, ramp, k });
+  const leaves = () => {
+    if (!clumps.length) return;
+    const ins = (c, xx, yy) => { const a = Math.atan2((yy - c.cy) / c.ry, (xx - c.cx) / c.rx), lump = hash(Math.floor((a + 4) * 2.2), Math.round(c.cx), s), d = ((xx - c.cx) / c.rx) ** 2 + ((yy - c.cy) / c.ry) ** 2; return d < 1 - lump * 0.22 * c.k; };
+    const at = (xx, yy) => { for (let i = clumps.length - 1; i >= 0; i--) if (ins(clumps[i], xx, yy)) return clumps[i]; return null; };
+    const x0 = Math.min(...clumps.map((c) => c.cx - c.rx)), x1 = Math.max(...clumps.map((c) => c.cx + c.rx)), y0 = Math.min(...clumps.map((c) => c.cy - c.ry)), y1 = Math.max(...clumps.map((c) => c.cy + c.ry));
+    for (let yy = Math.floor(y0); yy <= y1; yy++) for (let xx = Math.floor(x0); xx <= x1; xx++) {
+      const c = at(xx, yy); if (!c) continue;
+      const edge = !at(xx - 1, yy) || !at(xx + 1, yy) || !at(xx, yy - 1) || !at(xx, yy + 1), seam = !edge && at(xx, yy - 1) !== c && yy > c.cy - c.ry * 0.2; // (where one clump sits in front of another)
+      const v = edge ? 0.1 : seam ? 0.25 : (yy - c.cy) / c.ry < -0.35 + (xx - c.cx) / c.rx * 0.25 ? 0.78 : (yy - c.cy) / c.ry > 0.38 ? 0.34 : 0.56;
+      P.put(xx, yy, tone(c.ramp, v));
+    }
+    clumps.length = 0;
+  };
   if (kind === 'sakura') {
     trunk(x, G, x - 3, G - h * 0.55, 3); trunk(x - 3, G - h * 0.5, x - 16, G - h * 0.8, 1.6); trunk(x - 2, G - h * 0.55, x + 14, G - h * 0.85, 1.6);
     for (const [dx, dy, rx, ry] of [[-14, -0.82, 16, 10], [12, -0.86, 17, 11], [-1, -0.98, 18, 10], [-24, -0.66, 10, 7], [24, -0.7, 11, 7]]) blob(x + dx, G + dy * h, rx, ry, KMAT.blossom);
+    leaves();
     for (let k = 0; k < 14; k++) P.put(x - 30 + hash(k, 1, s) * 60, G - 1 - hash(k, 2, s) * 2, tone(KMAT.blossom, 0.8));
   } else if (kind === 'pine') {
     trunk(x, G, x + 4, G - h * 0.7, 2.6); trunk(x + 3, G - h * 0.45, x - 14, G - h * 0.55, 1.4); trunk(x + 4, G - h * 0.65, x + 18, G - h * 0.72, 1.2);
     for (const [dx, dy, rx, ry] of [[-16, -0.6, 13, 5], [18, -0.76, 12, 5], [3, -0.82, 15, 6], [2, -0.96, 9, 5], [-4, -0.42, 10, 4]]) blob(x + dx, G + dy * h, rx, ry, R(['#08140e', '#10241a', '#1c3a26', '#3a6a3a']), 0.6);
+    leaves();
   } else if (kind === 'willow') {
     trunk(x, G, x + 1, G - h * 0.7, 3);
-    blob(x, G - h * 0.78, 22, 12, KMAT.leaf);
+    blob(x, G - h * 0.78, 22, 12, KMAT.leaf); leaves();
     for (let k = 0; k < 26; k++) { const sx = x - 22 + hash(k, 1, s) * 44, len = h * (0.3 + hash(k, 2, s) * 0.4); for (let j = 0; j < len; j++) P.put(sx + Math.sin(j / 6 + k) * 1.2, G - h * 0.78 + j, tone(KMAT.leaf, 0.55 - j / len * 0.3 + (k % 3) * 0.1)); }
   } else if (kind === 'bamboo') {
     for (let k = 0; k < 7; k++) { const bx = x - 12 + k * 4 + Math.round(hash(k, 1, s) * 2), bh = h * (0.7 + hash(k, 2, s) * 0.3); for (let j = 0; j < bh; j++) { const v = j % 9 === 0 ? 0.8 : 0.5; P.put(bx, G - j, tone(R(['#10200a', '#24401a', '#3e6a2a', '#8ab85a']), v)); P.put(bx + 1, G - j, tone(R(['#10200a', '#24401a', '#3e6a2a', '#8ab85a']), v - 0.2)); } for (let q = 0; q < 4; q++) { const ly = G - bh + 4 + q * 7; for (let i = 0; i < 5; i++) P.put(bx + (q % 2 ? i : -i), ly + i * 0.4, tone(KMAT.leaf, 0.6)); } }
@@ -183,7 +202,7 @@ function kTree(P, x, G, kind, o = {}) {
     trunk(x, G, x + 2, G - h * 0.7, 2.4); trunk(x + 1, G - h * 0.4, x - 14, G - h * 0.7, 1.2); trunk(x + 2, G - h * 0.55, x + 16, G - h * 0.85, 1.1); trunk(x + 2, G - h * 0.7, x + 4, G - h, 0.8);
   } else { // a street tree in a pot of concrete
     trunk(x, G - 6, x, G - h * 0.6, 2);
-    blob(x, G - h * 0.75, 14, 12, KMAT.leaf);
+    blob(x, G - h * 0.75, 14, 12, KMAT.leaf); blob(x - 8, G - h * 0.66, 8, 7, KMAT.leaf); blob(x + 8, G - h * 0.68, 8, 7, KMAT.leaf); leaves();
     P.block(x - 8, G - 7, x + 9, G, MAT.concrete, { base: 0.5 });
   }
 }
