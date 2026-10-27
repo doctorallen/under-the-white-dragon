@@ -1,8 +1,20 @@
 'use strict';
+// A sprite painted from shapes. Props and the city's pieces are shaded in
+// soft runs of close tones. Figures (people, enemies, machines) are flat
+// (`Spr.figure`): three hard tones a material (shadow, base, light) with no
+// noise, a shadow line where one part lies over another (`part`), and a dark
+// outline round the whole, so they read as drawn pixel art.
 class Spr {
-  constructor(w, h, seed = 1) { this.w = w; this.h = h; this.c = new Array(w * h).fill(null); this.g = new Uint8Array(w * h); this.seed = seed; this.n = 0; this.ax = w / 2; this.ay = h; }
+  constructor(w, h, seed = 1) { this.w = w; this.h = h; this.c = new Array(w * h).fill(null); this.g = new Uint8Array(w * h); this.p = new Uint8Array(w * h); this.seed = seed; this.n = 0; this.ax = w / 2; this.ay = h; this.flat = false; this.line = false; this.pid = 0; this.soft = new Set(); }
+  // a flat figure, outlined
+  static figure(w, h, seed) { const S = new Spr(w, h, seed); S.flat = S.line = true; return S; }
+  // the next shapes are a new part, drawn over what came before; a part that
+  // doesn't cast (hair on a face) leaves no shadow line on what's under it
+  part(cast = true) { this.pid = Math.min(255, this.pid + 1); if (!cast) this.soft.add(this.pid); }
   rnd() { return hash(this.n++, 17, this.seed); }
-  px(x, y, col, glow) { x = Math.round(x); y = Math.round(y); if (!col || x < 0 || y < 0 || x >= this.w || y >= this.h) return; this.c[y * this.w + x] = typeof col === 'string' ? rgb(col) : col; this.g[y * this.w + x] = glow ? 1 : 0; }
+  // a tone from a shading value, flat: shadow, base or light
+  band(s, lo, hi) { return lo + Math.round((hi - lo) * (s < 0.32 ? 0.18 : s < 0.7 ? 0.5 : 0.82)); }
+  px(x, y, col, glow) { x = Math.round(x); y = Math.round(y); if (!col || x < 0 || y < 0 || x >= this.w || y >= this.h) return; const i = y * this.w + x; this.c[i] = typeof col === 'string' ? rgb(col) : col; this.g[i] = glow ? 1 : 0; this.p[i] = this.pid; }
   get(x, y) { return x < 0 || y < 0 || x >= this.w || y >= this.h ? null : this.c[y * this.w + x]; }
   // a rounded volume: its tone from how it faces the upper left, in runs
   ell(cx, cy, rx, ry, ramp, o = {}) {
@@ -13,6 +25,7 @@ class Spr {
         const u = (x + 0.5 - cx) / rx, v = (y + 0.5 - cy) / ry, d = u * u + v * v;
         if (d > 1 || (o.mask && !o.mask(x, y))) continue;
         const nz = Math.sqrt(Math.max(0, 1 - d)), s = (u * -0.55 + v * -0.8) * 0.8 + nz * 0.5 - 0.15 + (o.bias || 0);
+        if (this.flat) { this.px(x, y, R[this.band(s, lo, hi)], o.glow); continue; }
         if (run <= 0) { rt = (this.rnd() + this.rnd() - 1) * 0.42; run = 2 + ((this.rnd() * 3) | 0); }
         run--;
         this.px(x, y, R[clamp(Math.round(lo + (hi - lo) * clamp(s, 0, 1) + rt), lo, hi)], o.glow);
@@ -22,14 +35,14 @@ class Spr {
   box(x0, y0, x1, y1, ramp, o = {}) {
     this.ell((x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2 + 0.7, (y1 - y0) / 2 + 0.7, ramp, Object.assign({}, o, { mask: (x, y) => x >= x0 && x <= x1 && y >= y0 && y <= y1 }));
     const R = ramp.map((c) => (typeof c === 'string' ? rgb(c) : c));
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (!this.get(x, y)) this.px(x, y, R[(o.lo || 0) + 1] || R[0], o.glow);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (!this.get(x, y) || (this.flat && this.p[y * this.w + x] !== this.pid)) this.px(x, y, R[(o.lo || 0) + 1] || R[0], o.glow);
   }
   // a limb from a to b, w wide: lit along its upper-left side
   limb(ax, ay, bx, by, w, ramp, o = {}) {
     const R = ramp.map((c) => (typeof c === 'string' ? rgb(c) : c)), L = Math.hypot(bx - ax, by - ay) || 1, n = Math.ceil(L * 3), nx = -(by - ay) / L, ny = (bx - ax) / L;
     for (let k = 0; k <= n; k++) {
       const t = k / n, x = ax + (bx - ax) * t, y = ay + (by - ay) * t;
-      for (let s = -w / 2; s <= w / 2; s += 0.5) { const lit = nx * s * -0.55 + ny * s * -0.8; this.px(x + nx * s, y + ny * s, R[clamp(Math.round((R.length - 1) * (0.5 + lit * 0.5 / Math.max(0.5, w / 2))), 0, R.length - 1)], o.glow); }
+      for (let s = -w / 2; s <= w / 2; s += 0.5) { const lit = nx * s * -0.55 + ny * s * -0.8; if (this.flat) { this.px(x + nx * s, y + ny * s, R[this.band(0.5 + lit * 0.7 / Math.max(0.5, w / 2), 0, R.length - 1)], o.glow); continue; } this.px(x + nx * s, y + ny * s, R[clamp(Math.round((R.length - 1) * (0.5 + lit * 0.5 / Math.max(0.5, w / 2))), 0, R.length - 1)], o.glow); }
     }
   }
   // a capsule from a (radius ra) to b (radius rb): a limb with volume, its
@@ -44,6 +57,7 @@ class Spr {
         const ux = (px - qx) / r, uy = (py - qy) / r, d = ux * ux + uy * uy;
         if (d > 1 || (o.mask && !o.mask(x, y))) continue;
         const nz = Math.sqrt(Math.max(0, 1 - d)), sh = (ux * -0.6 + uy * -0.75) * 0.75 + nz * 0.45 - 0.1 + (o.bias || 0);
+        if (this.flat) { this.px(x, y, R[this.band(sh, lo, hi)], o.glow); continue; }
         if (run <= 0) { rt = (this.rnd() + this.rnd() - 1) * 0.35; run = 2 + ((this.rnd() * 2) | 0); }
         run--;
         this.px(x, y, R[clamp(Math.round(lo + (hi - lo) * clamp(sh, 0, 1) + rt), lo, hi)], o.glow);
@@ -63,6 +77,7 @@ class Spr {
       for (let i = 0; i + 1 < xs.length; i += 2) for (let x = Math.ceil(xs[i] - 0.5); x <= Math.floor(xs[i + 1] - 0.5); x++) {
         const u = (x + 0.5 - xs[i]) / Math.max(1, xs[i + 1] - xs[i]), v = (yc - y0) / Math.max(1, y1 - y0);
         let sh = 0.78 - u * 0.62 - v * (o.down === undefined ? 0.18 : o.down) + (u < 0.18 ? 0.12 : 0) + (yc - y0 < 1.2 ? 0.15 : 0) + (o.bias || 0);
+        if (this.flat) { const L = xs[i + 1] - xs[i], fx = x + 0.5 - xs[i]; this.px(x, y, R[this.band(fx < Math.min(1.6, L * 0.25) || yc - y0 < 1 ? 0.9 : xs[i + 1] - x - 0.5 < Math.min(1.6, L * 0.3) ? 0.1 : 0.5 - (o.down || 0) * 0.3 * v, 0, n1)], o.glow); continue; }
         if (o.folds) sh += Math.sin(x * 1.7 + y * 0.2) * 0.06;
         if (run <= 0) { rt = (this.rnd() + this.rnd() - 1) * 0.35; run = 2 + ((this.rnd() * 2) | 0); }
         run--;
@@ -79,7 +94,26 @@ class Spr {
       for (let i = 0; i + 1 < xs.length; i += 2) for (let x = Math.ceil(xs[i] - 0.5); x <= Math.floor(xs[i + 1] - 0.5); x++) this.px(x, y, typeof col === 'function' ? col(x, y) : col);
     }
   }
+  // a figure's finish: a shadow line on a part where a later part lies on
+  // it, then a dark outline round the whole (not round glow alone)
+  finish() {
+    const w = this.w, h = this.h, C = this.c, dk = [8, 6, 12], N = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    const shade = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x; if (!C[i] || this.g[i]) continue;
+      for (const [dx, dy] of N) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= w || Y >= h) continue; const j = Y * w + X; if (C[j] && this.p[j] > this.p[i] && !this.g[j] && !this.soft.has(this.p[j])) { shade.push(i); break; } }
+    }
+    for (const i of shade) this.c[i] = mixRgb(this.c[i], dk, 0.45);
+    const out = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x; if (C[i]) continue; let best = null, lit = 0;
+      for (const [dx, dy] of N) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= w || Y >= h) continue; const j = Y * w + X; if (!C[j]) continue; if (this.g[j]) { lit++; continue; } const L = C[j][0] + C[j][1] + C[j][2]; if (!best || L < best[1]) best = [C[j], L]; }
+      if (best) out.push([i, mixRgb(best[0], dk, 0.72)]);
+    }
+    for (const [i, col] of out) { this.c[i] = col; this.g[i] = 0; }
+  }
   done() {
+    if (this.line) this.finish();
     const [c, g] = canvasOf(this.w, this.h), img = g.createImageData(this.w, this.h);
     let glow = false; const [ec, eg] = canvasOf(this.w, this.h), eimg = eg.createImageData(this.w, this.h);
     for (let i = 0; i < this.c.length; i++) {

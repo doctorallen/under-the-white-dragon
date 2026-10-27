@@ -47,26 +47,39 @@ const LOOKS = {
 
 // a sentinel: Meridian's drone, bigger, white, an amber eye
 function sentinel() {
-  const S = new Spr(30, 18, 37); S.ax = 15; S.ay = 15;
-  S.ell(15, 9, 9, 4.6, rp('#c8ccd8', 6)); S.box(4, 4, 26, 5, MAT.steel, { lo: 2, hi: 6 }); for (const x of [3, 27]) S.ell(x, 4, 3.4, 1, ['#3a3a40', '#8a8a96']);
+  const S = Spr.figure(30, 18, 37); S.ax = 15; S.ay = 15;
+  const sb = rp('#c8ccd8', 6); S.ell(15, 9, 9, 4.6, sb); S.part(); S.box(4, 4, 26, 5, MAT.steel, { lo: 2, hi: 6 }); for (const x of [3, 27]) { S.ell(x, 4, 3.4, 1, ['#3a3a40', '#8a8a96']); S.px(x, 3, '#e8e8f0'); }
+  // a seam under the eye, a Meridian mark, fins
+  for (let x = 8; x < 23; x++) if (S.get(x, 11)) S.px(x, 11, sb[1]); S.px(9, 8, '#ff3040'); S.px(10, 8, '#e8e8f0'); S.px(7, 12, sb[0]); S.px(23, 12, sb[0]);
   for (let x = 13; x < 20; x++) S.px(x, 9, x === 17 ? '#fff0c0' : '#ffb040', true);
   for (let y = 13; y < 17; y++) S.px(15, y, '#ffb040', true);
   return S.done();
 }
 // a turret on a wall bracket, its barrel and its eye
 function turret() {
-  const S = new Spr(20, 16, 39); S.ax = 10; S.ay = 8;
+  const S = Spr.figure(20, 16, 39); S.ax = 10; S.ay = 8;
   panel(S, 0, 0, 5, 15, MAT.steelD); S.ell(10, 8, 6, 5.5, rp('#4a4e58', 6)); S.box(14, 6, 19, 9, MAT.steelD, { lo: 1, hi: 5 });
   S.px(10, 7, '#ff3040', true); S.px(11, 7, '#ff8090', true); S.px(10, 8, '#ff3040', true);
   return S.done();
 }
 // the Root's guardian: a knot of cable round a lit core, roots into the floor
 function rootCore() {
-  const S = new Spr(90, 96, 41); S.ax = 45; S.ay = 48;
-  for (let k = 0; k < 14; k++) { const a = (k / 14) * Math.PI * 2, r0 = 18, r1 = 40 + (k % 3) * 4; S.limb(45 + Math.cos(a) * r0, 48 + Math.sin(a) * r0, 45 + Math.cos(a + 0.4) * r1, 48 + Math.sin(a + 0.4) * r1 + (Math.sin(a) > 0 ? 8 : 0), 3 - (k % 2), ['#1a0e2a', '#3a1a4a', '#5a2a6a', '#8a4aa0']); }
-  S.ell(45, 48, 20, 20, ['#140a1e', '#2a1438', '#4a2058', '#6a3080']);
+  const S = Spr.figure(90, 96, 41); S.ax = 45; S.ay = 48;
+  // cables, banded where they're clamped, a lit bead now and then
+  for (let k = 0; k < 14; k++) {
+    const a = (k / 14) * Math.PI * 2, r0 = 18, r1 = 40 + (k % 3) * 4, x0 = 45 + Math.cos(a) * r0, y0 = 48 + Math.sin(a) * r0, x1 = 45 + Math.cos(a + 0.4) * r1, y1 = 48 + Math.sin(a + 0.4) * r1 + (Math.sin(a) > 0 ? 8 : 0), w = 3 - (k % 2);
+    S.part(); S.limb(x0, y0, x1, y1, w, ['#1a0e2a', '#3a1a4a', '#5a2a6a', '#8a4aa0']);
+    const L = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / L, ny = (x1 - x0) / L;
+    for (let t = 5; t < L - 2; t += 6) { const x = x0 + (x1 - x0) * t / L, y = y0 + (y1 - y0) * t / L; for (let q = -w / 2; q <= w / 2; q += 0.5) S.px(x + nx * q, y + ny * q, '#140a1e'); }
+    if (k % 3 === 0) S.px(x0 + (x1 - x0) * 0.62, y0 + (y1 - y0) * 0.62, '#e8a0ff', true);
+  }
+  S.part(); S.ell(45, 48, 20, 20, ['#140a1e', '#2a1438', '#4a2058', '#6a3080']);
+  // a ring of plates round the core, then the core and its pupil
+  for (let k = 0; k < 24; k++) { const a = (k / 24) * Math.PI * 2; S.px(45 + Math.cos(a) * 15, 48 + Math.sin(a) * 15, k % 2 ? '#140a1e' : '#6a3080'); }
+  S.ell(45, 48, 11, 11, ['#140a1e', '#1e0e2a']);
   S.ell(45, 48, 9, 9, ['#5a1a8a', '#a83aff', '#e8c8ff', '#ffffff'], { glow: true });
-  for (let k = 0; k < 6; k++) S.px(45 + Math.cos(k) * 14, 48 + Math.sin(k) * 14, '#c87aff', true);
+  for (let y = 42; y <= 54; y++) for (let x = 44; x <= 46; x++) if (Math.abs(y - 48) < 6 - Math.abs(x - 45) * 2) S.px(x, y, '#2a0a44', true);
+  for (let k = 0; k < 6; k++) S.px(45 + Math.cos(k) * 18, 48 + Math.sin(k) * 18, '#c87aff', true);
   return S.done();
 }
 // a sprite drawn bigger, pixel for pixel (for the bigger bosses)
