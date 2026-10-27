@@ -2,7 +2,7 @@
 
 A side-scrolling cyberpunk game for the phone. You fix what the city breaks, in a hidden basement under the White Dragon, a noodle bar in the Stack; the way down is a trapdoor under a rug in the storeroom, and some of what you fix is illegal.
 
-**Play:** https://doctorallen.github.io/underhill/ (best on a phone held sideways). The repo keeps the name of an older game, Underhill.
+**Play:** https://doctorallen.github.io/under-the-white-dragon/ (best on a phone held sideways).
 
 People bring broken things to the bar: Ozzy's cab nav unit, Vey's seizing arm. Take a job to your bench and open it up for real: back the screws out (ease off when one binds, or strip it), probe each part, melt the joints of the bad one with the iron (not too long, or you cook the board), seat a good one and solder it in, close it up and power it up. Parts have a kind, a grade (scrap, street, clinic, Meridian) and a history: strip them from machines, buy them at the Overpass Market and Clinic Row, or take them from where you shouldn't. Hand the fix back at the counter, and the next morning you hear what it did. Heat is how close the precinct is to your door: illegal work and traceable parts raise it, honest repairs and time bring it down. The design is in [the design doc](https://claude.ai/artifact/6q6FiLoTUN74PSnhsy7hNT).
 
