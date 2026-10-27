@@ -196,6 +196,7 @@ input[type=range] { width: min(420px, 100%); accent-color: var(--teal); }
 #where { flex-wrap: wrap; justify-content: center; max-width: 52vw; row-gap: 2px; }
 #obj { flex-basis: 100%; text-align: center; text-transform: none; letter-spacing: 0.02em; font-size: 11px; color: var(--sodium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #obj:empty { display: none; }
+#obj { pointer-events: auto; cursor: pointer; text-decoration: underline dotted rgba(255, 176, 64, 0.5); text-underline-offset: 3px; }
 #pads #bItem { width: 50px; height: 50px; font-size: 10px; border-color: rgba(255, 176, 64, 0.7); margin-bottom: 6px; line-height: 1.1; }
 #pads #bItem.none { opacity: 0.35; }
 .ask { border-left: 3px solid var(--teal); padding: 2px 0 6px 12px; margin: 10px 0; background: linear-gradient(90deg, rgba(58, 240, 224, 0.07), transparent 70%); }
@@ -226,6 +227,17 @@ button.q { font-size: 12px; padding: 5px 9px; text-align: left; max-width: 100%;
 .clue b { display: block; font-size: 13px; }
 .clue small { display: block; color: var(--dim); font-size: 12px; }
 .lead { color: var(--ink); font-size: 13px; margin: 6px 0; }
+/* the case board */
+.doubt { font-family: var(--mono); font-size: 12px; color: var(--sodium); }
+.doubt small { color: var(--dim); font-family: inherit; margin-left: 6px; }
+.bq { border: 1px solid var(--edge); border-left: 3px solid var(--pink); padding: 2px 12px 10px; margin: 10px 0; }
+.bq.done { border-left-color: var(--teal); }
+.bq .answers { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 4px; }
+.bq .answers button { text-align: left; }
+.bq .answers button.on { border-color: var(--teal); color: var(--teal); background: rgba(58, 240, 224, 0.1); }
+button.clue { text-align: left; font: inherit; color: inherit; background: rgba(255, 255, 255, 0.03); cursor: pointer; }
+button.clue.pinned { border-color: var(--pink); background: rgba(255, 74, 176, 0.12); }
+.bmsg { color: var(--sodium); font-size: 13px; }
 .lead b { color: var(--pink); }
 .row.tracked b { color: var(--sodium); }
 .tile.quick { outline: 1px solid var(--sodium); }

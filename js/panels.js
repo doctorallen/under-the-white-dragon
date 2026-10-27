@@ -13,7 +13,15 @@ const PANELS = {
     // the case's business with them
     for (const a of Cases.actionsFor(name)) {
       const C = Cases.def(a.id), c = Cases.st(a.id);
-      if (a.kind === 'ask') { const K = C.clues[a.cid]; h += `<div class="ask"><h3>${C.title}</h3><p class="dim">Ask about what happened.</p><div class="buttons"><button data-ask="${a.id}:${a.cid}:0">Ask politely</button><button data-ask="${a.id}:${a.cid}:1" class="warnb">Press them</button></div></div>`; }
+      if (a.kind === 'ask') h += `<div class="ask"><h3>${C.title}</h3><p class="dim">Ask them what happened.</p><div class="buttons"><button data-ask="${a.id}:${a.cid}" class="go">Ask what happened</button></div></div>`;
+      // their story, the line in it that doesn't hold, and what you can show them
+      if (a.kind === 'present') {
+        const K = C.clues[a.cid], T = C.clues[a.tid], shown = Object.keys(C.clues).filter((k) => c.found[k] && k !== a.cid && C.clues[k].kind !== 'truth');
+        h += `<div class="ask"><h3>${C.title}: their story</h3><p class="sub">${K.text}</p><p class="dim">Something in that doesn't hold up: ${T.claim}</p>`;
+        if (a.clam) h += '<p class="dim">They won\'t talk to you again today.</p>';
+        else h += `<p class="dim">Show them something from the case file that breaks it. Get it wrong twice and they clam up until tomorrow.</p><div class="buttons">${shown.length ? shown.map((k) => `<button data-present="${a.id}:${a.tid}:${k}">${C.clues[k].name}</button>`).join('') : '<span class="dim">You have nothing to show them yet. Find more.</span>'}</div>`;
+        h += '</div>';
+      }
       if (a.kind === 'suspect') {
         const read = c.test ? `Your read: <b class="${c.test}">${c.test === 'synth' ? 'a synth' : 'human'}</b>.` : 'You haven\'t tested them.';
         h += `<div class="ask"><h3>${C.title}: the suspect</h3><p class="dim">${read}</p><div class="buttons">${c.test ? '' : `<button data-test="${a.id}" class="go">Run the baseline test</button>`}`;
@@ -57,6 +65,21 @@ const PANELS = {
     h += tiers.map(([lv, nm]) => `<div class="qrow"><span class="tag">${nm}</span>${BASELINE_QS.map((q, i) => (q[0] === lv ? `<button data-q="${i}" class="q">${q[1]}</button>` : '')).join('')}</div>`).join('') + '</div></div>';
     return ['Baseline test · ' + C.suspect.name, h];
   },
+  // the case board: every lead a question, its answers, the evidence you pin
+  board() {
+    const id = Board.id, C = Cases.def(id), c = Cases.st(id), d = Cases.doubt(id), keys = Object.keys(C.clues);
+    let h = `<p class="dim">${C.brief}</p><p class="doubt">Doubt <b>${'●'.repeat(d)}${'○'.repeat(3 - d)}</b> <small>Each wrong call: the suspect hears you're asking, and the case pays less.</small></p>`;
+    for (const L of C.leads) {
+      if (c.leads[L.id]) { h += `<div class="bq done"><h3>${L.ask}</h3><p class="sub">✓ ${L.answers[0]}</p><p class="lead">Lead: <b>${L.name}</b>. ${L.text}</p></div>`; continue; }
+      const pick = Board.ans[L.id], pins = Board.pins[L.id] || [];
+      h += `<div class="bq"><h3>${L.ask}</h3><div class="answers">${Cases.answers(id, L).map((o) => `<button data-ans="${L.id}:${o.i}" class="${pick === o.i ? 'on' : ''}">${o.a}</button>`).join('')}</div>`;
+      h += `<p class="dim">Pin the evidence that proves it, and nothing else:</p><div class="clues">` + keys.map((k) => { const K = C.clues[k]; if (!c.found[k]) return `<div class="clue"><b>?</b><small>${K.kind === 'truth' ? 'Something someone\'s hiding' : K.kind === 'talk' ? 'Someone knows something' : K.kind === 'photo' ? 'A picture to enhance' : 'Something left behind'}</small></div>`; return `<button class="clue on ${pins.includes(k) ? 'pinned' : ''}" data-pin="${L.id}:${k}"><b>${pins.includes(k) ? '📌 ' : ''}${K.name}</b><small>${K.text}</small></button>`; }).join('') + '</div>';
+      const msg = Board.msg[L.id];
+      h += `<div class="buttons"><button data-decide="${L.id}" class="go" ${pick === undefined || !pins.length ? 'disabled' : ''}>Make the call</button>${msg ? `<span class="bmsg">${msg}</span>` : ''}</div></div>`;
+    }
+    h += '<div class="buttons"><button data-act="resume" class="quiet">Close the board</button></div>';
+    return ['Case board · ' + C.title, h];
+  },
   photo() {
     const C = Cases.def(Enhancer.id), K = C.clues[Enhancer.cid];
     return ['Enhance · ' + K.name, `<div class="photowrap"><canvas id="photocv"></canvas></div><div class="photobar"><p class="sub" id="photonote"></p><div class="buttons"><button data-enh="out">− Pull back</button><button data-enh="reset">Whole picture</button><button data-act="resume" class="go">Done</button></div></div>`];
@@ -68,6 +91,12 @@ const PANELS = {
     const fates = ['iris', 'bishop', 'wren'].map((k) => `${CASES[k].suspect.name}: ${{ retire: 'retired', arrest: 'arrested', release: 'let go' }[s.flags[k]] || '?'}`).join(' · ');
     return ['The end of the case', `<p class="sub">${E.text}</p><p class="dim">${fates}. ${s.flags.misfire ? 'You retired ' + s.flags.misfire + ' human being' + (s.flags.misfire > 1 ? 's' : '') + ' along the way.' : 'You never retired a human being.'}</p><p class="sub">The city is still here in the morning. There's still chrome on the streets, and the night desk still has work. You're ${Cases.rank()[1].toLowerCase()} now.</p><div class="buttons"><button data-act="resume" class="go">Back to the city</button></div>`];
   },
+};
+// the board's state while it's open: per lead, the answer picked, the
+// evidence pinned, and what the last call got
+const Board = {
+  id: null, ans: {}, pins: {}, msg: {},
+  open(id) { if (this.id !== id) { this.ans = {}; this.pins = {}; this.msg = {}; } this.id = id; Hud.toggle('board'); },
 };
 // the work someone with a trade offers, shown above their trade
 function workHtml(name) {
@@ -87,9 +116,9 @@ function caseFile(s) {
   for (const id of open) {
     const C = Cases.def(id), c = Cases.st(id), keys = Object.keys(C.clues), got = keys.filter((k) => c.found[k]);
     h += `<div class="case ${s.track === id ? 'tracked' : ''}"><h3>${C.main ? 'Case' : 'Night case'}: ${C.title}</h3><p class="dim">${C.brief}</p>`;
-    h += `<p class="obj">▸ ${Cases.objective(id)}</p><div class="clues">` + keys.map((k) => (c.found[k] ? `<div class="clue on"><b>${C.clues[k].name}</b><small>${C.clues[k].text}</small></div>` : `<div class="clue"><b>?</b><small>${C.clues[k].kind === 'talk' ? 'Someone knows something' : C.clues[k].kind === 'photo' ? 'A picture to enhance' : 'Something left behind'}</small></div>`)).join('') + '</div>';
+    h += `<p class="obj">▸ ${Cases.objective(id)}</p><div class="clues">` + keys.map((k) => (c.found[k] ? `<div class="clue on"><b>${C.clues[k].name}</b><small>${C.clues[k].text}</small></div>` : `<div class="clue"><b>?</b><small>${C.clues[k].kind === 'truth' ? 'Something someone\'s hiding' : C.clues[k].kind === 'talk' ? 'Someone knows something' : C.clues[k].kind === 'photo' ? 'A picture to enhance' : 'Something left behind'}</small></div>`)).join('') + '</div>';
     for (const L of C.leads) if (c.leads[L.id]) h += `<p class="lead">Lead: <b>${L.name}</b>. ${L.text}</p>`;
-    h += `<div class="buttons">${s.track === id ? '<span class="tag">tracked</span>' : `<button data-track="${id}">Track this</button>`}</div></div>`;
+    h += `<div class="buttons"><button data-board="${id}" class="go">Case board</button>${s.track === id ? '<span class="tag">tracked</span>' : `<button data-track="${id}">Track this</button>`}${Cases.doubt(id) ? `<span class="tag">doubt ${'●'.repeat(Cases.doubt(id))}</span>` : ''}</div></div>`;
   }
   const jobs = Quests.open();
   if (jobs.length) h += '<h3>Jobs</h3><div class="rows">' + jobs.map((id) => `<div class="row ${s.track === id ? 'tracked' : ''}"><div><b>${QUESTS[id].title}</b><small>▸ ${Quests.objective(id)}</small></div>${s.track === id ? '<span class="tag">tracked</span>' : `<button data-track="${id}">Track</button>`}</div>`).join('') + '</div>';
@@ -110,7 +139,12 @@ function itemsTab(s) {
 }
 function panelBind(body, which) {
   const s = Game.s, n = Hud.who, re = () => Hud.panel(Hud.open);
-  body.querySelectorAll('button[data-ask]').forEach((b) => (b.onclick = () => { const [id, cid, p] = b.dataset.ask.split(':'); Cases.ask(id, cid, p === '1'); re(); }));
+  body.querySelectorAll('button[data-ask]').forEach((b) => (b.onclick = () => { const [id, cid] = b.dataset.ask.split(':'); Cases.ask(id, cid); re(); }));
+  body.querySelectorAll('button[data-present]').forEach((b) => (b.onclick = () => { const [id, tid, by] = b.dataset.present.split(':'); Cases.present(id, tid, by); re(); }));
+  body.querySelectorAll('button[data-board]').forEach((b) => (b.onclick = () => Board.open(b.dataset.board)));
+  body.querySelectorAll('button[data-ans]').forEach((b) => (b.onclick = () => { const [lid, i] = b.dataset.ans.split(':'); Board.ans[lid] = +i; Board.msg[lid] = ''; re(); }));
+  body.querySelectorAll('button[data-pin]').forEach((b) => (b.onclick = () => { const [lid, k] = b.dataset.pin.split(':'), p = (Board.pins[lid] = Board.pins[lid] || []); const at = p.indexOf(k); if (at >= 0) p.splice(at, 1); else p.push(k); Board.msg[lid] = ''; re(); }));
+  body.querySelectorAll('button[data-decide]').forEach((b) => (b.onclick = () => { const lid = b.dataset.decide, r = Cases.deduce(Board.id, lid, Board.ans[lid], Board.pins[lid] || []); Board.msg[lid] = r === 'ok' ? '' : r === 'evidence' ? 'The idea\'s right, but that evidence won\'t hold up. Doubt +1.' : 'That doesn\'t fit what you have. Doubt +1.'; if (r !== 'ok') { Board.ans[lid] = undefined; } re(); }));
   body.querySelectorAll('button[data-test]').forEach((b) => (b.onclick = () => Baseline.open(b.dataset.test)));
   body.querySelectorAll('button[data-verdict]').forEach((b) => (b.onclick = () => { const [id, v] = b.dataset.verdict.split(':'); Cases.verdict(id, v); Hud.toggle(null); }));
   body.querySelectorAll('button[data-end]').forEach((b) => (b.onclick = () => Cases.endWith(+b.dataset.end)));

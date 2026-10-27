@@ -12,6 +12,8 @@ const Hud = {
     $('bPack').onclick = () => this.toggle('pack');
     $('bMenu').onclick = () => this.toggle('pause');
     $('bCab').onclick = () => this.toggle('cab');
+    // the tracked case's line opens its board (a job's opens the case file)
+    $('obj').onclick = () => { const id = Game.s.track; if (id && Cases.st(id) && !Cases.closed(id)) Board.open(id); else { this.tab = 'jobs'; this.toggle('pack'); } };
     $('bItem').onclick = () => { Input.itemHit = true; };
     $('panelClose').onclick = () => this.toggle(null);
     this.refresh();
@@ -214,7 +216,7 @@ const Hud = {
       title.textContent = 'Downlevel';
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
         <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Gear</b> I. <b>Map</b> M.</p>
-        <p>You\'re a tracer with the precinct. Four synths ran from the Spires and went down into the city; Lieutenant Hale gives you their cases one at a time, and the night desk always has a short one. Find the clues (pick things up, enhance photos, ask people, press them), follow the leads to the suspect, run the baseline test, and decide: retire, arrest or let go. Retire a human and it costs you. Your spinner is on the pad at the end of your hall; the old subway and the lift cages go deeper. Strip machines for parts, sell them, or take them to Mags for gear. Anywhere, a cab takes you home for a fare.</p></div>
+        <p>You\'re a tracer with the precinct. Four synths ran from the Spires and went down into the city; Lieutenant Hale gives you their cases one at a time, and the night desk always has a short one. Find the clues (pick things up, enhance photos, ask people, and catch their lies by showing them what breaks their story), work out the leads on the case board (tap the case line at the top), follow them to the suspect, run the baseline test, and decide: retire, arrest or let go. Retire a human and it costs you. Your spinner is on the pad at the end of your hall; the old subway and the lift cages go deeper. Strip machines for parts, sell them, or take them to Mags for gear. Anywhere, a cab takes you home for a fare.</p></div>
         <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     if (['vendor', 'qm', 'fab'].includes(which) && this.who) h = workHtml(this.who.def.name) + h;

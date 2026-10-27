@@ -24,10 +24,12 @@ const CASES = {
     clues: {
       casings: { name: 'Spent cells', kind: 'item', at: { level: 'd_neonrow', x: 610 }, text: 'Military-grade blaster cells, still warm. Not something you buy on Neon Row.' },
       still: { name: 'Security still', kind: 'photo', at: { level: 'd_neonrow', x: 668 }, text: 'Enhanced: in the window\'s reflection, a woman with a coiled snake tattooed on her neck.', detail: 'snake' },
-      band: { name: 'Owl\'s ID band', kind: 'item', at: { level: 'd_neonrow', x: 720 }, text: 'Its serial says the owl was real. Twelve thousand credits of real, and somebody knew.' },
-      lio: { name: 'Lio\'s story', kind: 'talk', npc: 'Lio', text: 'Lio owes money to the Coil, the club at the end of the Row. "They said they\'d take it out of my stock."', press: 'Pressed, Lio admits a dancer from the Coil came by the day before, asking which animals were real.' },
+      notice: { name: 'Final notice', kind: 'item', at: { level: 'd_neonrow', x: 720 }, text: 'Behind the counter: "PAY BY FRIDAY OR WE TAKE IT IN STOCK. The Coil." Friday was yesterday.' },
+      lio: { name: 'Lio\'s story', kind: 'talk', npc: 'Lio', text: '"I was asleep upstairs. I don\'t owe anybody anything. Nobody had a reason to do this to me. Nobody!"' },
+      lioTruth: { name: 'What Lio hid', kind: 'truth', from: 'lio', by: 'notice', claim: '"I don\'t owe anybody anything."', text: '"All right! I owe the Coil. And one of their dancers came in the day before, asking which of my animals were real."' },
     },
-    leads: [{ id: 'coil', name: 'The Coil, at the end of Neon Row', needs: ['still', 'lio'], text: 'The tattoo and Lio\'s debt both point at the Coil.' }],
+    leads: [{ id: 'coil', name: 'The Coil, at the end of Neon Row', needs: ['still', 'lioTruth'], text: 'The tattoo and Lio\'s debt both point at the Coil.',
+      ask: 'Who shot the animals, and why?', answers: ['A dancer from the Coil, taking Lio\'s debt out in stock', 'Lio himself, for the insurance on a real owl', 'A Meridian soldier: the cells are military issue'] }],
     suspect: { name: 'Zola', needs: 'coil', at: { level: 'd_neonrow', x: 2050 }, synth: 'random', look: { skin: SKINS[4], hair: 'bob', hairCol: '#1a1414', top: '#1a3a3a', coat: 'jacket', legs: '#1a1a24', acc: '#3af0e0', trim: true, eye: null },
       lines: ['You\'re the cop who\'s been asking about me. I dance. That\'s all.', 'Lio owes the Coil. Everybody knows. I didn\'t shoot anything.'] },
     outcome: { synth: 'Zola was a synth working off Meridian\'s books for the Coil, sent to make an example of Lio. Hale nods. "Good work, tracer."', human: 'Zola shot the animals for the Coil\'s money. Human, and guilty. She\'ll do ten years.' },
@@ -39,9 +41,11 @@ const CASES = {
       ticket: { name: 'Punched ticket', kind: 'item', at: { level: 'oldtown', x: 300 }, text: 'Old Town line, one way, three days ago. Punched at the Mayor\'s stop.' },
       bandage: { name: 'Clean bandage', kind: 'item', at: { level: 'd_arcade', spot: 5 }, text: 'From a wrist. No blood: synths don\'t bleed like that.' },
       plate: { name: 'Market photo', kind: 'photo', at: { level: 'd_lantern', spot: 3 }, text: 'Enhanced: a serial plate for sale on a stall, IR-4, and behind it, the Mayor\'s hall.', detail: 'plate' },
-      ferry: { name: 'The Ferryman\'s word', kind: 'talk', npc: 'The Ferryman', text: '"A woman with a cut wrist came through, polite. Too polite. She went looking for the Mayor."', press: 'Pressed: "The Mayor sells synths back to whoever lost them. She didn\'t know that. Go, quickly."' },
+      ferry: { name: 'The Ferryman\'s word', kind: 'talk', npc: 'The Ferryman', text: '"Nobody\'s come down the old line in a week. Nobody at all. I\'d have seen them."' },
+      ferryTruth: { name: 'What the Ferryman hid', kind: 'truth', from: 'ferry', by: 'ticket', claim: '"Nobody\'s come down the old line in a week."', text: '"...She came three days ago. A cut wrist, polite. Too polite. She went looking for the Mayor, and the Mayor sells synths back to whoever lost them."' },
     },
-    leads: [{ id: 'hall', name: 'The Old Mayor\'s hall, in Old Town', needs: ['plate', 'ferry'], text: 'She went to the Mayor. The Mayor sells synths back to Meridian.' }],
+    leads: [{ id: 'hall', name: 'The Old Mayor\'s hall, in Old Town', needs: ['plate', 'ferryTruth'], text: 'She went to the Mayor. The Mayor sells synths back to Meridian.',
+      ask: 'Where did Iris go?', answers: ['To the Old Mayor, who sells synths back to Meridian', 'Into the arcade, to lie low where she dropped the bandage', 'On down the old line, toward the Works'] }],
     gate: { boss: 'mayor', text: 'The Old Mayor stands between you and her' },
     suspect: { name: 'Iris', needs: 'hall', boss: 'mayor', at: { level: 'oldtown', x: 2960 }, synth: true, look: { skin: SKINS[0], hair: 'long', hairCol: '#2a1a14', top: '#d8d0c0', coat: 'long', legs: '#3a3a3a' },
       lines: ['You came for me. Of course you did.', 'I wanted to see the sun once, from underneath. That\'s all. Is that a crime here?', 'There are three more of us. We were made to come home.'] },
@@ -54,9 +58,11 @@ const CASES = {
       roster: { name: 'Shift roster', kind: 'item', at: { level: 'd_pumphall', spot: 4 }, text: 'One name on every shift for thirty years: Bishop. Nobody works every shift.' },
       badge: { name: 'Heat-scarred badge', kind: 'item', at: { level: 'd_foundry', spot: 6 }, text: 'Melted at the edges. The face on it hasn\'t aged a day.' },
       ledger: { name: 'Canteen camera', kind: 'photo', at: { level: 'works', x: 1500 }, text: 'Enhanced: a man drinking coolant from a canteen cup like it\'s coffee.', detail: 'cup' },
-      cook: { name: 'Cookie\'s gossip', kind: 'talk', npc: 'Cookie', text: '"Never sleeps, never eats. That\'s Bishop. The Foreman keeps him close."', press: 'Pressed: "The Foreman sells the Works\' power upstairs. Bishop keeps the pumps running so nobody looks."' },
+      cook: { name: 'Cookie\'s gossip', kind: 'talk', npc: 'Cookie', text: '"Bishop? Ordinary fella. Eats with the rest of us, sleeps in the bunks. Nothing to tell."' },
+      cookTruth: { name: 'What Cookie hid', kind: 'truth', from: 'cook', by: 'ledger', claim: '"Eats with the rest of us."', text: '"...Fine. Never sleeps, never eats. The Foreman keeps him close in the crane bay: Bishop keeps the pumps running, and nobody looks at what the Foreman sells upstairs."' },
     },
-    leads: [{ id: 'crane', name: 'The crane bay, past the Foreman', needs: ['ledger', 'cook'], text: 'Bishop is the Foreman\'s secret, and the Foreman guards him.' }],
+    leads: [{ id: 'crane', name: 'The crane bay, past the Foreman', needs: ['roster', 'cookTruth'], text: 'Bishop is the Foreman\'s secret, and the Foreman guards him.',
+      ask: 'Where is Bishop?', answers: ['At work in the crane bay, where the Foreman keeps him', 'Dead in the foundry: that\'s why the badge melted', 'Gone up to the Stack on a night shift'] }],
     gate: { boss: 'foreman', text: 'The Foreman stands between you and him' },
     suspect: { name: 'Bishop', needs: 'crane', boss: 'foreman', at: { level: 'works', x: 2900 }, synth: true, look: { skin: SKINS[2], hair: 'short', hairCol: '#3a3a3a', top: '#4a4030', legs: '#2a2a24', hat: null },
       lines: ['I fix the pumps. If I stop, the Stack floods in a week.', 'I didn\'t run from anything. I came home. This is the closest thing.'] },
@@ -69,9 +75,11 @@ const CASES = {
       drawing: { name: 'Child\'s drawing', kind: 'item', at: { level: 'd_cables', spot: 4 }, text: 'A tower going up into the sky, and a girl at the bottom.' },
       tag: { name: 'Tracking tag', kind: 'item', at: { level: 'd_vaults', spot: 5 }, text: 'Meridian\'s. Still pinging, faintly. Meridian knows where she is.' },
       cam: { name: 'Chamber camera', kind: 'photo', at: { level: 'bowels', x: 1700 }, text: 'Enhanced: a small figure sitting by the Root, its cables curled round her like a cat.', detail: 'girl' },
-      hermit: { name: 'The Hermit\'s word', kind: 'talk', npc: 'The Hermit', text: '"She talks to the Root. The Root talks back."', press: 'Pressed: "It made them. The synths. Meridian only stole the design. Leave her be."' },
+      hermit: { name: 'The Hermit\'s word', kind: 'talk', npc: 'The Hermit', text: '"Nobody lives down here but me. No girl. I\'d know."' },
+      hermitTruth: { name: 'What the Hermit hid', kind: 'truth', from: 'hermit', by: 'drawing', claim: '"No girl."', text: '"...She talks to the Root, and the Root talks back. It made them, the synths. Meridian only stole the design. Leave her be."' },
     },
-    leads: [{ id: 'root', name: 'The Root\'s chamber', needs: ['cam', 'hermit'], text: 'She\'s with the Root, and something guards it.' }],
+    leads: [{ id: 'root', name: 'The Root\'s chamber', needs: ['cam', 'hermitTruth'], text: 'She\'s with the Root, and something guards it.',
+      ask: 'Where is Wren?', answers: ['In the Root\'s chamber, with the Root', 'Taken already: Meridian\'s tag is still pinging', 'Climbing back up toward the tower in her drawing'] }],
     gate: { boss: 'root', text: 'The Root\'s guardian stands between you and her' },
     suspect: { name: 'Wren', needs: 'root', boss: 'root', at: { level: 'bowels', x: 3000 }, synth: true, look: { skin: SKINS[4], hair: 'bob', hairCol: '#c8c8d8', top: '#8a8aa0', legs: '#4a4a5a', tall: 0.72 },
       lines: ['It made us to come home. Meridian took us before we could.', 'The last one is up top. Ada. She\'s the one who remembers how.'] },
@@ -85,9 +93,11 @@ const CASES = {
       contract: { name: 'Meridian contract', kind: 'item', at: { level: 'spires', x: 900 }, text: 'Four units, delivered to the Spires. Signed by nobody.' },
       blueprint: { name: 'Neural blueprint', kind: 'item', at: { level: 'd_glasshouse', spot: 6 }, text: 'The design isn\'t Meridian\'s. It came up from below.' },
       memory: { name: 'Lobby camera', kind: 'photo', at: { level: 'spires', x: 1700 }, text: 'Enhanced: Halden, Meridian\'s head of security, carrying a woman up to the top floor.', detail: 'carry' },
-      concierge: { name: 'The concierge\'s word', kind: 'talk', npc: 'Concierge', text: '"Top floor. Mr Halden doesn\'t like visitors."', press: 'Pressed: "She came in on her own. Halden put her in the vault. She hasn\'t asked to leave."' },
+      concierge: { name: 'The concierge\'s word', kind: 'talk', npc: 'Concierge', text: '"No one has gone up to the top floor in months. Mr Halden doesn\'t keep guests."' },
+      conciergeTruth: { name: 'What the concierge hid', kind: 'truth', from: 'concierge', by: 'memory', claim: '"No one has gone up in months."', text: '"...She came in on her own. Halden put her in the vault at the top. She hasn\'t asked to leave."' },
     },
-    leads: [{ id: 'top', name: 'The top of Meridian\'s tower', needs: ['memory', 'concierge'], text: 'Ada is at the top, and Halden is in the way.' }],
+    leads: [{ id: 'top', name: 'The top of Meridian\'s tower', needs: ['contract', 'conciergeTruth'], text: 'Ada is at the top, and Halden is in the way.',
+      ask: 'Where is Ada?', answers: ['In the vault at the top of the tower, kept by Halden', 'Already shipped out, under the Meridian contract', 'Gone back down below, where the blueprint came from'] }],
     gate: { boss: 'halden', text: 'Halden stands between you and her' },
     suspect: { name: 'Ada', needs: 'top', boss: 'halden', at: { level: 'spires', x: 3000 }, synth: true, look: { skin: SKINS[0], hair: 'long', hairCol: '#e8e8f0', top: '#e8e8f0', coat: 'long', legs: '#c8c8d8' },
       lines: ['You came all the way up. The others said you would.', 'The Root made us to bring something back up to the city. Meridian wants to sell it. You get to choose, detective. That\'s what you\'re for.'] },
@@ -106,11 +116,14 @@ const RANKS = [[0, 'Tracer, third grade'], [100, 'Tracer, second grade'], [260, 
 const NIGHT = {
   kinds: {
     pet: { title: (v) => 'The ' + v.animal, brief: (v) => `Someone destroyed ${v.owner}'s synth ${v.animal} in ${v.place}. ${v.owner} wants whoever did it found tonight.`,
-      clues: (v) => ({ marks: { name: 'Scorch marks', kind: 'item', text: `Blaster burns on the wall where the ${v.animal} was kept.` }, cam: { name: 'Doorbell camera', kind: 'photo', text: `Enhanced: someone leaving in a hurry. ${v.tell}.`, detail: 'figure' }, owner: { name: v.owner + '\'s story', kind: 'talk', text: `"${v.suspect} wanted the ${v.animal}. Offered me half what it was worth."`, press: `Pressed, ${v.owner} admits the ${v.animal} was a fake, and ${v.suspect} found out.` } }) },
+      clues: (v) => ({ marks: { name: 'Scorch marks', kind: 'item', text: `Blaster burns on the wall right where the ${v.animal} was kept, and nowhere else. Whoever did it knew where to aim.` }, cam: { name: 'Doorbell camera', kind: 'photo', text: `Enhanced: someone leaving in a hurry. ${v.tell}.`, detail: 'figure' }, owner: { name: v.owner + '\'s story', kind: 'talk', text: `"Nobody wanted the ${v.animal}. Nobody even knew it was here."` }, ownerTruth: { name: 'What ' + v.owner + ' hid', kind: 'truth', from: 'owner', by: 'marks', claim: '"Nobody even knew it was here."', text: `"...${v.suspect} knew. Wanted the ${v.animal}, offered me half what it was worth, and found out it was a fake."` } }),
+      lead: (v, L) => ({ needs: ['cam', 'ownerTruth'], ask: 'Who did it?', answers: [`${v.suspect}, who wanted the ${v.animal} and found out it was fake`, `${v.owner}, for the insurance`, 'A burglar who panicked and fired'] }) },
     chrome: { title: () => 'Chrome for sale', brief: (v) => `Someone is selling illegal implants out of ${v.place}. A buyer nearly died on the table. Find the dealer.`,
-      clues: (v) => ({ kit: { name: 'Surgical kit', kind: 'item', text: 'Dirty tools and an empty implant case.' }, ledger: { name: 'Buyer\'s photo', kind: 'photo', text: `Enhanced: the dealer handing over a case. ${v.tell}.`, detail: 'figure' }, buyer: { name: 'The buyer\'s story', kind: 'talk', text: `"${v.suspect}. Said the arm was clean. It wasn't."`, press: `Pressed: "${v.suspect} works out of ${v.place}, late. Don't say I told you."` } }) },
+      clues: (v) => ({ kit: { name: 'Surgical kit', kind: 'item', text: 'Dirty tools and an empty implant case, a clinic\'s stamp scratched off it.' }, ledger: { name: 'Buyer\'s photo', kind: 'photo', text: `Enhanced: the dealer handing over a case to the buyer, face to face. ${v.tell}.`, detail: 'figure' }, buyer: { name: 'The buyer\'s story', kind: 'talk', text: '"Bought it off a stranger in the dark. Never saw a face, never heard a name."' }, buyerTruth: { name: 'What the buyer hid', kind: 'truth', from: 'buyer', by: 'ledger', claim: '"Never saw a face."', text: `"...${v.suspect}. Said the arm was clean. It wasn't. ${v.suspect} works out of ${v.place}, late. Don't say I told you."` } }),
+      lead: (v) => ({ needs: ['ledger', 'buyerTruth'], ask: 'Who\'s selling the chrome?', answers: [`${v.suspect}, out of ${v.place}`, 'A clinic doctor: the kit had a stamp on it', 'The buyer, covering for himself'] }) },
     missing: { title: (v) => 'Where is ' + v.victim, brief: (v) => `${v.victim} hasn't been seen in ${v.place} for three days, but their door code was used last night.`,
-      clues: (v) => ({ bag: { name: v.victim + '\'s bag', kind: 'item', text: 'Dropped in a hurry. The ID is still in it.' }, cam: { name: 'Street camera', kind: 'photo', text: `Enhanced: ${v.victim}'s face, on someone walking wrong. ${v.tell}.`, detail: 'figure' }, friend: { name: 'A neighbour\'s word', kind: 'talk', text: `"${v.victim} came home last night. Didn't know my name."`, press: `Pressed: "${v.suspect}, they call themselves now. They're still around ${v.place}."` } }) },
+      clues: (v) => ({ bag: { name: v.victim + '\'s bag', kind: 'item', text: 'Dropped in a hurry. The ID is still in it.' }, cam: { name: 'Street camera', kind: 'photo', text: `Enhanced: ${v.victim}'s face, on someone walking wrong. ${v.tell}.`, detail: 'figure' }, friend: { name: 'A neighbour\'s word', kind: 'talk', text: `"${v.victim} came home last night, same as ever. Nothing strange."` }, friendTruth: { name: 'What the neighbour hid', kind: 'truth', from: 'friend', by: 'cam', claim: '"Same as ever."', text: `"...It wasn't them. Same face, but they didn't know my name. ${v.suspect}, they call themselves now. Still around ${v.place}."` } }),
+      lead: (v) => ({ needs: ['bag', 'friendTruth'], ask: `What happened to ${v.victim}?`, answers: [`Someone is wearing their face: ${v.suspect}`, `${v.victim} ran off, and came back changed`, 'Nothing: the bag was only lost'] }) },
   },
   animals: ['owl', 'cat', 'snake', 'dog', 'heron', 'fox'], owners: ['Mr Abara', 'Ms Lindqvist', 'Old Hosseini', 'Dee Marsh', 'the Tanakas', 'Mrs Petrov'],
   suspects: ['Kell', 'Rhea', 'Moss', 'Ivo', 'Saffi', 'Dane', 'Petra', 'Luca', 'Noor', 'Teague'], victims: ['Amos Reyes', 'Lena Cho', 'Jonah Pike', 'Mara Quist', 'Felix Obi'],
@@ -136,21 +149,56 @@ const Cases = {
     const before = this.rank()[1]; Game.s.xp += n; const after = this.rank()[1];
     Game.toast('+ ' + n + ' rank', 'good'); if (after !== before) setTimeout(() => Game.toast('Promoted: ' + after + '. Hale pays you more now.', 'good'), 1500);
   },
-  // a clue found: into the case file; leads open when their clues are in
+  // a clue found: into the case file. Leads don't open on their own: you
+  // work them out on the case board.
   found(id, cid) {
     const c = this.st(id), C = this.def(id); if (!c || c.found[cid]) return;
     c.found[cid] = 1; const K = C.clues[cid];
     Game.toast('Clue: ' + K.name + '. ' + K.text, 'good');
-    for (const L of C.leads) if (!c.leads[L.id] && L.needs.every((n) => c.found[n])) { c.leads[L.id] = 1; setTimeout(() => Game.toast('New lead: ' + L.name + '. ' + L.text, 'good'), 1800); }
+    if (C.leads.some((L) => !c.leads[L.id] && L.needs.every((n) => c.found[n]))) setTimeout(() => Game.toast('You might have enough to make a call. Open the case board.', 'good'), 1800);
     World.questProps(); Actors.questSpawns(); Hud.refresh(); Save.write();
   },
+  // ---- interrogation: a witness's story has a lie in it; show them the
+  // clue that breaks it and they tell you what they hid. Show them the wrong
+  // thing twice and they clam up till tomorrow.
+  truthFor(id, cid) { const C = this.def(id); return Object.keys(C.clues).find((k) => C.clues[k].kind === 'truth' && C.clues[k].from === cid) || null; },
+  clammed(id, npc) { const c = this.st(id); return !!(c.clam && c.clam[npc] === Game.s.day); },
+  present(id, tid, by) {
+    const c = this.st(id), C = this.def(id), T = C.clues[tid], npc = C.clues[T.from].npc;
+    if (by === T.by) { this.found(id, tid); return true; }
+    c.wrong = c.wrong || {}; c.wrong[npc] = (c.wrong[npc] || 0) + 1;
+    if (c.wrong[npc] >= 2) { c.clam = c.clam || {}; c.clam[npc] = Game.s.day; c.wrong[npc] = 0; Game.toast(npc + ' has had enough of you for today. "Come back when you know something."', 'warn'); }
+    else Game.toast('"' + C.clues[by].name + '? What\'s that got to do with anything?"', 'warn');
+    Save.write(); return false;
+  },
+  // ---- the case board: each lead is a question. Pick the answer and pin the
+  // evidence that proves it, exactly. A wrong call costs doubt: the suspect
+  // hears you're asking (they start the baseline test on edge) and the case
+  // pays less.
+  answers(id, L) {
+    // the answers in an order fixed for the case, the right one (the first
+    // written) not always first
+    const n = L.answers.length, r = Math.floor(hash(id.length * 7 + L.id.length, L.ask.length, 19) * n);
+    return L.answers.map((a, i) => ({ a, right: i === 0, i })).map((o, i, arr) => arr[(i + r) % n]);
+  },
+  deduce(id, lid, answer, pins) {
+    const c = this.st(id), C = this.def(id), L = C.leads.find((q) => q.id === lid); if (!L || c.leads[lid]) return;
+    const exact = pins.length === L.needs.length && L.needs.every((k) => pins.includes(k));
+    if (answer === 0 && exact) { c.leads[lid] = 1; Game.toast('New lead: ' + L.name + '. ' + L.text, 'good'); World.questProps(); Actors.questSpawns(); Hud.refresh(); Save.write(); return 'ok'; }
+    c.doubt = Math.min(3, (c.doubt || 0) + 1); Save.write();
+    return answer === 0 ? 'evidence' : 'wrong';
+  },
+  doubt(id) { const c = this.st(id); return c ? c.doubt || 0 : 0; },
   suspectOut(id) { const c = this.st(id), C = this.def(id), S = C.suspect; return !!(c && !c.done && c.leads[S.needs] && (!S.boss || Game.flag(ENEMY[S.boss].flag))); },
   objective(id) {
     const c = this.st(id), C = this.def(id); if (!c) return C.brief; if (c.done) return 'Closed';
     const left = Object.keys(C.clues).filter((k) => !c.found[k]);
     if (this.suspectOut(id)) return 'Find ' + C.suspect.name + ' and decide what they are';
     if (c.leads[C.suspect.needs] && C.gate) return C.gate.text;
-    return 'Follow the clues: ' + left.length + ' still to find';
+    const hid = left.find((k) => C.clues[k].kind === 'truth' && c.found[C.clues[k].from]);
+    if (!left.length || C.leads.some((L) => !c.leads[L.id] && L.needs.every((n) => c.found[n]))) return 'Work it out on the case board' + (left.length ? ', or keep digging' : '');
+    if (hid) return C.clues[C.clues[hid].from].npc + ' is hiding something: show them what breaks their story';
+    return 'Follow the clues: ' + left.filter((k) => C.clues[k].kind !== 'truth').length + ' still to find';
   },
   // clue props in this level: things to pick up or photos to enhance
   props(level) {
@@ -176,12 +224,16 @@ const Cases = {
     const out = [];
     for (const id of this.open()) {
       const c = this.st(id), C = this.def(id);
-      for (const cid in C.clues) { const K = C.clues[cid]; if (K.kind === 'talk' && K.npc === name && !c.found[cid]) out.push({ id, kind: 'ask', cid }); }
+      for (const cid in C.clues) {
+        const K = C.clues[cid]; if (K.kind !== 'talk' || K.npc !== name) continue;
+        if (!c.found[cid]) out.push({ id, kind: 'ask', cid });
+        else { const tid = this.truthFor(id, cid); if (tid && !c.found[tid]) out.push({ id, kind: 'present', cid, tid, clam: this.clammed(id, name) }); }
+      }
       if (this.suspectOut(id) && C.suspect.name === name) out.push({ id, kind: 'suspect' });
     }
     return out;
   },
-  ask(id, cid, press) { const C = this.def(id), K = C.clues[cid]; this.found(id, cid); if (press) Game.toast(K.press, 'good'); },
+  ask(id, cid) { this.found(id, cid); },
   // the verdict, and what it earns
   verdict(id, action) {
     const c = this.st(id), C = this.def(id); if (!c || c.done) return;
@@ -190,7 +242,7 @@ const Cases = {
     let text = C.outcome ? (C.outcome[action] || C.outcome[synth ? 'synth' : 'human']) : '';
     if (wrong) { text = (C.suspect.name + ' was human. You retired a human being. The precinct fines you, and Hale won\'t look at you.'); Game.s.cr = Math.max(0, Game.s.cr - 300); Game.s.flags.misfire = (Game.s.flags.misfire || 0) + 1; }
     else {
-      const pay = (C.reward && C.reward.cr ? C.reward.cr : 0) * (action === 'release' && synth && !C.main ? 0.5 : 1) * (1 + 0.1 * RANKS.indexOf(this.rank()));
+      const pay = (C.reward && C.reward.cr ? C.reward.cr : 0) * (action === 'release' && synth && !C.main ? 0.5 : 1) * (1 + 0.1 * RANKS.indexOf(this.rank())) * (1 - 0.15 * (c.doubt || 0));
       Game.s.cr += Math.round(pay); if (C.reward2) Quests.pay(C.reward2);
       this.xp(Math.round((C.xp || 40) * (c.test ? 1.25 : 1)));
       Game.toast('Case closed: ' + C.title + '. + ' + Math.round(pay) + ' cr', 'good');
@@ -207,7 +259,7 @@ const Cases = {
     const c = this.st(id), C = this.def(id); if (!c || c.done) return null;
     if (this.suspectOut(id)) return { level: C.suspect.at.level, x: C.suspect.at.x, name: C.suspect.name };
     if (c.leads[C.suspect.needs] && C.gate) { const b = C.suspect.at.level; return { level: b, name: ENEMY[C.gate.boss].name }; }
-    for (const cid in C.clues) { const K = C.clues[cid]; if (c.found[cid]) continue; if (K.kind === 'talk') { const at = K.at || npcWhere(K.npc); if (at) return { level: at.level, x: at.x, name: K.npc }; } else return { level: K.at.level, x: K.at.x, spot: K.at.spot, name: K.name }; }
+    for (const cid in C.clues) { let K = C.clues[cid]; if (c.found[cid]) continue; if (K.kind === 'truth') { if (!c.found[K.from]) continue; K = C.clues[K.from]; } if (K.kind === 'talk') { const at = K.at || npcWhere(K.npc); if (at) return { level: at.level, x: at.x, name: K.npc }; } else return { level: K.at.level, x: K.at.x, spot: K.at.spot, name: K.name }; }
     return null;
   },
   // ---- the night desk ----
@@ -224,8 +276,8 @@ const Cases = {
   },
   nightDef(N) {
     const K = NIGHT.kinds[N.kind], v = N.v, clues = K.clues(v), keys = Object.keys(clues), L = LEVELS[N.level];
-    keys.forEach((k, i) => { const cl = clues[k]; if (cl.kind === 'talk') { cl.npc = { pet: v.owner, chrome: 'The buyer', missing: 'A neighbour' }[N.kind]; cl.at = { level: N.level, spot: N.spots[i] }; cl.look = SUSPECT_LOOKS[(N.look + 2) % SUSPECT_LOOKS.length]; cl.lines = ['You\'re the tracer? Ask, then.']; } else cl.at = { level: N.level, spot: N.spots[i] }; });
-    return { title: K.title(v), night: true, xp: 40 + N.tier * 6, reward: { cr: 90 + N.tier * 45 }, brief: K.brief(v), clues, leads: [{ id: 'lead', name: v.suspect + ', in ' + L.name, needs: keys.filter((k) => clues[k].kind !== 'item'), text: 'You know who, and roughly where.' }],
+    keys.forEach((k, i) => { const cl = clues[k]; if (cl.kind === 'truth') return; if (cl.kind === 'talk') { cl.npc = { pet: v.owner, chrome: 'The buyer', missing: 'A neighbour' }[N.kind]; cl.at = { level: N.level, spot: N.spots[i] }; cl.look = SUSPECT_LOOKS[(N.look + 2) % SUSPECT_LOOKS.length]; cl.lines = ['You\'re the tracer? Ask, then.']; } else cl.at = { level: N.level, spot: N.spots[i] }; });
+    return { title: K.title(v), night: true, xp: 40 + N.tier * 6, reward: { cr: 90 + N.tier * 45 }, brief: K.brief(v), clues, leads: [Object.assign({ id: 'lead', name: v.suspect + ', in ' + L.name, text: 'You know who, and roughly where.' }, K.lead(v))],
       suspect: { name: v.suspect, needs: 'lead', at: { level: N.level, spot: N.spots[3] }, synth: N.synth, look: SUSPECT_LOOKS[N.look], lines: ['What do you want? I\'ve got nothing to say to a tracer.', 'Fine. Ask your questions.'] } };
   },
   takeNight() { const N = this.nightOffer(); if (N) this.start(N.id); },
@@ -261,7 +313,8 @@ const BASELINE_QS = [
 ];
 const Baseline = {
   on: false, id: null, asked: 0, stress: 0, t: 0, q: null, raf: 0, readings: [],
-  open(id) { this.id = id; this.asked = 0; this.stress = 0; this.q = null; this.readings = []; Hud.toggle('test'); },
+  // doubt on the case puts them on edge before you start
+  open(id) { this.id = id; this.asked = 0; this.stress = Cases.doubt(id) * 0.15; this.q = null; this.readings = []; Hud.toggle('test'); },
   ask(i) {
     if (this.q && this.t < 2.4) return;
     const [lvl, text] = BASELINE_QS[i]; this.q = { lvl, text, i }; this.t = 0; this.asked++;

@@ -156,10 +156,23 @@ async function run(B, url, vp, name, failures) {
   const lio = await E(() => {
     Hud.toggle(null); T_.walkTo(720); T_.tap('useHit');
     const L = Actors.npcs.find((n) => n.def.name === 'Lio'); Player.place(L.x - 12, L.y); T_.run({}, 10); T_.tap('useHit'); const o = Hud.open;
-    const b = document.querySelector('button[data-ask^="menagerie:lio"]'); if (b) b.click(); Hud.toggle(null);
-    const c = Cases.st('menagerie'); return { o, found: Object.keys(c.found).sort().join(), lead: !!c.leads.coil, zola: !!Actors.npcs.find((n) => n.def.name === 'Zola') };
+    let b = document.querySelector('button[data-ask^="menagerie:lio"]'); if (b) b.click();
+    // his story doesn't hold: show him the wrong thing, then the notice that breaks it
+    b = document.querySelector('button[data-present="menagerie:lioTruth:casings"]'); if (b) b.click(); const wrong = !Cases.st('menagerie').found.lioTruth;
+    b = document.querySelector('button[data-present="menagerie:lioTruth:notice"]'); if (b) b.click(); Hud.toggle(null);
+    const c = Cases.st('menagerie'); return { o, wrong, found: Object.keys(c.found).sort().join(), lead: !!c.leads.coil };
   });
-  if (!clues.casings || clues.photo !== 'photo' || !clues.scan || !clues.still || lio.o !== 'talk' || lio.found !== 'band,casings,lio,still' || !lio.lead || !lio.zola) fail('the clues did not come together ' + JSON.stringify({ clues, lio }));
+  // the case board: a call with too much evidence costs doubt; the right one opens the lead
+  const board = await E(() => {
+    Board.open('menagerie'); const o = Hud.open, click = (sel) => { const b = document.querySelector(sel); if (b) b.click(); return !!b; };
+    click('button[data-ans="coil:0"]'); for (const k of ['still', 'lioTruth', 'casings']) click(`button[data-pin="coil:${k}"]`); click('button[data-decide="coil"]');
+    const d1 = Cases.doubt('menagerie'), lead1 = !!Cases.st('menagerie').leads.coil;
+    click('button[data-ans="coil:0"]'); click('button[data-pin="coil:casings"]'); click('button[data-decide="coil"]');
+    return { o, d1, lead1, lead: !!Cases.st('menagerie').leads.coil, zola: !!Actors.npcs.find((n) => n.def.name === 'Zola') };
+  });
+  await shot('board');
+  await E(() => Hud.toggle(null));
+  if (!clues.casings || clues.photo !== 'photo' || !clues.scan || !clues.still || lio.o !== 'talk' || !lio.wrong || lio.found !== 'casings,lio,lioTruth,notice,still' || lio.lead || board.o !== 'board' || board.d1 !== 1 || board.lead1 || !board.lead || !board.zola) fail('the clues did not come together ' + JSON.stringify({ clues, lio, board }));
   const test = await E(() => {
     const z = Actors.npcs.find((n) => n.def.name === 'Zola'); Player.place(z.x - 12, z.y); T_.run({}, 10); T_.tap('useHit'); const o = Hud.open;
     let b = document.querySelector('button[data-test="menagerie"]'); if (b) b.click(); const t = Hud.open;
