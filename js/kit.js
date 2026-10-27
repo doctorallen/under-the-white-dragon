@@ -140,6 +140,7 @@ function kAC(P, x, y, o = {}) {
 // a down pipe with brackets
 function kDrain(P, x, y0, y1, ramp = MAT.steelD) { for (let y = y0; y < y1; y++) { P.put(x, y, tone(ramp, 0.65)); P.put(x + 1, y, tone(ramp, 0.35)); if ((y - y0) % 24 === 0) { P.put(x - 1, y, tone(ramp, 0.5)); P.put(x + 2, y, tone(ramp, 0.3)); } } }
 // a window with a frame, a sill, and what's behind it
+const KS = { door: 40, doorW: 18, fh: 50, gh: 52, winW: 18, winH: 22 };
 function kWin(P, x, y, w, h, o = {}) {
   const lit = o.lit, fr = o.frame || [10, 10, 14], c = lit ? col3(lit) : col3(o.dark || '#0e141e');
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
@@ -221,7 +222,7 @@ function kShelves(P, x0, y0, x1, y1, cols, o = {}) {
 // the ground floor of a building, [x0, x1] by h px over G; `kind` says what's
 // sold there, `col` its colour. Lights and signs go in with it.
 function kShop(L, x0, x1, G, kind, col, o = {}) {
-  const h = o.h || 40, w = x1 - x0, c = col3(col || '#ffd040'), mid = Math.round((x0 + x1) / 2), seed = o.seed || x0;
+  const h = Math.max(o.h || KS.gh, KS.door + 4), w = x1 - x0, c = col3(col || '#ffd040'), mid = Math.round((x0 + x1) / 2), seed = o.seed || x0;
   L.paint(x0, G - h - 12, x1, G, (P) => {
     // the frame: a lintel, piers at the sides
     P.block(x0, G - h, x1, G - h + 4, o.frame || MAT.steelD, { base: 0.45 });
@@ -240,8 +241,8 @@ function kShop(L, x0, x1, G, kind, col, o = {}) {
       kFill(P, ix0, G - 14, ix1, G, mixRgb(c, [30, 20, 10], 0.5), 0.4);
     } else if (kind === 'noren' || kind === 'ramen' || kind === 'izakaya') { // dark wood, a curtain over the door, lanterns
       P.area(ix0, iy0, ix1, G, KMAT.darkwood, (x, y) => ((x - ix0) % 4 === 0 ? 0.55 : 0.32));
-      kFill(P, mid - 12, iy0 + 4, mid + 12, G, mixRgb(c, [40, 24, 10], 0.55), 0.35);
-      kNoren(P, mid - 13, mid + 13, iy0 + 2, 14, kind === 'ramen' ? '#c82a2a' : kind === 'izakaya' ? '#1a2a5a' : (o.noren || '#2a2a3a'));
+      kFill(P, mid - 12, G - KS.door - 4, mid + 12, G, mixRgb(c, [40, 24, 10], 0.55), 0.35);
+      kNoren(P, mid - 13, mid + 13, G - KS.door - 6, 16, kind === 'ramen' ? '#c82a2a' : kind === 'izakaya' ? '#1a2a5a' : (o.noren || '#2a2a3a'));
       if (kind !== 'noren') { kLantern(P, ix0 + 6, iy0 + 4, '#ff4a2a', { r: 3, h: 6 }); kLantern(P, ix1 - 6, iy0 + 4, '#ff4a2a', { r: 3, h: 6 }); }
     } else if (kind === 'counter' || kind === 'food') { // an open counter, the kitchen behind it
       kFill(P, ix0, iy0, ix1, G - 14, mixRgb(c, [30, 20, 10], 0.62), 0.3);
@@ -273,14 +274,14 @@ function kShop(L, x0, x1, G, kind, col, o = {}) {
       P.block(ix0, G - 12, ix1, G, MAT.wood, { base: 0.5 });
     } else if (kind === 'bar' || kind === 'club') { // dark, a lit door, a bouncer's light
       kFill(P, ix0, iy0, ix1, G, '#0a060c');
-      P.block(mid - 9, G - 30, mid + 9, G, KMAT.blackglass, { base: 0.4 }); kFill(P, mid - 7, G - 28, mid + 7, G, mixRgb(c, [10, 0, 10], 0.6), 0.45);
-      for (let x = ix0 + 2; x < ix1 - 2; x++) if (Math.abs(x - mid) > 11) P.put(x, iy0 + 6, c, 1);
+      P.block(mid - 11, G - KS.door - 2, mid + 11, G, KMAT.blackglass, { base: 0.4 }); kFill(P, mid - 9, G - KS.door, mid + 9, G, mixRgb(c, [10, 0, 10], 0.6), 0.45);
+      for (let x = ix0 + 2; x < ix1 - 2; x++) if (Math.abs(x - mid) > 13) P.put(x, iy0 + 6, c, 1);
     } else if (kind === 'temple') { // red doors with gold studs
       P.area(ix0, iy0, ix1, G, KMAT.lacquer, (x, y) => 0.45 + ((x - ix0) % 14 === 0 ? -0.25 : 0));
       for (let y = iy0 + 6; y < G - 4; y += 6) for (let x = ix0 + 4; x < ix1 - 2; x += 5) P.put(x, y, tone(KMAT.gold, 0.8));
     } else { // a plain door in a plain wall
       P.area(ix0, iy0, ix1, G, MAT.concreteD, () => 0.4);
-      P.block(mid - 8, G - 30, mid + 8, G, rp(col || '#4a3a3a', 6), { base: 0.45 });
+      P.block(mid - KS.doorW / 2, G - KS.door, mid + KS.doorW / 2, G, rp(col || '#4a3a3a', 6), { base: 0.45 }); P.put(mid + KS.doorW / 2 - 4, G - 20, [200, 200, 210]);
     }
   });
   // signs and lights
@@ -290,25 +291,29 @@ function kShop(L, x0, x1, G, kind, col, o = {}) {
 }
 
 // ---- buildings ------------------------------------------------------------------
+// Scale: an adult is 33 px, about 19 px to the metre, so a door is 40 px high
+// and 18-20 wide, a storey about 50 px, a window about 18 x 22 (KS). A
+// district can ask for a lower ground floor (gh) to meet a gallery, never
+// lower than a door.
 // A shophouse: shops on the ground, people above. o.floors, o.fh (floor
 // height), o.wall (material), o.shops ([[kind, colour], ...] across the
 // front), o.roof ('flat', 'tank', 'garden', 'tin', 'tile', 'shack'), o.balcony,
 // o.blade (a hanging sign's colour), o.ac.
 function bShophouse(L, x0, x1, G, o = {}) {
-  const seed = o.seed || x0 * 7 + 3, r = new Rng(seed), fl = o.floors || 3, fh = o.fh || 34, gh = o.gh || 42, top = G - gh - fl * fh, wall = o.wall || r.pick([KMAT.stucco, KMAT.cream, KMAT.teal, KMAT.pink, MAT.concrete, KMAT.mint]), w = x1 - x0;
+  const seed = o.seed || x0 * 7 + 3, r = new Rng(seed), fl = o.floors || 3, fh = Math.max(o.fh || 0, KS.fh), gh = Math.max(o.gh || KS.gh, KS.door + 4), top = G - gh - fl * fh, wall = o.wall || r.pick([KMAT.stucco, KMAT.cream, KMAT.teal, KMAT.pink, MAT.concrete, KMAT.mint]), w = x1 - x0;
   L.paint(x0 - 12, top - 40, x1 + 12, G - gh + 2, (P) => {
     P.block(x0, top, x1, G - gh, wall, { base: 0.42, drips: 0.12, dripLen: 22, seed });
     // floor by floor: a band, windows, sometimes a balcony across, AC units
     for (let f = 0; f < fl; f++) {
-      const fy = G - gh - (f + 1) * fh, wy = fy + 8, n = Math.max(1, Math.round(w / 26)), sp = w / n;
+      const fy = G - gh - (f + 1) * fh, wy = fy + 12, n = Math.max(1, Math.round(w / 34)), sp = w / n;
       P.block(x0 - 1, fy + fh - 3, x1 + 1, fy + fh, wall, { base: 0.55, lip: 0.8 });
       for (let i = 0; i < n; i++) {
-        const wx = Math.round(x0 + sp * i + sp / 2 - 7), lit = hash(i, f, seed) < (o.lit || 0.55);
-        kWin(P, wx, wy, 14, 15, { lit: lit ? ['#ffd890', '#ffe8c0', '#a0f0ff', '#ff90c0', '#ffc070'][Math.floor(hash(i, f, seed + 1) * 5)] : null, blinds: hash(i, f, seed + 2) < 0.4, curtain: hash(i, f, seed + 3) < 0.3 ? ['#8a3a3a', '#3a5a8a', '#8a7a3a'][i % 3] : null, figure: hash(i, f, seed + 4) < 0.12, bars: o.bars && f === 0 });
-        if (o.ac !== false && hash(i, f, seed + 5) < 0.45) kAC(P, wx + (hash(i, f, seed + 6) < 0.5 ? -3 : 7), wy + 17);
+        const wx = Math.round(x0 + sp * i + sp / 2 - KS.winW / 2), lit = hash(i, f, seed) < (o.lit || 0.55);
+        kWin(P, wx, wy, KS.winW, KS.winH, { lit: lit ? ['#ffd890', '#ffe8c0', '#a0f0ff', '#ff90c0', '#ffc070'][Math.floor(hash(i, f, seed + 1) * 5)] : null, blinds: hash(i, f, seed + 2) < 0.4, curtain: hash(i, f, seed + 3) < 0.3 ? ['#8a3a3a', '#3a5a8a', '#8a7a3a'][i % 3] : null, figure: hash(i, f, seed + 4) < 0.12, bars: o.bars && f === 0 });
+        if (o.ac !== false && hash(i, f, seed + 5) < 0.45) kAC(P, wx + (hash(i, f, seed + 6) < 0.5 ? -3 : 9), wy + KS.winH + 3);
       }
       if (o.balcony !== false && (o.balcony === 'all' || hash(f, 9, seed) < 0.45)) kBalcony(P, x0 + 2, x1 - 2, fy + fh - 4, { seed: seed + f, ramp: wall, solid: hash(f, 3, seed) < 0.3 });
-      else if (hash(f, 11, seed) < 0.5) laundry(P, x0 + 4, fy + 6, x1 - 4, fy + 4, seed + f);
+      else if (hash(f, 11, seed) < 0.5) laundry(P, x0 + 4, fy + 8, x1 - 4, fy + 6, seed + f);
     }
     kDrain(P, x1 - 4, top, G - gh);
     // the roof
@@ -335,48 +340,49 @@ function bCapsules(L, x0, x1, G, o = {}) {
   const seed = o.seed || 77, h = o.h || 300, top = G - h, w = x1 - x0, cores = [x0 + Math.round(w * 0.28), x0 + Math.round(w * 0.68)];
   L.paint(x0 - 30, top - 30, x1 + 30, G, (P) => {
     // the cores: lift shafts with slit windows, stairs lit at night
-    for (const cx of cores) { P.block(cx - 12, top, cx + 12, G - 30, KMAT.concreteL, { base: 0.42, panels: [24, 16], drips: 0.1, dripLen: 30 }); for (let y = top + 8; y < G - 40; y += 16) kFill(P, cx - 2, y, cx + 2, y + 8, hash(cx, y, seed) < 0.5 ? '#ffe0a0' : '#1a1e24', hash(cx, y, seed) < 0.5 ? 0.4 : 0); P.block(cx - 14, top - 10, cx + 14, top, KMAT.concreteL, { base: 0.55 }); for (let y = top - 22; y < top - 10; y++) P.put(cx + 6, y, tone(MAT.steel, 0.5)); P.put(cx + 6, top - 23, [255, 50, 60], 1); }
+    for (const cx of cores) { P.block(cx - 16, top, cx + 16, G - 54, KMAT.concreteL, { base: 0.42, panels: [24, 16], drips: 0.1, dripLen: 30 }); for (let y = top + 10; y < G - 64; y += 25) kFill(P, cx - 3, y, cx + 3, y + 14, hash(cx, y, seed) < 0.5 ? '#ffe0a0' : '#1a1e24', hash(cx, y, seed) < 0.5 ? 0.4 : 0); P.block(cx - 14, top - 10, cx + 14, top, KMAT.concreteL, { base: 0.55 }); for (let y = top - 22; y < top - 10; y++) P.put(cx + 6, y, tone(MAT.steel, 0.5)); P.put(cx + 6, top - 23, [255, 50, 60], 1); }
     // the capsules: each fixed to a core, sticking out one side or the other
     let k = 0;
-    for (const cx of cores) for (let y = top + 6; y < G - 66; y += 27) for (const side of [-1, 1]) {
+    for (const cx of cores) for (let y = top + 6; y < G - 100; y += 50) for (const side of [-1, 1]) {
       k++; if (hash(k, y, seed) < 0.12) continue;
-      const off = Math.round(hash(k, 2, seed) * 8), bw = 30, bh = 24, bx = side < 0 ? cx - 12 - bw + 6 - off : cx + 12 - 6 + off, by = y + Math.round(hash(k, 3, seed) * 4);
-      P.block(bx, by, bx + bw, by + bh, KMAT.whitepanel, { base: 0.62 - hash(k, 4, seed) * 0.14, panels: [10, 24], drips: 0.25, dripLen: 10 });
-      const lit = hash(k, 5, seed) < 0.5; kPort(P, bx + bw / 2, by + bh / 2, 6, lit ? ['#ffd890', '#ffe8c0', '#a0f0ff', '#ffb0d0'][k % 4] : null);
-      if (lit && hash(k, 6, seed) < 0.3) { P.put(bx + bw / 2 - 2, by + bh / 2, [20, 14, 18]); P.put(bx + bw / 2 - 2, by + bh / 2 + 1, [20, 14, 18]); }
-      for (let i = 0; i < 4; i++) P.put(bx + 3 + i * 2, by + bh - 3, [30, 30, 34]);
-      if (hash(k, 7, seed) < 0.2) kAC(P, bx + (side < 0 ? 2 : bw - 12), by + bh + 1, { drip: 6 });
+      const off = Math.round(hash(k, 2, seed) * 8), bw = 56, bh = 44, bx = side < 0 ? cx - 16 - bw + 6 - off : cx + 16 - 6 + off, by = y + Math.round(hash(k, 3, seed) * 4);
+      P.block(bx, by, bx + bw, by + bh, KMAT.whitepanel, { base: 0.62 - hash(k, 4, seed) * 0.14, panels: [14, 44], drips: 0.25, dripLen: 14 });
+      const lit = hash(k, 5, seed) < 0.5; kPort(P, bx + bw / 2, by + bh / 2, 12, lit ? ['#ffd890', '#ffe8c0', '#a0f0ff', '#ffb0d0'][k % 4] : null);
+      if (lit && hash(k, 6, seed) < 0.3) for (let j = 0; j < 9; j++) for (let i = 0; i < 3; i++) P.put(bx + bw / 2 - 4 + i, by + bh / 2 - 2 + j, [20, 14, 18]);
+      for (let i = 0; i < 6; i++) P.put(bx + 4 + i * 2, by + bh - 4, [30, 30, 34]);
+      if (hash(k, 7, seed) < 0.2) kAC(P, bx + (side < 0 ? 4 : bw - 14), by + bh + 1, { drip: 6 });
     }
     // the base: pilotis, a dim lobby
-    P.block(x0 + 10, G - 30, x1 - 10, G - 26, KMAT.concreteL, { base: 0.5 });
-    for (let x = x0 + 14; x < x1 - 14; x += 22) P.block(x, G - 26, x + 5, G, KMAT.concreteL, { base: 0.45, lip: 0 });
-    kFill(P, x0 + 20, G - 24, x1 - 20, G, '#0c0e12'); kFill(P, cores[0] - 10, G - 22, cores[0] + 10, G, '#ffe8c0', 0.25);
+    P.block(x0 + 10, G - 54, x1 - 10, G - 48, KMAT.concreteL, { base: 0.5 });
+    kFill(P, x0 + 20, G - 48, x1 - 20, G, '#0c0e12');
+    for (let x = x0 + 14; x < x1 - 14; x += 34) P.block(x, G - 48, x + 7, G, KMAT.concreteL, { base: 0.45, lip: 0 });
+    kFill(P, cores[0] - KS.doorW / 2 - 4, G - KS.door - 4, cores[0] + KS.doorW / 2 + 4, G, '#2a2a30'); kFill(P, cores[0] - KS.doorW / 2, G - KS.door, cores[0] + KS.doorW / 2, G, '#ffe8c0', 0.25); kV(P, cores[0], G - KS.door, G, '#8a8070');
   });
-  L.light(cores[0], G - 14, 50, [1, 0.85, 0.6], 0.6);
+  L.light(cores[0], G - 20, 60, [1, 0.85, 0.6], 0.6);
   if (o.sign) L.sign(x1 - 20, top + 30, 8, o.sign, { vert: true, r: 70, seed });
   return { top };
 }
 // A machiya: a narrow wooden townhouse, two floors: a lattice front, a
 // curtain over the door, a little tiled roof between floors, the main roof
 function bMachiya(L, x0, x1, G, o = {}) {
-  const seed = o.seed || x0, w = x1 - x0, g1 = G - 40, g2 = g1 - 32, wood = o.wood || KMAT.darkwood, pl = KMAT.plaster;
+  const seed = o.seed || x0, w = x1 - x0, g1 = G - 54, g2 = g1 - 46, wood = o.wood || KMAT.darkwood, pl = KMAT.plaster;
   L.paint(x0 - 10, g2 - 30, x1 + 10, G, (P) => {
     // the upper floor: plaster with slatted windows (mushiko)
     P.block(x0 + 2, g2, x1 - 2, g1, pl, { base: 0.46, drips: 0.1, dripLen: 10 });
-    for (let x = x0 + 8; x < x1 - 18; x += 22) { kFill(P, x, g2 + 10, x + 14, g2 + 22, '#1a1410'); for (let i = 0; i < 14; i += 3) for (let j = 0; j < 12; j++) P.put(x + i, g2 + 10 + j, tone(pl, 0.6)); if (hash(x, 1, seed) < 0.5) for (let i = 1; i < 14; i += 3) for (let j = 0; j < 12; j++) P.put(x + i, g2 + 10 + j, [255, 200, 130], 0.3); }
+    for (let x = x0 + 10; x < x1 - 26; x += 30) { kFill(P, x, g2 + 14, x + 20, g2 + 34, '#1a1410'); for (let i = 0; i < 20; i += 3) for (let j = 0; j < 20; j++) P.put(x + i, g2 + 14 + j, tone(pl, 0.6)); if (hash(x, 1, seed) < 0.5) for (let i = 1; i < 20; i += 3) for (let j = 0; j < 20; j++) P.put(x + i, g2 + 14 + j, [255, 200, 130], 0.3); }
     for (const px of [x0 + 2, x1 - 6]) P.block(px, g2, px + 4, G, wood, { base: 0.5, lip: 0 });
     // the main roof and the little roof between floors
     kRoof(P, x0, x1, g2, 16, o.roof || KMAT.kawara, { over: 7, inset: 8 });
     kRoof(P, x0, x1, g1, 6, o.roof || KMAT.kawara, { over: 6, inset: 1 });
     // the ground floor: the lattice, the door with its curtain
-    const dx = o.doorLeft ? x0 + 8 : x1 - 30;
+    const dx = o.doorLeft ? x0 + 8 : x1 - 32;
     kLattice(P, x0 + 6, g1 + 4, x1 - 6, G, wood, { lit: o.lit === false ? null : '#ffb060' });
-    kFill(P, dx, g1 + 8, dx + 22, G, '#2a1608', 0.2); kFill(P, dx + 2, g1 + 10, dx + 20, G, '#c87a3a', 0.35);
-    kNoren(P, dx, dx + 22, g1 + 6, 14, o.noren || '#1a2a4a', { glyph: seed });
+    kFill(P, dx, G - KS.door - 4, dx + 24, G, '#2a1608', 0.2); kFill(P, dx + 2, G - KS.door - 2, dx + 22, G, '#c87a3a', 0.35);
+    kNoren(P, dx, dx + 24, G - KS.door - 6, 16, o.noren || '#1a2a4a', { glyph: seed });
     P.block(x0 + 4, G - 3, x1 - 4, G, KMAT.stone, { base: 0.5 });
   });
   if (o.lantern !== false) L.paint(x0, g1, x0 + 14, g1 + 16, (P) => kLantern(P, x0 + 8, g1 + 4, o.lantern || '#ff5030', { r: 3, h: 7 }));
-  L.light(o.doorLeft ? x0 + 19 : x1 - 19, G - 16, 50, [1, 0.65, 0.35], 0.75);
+  L.light(o.doorLeft ? x0 + 20 : x1 - 20, G - 20, 56, [1, 0.65, 0.35], 0.75);
   if (o.lantern !== false) L.light(x0 + 8, g1 + 8, 30, [1, 0.45, 0.25], 0.6, 1, { mode: 'fire', seed: x0 });
 }
 // A temple hall on a stone base: red pillars, lattice doors, a great curved
@@ -430,40 +436,40 @@ function bGlass(L, x0, x1, G, o = {}) {
   const seed = o.seed || x0, h = o.h || 320, top = G - h, w = x1 - x0, edge = col3(o.edge || '#3af0e0'), crown = o.crown || 'slant';
   L.paint(x0 - 10, top - 60, x1 + 10, G, (P) => {
     // the curtain wall
-    glassWall(P, x0, top, x1, G - 48, { lit: o.lit === undefined ? 0.4 : o.lit, seed, mw: o.mw || 12, mh: o.mh || 14, ramp: o.glass || MAT.glassC, pal: o.pal });
-    if (o.panel) for (let y = top + 20; y < G - 60; y += o.panel) P.block(x0, y, x1, y + 5, KMAT.whitepanel, { base: 0.55 });
-    if (o.fins) for (let x = x0 + 6; x < x1 - 4; x += o.fins) P.block(x, top, x + 2, G - 48, KMAT.whitepanel, { base: 0.6, lip: 0 });
+    glassWall(P, x0, top, x1, G - 60, { lit: o.lit === undefined ? 0.4 : o.lit, seed, mw: o.mw || 12, mh: o.mh || 14, ramp: o.glass || MAT.glassC, pal: o.pal });
+    if (o.panel) for (let y = top + 20; y < G - 72; y += o.panel) P.block(x0, y, x1, y + 5, KMAT.whitepanel, { base: 0.55 });
+    if (o.fins) for (let x = x0 + 6; x < x1 - 4; x += o.fins) P.block(x, top, x + 2, G - 60, KMAT.whitepanel, { base: 0.6, lip: 0 });
     // the crown: slanted glass, a stepped top, or a ring
     if (crown === 'slant') P.area(x0, top - 50, x1, top, o.glass || MAT.glassC, (x, y) => 0.45 + ((x + y) % 9 === 0 ? 0.2 : 0) - (top - y) / 120, { inside: (x, y) => y >= top - 50 * (x - x0) / w });
     if (crown === 'step') { P.block(x0 + w * 0.15, top - 30, x1 - w * 0.15, top, KMAT.whitepanel, { base: 0.5, panels: [10, 10] }); P.block(x0 + w * 0.32, top - 50, x1 - w * 0.32, top - 30, KMAT.whitepanel, { base: 0.55 }); for (let y = top - 70; y < top - 50; y++) P.put(Math.round((x0 + x1) / 2), y, tone(MAT.steel, 0.6)); P.put(Math.round((x0 + x1) / 2), top - 71, [255, 50, 60], 1); }
     if (crown === 'ring') { for (let a = 0; a < Math.PI * 2; a += 0.01) { const x = (x0 + x1) / 2 + Math.cos(a) * w * 0.4, y = top - 22 + Math.sin(a) * 8; P.put(x, y, a > Math.PI ? edge : mixRgb(edge, [0, 0, 0], 0.5), a > Math.PI ? 1 : 0.4); } }
     // light strips up the corners
-    for (let y = top; y < G - 48; y++) { P.put(x0, y, edge, 0.9); P.put(x1 - 1, y, mixRgb(edge, [0, 0, 0], 0.4), 0.6); }
+    for (let y = top; y < G - 60; y++) { P.put(x0, y, edge, 0.9); P.put(x1 - 1, y, mixRgb(edge, [0, 0, 0], 0.4), 0.6); }
     // the lobby: a canopy, tall glass, people's light inside
-    P.block(x0 - 6, G - 52, x1 + 6, G - 47, KMAT.whitepanel, { base: 0.62 });
-    for (let x = x0 + 2; x < x1 - 2; x++) for (let y = G - 47; y < G; y++) { const t = (y - G + 47) / 47; P.put(x, y, (x - x0) % 16 < 1 ? [30, 38, 48] : mixRgb([150, 175, 200], [60, 72, 90], t + (hash(x >> 3, 1, seed) - 0.5) * 0.3), (x - x0) % 16 < 1 ? 0 : 0.08); }
-    for (let x = x0 + 8; x < x1 - 8; x += 22) { kFill(P, x, G - 20, x + 10, G - 12, '#2a3a48'); kFill(P, x + 2, G - 36, x + 8, G - 33, '#e8f0ff', 0.5); }
-    P.block(Math.round((x0 + x1) / 2) - 12, G - 30, Math.round((x0 + x1) / 2) + 12, G, KMAT.blackglass, { base: 0.35 });
+    P.block(x0 - 6, G - 64, x1 + 6, G - 59, KMAT.whitepanel, { base: 0.62 });
+    for (let x = x0 + 2; x < x1 - 2; x++) for (let y = G - 59; y < G; y++) { const t = (y - G + 59) / 59; P.put(x, y, (x - x0) % 16 < 1 ? [30, 38, 48] : mixRgb([150, 175, 200], [60, 72, 90], t + (hash(x >> 3, 1, seed) - 0.5) * 0.3), (x - x0) % 16 < 1 ? 0 : 0.08); }
+    for (let x = x0 + 8; x < x1 - 8; x += 26) { kFill(P, x, G - 22, x + 14, G - 14, '#2a3a48'); kFill(P, x + 2, G - 50, x + 10, G - 47, '#e8f0ff', 0.5); }
+    P.block(Math.round((x0 + x1) / 2) - 14, G - KS.door - 4, Math.round((x0 + x1) / 2) + 14, G, KMAT.blackglass, { base: 0.35 }); kV(P, Math.round((x0 + x1) / 2), G - KS.door - 2, G, '#8a9aa8');
   });
   L.light((x0 + x1) / 2, G - 26, w * 0.7, [0.75, 0.85, 1], 0.55);
-  if (o.logo) L.sign(Math.round((x0 + x1) / 2) - 13, G - 64, 6, o.logo, { r: 70, seed });
+  if (o.logo) L.sign(Math.round((x0 + x1) / 2) - 13, G - 76, 6, o.logo, { r: 70, seed });
   return { top };
 }
 // A stack of shacks: an old two-floor block with whatever people could find
 // built on top of it, box on box, corrugated, tarped, plywood, a container
 function bStack(L, x0, x1, G, o = {}) {
-  const seed = o.seed || x0 * 3, r = new Rng(seed), w = x1 - x0, base = G - 76, levels = o.levels || 4, mats = [MAT.rust, KMAT.corrBlue, KMAT.plywood, KMAT.tarp, KMAT.corrGreen, KMAT.tarpR, MAT.steelD];
+  const seed = o.seed || x0 * 3, r = new Rng(seed), w = x1 - x0, base = G - 104, levels = o.levels || 4, mats = [MAT.rust, KMAT.corrBlue, KMAT.plywood, KMAT.tarp, KMAT.corrGreen, KMAT.tarpR, MAT.steelD];
   const boxes = []; let y = base;
-  for (let k = 0; k < levels; k++) { const bh = r.i(22, 32), cnt = r.i(1, 3); let bx = x0 + r.i(-16, 20); for (let q = 0; q < cnt && bx < x1 - 20; q++) { const bw = r.i(28, 56); boxes.push({ x: bx, y: y - bh, w: Math.min(bw, x1 + 20 - bx), h: bh, m: r.pick(mats), s: r.i(1, 1e5) }); bx += bw + r.i(-6, 10); } y -= bh; }
+  for (let k = 0; k < levels; k++) { const bh = r.i(40, 50), cnt = r.i(1, 3); let bx = x0 + r.i(-16, 20); for (let q = 0; q < cnt && bx < x1 - 30; q++) { const bw = r.i(44, 76); boxes.push({ x: bx, y: y - bh, w: Math.min(bw, x1 + 20 - bx), h: bh, m: r.pick(mats), s: r.i(1, 1e5) }); bx += bw + r.i(-6, 10); } y -= bh; }
   L.paint(x0 - 40, y - 30, x1 + 40, G, (P) => {
     // the old block under it all: brick, barred windows, a stair up its side
-    P.block(x0, base, x1, G - 42, MAT.brickD, { base: 0.38, drips: 0.2, dripLen: 20, seed });
-    for (let x = x0 + 8; x < x1 - 14; x += 24) kWin(P, x, base + 8, 12, 14, { lit: hash(x, 2, seed) < 0.5 ? '#ffc880' : null, bars: true });
+    P.block(x0, base, x1, G - KS.gh, MAT.brickD, { base: 0.38, drips: 0.2, dripLen: 20, seed });
+    for (let x = x0 + 10; x < x1 - 24; x += 32) kWin(P, x, base + 12, KS.winW, KS.winH, { lit: hash(x, 2, seed) < 0.5 ? '#ffc880' : null, bars: true });
     for (const b of boxes) {
       const corr = b.m === MAT.rust || b.m === KMAT.corrBlue || b.m === KMAT.corrGreen;
       if (corr) corrugated(P, b.x, b.y, b.x + b.w, b.y + b.h, b.m); else P.block(b.x, b.y, b.x + b.w, b.y + b.h, b.m, { base: 0.42, panels: b.m === KMAT.plywood ? [12, 40] : undefined, drips: 0.2, dripLen: 8 });
       // a window or two, a door, things hung off it
-      for (let wx = b.x + 5; wx < b.x + b.w - 10; wx += 18) if (hash(wx, b.y, b.s) < 0.7) kWin(P, wx, b.y + 6, 8, 8, { lit: hash(wx, b.y, b.s + 1) < 0.55 ? ['#ffd890', '#a0f0ff', '#ff90c0', '#ffc070'][Math.floor(hash(wx, 3, b.s) * 4)] : null, cross: false });
+      for (let wx = b.x + 6; wx < b.x + b.w - 18; wx += 26) if (hash(wx, b.y, b.s) < 0.7) kWin(P, wx, b.y + 10, 14, 16, { lit: hash(wx, b.y, b.s + 1) < 0.55 ? ['#ffd890', '#a0f0ff', '#ff90c0', '#ffc070'][Math.floor(hash(wx, 3, b.s) * 4)] : null, cross: false });
       kH(P, b.x - 2, b.x + b.w + 2, b.y, tone(MAT.steel, 0.65)); kH(P, b.x - 2, b.x + b.w + 2, b.y + 1, tone(MAT.steelD, 0.3));
       if (hash(b.x, b.y, 5) < 0.35) { for (let j = 0; j < 9; j++) P.put(b.x + b.w - 6, b.y - 9 + j, tone(MAT.steel, 0.5)); P.area(b.x + b.w - 11, b.y - 15, b.x + b.w - 1, b.y - 7, MAT.chrome, (x, yy) => 0.7 - Math.hypot(x - b.x - b.w + 6, yy - b.y + 11) / 7, { inside: (x, yy) => Math.hypot(x - b.x - b.w + 6, yy - b.y + 11) < 5 }); }
       if (hash(b.x, b.y, 6) < 0.3) P.put(b.x + 3, b.y + 3, [255, 230, 160], 1);
@@ -473,27 +479,27 @@ function bStack(L, x0, x1, G, o = {}) {
     for (let ly = base; ly > y + 10; ly -= 4) { P.put(x1 - 8, ly, tone(MAT.steel, 0.6)); P.put(x1 - 3, ly, tone(MAT.steel, 0.4)); }
     laundry(P, x0 + 6, base - 4, x1 - 6, base - 8, seed);
   });
-  kShop(L, x0, x1, G, o.shop || 'junkshop', o.shopCol || '#ffb040', { h: 42, seed });
+  kShop(L, x0, x1, G, o.shop || 'junkshop', o.shopCol || '#ffb040', { h: KS.gh, seed });
   for (const b of boxes) if (hash(b.x, b.y, 6) < 0.3) L.light(b.x + 3, b.y + 3, 30, [1, 0.85, 0.6], 0.4);
-  if (o.blade) L.sign(x0 - 8, base - 50, 7, o.blade, { vert: true, r: 60, seed });
+  if (o.blade) L.sign(x0 - 8, base - 70, 7, o.blade, { vert: true, r: 60, seed });
   return { top: y };
 }
 // A slab block (danchi): floors of front doors along open galleries, a stair
 // tower at one end, a number painted big on the end wall
 function bDanchi(L, x0, x1, G, o = {}) {
-  const seed = o.seed || x0, fl = o.floors || 6, fh = 30, top = G - fl * fh - 10, w = x1 - x0, wall = o.wall || KMAT.concreteL;
+  const seed = o.seed || x0, fl = o.floors || 6, fh = KS.fh, top = G - fl * fh - 10, w = x1 - x0, wall = o.wall || KMAT.concreteL;
   L.paint(x0 - 4, top - 20, x1 + 4, G, (P) => {
     P.block(x0, top, x1, G, wall, { base: 0.4, drips: 0.22, dripLen: 40, seed });
     for (let f = 0; f < fl; f++) {
       const gy = G - f * fh - 2;
-      for (let x = x0 + 30; x < x1 - 14; x += 26) { const lit = hash(x, f, seed) < 0.55; P.block(x, gy - 24, x + 12, gy, rp(['#5a4a3a', '#3a4a5a', '#4a3a4a', '#6a5a3a'][Math.floor(hash(x, f, seed + 2) * 4)], 6), { base: 0.42 }); kWin(P, x + 14, gy - 20, 8, 9, { lit: lit ? '#ffd8a0' : null, cross: false }); P.put(x + 10, gy - 12, [200, 200, 200]); if (lit) P.put(x + 6, gy - 26, [255, 230, 170], 0.8); }
-      if (f > 0) { slab(P, x0, x1, gy, 3, wall); railing(P, x0 + 24, x1, gy, wall, { h: 8, step: 2 }); for (let x = x0 + 24; x < x1; x++) for (let j = 1; j < 8; j++) if (hash(x >> 2, f, seed) < 0.15) P.put(x, gy - j, tone(rp(['#a83a3a', '#3a6aa8', '#d8d0b0'][Math.floor(hash(x >> 2, f, seed + 1) * 3)], 5), 0.6)); }
+      for (let x = x0 + 32; x < x1 - 44; x += 50) { const lit = hash(x, f, seed) < 0.55; P.block(x, gy - KS.door, x + KS.doorW, gy, rp(['#5a4a3a', '#3a4a5a', '#4a3a4a', '#6a5a3a'][Math.floor(hash(x, f, seed + 2) * 4)], 6), { base: 0.42 }); kWin(P, x + 24, gy - 34, 18, 16, { lit: lit ? '#ffd8a0' : null }); P.put(x + KS.doorW - 4, gy - 20, [200, 200, 200]); if (lit) for (let i = 0; i < 4; i++) P.put(x + 7 + i, gy - KS.door - 3, [255, 230, 170], 0.8); }
+      if (f > 0) { slab(P, x0, x1, gy, 3, wall); railing(P, x0 + 24, x1, gy, wall, { h: 14, step: 2 }); for (let x = x0 + 24; x < x1; x++) for (let j = 1; j < 14; j++) if (hash(x >> 2, f, seed) < 0.15) P.put(x, gy - j, tone(rp(['#a83a3a', '#3a6aa8', '#d8d0b0'][Math.floor(hash(x >> 2, f, seed + 1) * 3)], 5), 0.6)); }
     }
     // the stair tower, and the number
-    P.block(x0, top - 10, x0 + 22, G, wall, { base: 0.5, panels: [22, 12] }); for (let y = top; y < G - 10; y += 12) kFill(P, x0 + 6, y + 3, x0 + 16, y + 9, hash(y, 3, seed) < 0.6 ? '#e8f0d0' : '#1a1e20', hash(y, 3, seed) < 0.6 ? 0.3 : 0);
-    const num = String(o.number || 7), nx = x1 - 20; for (let i = 0; i < num.length; i++) for (const [a, b] of GLYPHS[(num.charCodeAt(i) * 3) % GLYPHS.length]) kFill(P, nx + i * 10 + a * 3, top + 10 + b * 3, nx + i * 10 + a * 3 + 3, top + 13 + b * 3, '#d8c8a0');
+    P.block(x0, top - 10, x0 + 26, G, wall, { base: 0.5, panels: [26, 25] }); for (let y = top; y < G - 10; y += 25) kFill(P, x0 + 6, y + 6, x0 + 20, y + 18, hash(y, 3, seed) < 0.6 ? '#e8f0d0' : '#1a1e20', hash(y, 3, seed) < 0.6 ? 0.3 : 0);
+    const num = String(o.number || 7), nx = x1 - 26; for (let i = 0; i < num.length; i++) for (const [a, b] of GLYPHS[(num.charCodeAt(i) * 3) % GLYPHS.length]) kFill(P, nx + i * 14 + a * 4, top + 12 + b * 4, nx + i * 14 + a * 4 + 4, top + 16 + b * 4, '#d8c8a0');
   });
-  for (let f = 1; f < fl; f++) if (hash(f, 1, seed) < 0.6) L.tube(x0 + 30 + Math.round(hash(f, 2, seed) * (w - 60)), G - f * fh - 26, 10, '#e8f4e8', 0.45);
+  for (let f = 1; f < fl; f++) if (hash(f, 1, seed) < 0.6) L.tube(x0 + 30 + Math.round(hash(f, 2, seed) * (w - 60)), G - f * fh - 44, 12, '#e8f4e8', 0.45);
   return { top };
 }
 // A theatre: a marquee of chasing bulbs, posters in lit frames, a tall sign
@@ -548,13 +554,13 @@ function bPark(L, x0, x1, G, o = {}) {
 }
 // A pachinko hall or arcade: a whole front of bulbs and screens
 function bArcade(L, x0, x1, G, o = {}) {
-  const seed = o.seed || x0, h = o.h || 110, top = G - h, w = x1 - x0, c = col3(o.col || '#ff4ab0');
+  const seed = o.seed || x0, h = Math.max(o.h || 0, 130), top = G - h, w = x1 - x0, c = col3(o.col || '#ff4ab0');
   L.paint(x0 - 4, top - 10, x1 + 4, G, (P) => {
-    P.block(x0, top, x1, G - 40, KMAT.blackglass, { base: 0.3 });
-    for (let y = top + 6; y < G - 46; y += 4) for (let x = x0 + 4; x < x1 - 4; x += 4) { const k = Math.floor(hash(x >> 4, y >> 4, seed) * 4); P.put(x, y, [[255, 220, 120], [255, 90, 190], [90, 230, 255], [255, 255, 255]][k], 0.8); }
+    P.block(x0, top, x1, G - KS.gh, KMAT.blackglass, { base: 0.3 });
+    for (let y = top + 6; y < G - KS.gh - 6; y += 4) for (let x = x0 + 4; x < x1 - 4; x += 4) { const k = Math.floor(hash(x >> 4, y >> 4, seed) * 4); P.put(x, y, [[255, 220, 120], [255, 90, 190], [90, 230, 255], [255, 255, 255]][k], 0.8); }
     for (let k = 0; k < 3; k++) { const bx = x0 + 10 + k * (w - 20) / 3; kFill(P, bx, top + 16, bx + (w - 20) / 3 - 8, top + 40, mixRgb(c, [10, 0, 20], 0.5), 0.6); }
   });
-  kShop(L, x0, x1, G, 'pachinko', o.col || '#ff4ab0', { h: 40, seed, signN: 7 });
+  kShop(L, x0, x1, G, 'pachinko', o.col || '#ff4ab0', { h: KS.gh, seed, signN: 7 });
   L.ad(x0 + 12, top + 50, Math.min(90, w - 24), 22, 'marquee', [o.col || '#ff4ab0', '#ffd040']);
   L.light((x0 + x1) / 2, top + 40, w, c.map((q) => q / 255), 0.8);
 }
