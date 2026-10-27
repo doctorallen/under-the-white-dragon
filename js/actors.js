@@ -57,7 +57,7 @@ const Actors = {
   },
   entry(n) { const h = Game.hour(); for (const e of n.def.sched) if (h >= e[0] && h < e[1]) return e; return n.def.sched[0]; },
   nearest(test, r) { let best = null, bd = r; for (const e of this.enemies) { if (!test(e)) continue; const d = Math.hypot(e.x - Player.x, (e.y - 10) - (Player.y - 16)); if (d < bd) { bd = d; best = e; } } return best; },
-  say(n, text) { n.bubble = { text, t: 3.6 }; },
+  say(n, text) { n.bubble = { text, t: 3.6, seq: (this.bseq = (this.bseq || 0) + 1) }; },
   talk(n) {
     if (n.def.town) { Town.talk(n); return; }
     // a case or a quest has something to say through them: the talk panel

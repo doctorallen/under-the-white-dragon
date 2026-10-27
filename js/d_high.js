@@ -215,7 +215,7 @@ addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza
     L.paint(370, G - 160, 780, G - 66, (P) => { P.block(370, G - 160, 780, G - 66, KMAT.whitepanel, { base: 0.5, panels: [40, 18] }); for (let x = 380; x < 770; x += 40) kWin(P, x + 6, G - 150, 28, 8, { lit: '#d8ecff', cross: false }); });
     const bq = [['boutique', '#ff9ad8'], ['glass', '#e8e8ff'], ['boutique', '#ffd040'], ['flowers', '#ff6a8a'], ['glass', '#9af0ff'], ['tea', '#e8c070']];
     bq.forEach(([k, c], i) => kShop(L, 380 + i * 66, 440 + i * 66, G, k, c, { h: 46, frame: KMAT.whitepanel, signN: 5, seed: 310 + i }));
-    L.walk(370, 780, G - 66, 4, KMAT.whitepanel, { rail: true }); L.stairs(784, G, 860, G - 66, KMAT.whitepanel); L.spots.push([560, G - 66]);
+    L.walk(370, 780, G - 66, 4, KMAT.whitepanel, { rail: true }); L.stairs(860, G, 782, G - 66, KMAT.whitepanel); // (up from the plaza to the arcade's gallery) L.spots.push([560, G - 66]);
     // the plaza: a fountain, a hologram over it, benches, the chrome ring
     hiFountain(L, 1000, G);
     L.ad(960, G - 160, 80, 60, 'koi', ['#3af0e0', '#ffffff']);

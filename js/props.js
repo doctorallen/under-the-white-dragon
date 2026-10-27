@@ -35,14 +35,17 @@ function barrelFire() {
   for (let k = 0; k < 26; k++) { const x = 2 + hash(k, 1, 4) * 8, y = 9 - hash(k, 2, 4) * hash(k, 3, 4) * 9; S.px(x, y, y < 3 ? '#ffe0a0' : y < 6 ? '#ffa040' : '#e04010', true); }
   return S.done();
 }
+// a parked car, at people's scale: about 88 px long and as high as a
+// person's chest, a cabin with two windows, wheels, lights at each end
 function car(o = {}) {
-  const S = new Spr(60, 22, 49); S.ax = 30; S.ay = 21; const b = rp(o.col || '#3a2a48', 7), gl = MAT.glass;
-  S.poly([[2, 12], [12, 10], [20, 3], [42, 3], [50, 10], [58, 11], [59, 18], [1, 18]], (x, y) => tone(b, 0.7 - y / 30 - x / 200 + (y < 5 ? 0.2 : 0)));
-  S.poly([[21, 5], [41, 5], [47, 10], [15, 10]], (x, y) => tone(gl, 0.55 - (x - 15) / 60 + ((x + y) % 7 === 0 ? 0.3 : 0)));
-  S.box(1, 15, 59, 18, b, { lo: 0, hi: 3 });
-  for (const x of [13, 47]) S.ell(x, 18, 4.2, 3.6, ['#08080a', '#1a1a1e', '#3a3a40']);
-  for (let x = 2; x < 58; x++) if (x < 6 || x > 54) S.px(x, 13, x < 6 ? '#ff2020' : '#fff4d0', true);
-  if (o.under) for (let x = 6; x < 54; x++) S.px(x, 20, col3(o.under), true);
+  const S = new Spr(90, 32, 49); S.ax = 45; S.ay = 31; const b = rp(o.col || '#3a2a48', 7), gl = MAT.glass;
+  S.poly([[3, 17], [18, 14], [30, 4], [62, 4], [74, 14], [86, 15], [88, 26], [2, 26]], (x, y) => tone(b, 0.68 - y / 44 - x / 300 + (y < 6 ? 0.2 : 0)));
+  S.part(); S.poly([[32, 7], [45, 7], [45, 14], [23, 14]], (x, y) => tone(gl, 0.6 - (x - 23) / 70 + ((x + y) % 9 === 0 ? 0.3 : 0)));
+  S.poly([[48, 7], [60, 7], [69, 14], [48, 14]], (x, y) => tone(gl, 0.5 - (x - 48) / 70 + ((x + y) % 9 === 0 ? 0.3 : 0)));
+  S.box(2, 21, 88, 26, b, { lo: 0, hi: 3 }); for (let x = 46; x < 47; x++) for (let y = 15; y < 24; y++) S.px(x, y, b[1]); S.px(42, 18, '#c8c8d0'); S.px(58, 18, '#c8c8d0');
+  for (const x of [19, 70]) { S.ell(x, 26, 6.2, 5.4, ['#08080a', '#1a1a1e', '#3a3a40']); S.ell(x, 26, 2.4, 2.2, ['#3a3a40', '#6a6e78', '#9aa0aa']); }
+  for (let y = 16; y < 19; y++) { for (let x = 2; x < 7; x++) S.px(x, y, '#ff2020', true); for (let x = 83; x < 88; x++) S.px(x, y, '#fff4d0', true); }
+  if (o.under) for (let x = 8; x < 82; x++) S.px(x, 30, col3(o.under), true);
   return S.done();
 }
 function terminal(o = {}) {

@@ -43,8 +43,18 @@ const Hud = {
     if (Game.toasts.length && Game.t - Game.toasts[0].t > 4.2) { Game.toasts.shift(); this.toasts(); }
     // speech over heads
     let h = ''; const V = View, sc = V.scale / (window.devicePixelRatio || 1);
-    for (const n of Actors.npcs) if (n.bubble && !n.hidden) { const x = (n.x - V.cx) * sc, y = (n.y - 44 - V.cy) * sc; h += `<div class="bubble" style="left:${x}px;top:${y}px"><b>${n.def.name}</b> ${n.bubble.text}</div>`; }
-    this.set('bubbles', h, 'innerHTML');
+    // oldest first, so the newest is drawn on top; then any older one it
+    // would cover is lifted up above it
+    const said = Actors.npcs.filter((n) => n.bubble && !n.hidden).sort((a, b) => (a.bubble.seq || 0) - (b.bubble.seq || 0));
+    for (const n of said) { const x = (n.x - V.cx) * sc, y = (n.y - 44 - V.cy) * sc; h += `<div class="bubble${n === said[said.length - 1] ? ' new' : ''}" style="left:${x}px;top:${y}px"><b>${n.def.name}</b> ${n.bubble.text}</div>`; }
+    if (this.set('bubbles', h, 'innerHTML') !== false && said.length > 1) {
+      const els = [...$('bubbles').children], placed = [];
+      for (let i = els.length - 1; i >= 0; i--) {
+        const el = els[i], w = el.offsetWidth, hh = el.offsetHeight, x = parseFloat(el.style.left); let top = parseFloat(el.style.top);
+        for (let moved = true, k = 0; moved && k < 8; k++) { moved = false; for (const p of placed) if (Math.abs(x - p.x) < (w + p.w) / 2 + 4 && top - hh < p.top && top > p.top - p.h - 4) { top = p.top - p.h - 6; moved = true; } }
+        el.style.top = top + 'px'; placed.push({ x, w, h: hh, top });
+      }
+    }
   },
   toasts() { $('toasts').innerHTML = Game.toasts.map((t) => `<div class="toast ${t.kind}" data-t="${t.t}">${t.text}</div>`).join(''); },
   refresh() {
