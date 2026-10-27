@@ -48,6 +48,7 @@ const FILES = [
   'js/enemies.js',
   'js/actors.js',
   'js/hack.js',
+  'js/parts.js',
   'js/bench.js',
   'js/life.js',
   'js/skyline.js',

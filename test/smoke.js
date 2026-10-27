@@ -83,7 +83,26 @@ async function run(B, url, vp, name, failures) {
     return { bench, shelf, sign: !!World.props.find((p) => p.id === 'wdsign'), lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
   });
   if (room.bench !== 'workbench' || room.shelf !== 'shelf' || !room.sign || !room.lin) fail('the back room is not set up ' + JSON.stringify(room));
-  await E(() => { T_.walkTo(300); });
+  // the bench: open a nav unit with a dead cell, find it, swap it, test it
+  const fix = await E(() => {
+    const B = Bench, hold = (x, y, n, fn) => { B.press(x, y); for (let k = 0; k < n; k++) { B.step(1 / 60); if (fn) fn(); } B.release(); };
+    Bench.put('navunit', { name: 'A nav unit', parts: { cell: ['street', 'dead'] } });
+    Parts.give(Parts.make('cell', 'street'), true);
+    T_.walkTo(World.props.find((p) => p.kind === 'workbench').x); T_.tap('useHit'); const open = Hud.open;
+    // screws out, easing off whenever one binds
+    B.b.screws.forEach((_, i) => { const [x, y] = B.screwAt(i); for (let t = 0; t < 4 && B.b.screws[i].st === 'in'; t++) hold(x, y, 120, () => { if (B.rt[i] && B.rt[i].bind > 0.1) B.release(); }); });
+    B.tool = 'hands'; B.lift(); B.tool = 'probe'; for (const k in B.D.slots) { const S = B.D.slots[k]; B.press(B.ox + S.x + 4, B.oy + S.y + 4); B.release(); }
+    const learnt = Parts.knows('navunit');
+    B.tool = 'iron'; for (const [x, y] of B.joints('cell')) hold(x, y, 60);
+    B.tool = 'hands'; const S = B.D.slots.cell; B.press(B.ox + S.x + 8, B.oy + S.y + 4); B.release();
+    B.fit(Parts.have('cell').find((p) => p.st === 'ok').id); for (const [x, y] of B.joints('cell')) hold(x, y, 60);
+    B.close(); B.b.screws.forEach((_, i) => { const [x, y] = B.screwAt(i); for (let t = 0; t < 4 && B.b.screws[i].st !== 'in'; t++) hold(x, y, 120, () => { if (B.rt[i] && B.rt[i].bind > 0.1) B.release(); }); });
+    B.test(); B.draw();
+    return { open, learnt, res: B.b.tested && B.b.tested.res, loose: B.loose(), scorch: B.b.scorch.length };
+  });
+  await shot('bench');
+  if (fix.open !== 'bench' || !fix.learnt || fix.res !== 'works' || fix.loose || fix.scorch) fail('the bench repair did not work ' + JSON.stringify(fix));
+  await E(() => { Hud.toggle(null); Bench.clear(); T_.walkTo(300); });
   await shot('frontage');
   // (the old slice from the apartment, until the jobs replace it)
   await E(() => { Game.go('home', 'bed'); T_.run({}, 90); });

@@ -81,6 +81,17 @@ const PANELS = {
     return ['Case board · ' + C.title, h];
   },
   net() { return [(Hack.p && Hack.p.term ? 'Terminal' : 'Data node') + ' · jacked in', Hack.html()]; },
+  bench() { return ['The bench · ' + Bench.b.name, Bench.html()]; },
+  // the shelf: the parts you have, and the notebook
+  shelf(s) {
+    const n = s.notes; let h = '<h3>Parts</h3>';
+    h += s.parts.length ? '<div class="parts">' + s.parts.map((p) => `<div class="part" style="--r:${GRADE[p.g].col}"><b>${Parts.name(p)}${p.gauge ? ' · ' + p.gauge + ' gauge' : ''}</b><small>${PART_STATE[p.st]} · ${Parts.from(p)}</small></div>`).join('') + '</div>' : '<p class="dim">Empty shelves. Strip machines, trade at the stalls, or pull parts from what comes to the bench.</p>';
+    h += '<h3>Notebook</h3>';
+    const known = Object.keys(n.known);
+    h += known.length ? known.map((d) => `<p><b>${DEVICE[d].name}</b> <span class="dim">(${DEVICE[d].kind.toLowerCase()})</span>: ${Parts.build(d).join(', ')}.</p>`).join('') : '<p class="dim">Nothing yet. Open things up and probe them, and the notebook learns how they\'re built.</p>';
+    if (n.log.length) h += n.log.map((e) => `<p class="sub">Day ${e.day}. ${e.text}</p>`).join('');
+    return ['The shelf', h];
+  },
   photo() {
     const C = Cases.def(Enhancer.id), K = C.clues[Enhancer.cid];
     return ['Enhance · ' + K.name, `<div class="photowrap"><canvas id="photocv"></canvas></div><div class="photobar"><p class="sub" id="photonote"></p><div class="buttons"><button data-enh="out">− Pull back</button><button data-enh="reset">Whole picture</button><button data-act="resume" class="go">Done</button></div></div>`];
@@ -166,5 +177,6 @@ function panelBind(body, which) {
   body.querySelectorAll('button[data-call]').forEach((b) => (b.onclick = () => { const c = Cases.st(Baseline.id); c.test = b.dataset.call; Save.write(); const who = Actors.npcs.find((q) => q.def.name === Cases.def(Baseline.id).suspect.name); Hud.toggle('talk', who || Hud.who); }));
   if (which === 'test') { const cv = $('testcv'), dpr = window.devicePixelRatio || 1; cv.width = cv.clientWidth * dpr; cv.height = cv.clientHeight * dpr; if (!Baseline.raf) Baseline.draw(); }
   if (which === 'photo') Enhancer.attach();
+  if (which === 'bench') Bench.attach();
   if (which === 'travel' || which === 'citymap') WorldMap.attach();
 }

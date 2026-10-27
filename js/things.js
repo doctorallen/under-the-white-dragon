@@ -93,7 +93,7 @@ const Props = {
     }
     if (p.kind === 'bed') { Hud.toggle('bed'); return; }
     if (p.kind === 'workbench') { Bench.open(); return; }
-    if (p.kind === 'shelf') { Hud.tab = 'items'; Hud.toggle('pack'); return; }
+    if (p.kind === 'shelf') { Hud.toggle('shelf'); return; }
     if (p.kind === 'spinner') { Hud.mode = 'spinner'; Hud.toggle('travel'); return; }
     if (p.kind === 'transit') { Hud.mode = p.mode; Hud.toggle('travel'); return; }
     if (p.kind === 'keydoor') { if (Game.s.pack[p.key] > 0) Travel.go(Travel.KEYS[p.key] || 'street'); else Game.toast(p.label + '. Locked: it needs the ' + ITEM[p.key].name.toLowerCase() + '.'); return; }

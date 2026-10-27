@@ -279,3 +279,22 @@ i.mark { color: var(--sodium); font-style: normal; }
 .photobar .buttons { margin-top: 0; flex-wrap: nowrap; }
 #panelBody:has(.photowrap) { padding-top: 6px; padding-bottom: 6px; }
 @media (max-width: 560px) { .photobar { flex-direction: column; align-items: stretch; } }
+
+/* ---- the bench ---- */
+#panelBody:has(.benchwrap) { padding-top: 6px; padding-bottom: 6px; }
+.benchwrap { display: flex; gap: 10px; height: calc(100vh - 92px); min-height: 180px; }
+#benchcv { flex: 1; min-width: 0; height: 100%; touch-action: none; display: block; border: 1px solid var(--edge); background: #05070a; image-rendering: pixelated; }
+.benchside { width: 196px; flex: none; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.benchside .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.benchside .tools button { padding: 9px 4px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.benchside .tools button.on { border-color: var(--teal); color: var(--teal); background: rgba(58, 240, 224, 0.12); }
+.benchside .tools button[data-lens] { grid-column: span 2; padding: 6px 4px; }
+.benchside .sub { margin: 0; font-size: 13px; min-height: 3.6em; }
+.benchside h3 { margin: 2px 0; font-size: 12px; }
+.benchside .buttons { margin-top: auto; }
+.part { --r: var(--edge); display: grid; gap: 1px; width: 100%; text-align: left; padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--r) 50%, var(--edge)); border-left: 3px solid var(--r); background: rgba(16, 12, 24, 0.6); }
+.part b { font-weight: 500; font-size: 13px; }
+.part small { color: var(--dim); font-size: 11px; }
+#benchtray { display: grid; gap: 4px; }
+.parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+@media (max-height: 420px) { .benchside { width: 168px; } .benchside .tools button { padding: 7px 2px; } }
