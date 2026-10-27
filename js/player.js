@@ -9,8 +9,9 @@
 // the detective, under whatever they wear (each piece of gear has a look)
 const RUNNER = { skin: '#c88a5a', hair: 'short', hairCol: '#1a1416', top: '#4a4a52', coat: 'none', legs: '#4a3e36', boots: '#3a2a22', acc: '#ff8a20', trim: false, blaster: true, belt: '#2a1e14' };
 const POSE_HANDS = {
-  stand: {},
-  jump: { fx: 27, fy: 29, bx: 14, by: 30 }, fall: { fx: 27, fy: 26, bx: 14, by: 26 }, strike: { fx: 31, fy: 30, bx: 15, by: 35 }, aim: { fx: 30, fy: 29, bx: 17, by: 36 }, shot: { fx: 30, fy: 28, bx: 17, by: 36 }, cut: { fx: 28, fy: 33, bx: 22, by: 34 },
+  // (carried low at the side, the blaster pointing at the ground)
+  stand: { fx: 23.5, fy: 38 }, breathe: { fx: 23.5, fy: 37.5 },
+  jump: { fx: 26, fy: 32, bx: 14, by: 30 }, fall: { fx: 26, fy: 30, bx: 14, by: 26 }, strike: { fx: 31, fy: 30, bx: 15, by: 35 }, aim: { fx: 30, fy: 29, bx: 17, by: 36 }, shot: { fx: 30, fy: 28, bx: 17, by: 36 }, cut: { fx: 28, fy: 33, bx: 22, by: 34 },
   climb0: { fx: 23, fy: 18, bx: 18, by: 24 }, climb1: { fx: 23, fy: 24, bx: 18, by: 18 }, hurt: { fx: 24, fy: 30, bx: 14, by: 30 },
 };
 const RunnerArt = {
@@ -19,7 +20,10 @@ const RunnerArt = {
     const st = Game.stage(), k = pose + (left ? 'L' : 'R') + (st.eye ? 'e' : '') + (st.legs ? 'l' : '') + (st.arm ? 'a' : '');
     let s = this.cache.get(k);
     if (!s) {
-      const o = Object.assign({}, RUNNER, { pose, hands: POSE_HANDS[pose] || {}, seed: 5, holding: true });
+      // a pose can be the legs' and the arms' apart ('walk3+shot'): firing
+      // while moving keeps the stride and changes only the arms
+      const [legs, arms] = pose.split('+'), up = arms || legs;
+      const o = Object.assign({}, RUNNER, { pose: legs, hands: POSE_HANDS[up] || {}, fixedHands: !!arms, seed: 5, holding: true, gunDown: !['aim', 'shot', 'strike', 'cut'].includes(up) && !/^climb/.test(up) });
       // the inner layer's colour shows as the body without a coat
       for (const slot of SLOT_ORDER) { const g = Game.worn(slot); if (g && g.look) Object.assign(o, g.look); }
       if (!Game.worn('outer') && o.shirt) o.top = o.shirt;
@@ -27,9 +31,9 @@ const RunnerArt = {
       // gadgets show: goggles, heel jets, the cutter's plasma in a blow
       if (st.eye) o.goggles = '#3af0e0';
       if (st.legs) o.jets = true;
-      if (pose === 'cut') { o.cutter = true; o.blaster = false; }
-      if (pose === 'shot') o.muzzle = true;
-      if (pose === 'strike' && (st.arm || mel)) { o.blade = mel ? mel.look.bladeCol : '#ffb040'; o.blaster = false; o.sheath = null; }
+      if (up === 'cut') { o.cutter = true; o.blaster = false; }
+      if (up === 'shot') o.muzzle = true;
+      if (up === 'strike' && (st.arm || mel)) { o.blade = mel ? mel.look.bladeCol : '#ffb040'; o.blaster = false; o.sheath = null; }
       s = person(o); if (left) s = flipSprite(s);
       this.cache.set(k, s);
     }
@@ -205,14 +209,12 @@ const Player = {
   pose() {
     if (this.hurtT > 0) return 'hurt';
     if (this.strikeT > 0) return 'strike';
-    if (this.aimT > 0) return this.aimT > 0.15 ? 'shot' : 'aim';
     if (this.hold) return 'cut';
     if (this.ladder) return Math.floor(this.walked / 7) % 2 ? 'climb0' : 'climb1';
-    if (!this.ground) return this.vy < 0 ? 'jump' : 'fall';
-    const v = Math.abs(this.vx);
-    if (v > 64) return 'run' + (Math.floor(this.walked / 6.5) % 6);
-    if (v > 6) return 'walk' + (Math.floor(this.walked / 4.6) % 6);
-    return (Game.t * 0.65) % 1 < 0.5 ? 'breathe' : 'stand'; // breathing
+    // the legs go on as they were; a shot only raises the arms
+    const v = Math.abs(this.vx), legs = !this.ground ? (this.vy < 0 ? 'jump' : 'fall') : v > 64 ? 'run' + (Math.floor(this.walked / 6.5) % 6) : v > 6 ? 'walk' + (Math.floor(this.walked / 4.6) % 6) : null;
+    if (this.aimT > 0) { const arms = this.aimT > 0.15 ? 'shot' : 'aim'; return legs ? legs + '+' + arms : arms; }
+    return legs || ((Game.t * 0.65) % 1 < 0.5 ? 'breathe' : 'stand'); // breathing
   },
 };
 

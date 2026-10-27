@@ -138,8 +138,19 @@ function person(o = {}) {
   const [hx, hy] = hf; S.part();
   if (o.cutter) { const c = col3(o.cutterCol || '#ffb040'); S.cap(hx - 1, hy, hx + 5, hy - 0.5, 1.2, 1.1, MAT.steel); S.cap(hx + 0.5, hy + 1, hx + 0.5, hy + 2.5, 0.9, 0.8, MAT.steelD); S.px(hx + 6, hy - 0.5, c, true); S.px(hx + 7, hy - 0.5, mixRgb(c, [255, 255, 255], 0.6), true); S.px(hx + 2, hy - 1.5, c, true); }
   if (o.blade) { const c = col3(o.blade); for (let q = 0; q < 11; q++) S.px(hx + 1 + q * 0.95, hy - 1 - q * 0.45, q < 2 ? chrome[2] : mixRgb(c, [255, 255, 255], q % 4 ? 0.25 : 0.7), q >= 2); }
-  if (o.blaster && o.blasterBig) { S.cap(hx - 2, hy - 1.6, hx + 8, hy - 2.2, 2.3, 1.9, MAT.steelD); S.cap(hx + 6, hy - 3.2, hx + 9.5, hy - 3.2, 0.8, 0.8, MAT.steel); }
-  if (o.blaster) { S.cap(hx - 1.5, hy - 1.2, hx + 5.5, hy - 1.6, 1.7, 1.4, MAT.steelD); if (o.blasterCol) for (let q = 0; q < 4; q++) S.px(hx + q, hy - 1.4, col3(o.blasterCol), q % 2 === 0); S.cap(hx + 5, hy - 1.6, hx + 7.5, hy - 1.6, 0.8, 0.8, MAT.steel); S.cap(hx - 0.5, hy, hx - 0.8, hy + 2.6, 0.9, 0.8, ['#1a120c', '#3a2618', '#5a3c24']); S.px(hx + 2, hy - 2.6, '#ff8a20', true); if (o.muzzle) { S.px(hx + 8.5, hy - 1.6, '#ffffff', true); S.px(hx + 9.5, hy - 1.6, '#ffd080', true); S.px(hx + 8.5, hy - 2.6, '#ffb040', true); S.px(hx + 8.5, hy - 0.6, '#ffb040', true); } }
+  // the blaster, along the line it points: level when it's aimed, down at
+  // the ground when it's only carried (gunDown)
+  if (o.blaster) {
+    const a = o.gunDown ? 1.05 : 0, ux = Math.cos(a), uy = Math.sin(a), P = (u, v) => [hx + u * ux - v * uy, hy + u * uy + v * ux];
+    const C = (u0, v0, u1, v1, r0, r1, R) => { const [x0, y0] = P(u0, v0), [x1, y1] = P(u1, v1); S.cap(x0, y0, x1, y1, r0, r1, R); };
+    if (o.blasterBig) { C(-2, -1.6, 8, -2.2, 2.3, 1.9, MAT.steelD); C(6, -3.2, 9.5, -3.2, 0.8, 0.8, MAT.steel); }
+    C(-1.5, -1.2, 5.5, -1.6, 1.7, 1.4, MAT.steelD);
+    if (o.blasterCol) for (let q = 0; q < 4; q++) { const [x, y] = P(q, -1.4); S.px(x, y, col3(o.blasterCol), q % 2 === 0); }
+    C(5, -1.6, 7.5, -1.6, 0.8, 0.8, MAT.steel);
+    C(-0.5, 0, -0.8, 2.6, 0.9, 0.8, ['#1a120c', '#3a2618', '#5a3c24']);
+    { const [x, y] = P(2, -2.6); S.px(x, y, '#ff8a20', true); }
+    if (o.muzzle) for (const [u, v, c] of [[8.5, -1.6, '#ffffff'], [9.5, -1.6, '#ffd080'], [8.5, -2.6, '#ffb040'], [8.5, -0.6, '#ffb040']]) { const [x, y] = P(u, v); S.px(x, y, c, true); }
+  }
   if (o.gun) { S.cap(hx - 1, hy - 1, hx + 6, hy - 1.4, 1.4, 1.2, MAT.steelD); S.px(hx + 1, hy + 0.8, MAT.steelD[2]); S.px(hx + 4, hy - 1.4, col3(o.visor || '#ff3040'), true); }
   if (o.bowl) { S.cap(hx - 0.5, hy - 1, hx + 3, hy - 1, 1.6, 1.4, ['#5a1a0e', '#a83a1e', '#e06a3a', '#ffa070']); S.px(hx + 1, hy - 4, '#d8d8e0'); S.px(hx + 2, hy - 6, '#b8b8c0'); S.px(hx + 1, hy - 8, '#9898a0'); }
   if (o.phone) { S.px(hx + 1, hy - 1, col3(o.phone), true); S.px(hx + 1, hy - 2, col3(o.phone), true); }
