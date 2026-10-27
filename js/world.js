@@ -68,9 +68,17 @@ const World = {
   },
   // the props cases and quests put in this level: clues, photos, pickups;
   // made again whenever a case or quest moves on
+  // the spot a case put something at: a night case's spots are numbers taken
+  // round the level's spots, so two could land on one; within the case they
+  // step on to the next free spot instead, so nobody stands on anyone
+  spotOf(a, L) {
+    const n = L.spots.length; if (!a.group) return L.spots[a.spot % n];
+    const used = [], idx = a.group.map((s) => { let i = s % n; for (let k = 0; k < n && used.includes(i); k++) i = (i + 1) % n; used.push(i); return i; });
+    return L.spots[idx[a.gi !== undefined ? a.gi : a.group.indexOf(a.spot)]];
+  },
   questProps() {
     if (!this.L) return;
-    const L = this.L, at = (a) => { let x = a.x, y = a.y; if (a.spot !== undefined && L.spots && L.spots.length) { const s = L.spots[a.spot % L.spots.length]; x = s[0] + 18; y = s[1]; } if (y === undefined || y === 'G') y = L.ground || Object.values(L.spawns)[0][1]; return [x, y]; };
+    const L = this.L, at = (a) => { let x = a.x, y = a.y; if (a.spot !== undefined && L.spots && L.spots.length) { const s = World.spotOf(a, L); x = s[0] + 18; y = s[1]; } if (y === undefined || y === 'G') y = L.ground || Object.values(L.spawns)[0][1]; return [x, y]; };
     this.props = this.props.filter((p) => !p.dyn);
     for (const c of Cases.props(L.id)) { const [x, y] = at(c.K.at); const p = { id: 'clue:' + c.id + ':' + c.cid, kind: 'clue', x, y, caseId: c.id, cid: c.cid, K: c.K, dyn: true }; Props.init(p); this.props.push(p); }
     for (const q of Quests.pickups(L.id)) { const [x, y] = at(q.a); const p = { id: 'pick:' + q.item, kind: 'pickup', x, y, item: q.item, dyn: true }; Props.init(p); this.props.push(p); }

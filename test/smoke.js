@@ -109,10 +109,19 @@ async function run(B, url, vp, name, failures) {
   const up = await E(() => { T_.walkTo(1700); const mid = Math.round(Player.y); T_.walkTo(1000); return { mid, top: Math.round(Player.y) }; });
   if (up.mid !== 500 || up.top !== 360) fail('the stairs did not carry the runner up ' + JSON.stringify(up));
   // the data node: jack in (the puzzle is won for the test)
-  const node = await E(() => { T_.walkTo(1070); T_.tap('useHit'); const on = Hack.on; Hack.finish(true); Hack.close(); return { on, breach: !!Game.s.programs.breach }; });
+  // jack in: cross the network to the core, forcing any ICE in the way
+  const node = await E(() => {
+    T_.walkTo(1070); T_.tap('useHit'); const on = Hud.open === 'net' && !!Hack.net, N = Hack.net, core = N.nodes.length - 1;
+    for (let k = 0; k < 12 && !N.out; k++) {
+      const prev = {}, q = [N.at]; prev[N.at] = -1; while (q.length) { const a = q.shift(); for (const l of N.nodes[a].links) if (prev[l] === undefined) { prev[l] = a; q.push(l); } }
+      let s = core; while (prev[s] !== N.at) s = prev[s];
+      Hack.go(s); if (N.ask !== null) Hack.act('force');
+    }
+    const out = N.out; Hack.act('out'); return { on, out, open: Hud.open, breach: !!Game.s.programs.breach };
+  });
   if (!node.on || !node.breach) fail('the data node did not give Breach ' + JSON.stringify(node));
   // a drone, struck down
-  const drone = await E(() => { const d = Actors.enemies.find((e) => e.type === 'drone' && e.y < 400); Player.place(d.x - 40, 360); let n = 0; for (let k = 0; k < 900 && d.hp > 0; k++) { Game.s.hp = 100; Input.bot = { ax: Math.sign(d.x - Player.x) * (Math.abs(d.x - Player.x) > 18 ? 1 : 0) }; if (k % 12 === 0) { Player.face = Math.sign(d.x - Player.x) || 1; Input.strikeHit = true; } step(1 / 60); n++; } Input.bot = null; return { hp: d.hp, kills: Quests.st('drones').n, steps: n }; });
+  const drone = await E(() => { const d = Actors.enemies.find((e) => e.type === 'drone' && e.y < 400); d.stun = 0; Player.place(d.x - 40, 360); let n = 0; for (let k = 0; k < 900 && d.hp > 0; k++) { Game.s.hp = 100; Input.bot = { ax: Math.sign(d.x - Player.x) * (Math.abs(d.x - Player.x) > 18 ? 1 : 0) }; if (k % 12 === 0) { Player.face = Math.sign(d.x - Player.x) || 1; Input.strikeHit = true; } step(1 / 60); n++; } Input.bot = null; return { hp: d.hp, kills: Quests.st('drones').n, steps: n }; });
   if (drone.hp > 0 || drone.kills !== 1) fail('the strike did not down a drone ' + JSON.stringify(drone));
   await shot('walkway');
   // the grate into the yard, then the Warden

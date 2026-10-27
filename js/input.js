@@ -13,7 +13,6 @@ const Input = {
   init() {
     const map = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', Space: 'j', KeyK: 'j', KeyE: 'e', KeyF: 'e', ShiftLeft: 'slow', ShiftRight: 'slow' };
     addEventListener('keydown', (e) => {
-      if (Hack.on) { if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'KeyJ' || e.code === 'Enter') { Hack.tap(); e.preventDefault(); } if (e.code === 'Escape') Hack.quit(); return; }
       if (e.repeat) { if (map[e.code]) e.preventDefault(); return; }
       const k = map[e.code];
       if (k) { this.keys.add(k); if (k === 'j') this.jumpHit = true; if (k === 'e') this.useHit = true; e.preventDefault(); }

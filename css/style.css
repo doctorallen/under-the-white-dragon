@@ -136,10 +136,27 @@ button.go { border-color: var(--teal); color: var(--teal); }
 .sw { display: inline-block; width: 8px; height: 8px; margin-right: 6px; }
 
 /* ---- jacking in ---- */
-#hack { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.78); display: grid; place-items: center; align-content: center; gap: 8px; }
-#hack[hidden] { display: none; }
-#hackcv { width: min(640px, 86vw); height: min(220px, 40vh); border: 1px solid rgba(58, 240, 224, 0.5); box-shadow: 0 0 24px rgba(58, 240, 224, 0.25); }
-#hack p { margin: 0; font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--teal); }
+/* jacking in: the network, and what you can do */
+.netwrap { display: grid; grid-template-columns: 1fr minmax(220px, 34%); gap: 14px; height: 100%; min-height: 240px; }
+.net { position: relative; min-height: 240px; border: 1px solid rgba(58, 240, 224, 0.25); background: radial-gradient(ellipse at 50% 50%, rgba(58, 240, 224, 0.06), transparent 70%); }
+.net svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.net line { stroke: rgba(58, 240, 224, 0.18); stroke-width: 0.6; vector-effect: non-scaling-stroke; }
+.net line.lit { stroke: rgba(58, 240, 224, 0.7); stroke-width: 2; }
+.net .node { position: absolute; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 50%; padding: 0; font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; display: grid; place-items: center; line-height: 1; background: #0b1016; border: 1px solid rgba(58, 240, 224, 0.3); color: var(--dim); }
+.net .node i { display: block; font-style: normal; font-size: 8px; color: #ff4a6a; }
+.net .node.near { border-color: var(--teal); color: var(--ink); box-shadow: 0 0 10px rgba(58, 240, 224, 0.35); }
+.net .node.here { background: var(--teal); color: #05080a; border-color: var(--teal); box-shadow: 0 0 16px rgba(58, 240, 224, 0.6); }
+.net .node.been:not(.here) { background: #12303a; }
+.net .k-ice, .net .node.iced { border-color: #ff4a6a; color: #ff8090; }
+.net .k-sentry { border-color: var(--pink); color: var(--pink); }
+.net .k-sentry.turned { border-color: #3aff80; color: #3aff80; }
+.net .k-core { width: 62px; height: 62px; border-color: var(--sodium); color: var(--sodium); }
+.net .k-cam, .net .k-mail, .net .k-cache, .net .k-sec { color: var(--sodium); }
+.netside .trace b { color: #ff4a6a; letter-spacing: 0.08em; } .netside .ram b { color: var(--teal); letter-spacing: 0.08em; }
+.netside .trace, .netside .ram { font-family: var(--mono); font-size: 12px; margin: 2px 0; }
+.ghosted { color: var(--pink); }
+.netlog p { margin: 4px 0; font-size: 13px; } .netlog p:first-child { color: var(--ink); }
+.small { font-size: 12px; }
 
 #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #08060c; color: var(--dim); font-family: var(--mono); letter-spacing: 0.1em; }
 #loading[hidden] { display: none; }

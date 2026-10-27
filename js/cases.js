@@ -276,9 +276,9 @@ const Cases = {
   },
   nightDef(N) {
     const K = NIGHT.kinds[N.kind], v = N.v, clues = K.clues(v), keys = Object.keys(clues), L = LEVELS[N.level];
-    keys.forEach((k, i) => { const cl = clues[k]; if (cl.kind === 'truth') return; if (cl.kind === 'talk') { cl.npc = { pet: v.owner, chrome: 'The buyer', missing: 'A neighbour' }[N.kind]; cl.at = { level: N.level, spot: N.spots[i] }; cl.look = SUSPECT_LOOKS[(N.look + 2) % SUSPECT_LOOKS.length]; cl.lines = ['You\'re the tracer? Ask, then.']; } else cl.at = { level: N.level, spot: N.spots[i] }; });
+    keys.forEach((k, i) => { const cl = clues[k]; if (cl.kind === 'truth') return; if (cl.kind === 'talk') { cl.npc = { pet: v.owner, chrome: 'The buyer', missing: 'A neighbour' }[N.kind]; cl.at = { level: N.level, spot: N.spots[i], group: N.spots, gi: i }; cl.look = SUSPECT_LOOKS[(N.look + 2) % SUSPECT_LOOKS.length]; cl.lines = ['You\'re the tracer? Ask, then.']; } else cl.at = { level: N.level, spot: N.spots[i], group: N.spots, gi: i }; });
     return { title: K.title(v), night: true, xp: 40 + N.tier * 6, reward: { cr: 90 + N.tier * 45 }, brief: K.brief(v), clues, leads: [Object.assign({ id: 'lead', name: v.suspect + ', in ' + L.name, text: 'You know who, and roughly where.' }, K.lead(v))],
-      suspect: { name: v.suspect, needs: 'lead', at: { level: N.level, spot: N.spots[3] }, synth: N.synth, look: SUSPECT_LOOKS[N.look], lines: ['What do you want? I\'ve got nothing to say to a tracer.', 'Fine. Ask your questions.'] } };
+      suspect: { name: v.suspect, needs: 'lead', at: { level: N.level, spot: N.spots[3], group: N.spots, gi: 3 }, synth: N.synth, look: SUSPECT_LOOKS[N.look], lines: ['What do you want? I\'ve got nothing to say to a tracer.', 'Fine. Ask your questions.'] } };
   },
   takeNight() { const N = this.nightOffer(); if (N) this.start(N.id); },
   // the suspect ran: a synth bolts, a human just stops talking

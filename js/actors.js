@@ -31,7 +31,7 @@ const Actors = {
   },
   // the people a case puts here: witnesses, a suspect once you've found the lead
   caseNpcs() {
-    const L = World.L, want = Cases.npcs(L.id), at = (a) => { if (a.spot !== undefined && L.spots && L.spots.length) { const s = L.spots[a.spot % L.spots.length]; return [s[0] - 20, s[1]]; } return [a.x, a.y || L.ground || Object.values(L.spawns)[0][1]]; };
+    const L = World.L, want = Cases.npcs(L.id), at = (a) => { if (a.spot !== undefined && L.spots && L.spots.length) { const s = World.spotOf(a, L); return [s[0] - 20, s[1]]; } return [a.x, a.y || L.ground || Object.values(L.spawns)[0][1]]; };
     this.npcs = this.npcs.filter((n) => !n.def.dyn || want.some((w) => w.name === n.def.name));
     for (const w of want) { if (this.npcs.some((n) => n.def.name === w.name)) continue; const [x, y] = at(w.at); const def = { name: w.name, look: w.look || SUSPECT_LOOKS[0], x, y, sched: [[0, 24, x, 'stand']], lines: w.lines, dyn: true, suspect: w.suspect, caseId: w.caseId }; this.npcs.push({ def, i: 60 + this.npcs.length, x, y, face: -1, hidden: false, tx: x, wt: 0, bubble: null, line: 0, art: new Map() }); }
   },

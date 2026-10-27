@@ -700,6 +700,9 @@ function district(o) {
   o.build(L, G);
   // the spots: the ones the place gave, then the ground shared out
   for (let x = 300; L.spots.length < 10 && x < W - 150; x += Math.max(140, Math.floor((W - 450) / 10))) if (!L.spots.some((s) => Math.abs(s[0] - x) < 60 && s[1] === G)) L.spots.push([x, G]);
+  // a terminal on the ground, by one of the spots: a network to jack into
+  const gs = L.spots.filter((s) => s[1] === G), ts = gs.length ? gs[Math.floor(hash(o.id.length, W, 23) * gs.length)] : [W * 0.5, G], tier = o.tier || 1;
+  L.prop('node', ts[0] - 26, G, { term: true, level: tier >= 5 ? 3 : tier >= 3 ? 2 : 1, col: '#ffb040' }); L.light(ts[0] - 26, G - 18, 40, [1, 0.7, 0.3], 0.5);
   // people passing, light, weather
   if (o.crowd) crowd(L, o.crowd, o.crowdFrom || 300, o.crowdTo || W - 200, G, o.id.length * 977 + W);
   if (o.local) L.npc(Object.assign({ x: 260, y: G, sched: [[0, 24, 260, 'stand']] }, o.local, { look: Object.assign({ skin: SKINS[2], hair: 'short', top: '#3a4a5a', coat: 'jacket', legs: '#2a2a2a' }, o.local.look || {}) }));

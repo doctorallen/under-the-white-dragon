@@ -66,6 +66,7 @@ const Hud = {
   nextItem() { const have = Object.keys(ITEM).filter((k) => (ITEM[k].kind === 'consumable' || ITEM[k].kind === 'throwable') && Game.s.pack[k] > 0); if (!have.length) return; const i = have.indexOf(Game.s.quick); Game.s.quick = have[(i + 1) % have.length]; Game.toast('Quick item: ' + ITEM[Game.s.quick].name); this.refresh(); },
   nextProgram() { const have = PROGRAM_ORDER.filter((p) => Game.s.programs[p]); if (!have.length) return; const i = have.indexOf(Game.s.prog); Game.s.prog = have[(i + 1) % have.length]; Game.toast('Program: ' + PROGRAMS[Game.s.prog].name); this.refresh(); },
   toggle(which, who) {
+    if (!which && this.open === 'net' && Hack.net) { Hack.close(); return; } // closing the network jacks you out properly
     if (!which || (this.open === which && !who)) { this.open = null; this.who = null; $('panel').hidden = true; Game.paused = false; return; }
     this.open = which; this.who = who || this.who; Game.paused = true; $('panel').hidden = false; this.panel(which);
   },

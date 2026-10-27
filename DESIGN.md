@@ -62,7 +62,7 @@ Inspired by Blade Runner's tone (the 1997 point-and-click especially: clues gath
   - jump jets (on the heels): double jump
   - plasma cutter: heavy shutters, faster cutting, much harder blows
 - **Getting around:** the elevator in your block reaches every level you've been to. Your spinner on the pad at the end of your hall flies to the precinct, the Stack (setting down on the block's roof) and street level, with a flight through the city each time (tap to skip). From anywhere, a cab takes you home for a fare (30 cr, 45 from street level).
-- **Programs**, from data nodes, run for RAM (3, refilling over time). Jacking in is a short timing puzzle; failing costs health.
+- **Programs**, from data nodes, run for RAM (3, refilling over time). Jacking in is a small network to cross to the core, a node at a time, every move spending trace (run out and you're thrown out, hurt). You see what a node is once you're beside it: ICE to Breach or force, sentries that eat trace (Puppet turns one), mail with leads on your case, caches, cameras with a case's photo, and a security node that blinds the level's machines for forty seconds. Ghost makes three moves free. Every district has a terminal to jack into, its core paying out once.
   - Breach: locked hatches, stuns a drone
   - Ghost: enemies lose you
   - Puppet: a drone fights for you

@@ -80,6 +80,7 @@ const PANELS = {
     h += '<div class="buttons"><button data-act="resume" class="quiet">Close the board</button></div>';
     return ['Case board · ' + C.title, h];
   },
+  net() { return [(Hack.p && Hack.p.term ? 'Terminal' : 'Data node') + ' · jacked in', Hack.html()]; },
   photo() {
     const C = Cases.def(Enhancer.id), K = C.clues[Enhancer.cid];
     return ['Enhance · ' + K.name, `<div class="photowrap"><canvas id="photocv"></canvas></div><div class="photobar"><p class="sub" id="photonote"></p><div class="buttons"><button data-enh="out">− Pull back</button><button data-enh="reset">Whole picture</button><button data-act="resume" class="go">Done</button></div></div>`];
@@ -140,6 +141,8 @@ function itemsTab(s) {
 function panelBind(body, which) {
   const s = Game.s, n = Hud.who, re = () => Hud.panel(Hud.open);
   body.querySelectorAll('button[data-ask]').forEach((b) => (b.onclick = () => { const [id, cid] = b.dataset.ask.split(':'); Cases.ask(id, cid); re(); }));
+  body.querySelectorAll('button[data-net]').forEach((b) => (b.onclick = () => { Hack.go(+b.dataset.net); re(); }));
+  body.querySelectorAll('button[data-netact]').forEach((b) => (b.onclick = () => { const a = b.dataset.netact; Hack.act(a); if (a !== 'out') re(); }));
   body.querySelectorAll('button[data-present]').forEach((b) => (b.onclick = () => { const [id, tid, by] = b.dataset.present.split(':'); Cases.present(id, tid, by); re(); }));
   body.querySelectorAll('button[data-board]').forEach((b) => (b.onclick = () => Board.open(b.dataset.board)));
   body.querySelectorAll('button[data-ans]').forEach((b) => (b.onclick = () => { const [lid, i] = b.dataset.ans.split(':'); Board.ans[lid] = +i; Board.msg[lid] = ''; re(); }));

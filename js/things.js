@@ -52,7 +52,7 @@ const Props = {
       return Game.s.programs.breach ? { verb: 'Breach', text: 'Run Breach (1 RAM)', tap: true } : { verb: 'Locked', text: 'Locked. A Breach program would open it', tap: true, no: true };
     }
     if (p.kind === 'sealed') return { verb: 'Sealed', text: p.label || 'Sealed', tap: true, no: true };
-    if (p.kind === 'node') return p.done ? null : { verb: 'Hack', text: 'Jack in', tap: true };
+    if (p.kind === 'node') return p.done ? null : { verb: 'Hack', text: p.term ? 'A terminal: jack in' : 'A data node: jack in', tap: true };
     if (p.kind === 'lift') return Game.s.flags.lift ? { verb: 'Ride', text: 'Take the lift ' + (p.dir || ''), tap: true } : { verb: 'Repair', text: 'Restore the lift: 4 wire, 2 chips', tap: true, no: !Game.canPay({ wire: 4, chips: 2 }) };
     if (p.kind === 'bed') return { verb: 'Sleep', text: 'Your bed', tap: true };
     if (p.kind === 'spinner') return { verb: 'Fly', text: 'Your spinner', tap: true };
@@ -84,7 +84,7 @@ const Props = {
       if (Programs.run('breach', p)) { this.finish(p); Game.toast('Breached.'); }
       return;
     }
-    if (p.kind === 'node') { Hack.open(p.level || 1, () => { this.finish(p); Game.reward(p.gives); }); return; }
+    if (p.kind === 'node') { Hack.open(p.level || 1, () => { if (!p.term) { this.finish(p); Game.reward(p.gives); } }, p); return; }
     if (p.kind === 'lift') {
       if (!Game.s.flags.lift) { if (Game.pay({ wire: 4, chips: 2 })) { Game.s.flags.lift = true; p.spr = null; Game.toast('The lift shudders and lights up. It runs between the Stack and street level now.', 'good'); Save.write(); } else Game.toast('You need 4 wire and 2 chips.'); return; }
       Game.go(p.to[0], p.to[1]); return;
