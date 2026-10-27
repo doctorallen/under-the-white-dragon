@@ -27,7 +27,7 @@ const Pwa = {
       this.install();
     };
     addEventListener('pointerup', ask); addEventListener('keyup', ask);
-    addEventListener('appinstalled', () => { this.prompt = null; Game.toast('Installed. Downlevel is on your home screen.', 'good'); });
+    addEventListener('appinstalled', () => { this.prompt = null; Game.toast('Installed. The White Dragon is on your home screen.', 'good'); });
     fetch('version.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((v) => { this.build = v && v.build; }).catch(() => {});
     if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
     const hadController = !!navigator.serviceWorker.controller;
@@ -53,7 +53,7 @@ const Pwa = {
   html() {
     const b = this.build ? `Build ${this.build}. ` : '';
     if (this.installed()) return `<p class="dim">${b}Installed. It updates itself when there's a new version.</p>`;
-    if (this.prompt) return `<p class="dim">${b}</p><div class="buttons"><button data-act="install">Install Downlevel</button></div>`;
+    if (this.prompt) return `<p class="dim">${b}</p><div class="buttons"><button data-act="install">Install the game</button></div>`;
     if (this.ios()) return `<p class="dim">${b}To install: Share, then Add to Home Screen.</p>`;
     return b ? `<p class="dim">${b}</p>` : '';
   },

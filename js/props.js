@@ -361,3 +361,28 @@ function manholeCover() {
   for (let x = 17; x < 28; x += 3) S.px(x, 4, MAT.steel[1]);
   return S.done();
 }
+// your workbench: a scarred top, a vice, a magnifier lamp on an arm, a
+// soldering iron in its stand, drawers under it
+function workbench() {
+  const W = 52, H = 34, S = new Spr(W, H, 440); S.ax = W / 2; S.ay = H - 1; const wd = MAT.wood;
+  S.box(2, 14, W - 3, 17, wd, { lo: 2, hi: 6 }); S.box(4, 18, 20, H - 1, wd, { lo: 0, hi: 4 }); S.box(W - 21, 18, W - 5, H - 1, wd, { lo: 0, hi: 4 });
+  for (const y of [22, 27]) for (let x = 6; x < 19; x++) S.px(x, y, wd[0]); S.px(12, 20, '#c8a060'); S.px(12, 25, '#c8a060');
+  for (let x = 6; x < W - 6; x += 7) S.px(x, 15, wd[1]);
+  // the vice, the lamp's arm and head, its light on the top
+  S.box(6, 9, 13, 13, MAT.steel, { lo: 1, hi: 6 }); S.px(14, 11, MAT.steel[5]);
+  S.limb(40, 13, 44, 4, 1.2, MAT.steelD); S.limb(44, 4, 34, 2, 1.2, MAT.steelD); S.ell(32, 4, 4, 2.2, rp('#3a4048', 6)); S.px(31, 6, '#fff4d0', true); S.px(32, 6, '#ffe8b0', true); S.px(33, 6, '#fff4d0', true);
+  // the iron in its stand, a coil of solder, a board being worked on
+  S.limb(22, 13, 27, 9, 1, MAT.steelD); S.px(21, 13, '#ff8a30', true); S.ell(30, 12, 2, 1.2, ['#6a6a70', '#b8b8c0']);
+  S.box(16, 11, 21, 13, rp('#2a6a3a', 5), { lo: 1, hi: 4 }); S.px(18, 11, '#ffd040'); S.px(20, 12, '#c8c8d0');
+  return S.done();
+}
+// the parts shelf: three shelves of bins and boxes, a few parts showing
+function partsShelf() {
+  const W = 34, H = 50, S = new Spr(W, H, 441); S.ax = W / 2; S.ay = H - 1;
+  for (const x of [1, W - 3]) S.box(x, 0, x + 1, H - 1, MAT.steelD, { lo: 1, hi: 5 });
+  for (const y of [12, 26, 40, H - 2]) S.box(1, y, W - 2, y + 1, MAT.steel, { lo: 2, hi: 6 });
+  const bins = ['#3a5a8a', '#8a3a3a', '#6a6a30', '#2a6a5a', '#5a3a6a', '#7a5a2a'];
+  for (const [i, y] of [[0, 4], [1, 18], [2, 32]]) for (let k = 0; k < 3; k++) { const x = 4 + k * 9; S.box(x, y, x + 7, y + 7, rp(bins[(i * 3 + k) % 6], 5), { lo: 1, hi: 4 }); S.px(x + 3, y + 2, '#e8e4dc'); }
+  S.px(9, 43, '#3af0e0', true); S.px(20, 45, '#ff8a30', true); S.box(6, 44, 16, 47, rp('#4a4a50', 5), { lo: 1, hi: 4 });
+  return S.done();
+}

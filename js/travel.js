@@ -30,7 +30,7 @@ const Travel = {
   open(id) {
     const L = LEVELS[id], f = (k) => Game.flag(k);
     if (!L || L.metres === undefined) return false;
-    if (f('been:' + id) || id === 'home' || id === 'precinct' || id === 'stack') return true;
+    if (f('been:' + id) || id === 'home' || id === 'd_dragon' || id === 'precinct' || id === 'stack') return true;
     if (id === 'spires') return Game.s.pack.spirepass > 0;
     if (id === 'oldtown') return Game.s.pack.subwaypass > 0 && f('been:street');
     const b = this.band(id);

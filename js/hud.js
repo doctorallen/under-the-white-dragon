@@ -187,7 +187,7 @@ const Hud = {
       title.textContent = 'Elevator';
       h += `<p class="sub">A lift cage that groans. Buttons for the floors you know.</p><div class="rows">` + ELEVATOR.map((f) => { const here = World.L.id === f.level, known = !f.needs || Game.flag(f.needs); return `<div class="row ${known ? '' : 'passed'}"><div><b>${f.name}</b><small>${known ? f.note : 'The button is dead. You haven\'t found a way there yet.'}</small></div>${here ? '<span class="tag">you\'re here</span>' : `<button data-floor="${f.level}" ${known ? '' : 'disabled'}>Go</button>`}</div>`; }).join('') + '</div>';
     } else if (which === 'cab') {
-      const fare = Flight.cabFare(), home = World.L.id === 'home';
+      const fare = Flight.cabFare(), home = World.L.id === 'd_dragon';
       title.textContent = 'Call a cab';
       h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down on your pad.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>Call a cab · ${fare} cr</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
     } else if (which === 'fab') {
@@ -217,7 +217,7 @@ const Hud = {
       title.textContent = 'Dev settings';
       h += Dev.html();
     } else if (which === 'pause') {
-      title.textContent = 'Downlevel';
+      title.textContent = 'Behind the White Dragon';
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
         <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Gear</b> I. <b>Map</b> M.</p>
         <p>You\'re a tracer with the precinct. Four synths ran from the Spires and went down into the city; Lieutenant Hale gives you their cases one at a time, and the night desk always has a short one. Find the clues (pick things up, enhance photos, ask people, and catch their lies by showing them what breaks their story), work out the leads on the case board (tap the case line at the top), follow them to the suspect, run the baseline test, and decide: retire, arrest or let go. Retire a human and it costs you. Your spinner is on the pad at the end of your hall; the old subway and the lift cages go deeper. Strip machines for parts, sell them, or take them to Mags for gear. Anywhere, a cab takes you home for a fare.</p></div>
@@ -233,7 +233,7 @@ const Hud = {
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => this.toggle('dev'),
-      cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'home' || !Game.pay({ cr: fare })) return; Flight.start('home', 'pad', true); },
+      cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'd_dragon' || !Game.pay({ cr: fare })) return; Flight.start('d_dragon', 'enter', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     panelBind(body, which);

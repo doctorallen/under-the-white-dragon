@@ -72,9 +72,21 @@ async function run(B, url, vp, name, failures) {
   const E = (fn, arg) => page.evaluate(fn, arg);
   console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))));
   const st = await E(() => ({ level: Game.s.level, x: Player.x, frame: Game.frame }));
-  if (st.level !== 'home' || Math.abs(st.x - 116) > 40) fail('the runner does not start by the bed ' + JSON.stringify(st));
+  if (st.level !== 'd_dragon' || Math.abs(st.x - 1000) > 40) fail('the game does not start in the back room by the cot ' + JSON.stringify(st));
   if (!st.frame) fail('the loop is not running');
-  await shot('home');
+  await shot('backroom');
+  // the bench and the shelf answer Use; the sign hangs out front
+  const room = await E(() => {
+    const at = (k) => World.props.find((p) => p.kind === k);
+    T_.walkTo(at('workbench').x); const bench = Player.target && Player.target.p && Player.target.p.kind;
+    T_.walkTo(at('shelf').x); const shelf = Player.target && Player.target.p && Player.target.p.kind;
+    return { bench, shelf, sign: !!World.props.find((p) => p.id === 'wdsign'), lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
+  });
+  if (room.bench !== 'workbench' || room.shelf !== 'shelf' || !room.sign || !room.lin) fail('the back room is not set up ' + JSON.stringify(room));
+  await E(() => { T_.walkTo(300); });
+  await shot('frontage');
+  // (the old slice from the apartment, until the jobs replace it)
+  await E(() => { Game.go('home', 'bed'); T_.run({}, 90); });
   // out to the pad and the spinner, up to the precinct
   const fly = await E(() => { T_.walkTo(1760); T_.tap('useHit'); const o = Hud.open; WorldMap.sel = 'precinct'; WorldMap.info(); const b = document.querySelector('button[data-go="precinct"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
   if (fly.o !== 'travel' || !fly.on || fly.level !== 'precinct') fail('the spinner did not fly to the precinct ' + JSON.stringify(fly));
@@ -87,7 +99,8 @@ async function run(B, url, vp, name, failures) {
   if (qm.o !== 'qm' || !qm.has) fail('the quartermaster did not build the lenses ' + JSON.stringify(qm));
   // a cab home
   const cab = await E(() => { Game.s.cr += 30; const c0 = Game.s.cr; Hud.toggle('cab'); const b = document.querySelector('button[data-act="cab"]'); if (b) b.click(); T_.run({}, 330); return { level: Game.s.level, paid: c0 - Game.s.cr, x: Math.round(Player.x) }; });
-  if (cab.level !== 'home' || cab.paid !== 30) fail('the cab did not take the runner home ' + JSON.stringify(cab));
+  if (cab.level !== 'd_dragon' || cab.paid !== 30) fail('the cab did not take the runner home to the White Dragon ' + JSON.stringify(cab));
+  await E(() => { Game.go('home', 'bed'); T_.run({}, 90); }); // (the old apartment's elevator, for now)
   // down the hall to the elevator, and down to the Stack
   const lift = await E(() => { T_.walkTo(1470); T_.tap('useHit'); const o = Hud.open; const b = document.querySelector('button[data-floor="stack"]'); if (b) b.click(); T_.run({}, 90); return { o, level: Game.s.level, x: Math.round(Player.x) }; });
   if (lift.o !== 'elevator' || lift.level !== 'stack' || Math.abs(lift.x - 158) > 20) fail('the elevator did not take the runner down to the Stack ' + JSON.stringify(lift));
