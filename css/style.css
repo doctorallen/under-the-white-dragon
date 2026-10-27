@@ -308,3 +308,86 @@ i.mark { color: var(--sodium); font-style: normal; }
 #heat.hot #heatfill { background: linear-gradient(90deg, #ff6a3a, var(--red)); box-shadow: 0 0 6px var(--red); }
 #heat.none { opacity: 0.5; }
 #pads button.gone { visibility: hidden; }
+
+/* ===================================================================
+   The game's skin: Dragon Pixel (our own pixel font, fonts/dragon.woff),
+   windows with cut corners over the dimmed game, chunky buttons, cards.
+   Pixel sizes: 15px reads as text, 20px for titles and buttons, 30px big.
+   =================================================================== */
+@font-face { font-family: 'Dragon Pixel'; src: url('../fonts/dragon.woff') format('woff'); font-display: block; }
+:root { --px: 'Dragon Pixel', var(--mono); --cut: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); --cut-s: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px); --win: #140f1e; --card: #1d1629; --line: #3a2f4a; --ink2: #c8bcd8; }
+html, body { font-family: var(--px); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: none; font-smooth: never; }
+button { font-family: var(--px); font-size: 15px; line-height: 1.2; color: var(--ink); background: #241b33; border: 0; border-radius: 0; padding: 8px 14px; clip-path: var(--cut-s); box-shadow: inset 0 0 0 2px #4a3c5e, inset 0 -4px 0 rgba(0, 0, 0, 0.35); text-transform: uppercase; letter-spacing: 0.04em; }
+button:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 0 0 2px #4a3c5e, inset 0 2px 0 rgba(0, 0, 0, 0.35); }
+button.go { background: var(--teal); color: #061416; box-shadow: inset 0 -4px 0 rgba(0, 60, 60, 0.45); }
+button.quiet { background: transparent; box-shadow: inset 0 0 0 2px #3a2f4a; color: var(--dim); }
+button.warnb { background: #5a1a2a; color: #ffd0d8; box-shadow: inset 0 0 0 2px #ff4a6a, inset 0 -4px 0 rgba(0, 0, 0, 0.35); }
+button:disabled { opacity: 0.35; }
+.sub { color: var(--ink2); }
+.dim, .row small, .card small, .tile small, .part small, .tog small { color: #9a8eae; font-size: 15px; }
+b { font-weight: 400; color: #fff; }
+
+/* the window: the game dimmed behind it, a frame with cut corners */
+#panel { background: rgba(4, 3, 8, 0.72); padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); backdrop-filter: blur(2px); }
+#panel header { background: var(--win); border-bottom: 0; padding: 8px 10px 6px 14px; clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px); box-shadow: inset 0 2px 0 var(--teal); }
+#panel h2 { font-family: var(--px); font-size: 20px; font-weight: 400; letter-spacing: 0.08em; color: var(--teal); display: flex; align-items: center; gap: 10px; }
+#panel h2::before { content: ''; width: 8px; height: 8px; background: var(--pink); box-shadow: 0 0 6px var(--pink); flex: none; }
+#panelBody { background: var(--win); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); box-shadow: inset 0 1px 0 var(--line), inset 0 -2px 0 #2a2238; padding: 10px 14px 16px; }
+#panelClose { background: transparent; box-shadow: inset 0 0 0 2px #5a3a4a; color: #ff8aa0; padding: 4px 10px; font-size: 15px; }
+#panelCr { font-family: var(--px); font-size: 20px; border: 0; background: rgba(255, 176, 64, 0.1); clip-path: var(--cut-s); padding: 2px 10px; }
+#panel h3 { font-family: var(--px); font-size: 15px; font-weight: 400; letter-spacing: 0.1em; color: var(--pink); display: flex; align-items: center; gap: 8px; margin: 14px 0 8px; }
+#panel h3::after { content: ''; flex: 1; height: 2px; background: linear-gradient(90deg, rgba(255, 74, 176, 0.5), transparent); }
+.ask h3::after, .jobcard h3::after { display: none; }
+
+/* tabs: chips */
+.tabs { border-bottom: 0; gap: 6px; margin: 0 0 12px; }
+.tabs button { font-family: var(--px); font-size: 15px; background: #1d1629; color: var(--dim); border: 0; padding: 6px 14px; box-shadow: inset 0 0 0 2px #3a2f4a; }
+.tabs button.on { background: var(--teal); color: #061416; box-shadow: none; }
+
+/* cards: everything listed sits on one */
+.ask, .row, .card, .tile, .part, .case, .slot { background: var(--card); clip-path: var(--cut); border: 0; box-shadow: inset 3px 0 0 var(--r, var(--teal)); }
+.ask { padding: 8px 12px 10px 16px; margin: 0 0 10px; background: var(--card); }
+.rows { gap: 6px; }
+.row { padding: 8px 12px 8px 16px; border-top: 0; --r: var(--line); }
+.tile { padding: 10px 8px; background: var(--card); box-shadow: inset 0 -3px 0 var(--r); }
+.part { padding: 8px 12px; }
+.tag { font-family: var(--px); font-size: 15px; color: #9a8eae; background: rgba(255, 255, 255, 0.05); padding: 2px 8px; clip-path: var(--cut-s); }
+.help p { color: var(--ink2); } .help b { color: var(--teal); }
+
+/* the HUD in the same hand */
+#where, #prompt:not(:empty), #vitals, .toast, #bubbles .bubble, #panelCr { font-family: var(--px); }
+#where { font-size: 15px; letter-spacing: 0.06em; }
+#obj { font-size: 15px; }
+.toast { font-size: 15px; clip-path: var(--cut-s); border: 0; box-shadow: inset 3px 0 0 var(--dim); background: rgba(20, 15, 30, 0.9); padding: 4px 12px; }
+.toast.good { box-shadow: inset 3px 0 0 var(--green); } .toast.warn { box-shadow: inset 3px 0 0 var(--red); }
+#bubbles .bubble { font-size: 15px; border-radius: 0; clip-path: var(--cut-s); background: #ece4f2; padding: 5px 10px; }
+#bubbles .bubble b { font-size: 15px; color: #8a3a9a; }
+#prompt:not(:empty) { font-size: 15px; clip-path: var(--cut-s); border: 0; box-shadow: inset 0 0 0 2px rgba(58, 240, 224, 0.6); padding: 4px 12px; }
+#topbtns button { padding: 6px 12px; font-size: 15px; background: rgba(29, 22, 41, 0.86); }
+#pads button { font-family: var(--px); font-size: 15px; clip-path: none; text-transform: uppercase; }
+#cr { font-size: 15px; }
+#heat { font-size: 15px; letter-spacing: 0.08em; }
+
+/* ---- jobs: a card each, a face, where it stands, what it needs ---- */
+.jobcard { --r: var(--teal); display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 12px; padding: 10px 12px 12px 14px; margin: 0 0 10px; background: var(--card); clip-path: var(--cut); box-shadow: inset 3px 0 0 var(--r); }
+.jobcard.done { --r: #5a4a6a; opacity: 0.6; }
+.jobcard.ready { --r: var(--green); }
+.jobcard .face { grid-row: span 2; width: 56px; height: 56px; image-rendering: pixelated; background: #0e0a14; clip-path: var(--cut-s); }
+.jobcard h3 { margin: 0 !important; font-size: 20px !important; color: #fff !important; letter-spacing: 0.04em !important; }
+.jobcard .state { color: var(--ink2); }
+.jobcard .chip { display: inline-block; font-size: 15px; padding: 1px 8px; margin-left: 6px; background: rgba(255, 255, 255, 0.07); clip-path: var(--cut-s); color: var(--r); vertical-align: 2px; letter-spacing: 0.04em; }
+.needs { grid-column: 1 / -1; display: grid; gap: 4px; margin-top: 6px; }
+.need2 { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 5px 10px 5px 6px; background: #150f1f; clip-path: var(--cut-s); }
+.need2 img { width: 40px; height: 24px; image-rendering: pixelated; }
+.need2 b { font-size: 15px; }
+.need2 small { display: block; color: #9a8eae; font-size: 15px; }
+.need2 .have { font-size: 15px; padding: 2px 8px; clip-path: var(--cut-s); white-space: nowrap; }
+.need2.ok .have { background: rgba(58, 255, 128, 0.14); color: var(--green); }
+.need2.no .have { background: rgba(255, 74, 106, 0.14); color: #ff8aa0; }
+.need2.fine { opacity: 0.55; } .need2.fine .have { color: #9a8eae; }
+.need2.unk .have { color: var(--sodium); background: rgba(255, 176, 64, 0.1); }
+.heatbar { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 15px; color: var(--sodium); }
+.heatbar i { flex: 1; max-width: 260px; height: 8px; background: #1d1629; clip-path: var(--cut-s); position: relative; }
+.heatbar i::after { content: ''; position: absolute; inset: 0; width: var(--h); background: linear-gradient(90deg, var(--sodium), #ff4a6a); }
+.part img.picon { width: 60px; height: 36px; image-rendering: pixelated; margin-bottom: 2px; }
+.part .tbtns button { padding: 6px 14px; }

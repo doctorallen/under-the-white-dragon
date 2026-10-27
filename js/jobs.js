@@ -76,7 +76,7 @@ const Jobs = {
     }
     if (a.kind === 'jobwait') {
       const notes = Game.s.notes.log.filter((e) => e.key.startsWith(a.id + ':')).map((e) => e.text.replace(/^[^:]*: /, ''));
-      return `<div class="ask"><h3>${J.title}</h3><p class="sub">${J.waiting}</p><p class="dim">${notes.length ? 'Your notebook: ' + notes.join(' ') : 'It\'s on your bench in the back.'}</p></div>`;
+      return `<div class="ask"><h3>${J.title}</h3><p class="sub">${J.waiting}</p>${this.needs(a.id) || '<p class="dim">It\'s on your bench in the basement.</p>'}</div>`;
     }
     if (a.kind === 'handback') {
       const t = b.tested, trace = this.traced(b);
@@ -108,15 +108,42 @@ const Jobs = {
     if (J.honest) this.heat(-10, 'An honest repair, seen to be done.');
     Bench.clear(); Hud.toggle(null); this.spawn(); Hud.refresh(); Save.write();
   },
-  // the jobs, for the Jobs tab: who, what, where it stands
+  // a customer's face, for their card (made once)
+  faces: {},
+  face(id) {
+    if (this.faces[id]) return this.faces[id];
+    const sp = person(Object.assign({}, JOBS[id].look, { pose: 'stand', seed: 7 })), [c, g] = canvasOf(56, 56);
+    g.imageSmoothingEnabled = false; g.fillStyle = '#0e0a14'; g.fillRect(0, 0, 56, 56); const d = sp.c.getContext('2d').getImageData(0, 0, sp.w, sp.h).data; let top = 0; while (top < sp.h && ![...Array(sp.w).keys()].some((x) => d[(top * sp.w + x) * 4 + 3])) top++; g.drawImage(sp.c, Math.round(sp.ax - 11), top - 1, 22, 22, 0, 2, 56, 56); // (the head and shoulders, from the top of the head)
+    return (this.faces[id] = c.toDataURL());
+  },
+  // what a job needs: every part of the thing, and for each whether it's fine,
+  // needs replacing (with what you have that would do, and where to get it),
+  // or isn't checked yet
+  needs(id) {
+    const b = Game.s.bench, J = JOBS[id], D = DEVICE[J.dev];
+    if (!b || b.job !== id) return '';
+    return '<div class="needs">' + Object.keys(D.slots).map((k) => {
+      const S = D.slots[k], s = b.slots[k], P = PART[S.kind], gauge = S.gauge ? ', ' + S.gauge + ' gauge' : '';
+      const have = Parts.have(S.kind).filter((p) => p.st === 'ok' && (!S.gauge || p.gauge === S.gauge)).length;
+      const ico = `<img src="${Parts.icon(S.kind, s.p ? s.p.g : 'street')}" alt="">`;
+      if (!b.probed[k]) return `<div class="need2 unk">${ico}<div><b>${P.name}</b><small>Not checked yet: probe it on the bench.</small></div><span class="have">?</span></div>`;
+      const bad = !s.p || s.p.st !== 'ok' || (S.gauge && s.p.gauge !== S.gauge);
+      if (!bad) return `<div class="need2 fine">${ico}<div><b>${P.name}</b><small>Fine.</small></div><span class="have">✓ fine</span></div>`;
+      const why = !s.p ? 'missing' : s.p.st !== 'ok' ? PART_STATE[s.p.st] : 'wrong gauge';
+      return `<div class="need2 ${have ? 'ok' : 'no'}">${ico}<div><b>${P.name}${gauge} · ${why}</b><small>${have ? 'You have one on the shelf.' : Parts.sources(S.kind, S.gauge).join(' · ')}</small></div><span class="have">${have ? '✓ have ' + have : '✕ need 1'}</span></div>`;
+    }).join('') + '</div>';
+  },
+  // the jobs, for the Jobs tab: a card each, with a face, where it stands and what it needs
   list() {
-    const b = Game.s.bench, rows = JOB_ORDER.map((id) => {
-      const J = JOBS[id], c = this.st(id);
-      const st = { offer: 'Waiting at the bar upstairs.', bench: b && b.job === id ? (b.tested ? `On your bench: tested, ${{ works: 'it works', half: 'it half works', dead: 'nothing', smoke: 'it smoked' }[b.tested.res]}.` : 'On your bench.') : 'Waiting.', back: 'Handed back. You\'ll hear how it went in the morning.', done: 'Done.', seized: 'Seized by the precinct.' }[c.st];
-      const notes = c.st === 'bench' ? Game.s.notes.log.filter((e) => e.key.startsWith(id + ':')).map((e) => e.text.replace(/^[^:]*: /, '')).join(' ') : '';
-      return `<div class="row ${c.st === 'done' || c.st === 'seized' ? 'passed' : ''}"><div><b>${J.title}</b><small>${st}${notes ? ' ' + notes : ''}</small></div></div>`;
-    }).join('');
-    return `<p class="sub">Heat ${Game.s.heat} of 100.${Game.s.heat >= 70 ? ' Expect a knock.' : Game.s.heat >= 40 ? ' People on the block are talking.' : ''}</p><div class="rows">${rows}</div>`;
+    const b = Game.s.bench, h = Game.s.heat;
+    let out = `<div class="heatbar">HEAT ${h}<i style="--h:${h}%"></i>${h >= 70 ? 'Expect a knock.' : h >= 40 ? 'The block is talking.' : ''}</div>`;
+    for (const id of JOB_ORDER) {
+      const J = JOBS[id], c = this.st(id), mine = b && b.job === id, ready = mine && b.tested && (b.tested.res === 'works' || b.tested.res === 'half');
+      const chip = { offer: 'new', bench: ready ? 'ready' : 'on the bench', back: 'handed back', done: 'done', seized: 'seized' }[c.st];
+      const state = { offer: `${J.name} is waiting at the bar upstairs. ${J.pay ? J.pay + ' cr.' : 'A favour.'}`, bench: ready ? `Tested: ${b.tested.res === 'works' ? 'it works' : 'it half works'}. Hand it back to ${J.name} at the bar.` : mine ? 'On your bench in the basement.' : 'Waiting.', back: 'You\'ll hear how it went in the morning.', done: 'Done.', seized: 'Taken by the precinct.' }[c.st];
+      out += `<div class="jobcard ${ready ? 'ready' : ''} ${c.st === 'done' || c.st === 'seized' ? 'done' : ''}"><img class="face" src="${this.face(id)}" alt=""><div><h3>${J.title}<span class="chip">${chip}</span></h3><div class="state">${state}${J.illegal && c.st !== 'done' ? ' <span style="color:#ff8aa0">Illegal: heat while it\'s on your bench.</span>' : ''}</div></div>${mine && !ready ? this.needs(id) : ''}</div>`;
+    }
+    return out;
   },
   // the line at the top of the screen: what the job on the bench needs next
   objective() {

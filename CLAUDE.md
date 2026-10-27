@@ -32,6 +32,10 @@ npm test                        # everything CI runs: test/check.sh, then test/s
 - **Map and dev.** `map.js` paints every chunk of the level into one picture (cached per level) for the pause map; `dev.js` holds testing switches in localStorage `downlevel.dev` (god mode in `Game.hurt`, speed in `Player`, the clock in `step`).
 - **Time.** `step(dt)` (`main.js`) is one fixed 1/60 s step. Panels and jacking in set `Game.paused`.
 
+## The look of the menus
+
+Menus and the HUD are a game's, not a web page's: Dragon Pixel (`fonts/dragon.woff`, our own font, built by `python3 tools/mkfont.py fonts/dragon.woff` from the glyphs in that script; add a glyph there if text needs one) at 15px for text and 20px for titles and buttons; windows and cards with cut corners (`--cut`, `--cut-s` in `css/style.css`) over the dimmed game; chunky buttons (`.go` the main one). The skin is the last section of `css/style.css`. Anything a job needs is shown as a checklist with the part's picture (`Jobs.needs`, `Parts.icon`, `Parts.sources`).
+
 ## Testing changes
 
 `node test/smoke.js` plays through the slice headlessly on a phone and a desktop: it steps the game with `step(1/60)` and drives the controls through `Input.bot` and the edge flags (`Input.useHit`, `strikeHit`…), and writes screenshots to `test/out/` (gitignored). Look at them for visual changes. `?seed` isn't used; the levels are fixed.

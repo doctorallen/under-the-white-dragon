@@ -89,7 +89,7 @@ const PANELS = {
   partshop(s) {
     const n = Hud.who, stock = PART_STOCK[n.def.stock];
     let h = `<p class="sub">"${n.def.lines[n.line % n.def.lines.length]}"</p><div class="parts">`;
-    h += stock.map(([k, g, cr, gauge, note], i) => `<div class="part" style="--r:${GRADE[g].col}"><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr} cr</button></div></div>`).join('');
+    h += stock.map(([k, g, cr, gauge, note], i) => `<div class="part" style="--r:${GRADE[g].col}"><img class="picon" src="${Parts.icon(k, g)}" alt=""><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr} cr</button></div></div>`).join('');
     return [n.def.name + '\'s parts', h + '</div>'];
   },
   // the grocery's till: whoever's on shift sells you things
@@ -98,7 +98,7 @@ const PANELS = {
   // the shelf: the parts you have, and the notebook
   shelf(s) {
     const n = s.notes; let h = '<h3>Parts</h3>';
-    h += s.parts.length ? '<div class="parts">' + s.parts.map((p) => `<div class="part" style="--r:${GRADE[p.g].col}"><b>${Parts.name(p)}${p.gauge ? ' · ' + p.gauge + ' gauge' : ''}</b><small>${PART_STATE[p.st]} · ${Parts.from(p)}</small></div>`).join('') + '</div>' : '<p class="dim">Empty shelves. Strip machines, trade at the stalls, or pull parts from what comes to the bench.</p>';
+    h += s.parts.length ? '<div class="parts">' + s.parts.map((p) => `<div class="part" style="--r:${GRADE[p.g].col}"><img class="picon" src="${Parts.icon(p.k, p.g)}" alt=""><b>${Parts.name(p)}${p.gauge ? ' · ' + p.gauge + ' gauge' : ''}</b><small>${PART_STATE[p.st]} · ${Parts.from(p)}</small></div>`).join('') + '</div>' : '<p class="dim">Empty shelves. Strip machines, trade at the stalls, or pull parts from what comes to the bench.</p>';
     h += '<h3>Notebook</h3>';
     const known = Object.keys(n.known);
     h += known.length ? known.map((d) => `<p><b>${DEVICE[d].name}</b> <span class="dim">(${DEVICE[d].kind.toLowerCase()})</span>: ${Parts.build(d).join(', ')}.</p>`).join('') : '<p class="dim">Nothing yet. Open things up and probe them, and the notebook learns how they\'re built.</p>';

@@ -109,6 +109,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/panels.js` | The detective's panels: talk, the baseline test, the enhancer, travel, the case file, items |
 | `js/pwa.js` | Installing, and reloading onto a new deploy |
 | `js/main.js` | Boot and the loop |
+| `fonts/dragon.woff`, `tools/mkfont.py` | Dragon Pixel, the game's own pixel font, and the script that builds it from its glyphs |
 | `sw.js`, `manifest.webmanifest`, `icons/` | The service worker (network first), the app manifest and icons |
 | `test/check.sh` | Static checks |
 | `test/smoke.js` | Headless play-through on phone and desktop |

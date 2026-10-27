@@ -14,6 +14,7 @@ const FILES = [
   './',
   'index.html',
   'css/style.css',
+  'fonts/dragon.woff',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',

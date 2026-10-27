@@ -80,6 +80,19 @@ const Parts = {
   },
   // a part from a machine you've stripped: scrap, and maybe worn
   strip(p) { const k = PART_YIELD[p.kind]; if (!k) return null; return this.give(this.make(k, 'scrap', { st: hash(p.x, p.y, 77) < 0.7 ? 'ok' : 'worn' }), true); },
+  // a part's picture, as on the bench (made once a kind and grade)
+  icons: {},
+  icon(k, g = 'street') { const key = k + g; if (this.icons[key]) return this.icons[key]; const [c, x] = canvasOf(40, 24); partArt(x, { id: 3, k, g, st: 'ok' }, 2, 4, 36, 16, false, 0); return (this.icons[key] = c.toDataURL()); },
+  // where to get a kind of part (of a gauge, if it's particular): the stalls
+  // that sell it, the machines that give it, and the one place you shouldn't
+  sources(k, gauge) {
+    const out = [], WHO = { ana: 'Mechanic Ana, Overpass Market', kade: 'Nurse Kade, Clinic Row' };
+    for (const s in PART_STOCK) for (const [kk, g, cr, ga] of PART_STOCK[s]) if (kk === k && (!gauge || ga === gauge)) out.push(`${WHO[s]}: ${GRADE[g].name.toLowerCase()}, ${cr} cr`);
+    const strip = Object.keys(PART_YIELD).filter((m) => PART_YIELD[m] === k);
+    if (strip.length && !gauge) out.push('strip a ' + strip.map((m) => ({ vending: 'vending machine', car: 'parked car', ac: 'air conditioner', rack: 'server rack', wreck: 'wreck', junk: 'junk pile' }[m] || m)).join(' or ') + ' (scrap)');
+    if (k === 'servo' && gauge === 'heavy') out.push('the parts cabinet on Clinic Row: Meridian, taken (heat)');
+    return out;
+  },
   // ---- the notebook ----
   knows(dev) { return !!Game.s.notes.known[dev]; },
   learn(dev) { if (this.knows(dev)) return; Game.s.notes.known[dev] = 1; Game.toast('Notebook: how a ' + DEVICE[dev].name.toLowerCase() + ' is put together.', 'good'); },
