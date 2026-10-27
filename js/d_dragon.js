@@ -13,11 +13,13 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'The noodle bar on the co
   build(L, G) {
     const C = G - WD.CEIL;
     // next door: a shophouse, flats above
-    bShophouse(L, 150, 300, G, { floors: 4, wall: KMAT.teal, shops: [['glass', '#9af0ff']], roof: 'tank', seed: 911 });
+    bShophouse(L, 150, 282, G, { floors: 4, wall: KMAT.teal, shops: [['glass', '#9af0ff']], roof: 'tank', seed: 911 });
+    // a gap between the buildings: pipes, a drainpipe, the dark
+    L.paint(282, G - 330, 300, G, (P) => { kFill(P, 282, G - 330, 300, G, '#08070c'); for (let y = G - 330; y < G; y++) { P.put(286, y, [26, 28, 34]); P.put(287, y, [44, 48, 56]); } for (let y = G - 300; y < G; y += 46) for (let x = 282; x < 300; x++) P.put(x, y, [30, 30, 38]); });
     // the White Dragon's building: flats above the bar, a slab between
     L.paint(300, G - 330, WD.END + 28, C + 6, (P) => {
       P.block(300, G - 320, WD.END + 28, C, KMAT.plaster, { base: 0.4, panels: [60, 34], drips: 0.12, dripLen: 24 });
-      for (let fy = G - 306; fy < C - 24; fy += 34) for (let fx = 316; fx < WD.END + 10; fx += 26) kWin(P, fx, fy, 14, 18, { lit: hash(fx, fy, 31) < 0.45 ? (hash(fx, fy, 32) < 0.5 ? '#ffd8a0' : '#a8e0ff') : null, blinds: hash(fx, fy, 33) < 0.4, curtain: hash(fx, fy, 34) < 0.3 ? '#5a2a3a' : null });
+      for (let fy = G - 306; fy < C - 24; fy += 34) for (let fx = 316; fx < WD.END + 10; fx += 26) if (fx > 352 || fy + 18 < G - 150) kWin(P, fx, fy, 14, 18, { lit: hash(fx, fy, 31) < 0.45 ? (hash(fx, fy, 32) < 0.5 ? '#ffd8a0' : '#a8e0ff') : null, blinds: hash(fx, fy, 33) < 0.4, curtain: hash(fx, fy, 34) < 0.3 ? '#5a2a3a' : null });
       P.block(296, G - 330, WD.END + 30, G - 320, KMAT.kawara, { base: 0.5 });
       P.block(300, C, WD.END + 28, C + 6, MAT.concreteD, { base: 0.5 });
     });
@@ -66,7 +68,9 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'The noodle bar on the co
     L.prop('vending', 250, G, { look: { col: '#3af0e0', body: '#2a3a4a' }, label: 'vending machine' }); L.light(250, G - 12, 30, [0.3, 0.9, 1], 0.5);
     L.prop('junk', 186, G, { label: 'junk pile' });
     // ---- the sign: on the corner, over the street
-    L.prop('deco', 296, G - 10, { art: () => dragonSign(), id: 'wdsign' });
-    L.light(296, G - 80, 110, [0.75, 0.9, 1], 0.9); L.light(266, G - 130, 50, [1, 0.3, 0.38], 0.6);
+    // a conduit from the sign down the pier into the wall
+    L.paint(318, G - 48, 324, G, (P) => { for (let y = G - 48; y < G - 4; y++) { P.put(320, y, [20, 22, 28]); P.put(321, y, [58, 62, 72]); } for (const y of [G - 40, G - 24, G - 10]) { P.put(319, y, [90, 96, 108]); P.put(322, y, [90, 96, 108]); } });
+    L.prop('deco', 312, G - 46, { art: () => dragonSign(), id: 'wdsign' });
+    L.light(316, G - 100, 90, [0.75, 0.9, 1], 0.8); L.light(296, G - 120, 40, [1, 0.3, 0.38], 0.5);
   },
 }));

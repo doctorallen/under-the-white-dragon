@@ -120,16 +120,21 @@ const PIX3 = {
 };
 function pixText(g, text, x, y, col, k = 1) { g.fillStyle = col; let cx = x; for (const ch of text) { const P = PIX3[ch] || PIX3[' ']; P.forEach((row, j) => [...row].forEach((v, i) => { if (v === '1') g.fillRect(cx + i * k, y + j * k, k, k); })); cx += (P[0].length + 1) * k; } return cx - x - k; }
 function pixKanji(g, rows, x, y, col) { g.fillStyle = col; rows.forEach((row, j) => [...row].forEach((v, i) => { if (v === '1') g.fillRect(x + i, y + j, 1, 1); })); }
-// the tall sign: a blue neon frame, the dragon coming down it, 白龍 stacked in
-// red down the left, WHITE DRAGON and NOODLES along the foot
+// the sign: a blue neon frame, the dragon coming down it, 白龍 stacked in red
+// down the left, WHITE DRAGON and NOODLES along the foot; hung from a steel
+// rail bolted to the wall above it
 function dragonSign() {
-  const W = 92, H = 146, [c, g] = canvasOf(W, H), [e, eg] = canvasOf(W, H);
-  g.fillStyle = '#0c0a12'; g.fillRect(1, 1, W - 2, H - 2);
-  for (const G2 of [g, eg]) { G2.fillStyle = '#3a8cff'; G2.fillRect(3, 3, W - 6, 1); G2.fillRect(3, H - 4, W - 6, 1); G2.fillRect(3, 3, 1, H - 6); G2.fillRect(W - 4, 3, 1, H - 6); }
-  g.fillStyle = '#4a4050'; for (const [x, y] of [[1, 1], [W - 2, 1], [1, H - 2], [W - 2, H - 2]]) g.fillRect(x, y, 1, 1);
-  const d = dragonVert(64); g.drawImage(d, 26, 4); eg.drawImage(d.glow, 26, 4);
-  for (const G2 of [g, eg]) { pixKanji(G2, KANJI.bai, 7, 12, '#ff4a5a'); pixKanji(G2, KANJI.long, 5, 34, '#ff4a5a'); G2.fillStyle = '#ff3a4e'; G2.fillRect(5, 8, 20, 1); G2.fillRect(5, 55, 20, 1); }
-  const tw = 47; pixText(g, 'WHITE DRAGON', Math.round((W - tw) / 2), H - 21, '#e8fcff'); pixText(eg, 'WHITE DRAGON', Math.round((W - tw) / 2), H - 21, '#58c8d8');
-  pixText(g, 'NOODLES', Math.round((W - 30) / 2), H - 12, '#3af0e0'); pixText(eg, 'NOODLES', Math.round((W - 30) / 2), H - 12, '#3af0e0');
-  return { c, e, w: W, h: H, ax: W / 2, ay: H - 1 };
+  const W = 62, H = 92, T = 7, [c, g] = canvasOf(W + 4, H + T), [e, eg] = canvasOf(W + 4, H + T), ox = 2;
+  // the rail and its two struts up into the wall
+  g.fillStyle = '#2a2e36'; g.fillRect(0, T - 3, W + 4, 3); g.fillStyle = '#5a606c'; g.fillRect(0, T - 3, W + 4, 1);
+  for (const x of [10, W - 8]) { g.fillStyle = '#2a2e36'; g.fillRect(x, 0, 2, T - 3); g.fillStyle = '#8a909c'; g.fillRect(x, T - 2, 2, 1); }
+  // the plate, opaque, with a dark edge
+  g.fillStyle = '#06050a'; g.fillRect(ox, T, W, H); g.fillStyle = '#0e0c16'; g.fillRect(ox + 1, T + 1, W - 2, H - 2);
+  for (const G2 of [g, eg]) { G2.fillStyle = '#3a8cff'; G2.fillRect(ox + 2, T + 2, W - 4, 1); G2.fillRect(ox + 2, T + H - 3, W - 4, 1); G2.fillRect(ox + 2, T + 2, 1, H - 4); G2.fillRect(ox + W - 3, T + 2, 1, H - 4); }
+  const d = dragonVert(36); g.drawImage(d, ox + 22, T + 3); eg.drawImage(d.glow, ox + 22, T + 3);
+  for (const G2 of [g, eg]) { pixKanji(G2, KANJI.bai, ox + 5, T + 9, '#ff4a5a'); pixKanji(G2, KANJI.long, ox + 3, T + 30, '#ff4a5a'); G2.fillStyle = '#ff3a4e'; G2.fillRect(ox + 4, T + 6, 18, 1); G2.fillRect(ox + 4, T + 50, 18, 1); }
+  const wid = (t) => [...t].reduce((n, ch) => n + (PIX3[ch] || PIX3[' '])[0].length + 1, -1), tw = wid('WHITE DRAGON'), nw = wid('NOODLES');
+  pixText(g, 'WHITE DRAGON', ox + Math.round((W - tw) / 2), T + H - 19, '#e8fcff'); pixText(eg, 'WHITE DRAGON', ox + Math.round((W - tw) / 2), T + H - 19, '#58c8d8');
+  pixText(g, 'NOODLES', ox + Math.round((W - nw) / 2), T + H - 11, '#3af0e0'); pixText(eg, 'NOODLES', ox + Math.round((W - nw) / 2), T + H - 11, '#3af0e0');
+  return { c, e, w: W + 4, h: H + T, ax: (W + 4) / 2, ay: H + T - 1 };
 }
