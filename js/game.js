@@ -5,6 +5,10 @@
 // programs, what's been done to the city (props by id, flags), the quests, and
 // the time of day.
 // ---------------------------------------------------------------------------
+// Downlevel's detective game (Hale's cases, the night desk, side jobs, the
+// warrants board, the precinct and the old apartment) is still in the code
+// but switched off: nobody offers it, and those places aren't open.
+const LEGACY = false;
 const Game = {
   frame: 0, t: 0, acc: 0, last: 0, paused: false, fade: 0, fadeTo: null,
   s: null, cam: { x: 0, y: 0 }, toasts: [], particles: [], ghost: 0,
@@ -100,6 +104,7 @@ const Game = {
   },
   buyPart(k, n) { const c = Math.round(SALVAGE[k].price * FAB.markup) * n; if (this.s.cr < c) return false; this.s.cr -= c; this.give(k, n); Save.write(); return true; },
   giveGear(id) {
+    if (GEAR[id] && GEAR[id].slot === 'ranged') return false; // (no guns)
     const G = GEAR[id]; if (!G || this.s.gear.owned[id]) return false;
     this.s.gear.owned[id] = 1; if (!this.s.gear.on[G.slot]) this.equip(id);
     this.toast('New gear: ' + G.name + ', ' + RARITY[G.rarity].name.toLowerCase() + ' ' + SLOTS[G.slot].toLowerCase() + '. Wear it from Gear.', 'good');

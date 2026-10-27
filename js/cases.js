@@ -221,6 +221,7 @@ const Cases = {
   },
   // what someone can do for a case when you talk to them
   actionsFor(name) {
+    if (!LEGACY) return [];
     const out = [];
     for (const id of this.open()) {
       const c = this.st(id), C = this.def(id);

@@ -13,7 +13,7 @@ const Hud = {
     $('bMenu').onclick = () => this.toggle('pause');
     $('bCab').onclick = () => this.toggle('cab');
     // the tracked case's line opens its board (a job's opens the case file)
-    $('obj').onclick = () => { const id = Game.s.track; if (id && Cases.st(id) && !Cases.closed(id)) Board.open(id); else { this.tab = 'jobs'; this.toggle('pack'); } };
+    $('obj').onclick = () => { const id = Game.s.track; if (LEGACY && id && Cases.st(id) && !Cases.closed(id)) Board.open(id); else { this.tab = 'jobs'; this.toggle('pack'); } };
     $('bItem').onclick = () => { Input.itemHit = true; };
     $('panelClose').onclick = () => this.toggle(null);
     this.refresh();
@@ -28,8 +28,8 @@ const Hud = {
     const tg = Player.target;
     // behind someone who hasn't seen you: Fire takes them down quietly
     const tk = !Game.paused && Actors.enemies.some((e) => e.hp > 0 && Math.sign(e.x - Player.x) === Player.face && Foes.canTakedown(e));
-    this.set('prompt', tk ? 'Fire: take them down quietly' : tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : '');
-    this.set('bStrike', tk ? 'Take down' : 'Fire');
+    this.set('prompt', tk ? 'Take them down quietly' : tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : '');
+    $('bStrike').classList.toggle('gone', !tk);
     // the Use button says what it would do, in a word
     const verb = tg && !Game.paused ? tg.pr.verb || 'Use' : 'Use';
     this.set('bUse', verb);
@@ -49,7 +49,6 @@ const Hud = {
     const s = Game.s; if (!s) return;
     $('hpfill').style.width = Math.max(0, (s.hp / T.player.hp) * 100) + '%';
     $('ram').innerHTML = '<i class="on"></i>'.repeat(s.ram) + '<i></i>'.repeat(T.ram.max - s.ram);
-    $('charge').innerHTML = '<i class="on"></i>'.repeat(Player.charge) + '<i></i>'.repeat(Math.max(0, Game.weapon().shots - Player.charge));
     $('cr').textContent = s.cr + ' cr';
     $('heatfill').style.width = s.heat + '%'; $('heat').classList.toggle('hot', s.heat >= 40); $('heat').classList.toggle('none', !s.heat);
     const q = Game.quickItem(); $('bItem').textContent = q ? ITEM[q].name.split(' ')[0] + ' ' + s.pack[q] : 'Item'; $('bItem').classList.toggle('none', !q);
@@ -59,7 +58,7 @@ const Hud = {
   },
   // the tracked case or job: what next, and where
   objective() {
-    const id = Game.s.track; if (!id) return '';
+    const id = Game.s.track; if (!id) return Jobs.objective();
     if (Cases.st(id) && !Cases.closed(id)) { const w = Cases.where(id); return '▸ ' + Cases.objective(id) + (w && w.level !== World.L.id ? ' · ' + LEVELS[w.level].name : ''); }
     if (Quests.active(id)) { const w = Quests.where(id); return '▸ ' + Quests.objective(id) + (w && w.level !== World.L.id ? ' · ' + LEVELS[w.level].name : ''); }
     return '';
@@ -89,7 +88,7 @@ const Hud = {
   tiles(o, btn) { const ks = SALVAGE_ORDER.filter((k) => o === null || o[k]); return ks.length ? '<div class="tiles">' + ks.map((k) => `<div class="tile" style="--r:${SALVAGE[k].col[1]}"><img src="${this.icon(k)}" alt=""><b>${SALVAGE[k].name}</b>${o ? `<span class="n">× ${o[k]}</span>` : ''}${btn ? btn(k) : ''}</div>`).join('') + '</div>' : '<p class="dim">No salvage. Hold Use on a machine to strip it.</p>'; },
   // a shop's stock: things to carry, then gear
   shopHtml(shop) {
-    const s = Game.s, ids = Object.keys(shop), items = ids.filter((id) => ITEM[id]), gear = ids.filter((id) => GEAR[id]);
+    const s = Game.s, ids = Object.keys(shop), items = ids.filter((id) => ITEM[id]), gear = ids.filter((id) => GEAR[id] && GEAR[id].slot !== 'ranged');
     let h = '';
     if (items.length) h += '<h3>For sale</h3><div class="tiles">' + items.map((k) => `<div class="tile" style="--r:${(ITEM[k].col || ['', '#888'])[1]}"><img src="${this.icon(k)}" alt=""><b>${ITEM[k].name}</b><small>${ITEM[k].note || ''}</small><span class="n">you have ${s.pack[k] || 0}</span><div class="tbtns"><button data-buyitem="${k}" ${s.cr >= shop[k] ? '' : 'disabled'}>${shop[k]} cr</button></div></div>`).join('') + '</div>';
     if (gear.length) h += '<h3>Gear for sale</h3><div class="cards">' + gear.map((id) => this.gearCard(id, s.gear.owned[id] ? '<span class="tag">yours</span>' : `<button data-buygear="${id}" ${s.cr >= shop[id] ? '' : 'disabled'}>${shop[id]} cr</button>`)).join('') + '</div>';
@@ -157,9 +156,9 @@ const Hud = {
     const s = Game.s, body = $('panelBody'), title = $('panelTitle'); let h = '';
     if (which === 'pack') {
       // what you carry, in four tabs: gear on a figure of you, items, ware and programs, jobs
-      title.textContent = 'Inventory';
-      const tab = this.tab || 'jobs';
-      h += '<nav class="tabs">' + [['jobs', 'Cases'], ['gear', 'Gear'], ['items', 'Items'], ['ware', 'Gadgets']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
+      title.textContent = 'Pockets';
+      const tab = this.tab === 'items' ? 'items' : 'jobs';
+      h += '<nav class="tabs">' + [['jobs', 'Jobs'], ['items', 'Items']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
       if (tab === 'gear') {
         const slot = (k) => { const g = Game.worn(k), spare = Object.keys(s.gear.owned).some((id) => GEAR[id].slot === k && s.gear.on[k] !== id); return `<button class="slot ${g ? 'r-' + g.rarity : 'empty'} ${this.slot === k ? 'sel' : ''}" data-slot="${k}">${g ? `<img src="${this.thumb(s.gear.on[k])}" alt="">` : '<span class="noimg"></span>'}<span><small>${SLOTS[k]}${spare ? ' <i class="new">+</i>' : ''}</small><b>${g ? Game.gearName(s.gear.on[k]) : 'Empty'}</b></span></button>`; };
         const W = Game.weapon();
@@ -179,7 +178,7 @@ const Hud = {
         h += `<h3>Gadgets</h3><div class="tiles">` + GADGET_ORDER.map((g) => `<div class="tile ${s.gadgets[g] ? '' : 'off'}" style="--r:#3af0e0"><img src="${this.gadgetIcon(g)}" alt=""><b>${GADGETS[g].name}</b><small>${s.gadgets[g] ? GADGETS[g].note : 'Quartermaster Ito at the precinct builds these.'}</small></div>`).join('') + '</div>';
         h += `<h3>Programs · RAM ${s.ram} of ${T.ram.max}</h3><div class="rows">` + (PROGRAM_ORDER.filter((p) => s.programs[p]).map((p) => `<div class="row"><div><b>${PROGRAMS[p].name}</b><small>${PROGRAMS[p].ram} RAM · ${PROGRAMS[p].note}</small></div><button data-prog="${p}" ${s.prog === p ? 'disabled' : ''}>${s.prog === p ? 'Selected' : 'Select'}</button></div>`).join('') || '<p class="dim">No programs yet. Jack into data nodes to find them.</p>') + '</div>';
       } else {
-        h += caseFile(s);
+        h += Jobs.list();
       }
     } else if (which === 'bed') {
       title.textContent = 'Home';
@@ -220,8 +219,9 @@ const Hud = {
     } else if (which === 'pause') {
       title.textContent = 'Behind the White Dragon';
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
-        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Gear</b> I. <b>Map</b> M.</p>
-        <p>You\'re a tracer with the precinct. Four synths ran from the Spires and went down into the city; Lieutenant Hale gives you their cases one at a time, and the night desk always has a short one. Find the clues (pick things up, enhance photos, ask people, and catch their lies by showing them what breaks their story), work out the leads on the case board (tap the case line at the top), follow them to the suspect, run the baseline test, and decide: retire, arrest or let go. Retire a human and it costs you. Your spinner is on the pad at the end of your hall; the old subway and the lift cages go deeper. Strip machines for parts, sell them, or take them to Mags for gear. Anywhere, a cab takes you home for a fare.</p></div>
+        <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Use</b> E (hold it to strip machines). <b>Take down</b> J, from behind someone who hasn\'t seen you. <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Jobs</b> I. <b>Map</b> M.</p>
+        <p>You fix what the city breaks, in the back room behind the White Dragon, a noodle bar in the Stack, and some of what you fix is illegal. People bring their broken things to you: talk to them, take the job to your bench, and open it up. Hold the driver on the screws (ease off when one binds), probe the parts, melt the bad one free with the iron, seat a good one, solder it, close it up and power it up. Parts come from machines you strip, from the stalls (Mechanic Ana at the Overpass Market, Nurse Kade on Clinic Row), or from places you shouldn\'t be. Hand the fix back at the counter, and sleep on it: in the morning you hear what it did.</p>
+        <p>Heat is how close the precinct is to your door. Illegal work, stolen parts and traceable serials raise it; honest repairs and time bring it down. You carry no gun: if you\'re seen, run. Your spinner is out front; a cab gets you home from anywhere.</p></div>
         <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     if (['vendor', 'qm', 'fab'].includes(which) && this.who) h = workHtml(this.who.def.name) + h;

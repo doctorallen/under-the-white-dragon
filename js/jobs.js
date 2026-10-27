@@ -111,6 +111,24 @@ const Jobs = {
     if (J.honest) this.heat(-10, 'An honest repair, seen to be done.');
     Bench.clear(); Hud.toggle(null); this.spawn(); Hud.refresh(); Save.write();
   },
+  // the jobs, for the Jobs tab: who, what, where it stands
+  list() {
+    const b = Game.s.bench, rows = JOB_ORDER.map((id) => {
+      const J = JOBS[id], c = this.st(id);
+      const st = { offer: 'Waiting to talk to you at the White Dragon.', bench: b && b.job === id ? (b.tested ? `On your bench: tested, ${{ works: 'it works', half: 'it half works', dead: 'nothing', smoke: 'it smoked' }[b.tested.res]}.` : 'On your bench.') : 'Waiting.', back: 'Handed back. You\'ll hear how it went in the morning.', done: 'Done.', seized: 'Seized by the precinct.' }[c.st];
+      const notes = c.st === 'bench' ? Game.s.notes.log.filter((e) => e.key.startsWith(id + ':')).map((e) => e.text.replace(/^[^:]*: /, '')).join(' ') : '';
+      return `<div class="row ${c.st === 'done' || c.st === 'seized' ? 'passed' : ''}"><div><b>${J.title}</b><small>${st}${notes ? ' ' + notes : ''}</small></div></div>`;
+    }).join('');
+    return `<p class="sub">Heat ${Game.s.heat} of 100.${Game.s.heat >= 70 ? ' Expect a knock.' : Game.s.heat >= 40 ? ' A drone is working your street.' : ''}</p><div class="rows">${rows}</div>`;
+  },
+  // the line at the top of the screen: what the job on the bench needs next
+  objective() {
+    const b = Game.s.bench;
+    if (!b) { const id = JOB_ORDER.find((k) => this.st(k).st === 'offer'); return id ? `▸ ${JOBS[id].name} is waiting at the White Dragon` : ''; }
+    if (b.tested && (b.tested.res === 'works' || b.tested.res === 'half')) return `▸ Hand ${b.name.toLowerCase().replace(/^\w+'s /, 'back the ')} to ${JOBS[b.job] ? JOBS[b.job].name : 'them'}`;
+    const need = Object.keys(DEVICE[b.dev].slots).filter((k) => b.probed[k] && b.slots[k].p && (b.slots[k].p.st !== 'ok' || (DEVICE[b.dev].slots[k].gauge && b.slots[k].p.gauge !== DEVICE[b.dev].slots[k].gauge))).map((k) => PART[DEVICE[b.dev].slots[k].kind].took);
+    return need.length ? `▸ ${b.name} needs ${need.join(' and ')}` : `▸ ${b.name} is on your bench`;
+  },
   // ---- the morning after: what your fixes did, and who came knocking ----
   morning() {
     const s = Game.s, news = [];

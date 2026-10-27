@@ -177,7 +177,7 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
       });
       L.sign(640, G - 118, 7, '#ffd040', { r: 60 }); L.light(700, G - 40, 110, [1, 0.8, 0.55], 0.9);
       L.vents.push({ x: 650, y: G - 40, kind: 'steam' }, { x: 760, y: G - 40, kind: 'steam' });
-      L.npc({ name: 'Cookie', look: { skin: SKINS[2], hair: 'bald', top: '#e8e0d0', apron: '#8a3a2a', legs: '#2a2a2a', wide: 1, hands: { fx: 26, fy: 38 } }, x: 700, y: G, sched: [[0, 24, 700, 'work']], lines: ['Eat something, tracer. You look like a pump that\'s run dry.', 'Twelve-hour shifts. I feed them all.'], behind: true });
+      L.npc({ name: 'Cookie', look: { skin: SKINS[2], hair: 'bald', top: '#e8e0d0', apron: '#8a3a2a', legs: '#2a2a2a', wide: 1, hands: { fx: 26, fy: 38 } }, x: 700, y: G, sched: [[0, 24, 700, 'work']], lines: ['Eat something, tinker. You look like a pump that\'s run dry.', 'Twelve-hour shifts. I feed them all.'], behind: true });
       for (const x of [560, 840]) L.prop('deco', x, G, { art: () => bench(), id: 'wkcb' + x });
       // the conveyor floor: belts at two heights, crates riding, a crane over it
       L.paint(900, 40, 2300, G, (P) => {
@@ -363,7 +363,7 @@ addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant i
       kFill(P, 2120, G - 40, 2150, G, '#3a4a4a'); kCross(P, 2135, G - 120, 4, '#3aff80');
     });
     L.light(2130, G - 80, 120, [0.8, 1, 0.9], 0.8);
-    for (const [x, n] of [[2040, 'Chemist Orr'], [2220, 'Lab hand']]) L.npc({ name: n, look: { skin: SKINS[x % 6], hair: 'hood', top: '#e8e8d0', legs: '#e8e8d0', mask: '#3a5a5a', tall: 0.95 }, x, y: G, sched: [[0, 24, x, 'work']], lines: n === 'Chemist Orr' ? ['Coolant\'s mostly glycol and a secret. The secret is mostly glycol.', 'The suit isn\'t for show, tracer. Mind your boots.'] : ['Don\'t mind me. Counting drums.', 'Six short. Six short every week.'] });
+    for (const [x, n] of [[2040, 'Chemist Orr'], [2220, 'Lab hand']]) L.npc({ name: n, look: { skin: SKINS[x % 6], hair: 'hood', top: '#e8e8d0', legs: '#e8e8d0', mask: '#3a5a5a', tall: 0.95 }, x, y: G, sched: [[0, 24, x, 'work']], lines: n === 'Chemist Orr' ? ['Coolant\'s mostly glycol and a secret. The secret is mostly glycol.', 'The suit isn\'t for show, tinker. Mind your boots.'] : ['Don\'t mind me. Counting drums.', 'Six short. Six short every week.'] });
     L.prop('ac', 1480, G, { label: 'coolant pump' }); L.prop('junk', 1960, G, { label: 'empty drums' }); L.prop('ac', 540, G, { label: 'coolant pump' });
     L.prop('locker', 1990, G, { tier: 4, label: 'locker' });
     for (const x of [460, 1020, 1700]) wkHangLamp(L, x, 110, G - 150, '#c8ffd0', 0.7);

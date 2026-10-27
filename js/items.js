@@ -98,6 +98,7 @@ const GEAR = {
   respirator: { slot: 'face', name: 'Respirator', rarity: 'rare', armor: 7, look: { mask: '#3a4a3a' }, perk: { regen: 0.3 }, note: 'Scrubs the Bowels\' air. You breathe easier and heal a little.' },
   lenses: { slot: 'face', name: 'Tracer lenses', rarity: 'epic', armor: 3, look: { shades: '#ff4ab0' }, perk: { ram: 0.4 }, note: 'Old precinct issue. They take load off your deck.' },
   // outer torso
+  workjacket: { slot: 'outer', name: 'Work jacket', rarity: 'common', armor: 4, look: { coat: 'jacket', top: '#4a4632', collar: true }, note: 'Canvas, scorched at the cuffs, a pocket for every tool.' },
   trench: { slot: 'outer', name: 'Precinct trench', rarity: 'common', armor: 6, look: { coat: 'long', top: '#5e4c38', collar: true }, note: 'The coat. Every detective has one; yours has been rained on for nine years.' },
   bomber: { slot: 'outer', name: 'Neon bomber', rarity: 'uncommon', armor: 10, look: { coat: 'jacket', top: '#2a2438', collar: true, trim: true, acc: '#ff4ab0' }, note: 'Lit seams. Nobody will mistake you for a cop.' },
   armtrench: { slot: 'outer', name: 'Armoured trench', rarity: 'rare', armor: 18, look: { coat: 'long', top: '#34343c', collar: true, plates: true, acc: '#ffb040' }, note: 'Ceramic plates sewn into the lining.' },
@@ -126,13 +127,13 @@ const GEAR = {
   katana: { slot: 'melee', name: 'Mono-katana', rarity: 'epic', strike: 34, look: { bladeCol: '#ff4ab0', sheath: 'katana', sheathCol: '#ff4ab0' }, note: 'An edge one molecule thick.' },
 };
 // what the detective owns and wears on day one
-const GEAR_START = { head: 'fedora', outer: 'trench', inner: 'shirt', legs: 'slacks', feet: 'boots', ranged: 'blaster' };
+const GEAR_START = { head: 'beanie', outer: 'workjacket', inner: 'shirt', legs: 'slacks', feet: 'boots' };
 // what the vendors sell, and for how much
 // (gear, mods and items alike, by id)
 const SHOP = {
   Kit: { beanie: 30, mask: 90, bomber: 160, cargo: 110, noodlecup: 10, medpatch: 30 },
-  Ozu: { heavy: 380, ballistic: 300, plated: 240, grips: 320, katana: 600, scatter: 260, frag: 45 },
-  'Quartermaster Ito': { frag: 40, emp: 45, medpatch: 25, stim: 45 },
+  Ozu: { heavy: 380, ballistic: 300, plated: 240, grips: 320, katana: 600, scatter: 260 },
+  'Quartermaster Ito': { emp: 45, medpatch: 25, stim: 45 },
   'Ferrin': { respirator: 380, knuckles: 220, medpatch: 28, stim: 45, noodlecup: 10 },
   'Concierge': { riotcoat: 700, silent: 950, rail: 1200, circlet: 1500 },
 }
@@ -140,9 +141,9 @@ const SHOP = {
 // Bowels): salvage, things to carry, and now and then gear or a mod
 const LOOT = {
   1: { cr: [6, 24], salvage: ['wire', 'alloy', 'glass'], items: ['noodlecup', 'medpatch'], rare: ['beanie', 'mask', 'cargo'] },
-  2: { cr: [10, 34], salvage: ['wire', 'alloy', 'glass', 'coolant', 'chips'], items: ['medpatch', 'frag', 'noodlecup'], rare: ['mesh', 'cargo', 'scatter', 'knuckles'] },
-  3: { cr: [16, 48], salvage: ['glass', 'chips', 'coolant', 'wire'], items: ['medpatch', 'stim', 'frag'], rare: ['ballistic', 'plated', 'knuckles', 'respirator'] },
-  4: { cr: [24, 64], salvage: ['alloy', 'chips', 'coolant'], items: ['medpatch', 'emp', 'frag'], rare: ['grips', 'riotcoat', 'heavy'] },
+  2: { cr: [10, 34], salvage: ['wire', 'alloy', 'glass', 'coolant', 'chips'], items: ['medpatch', 'noodlecup'], rare: ['mesh', 'cargo', 'scatter', 'knuckles'] },
+  3: { cr: [16, 48], salvage: ['glass', 'chips', 'coolant', 'wire'], items: ['medpatch', 'stim'], rare: ['ballistic', 'plated', 'knuckles', 'respirator'] },
+  4: { cr: [24, 64], salvage: ['alloy', 'chips', 'coolant'], items: ['medpatch', 'emp'], rare: ['grips', 'riotcoat', 'heavy'] },
   5: { cr: [30, 80], salvage: ['chips', 'coolant', 'glass'], items: ['medpatch', 'stim', 'emp'], rare: ['respirator', 'silent', 'rail'] },
   6: { cr: [60, 140], salvage: ['chips', 'glass'], items: ['medpatch', 'stim'], rare: ['silent', 'riotcoat', 'synthweave', 'circlet'] },
 }

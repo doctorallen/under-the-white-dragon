@@ -327,7 +327,7 @@ addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under t
       for (let x = 2136; x < 2410; x += 16) P.put(x, G - 70, hash(x, 2, 3) < 0.2 ? [255, 60, 60] : [90, 255, 150], 1);
     });
     L.prop('deco', 2200, G, { art: () => desk({ col: '#2a3a2a' }), id: 'undesk1' }); L.prop('deco', 2320, G, { art: () => desk({ col: '#2a3a2a' }), id: 'undesk2' }); L.light(2260, G - 100, 120, [0.5, 1, 0.65], 0.7);
-    L.npc({ name: 'Chief Engineer Wu', look: { skin: SKINS[0], hair: 'helmet', armor: '#e8e8e8', visor: '#3a3a3a', top: '#3a3a4a', coat: 'long', legs: '#2a2a2a', glasses: true }, x: 2260, y: G, face: -1, sched: [[0, 24, 2260, 'stand']], lines: ['Every light up there, tracer. Every single one. From this room.', 'Someone\'s been tapping our lines for a chrome clinic. You find them, you tell me first.', 'The board\'s older than the precinct. Never once gone dark.'] });
+    L.npc({ name: 'Chief Engineer Wu', look: { skin: SKINS[0], hair: 'helmet', armor: '#e8e8e8', visor: '#3a3a3a', top: '#3a3a4a', coat: 'long', legs: '#2a2a2a', glasses: true }, x: 2260, y: G, face: -1, sched: [[0, 24, 2260, 'stand']], lines: ['Every light up there, tinker. Every single one. From this room.', 'Someone\'s been tapping our lines for a chrome clinic. You find them, you tell me first.', 'The board\'s older than the Stack. Never once gone dark.'] });
     for (const x of [2450, 2475, 2500, 2525, 2550]) L.prop('rack', x, G, { label: 'switchgear cabinet' });
     L.prop('locker', 2590, G, { tier: 2, label: 'fuse locker' });
     L.prop('ac', 1360, G, { label: 'cooling fan' }); L.prop('junk', 2100, G, { label: 'burnt-out switchgear' });

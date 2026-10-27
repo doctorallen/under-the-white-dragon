@@ -270,7 +270,7 @@ addDistrict('d_skybridge', 'The Skybridge', 1, 140, 760, 'A deck slung between t
       for (let x = 260; x < 2260; x += 220) L.lamp(x, G, 56, '#e8f0ff', 0.75);
       // kiosks and a tea house along the deck
       bShophouse(L, 300, 400, G, { floors: 1, fh: 30, wall: KMAT.whitepanel, shops: [['counter', '#ffd040']], roof: 'flat', balcony: false, ac: false, seed: 411 });
-      kStallAt(L, 460, G, 'tea', { col: '#2a6a3a', npc: { name: 'Tea seller', lines: ['Sit down, tracer. Tea first. Look down second, if you must.', 'The wind took my awning twice this week.'] } });
+      kStallAt(L, 460, G, 'tea', { col: '#2a6a3a', npc: { name: 'Tea seller', lines: ['Sit down, tinker. Tea first. Look down second, if you must.', 'The wind took my awning twice this week.'] } });
       bMachiya(L, 540, 640, G, { noren: '#2a6a3a', seed: 421 });
       L.paint(540, G - 80, 640, G - 72, (P) => kLanterns(P, 540, 640, G - 80, ['#ffd040', '#ff8a3a'], { sag: 2, step: 10 }));
       kStallAt(L, 720, G, 'dumpling');

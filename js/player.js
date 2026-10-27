@@ -7,7 +7,7 @@
 // (a prop or a person); stripping and cutting are held.
 // ---------------------------------------------------------------------------
 // the detective, under whatever they wear (each piece of gear has a look)
-const RUNNER = { skin: '#c88a5a', hair: 'short', hairCol: '#1a1416', top: '#4a4a52', coat: 'none', legs: '#4a3e36', boots: '#3a2a22', acc: '#ff8a20', trim: false, blaster: true, belt: '#2a1e14' };
+const RUNNER = { skin: '#c88a5a', hair: 'short', hairCol: '#1a1416', top: '#4a4a52', coat: 'none', legs: '#4a3e36', boots: '#3a2a22', acc: '#ff8a20', trim: false, blaster: false, belt: '#2a1e14' };
 const POSE_HANDS = {
   // (carried low at the side, the blaster pointing at the ground)
   stand: { fx: 23.5, fy: 38 }, breathe: { fx: 23.5, fy: 37.5 },
@@ -124,19 +124,11 @@ const Player = {
     this.questT = (this.questT || 0) - dt; if (this.questT <= 0) { this.questT = 0.25; Quests.tick(); }
     this.interact(dt);
   },
-  // Fire: up close it's a blow (the blaster's butt, or the blades); further
-  // off, a shot, aimed at the nearest hostile ahead, up or down a little
+  // Take down: behind one that hasn't seen you, a quiet takedown. There's
+  // no gun and no fighting back: if they've seen you, run.
   fire() {
-    const S = T.strike, x0 = this.face > 0 ? this.x : this.x - S.reach - 4, box = [x0, this.y - T.player.h + 2, x0 + S.reach + 4, this.y - 2];
-    // behind one that hasn't seen you: a quiet takedown
-    const tk = Actors.enemies.find((e) => e.hp > 0 && Math.sign(e.x - this.x) === this.face && Foes.canTakedown(e));
-    if (tk) { this.strikeT = 0.2; this.strikeCd = S.cd; Foes.takedown(tk); return; }
-    if (Actors.enemies.some((e) => { if (e.ally) return false; const b = Actors.hurtbox(e); return box[2] > b[0] && box[0] < b[2] && box[3] > b[1] && box[1] < b[3]; })) { this.strike(); return; }
-    const W = Game.weapon();
-    if (this.charge < 1) { Game.toast('Recharging.'); this.strikeCd = 0.2; return; }
-    this.charge--; this.strikeCd = W.cd; this.aimT = 0.22; Hud.refresh(); Foes.noise(this.x, this.y, 140);
-    this.shot(W);
-    if (W.burstN) { this.burstQ = W.burstN - 1; this.burstT = 0.07; }
+    const S = T.strike, tk = Actors.enemies.find((e) => e.hp > 0 && Math.sign(e.x - this.x) === this.face && Foes.canTakedown(e));
+    if (tk) { this.strikeT = 0.2; this.strikeCd = S.cd; Foes.takedown(tk); }
   },
   // one pull of the trigger: a bolt (or a scatter of pellets) at the nearest
   // hostile ahead within the gun's range, up or down a little

@@ -137,6 +137,7 @@ const Quests = {
   },
   // what someone has to say for the quests: offers, steps that need them
   actionsFor(name) {
+    if (!LEGACY) return [];
     const out = [];
     for (const id of QUEST_ORDER) {
       const Q = QUESTS[id];

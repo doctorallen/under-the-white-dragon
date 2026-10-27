@@ -6,7 +6,7 @@ A side-scrolling cyberpunk game for the phone. You fix what the city breaks, in 
 
 People bring broken things to the back room: Ozzy's cab nav unit, Vey's seizing arm. Take a job to your bench and open it up for real: back the screws out (ease off when one binds, or strip it), probe each part, melt the joints of the bad one with the iron (not too long, or you cook the board), seat a good one and solder it in, close it up and power it up. Parts have a kind, a grade (scrap, street, clinic, Meridian) and a history: strip them from machines, buy them at the Overpass Market and Clinic Row, or take them from where you shouldn't. Hand the fix back at the counter, and the next morning you hear what it did. Heat is how close the precinct is to your door: illegal work and traceable parts raise it, honest repairs and time bring it down. The design is in [the design doc](https://claude.ai/artifact/6q6FiLoTUN74PSnhsy7hNT).
 
-The game grew out of Downlevel, a detective game in the same city; its cases, jobs and fights are still in the code and the old apartment is still reachable, until the back room replaces them. What follows below the files list describes that game.
+You carry no gun: if you're seen, run, or take someone down quietly from behind. The game grew out of Downlevel, a detective game in the same city; its cases, side jobs and the precinct are still in the code but switched off (`LEGACY` in `game.js`). The sections after **The back room** describe that game.
 
 ## The back room
 

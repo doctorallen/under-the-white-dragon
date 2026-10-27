@@ -328,7 +328,7 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
 // ---- Chop Shop Alley: illegal chrome, chopped cars, the Gutter King ---------------
 addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of illegal chrome clinics and chop garages. The Gutter King holds court at the end.', 'Chop shops', () => district({
   id: 'd_chopshop', name: 'Chop Shop Alley', tier: 2, W: 2300, crowd: 5, amb: [0.15, 0.13, 0.18], floor: MAT.asphalt, layerDy: 0,
-  local: { name: 'Lookout', lines: ['You\'re in the wrong alley, tracer.', 'Nobody here\'s got chrome. Nobody here\'s got anything. Walk on.', 'The King hears everything. Even this.'], look: { hair: 'mohawk', hairCol: '#3af0e0', hairGlow: true, top: '#1a1a1e', coat: 'jacket', cyArm: true, acc: '#3af0e0' } },
+  local: { name: 'Lookout', lines: ['You\'re in the wrong alley, tinker.', 'Nobody here\'s got chrome. Nobody here\'s got anything. Walk on.', 'The King hears everything. Even this.'], look: { hair: 'mohawk', hairCol: '#3af0e0', hairGlow: true, top: '#1a1a1e', coat: 'jacket', cyArm: true, acc: '#3af0e0' } },
   build(L, G) {
     // the alley's walls close overhead: bridges, pipes, cables, a strip of sky
     L.paint(180, G - 300, 1700, G - 150, (P) => { for (const [a, b, y] of [[300, 520, G - 240], [800, 1100, G - 220], [1300, 1560, G - 260]]) { P.block(a, y, b, y + 14, MAT.concreteD, { base: 0.35, drips: 0.3, dripLen: 10 }); railing(P, a, b, y, MAT.steel); for (let x = a + 10; x < b; x += 30) P.put(x, y + 16, [255, 200, 140], 0.8); } for (let k = 0; k < 6; k++) cable(P, 180, G - 290 + k * 20, 1700, G - 280 + k * 18, 20 + k * 8, '#060608'); pipe(P, 180, G - 170, 1700, G - 162, MAT.rust, { joints: 40 }); });

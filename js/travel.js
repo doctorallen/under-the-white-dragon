@@ -5,16 +5,16 @@
 // say. The places themselves are built by hand in the d_*.js files.
 // ---------------------------------------------------------------------------
 const LOCAL_LINES = {
-  neon: ['Everything on the Row is for sale. Even the rain, if you ask the right stall.', 'Don\'t stand still too long, tracer. People notice.', 'My cousin sold a synth dog once. Got more for it than for his kidney.'],
+  neon: ['Everything on the Row is for sale. Even the rain, if you ask the right stall.', 'Don\'t stand still too long, tinker. People notice.', 'My cousin sold a synth dog once. Got more for it than for his kidney.'],
   blocks: ['Forty floors and the lift works on Tuesdays.', 'The walls are thin. I know everyone\'s business. Ask me.', 'Somebody on twelve keeps a real cat. Real! Imagine the money.'],
   plaza: ['You\'re not cleared for this level, are you? I won\'t tell.', 'Meridian owns the floor you\'re standing on. Literally.', 'Clean air up here. Costs extra.'],
   docks: ['Nothing\'s floated in this canal since I was born. Plenty\'s sunk.', 'The cranes run themselves now. Mostly.', 'Crates come in marked "machine parts". Some of them breathe.'],
   scrap: ['Everything ends up here eventually. People too.', 'The fires keep the dogs off. The real ones and the other kind.', 'You buying or burying?'],
   flood: ['The first city. It\'s still down here, under the water.', 'Lanterns keep the ferals back. Mostly.', 'The Mayor runs Old Town. Nobody voted.'],
   line: ['Last train ran in sixty-four. People still wait for it.', 'Watch the third rail. It remembers.', 'The tunnels go further than any map.'],
-  works: ['Shift\'s twelve hours. The Works never stops.', 'Hot down here, tracer. Drink water. Not coolant.', 'The Foreman counts every bolt. Counts us too.'],
+  works: ['Shift\'s twelve hours. The Works never stops.', 'Hot down here, tinker. Drink water. Not coolant.', 'The Foreman counts every bolt. Counts us too.'],
   servers: ['Cold enough to keep the racks happy. Not me.', 'Every screen up top is running on something down here.', 'Don\'t touch the blue lights.'],
-  tunnel: ['You hear it? The hum. The Root, breathing.', 'The ferals were people once. Some still are.', 'Go back up, tracer. There\'s nothing to arrest down here.'],
+  tunnel: ['You hear it? The hum. The Root, breathing.', 'The ferals were people once. Some still are.', 'Go back up, tinker. Nothing down here wants fixing.'],
   vault: ['It\'s the city\'s memory, kept cold.', 'Breath freezes on the racks. Mind the ice.', 'Something lives in the vents. Something warm.'],
 };
 
@@ -30,7 +30,8 @@ const Travel = {
   open(id) {
     const L = LEVELS[id], f = (k) => Game.flag(k);
     if (!L || L.metres === undefined) return false;
-    if (f('been:' + id) || id === 'home' || id === 'd_dragon' || id === 'precinct' || id === 'stack') return true;
+    if (!LEGACY && (id === 'home' || id === 'precinct')) return false;
+    if (f('been:' + id) || id === 'd_dragon' || id === 'stack') return true;
     if (id === 'spires') return Game.s.pack.spirepass > 0;
     if (id === 'oldtown') return Game.s.pack.subwaypass > 0 && f('been:street');
     const b = this.band(id);

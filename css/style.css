@@ -307,3 +307,4 @@ i.mark { color: var(--sodium); font-style: normal; }
 #heat.hot { color: #ff6a3a; }
 #heat.hot #heatfill { background: linear-gradient(90deg, #ff6a3a, var(--red)); box-shadow: 0 0 6px var(--red); }
 #heat.none { opacity: 0.5; }
+#pads button.gone { visibility: hidden; }
