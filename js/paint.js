@@ -197,9 +197,17 @@ function glassWall(P, x0, y0, x1, y1, o = {}) {
   }, { jit: 0.5 });
   if (o.lit) windows(P, x0 + 2, y0 + 2, x1 - 1, y1, { w: mw - 2, h: mh - 2, gx: 2, gy: 2, lit: o.lit, seed: o.seed || 3, glow: 0.18, dark: '#0a1a24', pal: o.pal });
 }
+// a heap of scrap, flat like everything: its ridge lit, then bands of
+// darker tones down into the shadow, each band's edge following the ridge
+// and wavering a little (slow noise: fine noise hangs off the bands in
+// streaks), and a few pieces of junk on the ridge breaking the skyline
 function heap(P, x0, x1, ybase, hgt, ramp, seed = 5) {
   const top = (x) => ybase - hgt * (0.5 + noise(x / 18, 0, seed) * 0.5);
-  P.area(x0, ybase - hgt - 4, x1, ybase, ramp, (x, y) => 0.55 - (y - top(x)) / 40 + (y - top(x) < 2 ? 0.35 : 0) + (noise(x / 3, y / 3, seed + 1) - 0.5) * 0.3, { inside: (x, y) => y > top(x) });
+  P.area(x0, ybase - hgt - 4, x1, ybase, ramp, (x, y) => Math.max(0.1, 0.55 - (y - top(x)) / 40 + (y - top(x) < 2 ? 0.35 : 0) + (noise(x / 11, y / 16, seed + 1) - 0.5) * 0.14), { inside: (x, y) => y > top(x) });
+  for (let k = 0; k < (x1 - x0) / 26; k++) {
+    const cx = Math.round(x0 + hash(k, 1, seed) * (x1 - x0)), w = 5 + Math.floor(hash(k, 2, seed) * 9), h = 2 + Math.floor(hash(k, 3, seed) * 2), sl = (hash(k, 5, seed) - 0.5) * 0.8, cy = Math.round(top(cx)) - 1 - Math.floor(hash(k, 4, seed) * 3);
+    for (let i = -1; i <= w; i++) for (let j = -1; j <= h; j++) { const x = cx - (w >> 1) + i, y = Math.round(cy + j + i * sl); if (y >= ybase) continue; P.put(x, y, tone(ramp, i < 0 || i === w || j < 0 || j === h ? 0.08 : j === 0 ? 0.85 : 0.6)); }
+  }
 }
 function corrugated(P, x0, y0, x1, y1, ramp, o = {}) {
   P.area(x0, y0, x1, y1, ramp, (x, y) => { let v = 0.45 + ((x - x0) % 3 === 0 ? 0.2 : (x - x0) % 3 === 2 ? -0.15 : 0) + (noise(x / 12, y / 12, 41) - 0.5) * 0.4; if (y - y0 < 1) v = 0.9; if (y1 - y < 1) v -= 0.3; if (noise(x / 6, y / 5, 43) > 0.72) v -= 0.25; return v; }, o);

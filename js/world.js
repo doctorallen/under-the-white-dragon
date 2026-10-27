@@ -41,7 +41,7 @@ function newLevel(id, name, w, h) {
     litter(x0, x1, y, n) { this.trash.push({ x0, x1, y, n }); },
     lamp(x, y, h, colr = '#ffe0b0', k = 1) { this.paint(x, y - h, x + 10, y, (P) => lampPaint(P, x, y, h, colr)); this.light(x + 7, y - h + 8, h * 1.7, colr, k, 1.2); },
     prop(kind, x, y, o = {}) { const p = Object.assign({ id: this.id + ':' + kind + ':' + Math.round(x) + ':' + Math.round(y), kind, x, y }, o); this.props.push(p); return p; },
-    npc(def) { this.npcs.push(def); return def; },
+    npc(def) { personName(this, def); this.npcs.push(def); return def; }, // (everyone gets a name: levels.js)
     enemy(type, x, y, o = {}) { this.enemies.push(Object.assign({ type, x, y }, o)); },
   };
   return L;

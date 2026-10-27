@@ -56,7 +56,7 @@ const PANELS = {
     }
     const role = n.def.role && n.def.role !== 'fixer' ? NPC_ROLE[n.def.role] : null;
     h += `<div class="buttons">${role ? `<button data-role="1">${role.verb}</button>` : ''}<button data-act="resume" class="quiet">Goodbye</button></div>`;
-    return [name, h];
+    return [n.def.title ? `${name} · ${n.def.title}` : name, h];
   },
   test() {
     const c = Cases.st(Baseline.id), C = Cases.def(Baseline.id);

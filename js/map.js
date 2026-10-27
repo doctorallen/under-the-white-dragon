@@ -52,7 +52,7 @@ const MapView = {
     const marks = [], mark = (x, y, text, col, dot, pri) => marks.push({ x, y, text, col, dot, pri });
     const PLACES = { elevator: 'Elevator', spinner: 'Spinner', lift: 'Freight lift', hatch: 'Shaft', exit: 'Ladder up', node: 'Data node', bed: 'Cot', closet: 'Closet', sealed: 'Sealed', heavy: 'Shutter', grate: 'Grate', workbench: 'Bench', shelf: 'Parts shelf', trapdoor: 'Trapdoor', door: 'Door', transit: 'Cab stand', dronewreck: 'Lead', substation: 'Lead', autodoc: 'Lead' };
     for (const p of World.props) if (PLACES[p.kind] && !(p.done && (p.kind === 'node' || TIP_YIELD[p.kind]))) mark(p.x, p.y - 20, PLACES[p.kind], '#3af0e0', 2.5, 2);
-    for (const n of Actors.npcs) if (!n.hidden) { const named = n.def.role || !/Passer-by|Commuter|Local|Night worker/.test(n.def.name); mark(n.x, n.y - 20, named ? n.def.name : '', n.def.role ? '#ffb040' : '#a69cb6', n.def.role ? 3 : 2, n.def.role ? 3 : 1); }
+    for (const n of Actors.npcs) if (!n.hidden) { const named = n.def.role || !n.def.title || !/^(lives near here|commuter|passer-by|night worker)$/.test(n.def.title); mark(n.x, n.y - 20, named ? n.def.name : '', n.def.role ? '#ffb040' : '#a69cb6', n.def.role ? 3 : 2, n.def.role ? 3 : 1); }
     for (const e of Actors.enemies) if (!e.ally) mark(e.x, e.y - 12, e.type === 'warden' ? 'The Warden' : '', '#ff4060', e.type === 'warden' ? 5 : 3, 4);
     for (const b of Actors.bodies) mark(b.x, b.y - 2, '', '#5a4048', 2, 0);
     mark(Player.x, Player.y - 16, 'You', '#ffd040', 4 + Math.sin(performance.now() / 200) * 1.5, 9);

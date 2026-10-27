@@ -19,6 +19,30 @@ const CROWD_LINES = [
   'Got any change? No? Me neither.', 'They say synths don\'t sleep. I don\'t sleep either. Doesn\'t make me one.', 'Don\'t eat the street noodles. Eat Lin\'s.',
   'You fix things? My whole life\'s broken. Kidding. Mostly.', 'I haven\'t seen the sky in eleven years. I hear it\'s overrated.', 'Somebody stole the copper out of my wall again.',
 ];
+// ---- everyone has a name -----------------------------------------------------
+// The people a level's builder only gave a part to play ("Commuter", "Fruit
+// seller") get a name of their own as the level is built, chosen from the
+// level and where they stand: the same person has it on every visit, and
+// nobody in the city shares one (test/smoke.js checks). The part stays, as
+// the title under their name. (The Concierge and the Prisoner keep theirs:
+// the detective's cases ask for them by it.)
+const PARTS = ['Local', 'Commuter', 'Passer-by', 'Night worker', 'Dumpling auntie', 'Mask maker', 'Fruit seller', 'Grill man', 'Skewer kid', 'Tea seller', 'Fishmonger', 'Watching', 'Parts dealer', 'Ramen cook', 'Book seller', 'Flower seller', 'Patient', 'Dancer', 'Herbalist', 'Street medic', 'Archivist', 'Bouncer', 'Kid', 'Resident', 'Office worker', 'Bridge warden', 'Tea master', 'Gardener', 'Porter', 'Dock worker', 'Picker', 'Cold-box man', 'Fence', 'Lookout', 'Old patient', 'Mother', 'Old-timer', 'Shopkeeper', 'Keeper', 'Kiosk cook', 'Platform squatter', 'Raft trader', 'Boatwoman', 'Festival-goer', 'Worker', 'Pump hand', 'Smelter', 'Night tech', 'Lab hand', 'Vat hand', 'Linesman', 'Scavenger', 'Pilgrim', 'A regular', 'Salaryman', 'Office girl', 'Old drunk', 'Player', 'Regular', 'Housewife', 'Night shift', 'Clubber'];
+const PART_TITLE = { Watching: 'in the audience', Player: 'at the pachinko', 'A regular': 'a regular', Local: 'lives near here', 'Night shift': 'on the night shift' };
+const NAME_F = ['Mei', 'Yuki', 'Aiko', 'Sora', 'Rin', 'Jia', 'Lan', 'Xiu', 'Linh', 'Thu', 'Mai', 'Anh', 'Ji-woo', 'Seo-yeon', 'Hye-jin', 'Priya', 'Asha', 'Nadia', 'Leila', 'Amara', 'Zainab', 'Ngozi', 'Adaeze', 'Efua', 'Abena', 'Rosa', 'Lucia', 'Marisol', 'Pilar', 'Olga', 'Vera', 'Katya', 'Mirela', 'Tamar', 'Noa', 'Ayla', 'Selin', 'Tala', 'Maricel', 'Joy', 'Bea', 'Imelda', 'Kiri', 'Moana', 'Haruka', 'Emi', 'Naoko', 'Chiyo', 'Fumiko', 'Xin', 'Ying', 'Qing', 'Hoa', 'Trang', 'Sun-hee', 'Eun-ji', 'Meera', 'Kavya', 'Farah', 'Yasmin', 'Kemi', 'Folake', 'Ama', 'Yaa', 'Carmen', 'Elena', 'Paz', 'Irina', 'Zora', 'Dana', 'Ilse', 'Greta', 'Lourdes', 'Perla', 'Nia', 'Wren', 'Iris', 'June', 'Odile', 'Suki'];
+const NAME_M = ['Kenji', 'Hiro', 'Taro', 'Daichi', 'Ren', 'Sho', 'Wei', 'Bao', 'Minh', 'Duc', 'Tuan', 'Hoang', 'Min-jun', 'Ji-ho', 'Seung', 'Arjun', 'Ravi', 'Dev', 'Omar', 'Tariq', 'Yusuf', 'Chidi', 'Emeka', 'Kwame', 'Kofi', 'Tunde', 'Diego', 'Mateo', 'Rafael', 'Joaquin', 'Andrei', 'Pavel', 'Dmitri', 'Luka', 'Marek', 'Ivo', 'Tomas', 'Ezra', 'Amir', 'Kemal', 'Paolo', 'Nando', 'Ramon', 'Joel', 'Ben', 'Sam', 'Nico', 'Akira', 'Masa', 'Shin', 'Yuto', 'Haruto', 'Lei', 'Hao', 'Cheng', 'Quang', 'Long', 'Dong-hyun', 'Tae', 'Sanjay', 'Vikram', 'Karim', 'Bilal', 'Obi', 'Femi', 'Yaw', 'Kojo', 'Ignacio', 'Raul', 'Sergei', 'Bogdan', 'Henrik', 'Lars', 'Efren', 'Rolando', 'Caleb', 'Felix', 'Otto', 'Silas', 'Abel'];
+const NAME_LAST = ['Tanaka', 'Nakamura', 'Watanabe', 'Yamada', 'Kobayashi', 'Hayashi', 'Shimizu', 'Fujita', 'Okada', 'Matsuda', 'Kimura', 'Endo', 'Chen', 'Lin', 'Huang', 'Zhou', 'Xu', 'Guo', 'Liang', 'Tang', 'Feng', 'Deng', 'Nguyen', 'Tran', 'Le', 'Pham', 'Vu', 'Dang', 'Bui', 'Park', 'Kim', 'Choi', 'Jung', 'Kang', 'Yoon', 'Han', 'Seo', 'Patel', 'Rao', 'Iyer', 'Menon', 'Khan', 'Haddad', 'Nasser', 'Aziz', 'Adeyemi', 'Mensah', 'Boateng', 'Asante', 'Eze', 'Nwosu', 'Balogun', 'Santos', 'Cruz', 'Mendoza', 'Delgado', 'Navarro', 'Morales', 'Ortega', 'Petrov', 'Novak', 'Horvat', 'Kovac', 'Lund', 'Berg', 'Aquino', 'Bautista', 'Dizon', 'Castillo', 'Ocampo', 'Villanueva', 'Tan', 'Lim', 'Ong', 'Goh', 'Koh', 'Wong', 'Chua', 'Sasaki', 'Ishikawa', 'Ogawa', 'Arai', 'Kwan', 'Leung', 'Ho', 'Mak', 'Ngo', 'Do', 'Lam', 'Cho', 'Shin', 'Bose', 'Sen', 'Das', 'Farouk', 'Salah', 'Okoye', 'Obi', 'Amadi', 'Darko', 'Owusu', 'Vargas', 'Rojas', 'Flores', 'Ibarra', 'Volkov', 'Sokol', 'Marin', 'Dahl', 'Holm', 'Reyes', 'Garcia', 'Medina', 'Soto', 'Ito', 'Hart', 'Quill', 'Vance', 'Marsh'];
+const NAME_SALT = 1;
+function personName(L, def) {
+  if (!PARTS.includes(def.name)) return;
+  let id = 0; for (const c of L.id) id = (id * 31 + c.charCodeAt(0)) % 100003;
+  const part = def.name, k = L.npcs.length, h = (j) => hash(k * 7 + j, Math.round(def.x || 0) + id, NAME_SALT * 17 + j);
+  const pick = (a, j) => a[Math.floor(h(j) * a.length)];
+  const fem = /auntie|girl|mother|housewife|woman/i.test(part), masc = /\bman\b|salaryman|grill man/i.test(part) && !fem;
+  const first = pick(fem ? NAME_F : masc ? NAME_M : h(9) < 0.5 ? NAME_F : NAME_M, 1), last = pick(NAME_LAST, 2);
+  def.name = /auntie/i.test(part) ? 'Auntie ' + first : /^old/i.test(part) ? 'Old ' + last : /kid/i.test(part) ? first : first + ' ' + last;
+  def.title = PART_TITLE[part] || part.toLowerCase();
+}
+
 function crowd(L, n, x0, x1, y, seed, wet = true) {
   const r = new Rng(seed);
   for (let i = 0; i < n; i++) {

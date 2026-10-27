@@ -11,7 +11,8 @@
 // about the basement; a cab flies from the stand to the Overpass Market, where Ana
 // sells a part; the map and dev settings work; on Clinic Row Kade's stall
 // opens, there are no enemies, and the cabinet gives a Meridian servo and heat; Ozzy's
-// cab flies home for free; a medpatch heals; every level loads and draws; a
+// cab flies home for free; a medpatch heals; every level loads and draws, and
+// nobody in them is only a part ("Commuter") or shares a name; a
 // reload brings it all back.
 // Screenshots go to test/out. Chrome comes from $CHROME (puppeteer-core), or,
 // where that isn't installed, playwright's Chromium.
@@ -218,9 +219,9 @@ async function run(B, url, vp, name, failures) {
   // nothing hurts: a fall or a trace leaves you as you were
   const hurt = await E(() => { const h = Game.s.hp; Game.hurt(20); return Game.s.hp - h; });
   if (hurt) fail('the runner can still be hurt (' + hurt + ')');
-  // every level loads and draws
+  // every level loads and draws, and everyone in them has a name of their own
   if (name === 'phone') {
-    const lv = await E(() => { const bad = []; const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); if (Actors.enemies.length) bad.push(id + ' has enemies'); for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
+    const lv = await E(() => { const bad = [], names = {}, res = new Set(Object.values(RESIDENTS).map((r) => r.name)); const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); if (Actors.enemies.length) bad.push(id + ' has enemies'); for (const d of World.L.npcs) { if (PARTS.includes(d.name)) bad.push(id + ': someone still called ' + d.name); if (d.title) { const w = names[d.name]; if (w && w !== id + d.x) bad.push(d.name + ' twice (' + w + ', ' + id + ')'); if (res.has(d.name)) bad.push(d.name + ' is a resident\'s name'); names[d.name] = id + d.x; } } for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
     if (lv.bad.length || lv.n < 30) fail('levels failed to load: ' + JSON.stringify(lv));
     const cm = await E(() => { Hud.toggle('citymap'); const ok = !!WorldMap.img && !!$('worldcv'); const off = Object.keys(LEVELS).filter((id) => LEVELS[id].metres === undefined || LEVELS[id].mapX === undefined); Hud.toggle(null); return { ok, off }; });
     if (!cm.ok || cm.off.length) fail('the city map did not open, or places are missing from it ' + JSON.stringify(cm));

@@ -116,9 +116,11 @@ function stFence(P, x0, x1, G, h) {
 // crushed cars in cubes, stacked
 function stCubes(P, x0, G, cols, rows, seed) {
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const x = x0 + c * 22 + (r % 2) * 4, y = G - (r + 1) * 18, col = ['#6a2a2a', '#2a4a6a', '#5a5a5a', '#6a5a2a', '#2a5a3a', '#4a2a5a'][Math.floor(hash(c, r, seed) * 6)];
-    P.area(x, y, x + 21, y + 17, rp(col, 7), (xx, yy) => 0.45 + (noise(xx / 2, yy / 2, seed + c) - 0.5) * 0.7 + (yy === y ? 0.25 : 0) - (yy - y) / 60);
-    if (hash(c, r, seed + 1) < 0.4) kFill(P, x + 5, y + 6, x + 12, y + 9, '#6aa8c8');
+    // a crushed car, flat: one tone, the crush lines across it, its top edge
+    // lit, a dark outline, and sometimes a fleck of window glass
+    const x = Math.min(x0 + c * 22 + (r % 2) * 4, x0 + cols * 22 - 22), y = G - (r + 1) * 18, col = ['#6a2a2a', '#2a4a6a', '#5a5a5a', '#6a5a2a', '#2a5a3a', '#4a2a5a'][Math.floor(hash(c, r, seed) * 6)], ramp = rp(col, 7);
+    P.area(x, y, x + 21, y + 17, ramp, (xx, yy) => (xx === x || xx === x + 21 || yy === y + 17 ? 0.06 : yy === y ? 0.78 : (yy - y + Math.floor(hash(c, r, seed + 3) * 3)) % 5 === 0 ? 0.3 : 0.5));
+    if (hash(c, r, seed + 1) < 0.4) kFill(P, x + 5, y + 6, x + 12, y + 8, '#6aa8c8');
   }
 }
 // a crawler crane with an electromagnet: the cab, the boom, a car stuck to it
@@ -293,9 +295,11 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
     L.light(1010, G - 110, 90, [1, 0.85, 0.6], 0.8); L.light(850, G - 40, 70, [1, 0.85, 0.5], 0.8);
     L.prop('car', 940, G, { look: { col: '#3a3a3a', under: '#ff6a3a' }, label: 'wreck' }); L.prop('wreck', 1040, G, { label: 'wrecked drone' });
     // stacked wrecks, a walk over them
-    L.paint(1150, G - 80, 1340, G, (P) => stCubes(P, 1160, G, 8, 3, 21));
-    L.solid(1160, G - 36, 1340, G); L.walk(1160, 1340, G - 36, 0, MAT.steel, { rail: false }); L.walk(1180, 1330, G - 54, 0, MAT.steel, { rail: false });
-    L.stairs(1110, G, 1160, G - 36, MAT.rust); L.spots.push([1250, G - 54]);
+    // (three cubes high, all solid, with stairs up and down both sides: you
+    // can cross it either way)
+    L.paint(1150, G - 80, 1350, G, (P) => stCubes(P, 1160, G, 8, 3, 21));
+    L.solid(1160, G - 54, 1340, G); L.walk(1160, 1340, G - 54, 0, MAT.steel, { rail: false });
+    L.stairs(1100, G, 1160, G - 54, MAT.rust); L.stairs(1340, G - 54, 1392, G, MAT.rust); L.spots.push([1250, G - 54]);
     L.prop('locker', 1300, G - 54, { tier: 2, label: 'stash in the wrecks' });
     // the compactor: a press over a pit, cubes coming out of it
     L.paint(1380, G - 150, 1640, G, (P) => {
