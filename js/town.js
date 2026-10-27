@@ -20,9 +20,9 @@ const PXH = 1300; // pixels walked in a game hour (26 px a second, 50 seconds an
 // the places, the level each is in, its door on the street and the door inside
 const TOWN_PLACE = {
   street: { level: 'd_dragon' },
-  noodles: { level: 'd_noodles', door: 424, inside: 60 },
-  grocery: { level: 'd_grocery', door: 216, inside: 44 },
-  flats: { level: 'd_flats', door: 1041, inside: 50 },
+  noodles: { level: 'd_noodles', door: 424, inside: 340 },
+  grocery: { level: 'd_grocery', door: 216, inside: 114 },
+  flats: { level: 'd_flats', door: 1041, inside: 86 },
 };
 const TOWN_END = { west: 18, east: 1482 }; // the street's ends, out to the rest of the city
 const NOODLE_SEAT = [144, 214, 284, 400, 450, 500, 550];

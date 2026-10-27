@@ -14,6 +14,7 @@ const Hud = {
     $('bCab').onclick = () => this.toggle('cab');
     // the tracked case's line opens its board (a job's opens the case file)
     $('obj').onclick = () => { const id = Game.s.track; if (LEGACY && id && Cases.st(id) && !Cases.closed(id)) Board.open(id); else { this.tab = 'jobs'; this.toggle('pack'); } };
+    document.body.classList.toggle('legacy', LEGACY);
     $('bItem').onclick = () => { Input.itemHit = true; };
     $('panelClose').onclick = () => this.toggle(null);
     this.refresh();

@@ -11,7 +11,7 @@
 // ---------------------------------------------------------------------------
 const BK = { G: 386, F1: 386 - 76 }; // the ground, and the flats' upper floor
 
-// a small hidden interior: walls, a ceiling, a door out at the west end
+// a small hidden interior: walls, a ceiling (each puts its own door out on the back wall)
 function bkRoom(id, name, W, build, amb = [0.42, 0.4, 0.44]) {
   LEVELS[id] = { name, tier: 1, hidden: true, metres: 2, depth: '+2 m', mapX: 230, blurb: name, label: name, make: () => district({
     id, name, tier: 1, W, sky: false, rain: 0, amb, floor: MAT.concreteD,
@@ -37,9 +37,9 @@ bkRoom('d_grocery', 'Mo\'s Grocery', 540, (L, G) => {
     for (let k = 0; k < 18; k++) P.tint(30 + Math.floor(hash(k, 1, 92) * 480), C + Math.floor(hash(k, 2, 92) * 90), [90, 80, 60], 0.25);
     kFill(P, 24, C, 516, C + 4, '#2a2a30');
     // the window onto the street by the door, the 24H sign in it
-    kFill(P, 70, C + 22, 120, G - 30, '#06080e'); for (let y = C + 23; y < G - 31; y++) for (let x = 71; x < 119; x++) { const v = hash(x >> 2, y >> 3, 93); P.put(x, y, v < 0.07 ? [255, 74, 176] : v < 0.12 ? [58, 240, 224] : mixRgb([10, 14, 24], [24, 30, 48], (y - C) / 90)); }
+    kFill(P, 36, C + 22, 92, G - 30, '#06080e'); for (let y = C + 23; y < G - 31; y++) for (let x = 37; x < 91; x++) { const v = hash(x >> 2, y >> 3, 93); P.put(x, y, v < 0.07 ? [255, 74, 176] : v < 0.12 ? [58, 240, 224] : mixRgb([10, 14, 24], [24, 30, 48], (y - C) / 90)); }
     // produce under the window: crates of fruit and greens
-    for (const [x, c] of [[66, [255, 140, 40]], [86, [90, 200, 70]], [106, [230, 60, 50]]]) { kFill(P, x, G - 22, x + 18, G - 10, '#6a4a2a'); for (let k = 0; k < 14; k++) P.put(x + 2 + (k % 7) * 2, G - 24 + Math.floor(k / 7) * 2, mixRgb(c, [255, 255, 255], (k % 3) * 0.12)); kFill(P, x + 1, G - 10, x + 3, G, '#3a2a1a'); kFill(P, x + 15, G - 10, x + 17, G, '#3a2a1a'); }
+    for (const [x, c] of [[32, [255, 140, 40]], [52, [90, 200, 70]], [72, [230, 60, 50]]]) { kFill(P, x, G - 22, x + 18, G - 10, '#6a4a2a'); for (let k = 0; k < 14; k++) P.put(x + 2 + (k % 7) * 2, G - 24 + Math.floor(k / 7) * 2, mixRgb(c, [255, 255, 255], (k % 3) * 0.12)); kFill(P, x + 1, G - 10, x + 3, G, '#3a2a1a'); kFill(P, x + 15, G - 10, x + 17, G, '#3a2a1a'); }
     // three shelving units, five shelves each, full
     for (const [x0, x1] of [[140, 210], [224, 294], [308, 362]]) {
       kFill(P, x0, C + 18, x1, G, '#2a2e36'); kFill(P, x0 + 2, C + 20, x1 - 2, G - 2, '#14161c');
@@ -57,8 +57,8 @@ bkRoom('d_grocery', 'Mo\'s Grocery', 540, (L, G) => {
   });
   for (const x of [80, 200, 320, 440]) L.tube(x - 20, C + 6, 40, '#e8fff4', 0.6);
   L.light(408, G - 50, 60, [0.6, 0.9, 1], 0.6);
-  L.prop('door', 44, G, { label: 'Out to the street', out: true, to: ['d_dragon', 'grocery'] });
-  L.spawns = { door: [60, G] };
+  L.prop('door', 114, G, { label: 'Out to the street', out: true, look: 'glass', to: ['d_dragon', 'grocery'] });
+  L.spawns = { door: [114, G] };
 }, [0.62, 0.66, 0.64]); // (a grocery under strip lights is bright)
 
 // ---- the flats: a lobby and five flats, cut away ------------------------------------
@@ -77,7 +77,7 @@ bkRoom('d_flats', 'Wan Fat Mansions', 540, (L, G) => {
     P.block(0, 0, 540, C2, MAT.concreteD, { base: 0.14, lip: 0, panels: [80, 40] });
     // the lobby and the stairwell: bare concrete, mailboxes, a bike
     P.block(24, C2, 540, G, MAT.concreteD, { base: 0.26, lip: 0, panels: [40, 30], drips: 0.08, dripLen: 16 });
-    kFill(P, 40, G - 46, 96, G - 22, '#3a3e48'); for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) { kFill(P, 42 + c * 13, G - 44 + r * 7, 53 + c * 13, G - 39 + r * 7, '#5a606c'); P.put(47 + c * 13, G - 42 + r * 7, [200, 200, 210]); }
+    kFill(P, 28, G - 46, 70, G - 22, '#3a3e48'); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) { kFill(P, 30 + c * 13, G - 44 + r * 7, 41 + c * 13, G - 39 + r * 7, '#5a606c'); P.put(35 + c * 13, G - 42 + r * 7, [200, 200, 210]); }
     // each flat: its wallpaper, a window on the city, its own bits
     for (const k in FLATS) {
       const F = FLATS[k], top = F.y - 70, wc = col3(F.wall);
@@ -107,6 +107,6 @@ bkRoom('d_flats', 'Wan Fat Mansions', 540, (L, G) => {
   for (const k of ['C', 'D']) L.prop('deco', FLATS[k].bed + (k === 'C' ? 26 : -26), FLATS[k].y, { art: () => bed(), id: 'flatbed2' + k }); // (a second bed: two live there)
   L.ad(FLATS.C.table + 14, BK.F1 - 40, 18, 12, 'cycle', ['#3af0e0', '#ff4ab0']);
   L.light(60, G - 50, 50, [0.9, 0.9, 1], 0.4); L.light(140, F1 - 40, 50, [0.9, 0.9, 1], 0.4);
-  L.prop('door', 50, G, { label: 'Out to the street', out: true, to: ['d_dragon', 'flats'] });
-  L.spawns = { door: [70, G] };
+  L.prop('door', 86, G, { label: 'Out to the street', out: true, look: 'steel', to: ['d_dragon', 'flats'] });
+  L.spawns = { door: [86, G] };
 }, [0.44, 0.4, 0.38]);

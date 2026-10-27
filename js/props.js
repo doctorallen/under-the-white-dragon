@@ -398,6 +398,23 @@ function medCabinet(open) {
 }
 // a worn rug on the storeroom floor, red and gold, its fringe frayed: the
 // trapdoor's under it
+// the door you came in by, seen from inside: on the back wall (the front's cut
+// away), the night street through it, a mat at its foot. o.kind: 'noren' (a
+// glass door under the bar's curtain), 'glass' (a shop door, a push bar),
+// 'steel' (a block's lobby door, wired glass)
+function innerDoor(o = {}) {
+  const W = 26, H = 46, S = new Spr(W, H, 445); S.ax = W / 2; S.ay = H - 1; const k = o.kind || 'glass';
+  const fr = rp(k === 'noren' ? '#3a2014' : k === 'steel' ? '#4a4e58' : '#2a3a3a', 6);
+  S.box(1, 3, W - 2, H - 2, fr, { lo: 1, hi: 5 }); // the frame
+  // the street through it: night, a wet pavement, a couple of signs across the way
+  for (let y = 6; y < H - 3; y++) for (let x = 4; x < W - 4; x++) { const v = hash(x >> 1, y >> 2, 446 + (o.seed || 0)); S.px(x, y, y > H - 12 ? (v < 0.2 ? '#3a5a7a' : '#14202e') : v < 0.05 ? '#ff4ab0' : v < 0.09 ? '#3af0e0' : y < 20 ? '#0c1220' : '#121a2a', true); }
+  if (k === 'glass') { for (let x = 4; x < W - 4; x++) S.px(x, 26, '#c8d0d8'); S.px(W - 6, 26, '#ffffff'); for (let y = 8; y < 16; y++) S.px(6 + (y >> 1), y, '#8aa0b0', true); }
+  if (k === 'steel') { for (let y = 6; y < H - 3; y++) for (let x = 4; x < W - 4; x++) if ((x + y) % 5 === 0) S.px(x, y, '#5a6470'); S.box(4, 24, W - 5, H - 3, rp('#4a4e58', 6), { lo: 1, hi: 5 }); S.px(W - 7, 27, '#c8c8d0'); }
+  if (k === 'noren') { for (let x = 3; x < W - 3; x++) for (let y = 5; y < 20; y++) { const gap = x === Math.floor(W / 2) || x === Math.floor(W / 4) + 1 || x === Math.floor(3 * W / 4) - 1; if (!gap || y < 8) S.px(x, y, y === 5 ? '#e84a3a' : '#a82a24'); } for (const [x, y] of [[12, 11], [13, 11], [12, 13], [13, 13], [12, 15], [13, 15], [11, 12], [14, 14]]) S.px(x, y, '#f4e8d8'); }
+  S.box(3, 0, W - 4, 3, rp(k === 'noren' ? '#ff6a3a' : '#3aff80', 6), { lo: 2, hi: 6, glow: true }); // the lit sign over it
+  for (let x = 6; x < W - 6; x += 2) S.px(x, 1, '#f4ffe8', true);
+  return S.done();
+}
 function rug() {
   const W = 40, H = 4, S = new Spr(W, H, 443); S.ax = W / 2; S.ay = H - 1;
   for (let x = 2; x < W - 2; x++) for (let y = 0; y < H; y++) S.px(x, y, y === 0 || x === 2 || x === W - 3 ? '#c8a050' : (x + y) % 6 < 3 ? '#8a2228' : y === 2 && x % 4 === 0 ? '#e8c070' : '#621a1e');

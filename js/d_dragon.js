@@ -72,7 +72,7 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, a
 
 // ---- the shop: through the front door. The dining room, Auntie Lin at the
 // counter, and through the curtain her storeroom with the rug and the trapdoor.
-const WN = { W: 940, CEIL: 128, PART: 618, BACK: 630, END: 912 };
+const WN = { W: 940, DOOR: 340, CEIL: 128, PART: 618, BACK: 630, END: 912 };
 LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2, depth: '+2 m', mapX: 230, blurb: 'Auntie Lin\'s noodle bar.', label: 'Noodle bar', make: () => district({
   id: 'd_noodles', name: 'The White Dragon', tier: 1, W: WN.W, sky: false, rain: 0, amb: [0.5, 0.4, 0.34], floor: KMAT.darkwood,
   build(L, G) {
@@ -107,8 +107,8 @@ LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2,
       for (let x = WN.BACK; x < WN.END; x++) P.put(x, G - 2, [22, 22, 26]);
     });
     L.wall(0, 0, 24, G, MAT.concreteD, { base: 0.3 }); L.wall(WN.END, 0, WN.W, G, MAT.concreteD, { base: 0.35 });
-    // the way out, under the front curtain
-    L.prop('door', 60, G, { label: 'Out to the street', out: true, to: ['d_dragon', 'door'] });
+    // the way out: the front door, between the tables and the counter (the front wall's cut away)
+    L.prop('door', WN.DOOR, G, { label: 'Out to the street', out: true, look: 'noren', to: ['d_dragon', 'door'] }); L.light(WN.DOOR, C + 20, 34, [1, 0.5, 0.3], 0.5);
     // the dining room's light: lanterns, the pots' steam, the window's neon
     bLanterns(L, 140, 600, C + 10, ['#ff3a3a', '#ffb040'], { step: 26 });
     L.light(480, G - 50, 130, [1, 0.62, 0.38], 0.9); L.light(220, G - 40, 110, [1, 0.6, 0.38], 0.7); L.light(80, G - 60, 60, [0.8, 0.4, 0.9], 0.5);
@@ -125,7 +125,7 @@ LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2,
     L.light(730, C + 16, 60, [1, 0.8, 0.55], 0.7); L.light(803, G - 4, 26, [0.5, 0.8, 1], 0.4);
     for (const [x, w, h, col] of [[664, 14, 12, '#5a4a32'], [680, 12, 10, '#4a3a2a'], [670, 12, 9, '#6a5a3a'], [870, 16, 14, '#4a4a3a'], [888, 12, 10, '#5a4a32']]) L.prop('deco', x, x === 670 ? G - 12 : G, { art: () => crate({ w, h, col }), id: 'wncrate' + x + h });
     L.prop('trapdoor', 846, G, { to: ['d_cellar', 'ladder'] });
-    L.spawns = { door: [90, G], trapdoor: [846, G] };
+    L.spawns = { door: [WN.DOOR, G], trapdoor: [846, G] };
     L.spots = Array.from({ length: 10 }, () => [870, G]);
   },
 }) };
