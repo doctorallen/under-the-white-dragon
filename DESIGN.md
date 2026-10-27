@@ -70,6 +70,7 @@ Inspired by Blade Runner's tone (the 1997 point-and-click especially: clues gath
   - Vendors buy salvage: Kit at base price, Ozu at 1.4×.
   - Mama Ruiz sells noodles that heal.
   - Lieutenant Hale at the precinct gives three cases: the hacked drones on the walkway, a chrome warrant on the street gang (three of them down), then the clinic's record. Juno at the bar is an informant who talks.
+- **Stealth first.** Hostiles don't fight until they know you're there. Each has an awareness meter (amber, over its head) that fills only while it's facing you: faster up close, in light and at a run; slower walking, and still in the dark. Half aware, it stops and looks; full, it's alert (a red mark flashes) and the others close by are too. Out of its sight for six seconds, it gives up. Getting hit or a shot nearby wakes it at once. Come up behind one that hasn't seen you and Fire takes it down quietly (not drones or turrets). Most fights can be walked round, sneaked past or ended before they start; bosses and fugitives still fight.
 - **Fights:** the blaster fires a bolt at the nearest hostile ahead (aim-assisted, up or down a little), six shots that recharge one at a time; up close, Fire is a blow instead (the melee weapon's, and the plasma cutter's on top).
   - Block drones hover and shoot.
   - Gangers close in with blades.

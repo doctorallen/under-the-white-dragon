@@ -134,6 +134,15 @@ async function run(B, url, vp, name, failures) {
   // a ganger downed stays down
   const body = await E(() => { const e = Actors.enemies.find((q) => q.type === 'gang'); Actors.damage(e, 999, 1); T_.run({}, 30); return Actors.bodies.length; });
   if (body !== 1) fail('the ganger left no body (' + body + ')');
+  // another, from behind while it isn't looking: a quiet takedown; one in
+  // front of you notices you and comes
+  const sneak = await E(() => {
+    const g = Actors.enemies.find((q) => q.type === 'gang' && q.hp > 0); g.alert = false; g.aware = 0; g.state = 'idle'; g.range = [g.x - 1, g.x + 200]; g.face = 1; g.dir = 1;
+    Player.place(g.x - 14, g.y); Player.face = 1; T_.run({}, 2); const unseen = !g.alert; Input.strikeHit = true; T_.run({}, 3);
+    const h = Actors.enemies.find((q) => q.type === 'gang' && q.hp > 0); h.alert = false; h.aware = 0; h.range = [h.x - 200, h.x + 1]; h.face = -1; h.dir = -1; Player.place(h.x - 45, h.y); T_.run({}, 240);
+    return { unseen, down: g.hp <= 0, quiet: !!g.subdued, noticed: !!h.alert };
+  });
+  if (!sneak.unseen || !sneak.down || !sneak.quiet || !sneak.noticed) fail('sneaking did not work ' + JSON.stringify(sneak));
   await shot('street2');
   // the elevator on street level goes home
   const home = await E(() => { T_.walkTo(350); T_.tap('useHit'); const b = document.querySelector('button[data-floor="home"]'); if (b) b.click(); T_.run({}, 90); return Game.s.level; });

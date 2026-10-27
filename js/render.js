@@ -179,7 +179,7 @@ function outlineOf(s) {
   TagArt.outlines.set(s, c); return c;
 }
 function tag(e, s, sx, sy) {
-  const gg = View.gg, ally = e.ally > 0, alert = ally || e.state !== 'idle' || Actors.sees(e, 120) || e.hp < e.max;
+  const gg = View.gg, ally = e.ally > 0, alert = ally || e.alert || !Foes.hunts(e) && (e.state !== 'idle' || Actors.sees(e, 120) || e.hp < e.max);
   const col = ally ? [80, 255, 140] : [255, 56, 80], k = (Game.ghost > 0 ? 0.35 : 1) * (alert ? 1 : 0.55);
   // the outline, tinted
   const o = outlineOf(s), t = View.tg; if (View.tmp.width < o.width || View.tmp.height < o.height) { View.tmp.width = Math.max(View.tmp.width, o.width); View.tmp.height = Math.max(View.tmp.height, o.height); }
@@ -189,6 +189,10 @@ function tag(e, s, sx, sy) {
   if (ENEMY[e.type].boss) return; // a boss's bar is on the HUD
   const b = Actors.hurtbox(e), n = e.type === 'drone' ? 5 : 6, w = n * 3 - 1, x0 = Math.round((b[0] + b[2]) / 2 - w / 2 - View.cx), y0 = Math.round(b[1] - View.cy) - 5, lit = Math.ceil((e.hp / e.max) * n);
   gg.globalAlpha = k;
+  // not yet alert: how near it is to noticing you, in amber, over the bar;
+  // just alerted: a mark that flashes
+  if (!ally && !e.alert && e.aware > 0.02) { const A = [255, 176, 64], m = Math.ceil(clamp(e.aware, 0, 1) * n); for (let i = 0; i < n; i++) { gg.fillStyle = i < m ? css(A) : css(A.map((q) => q * 0.2)); gg.fillRect(x0 + i * 3, y0 - 3, 2, 1); } }
+  if (e.seen > 0 && Math.floor(e.seen * 10) % 2) { gg.fillStyle = css(col); const mx = x0 + Math.floor(w / 2); gg.fillRect(mx, y0 - 9, 1, 4); gg.fillRect(mx, y0 - 4, 1, 1); }
   for (let i = 0; i < n; i++) { gg.fillStyle = i < lit ? css(col) : css(col.map((q) => q * 0.25)); gg.fillRect(x0 + i * 3, y0, 2, 2); }
   // brackets at the bar's ends, the overlay's mark
   gg.fillStyle = css(col.map((q) => q * 0.7)); gg.fillRect(x0 - 2, y0 - 1, 1, 4); gg.fillRect(x0 + w + 1, y0 - 1, 1, 4);

@@ -128,10 +128,13 @@ const Player = {
   // off, a shot, aimed at the nearest hostile ahead, up or down a little
   fire() {
     const S = T.strike, x0 = this.face > 0 ? this.x : this.x - S.reach - 4, box = [x0, this.y - T.player.h + 2, x0 + S.reach + 4, this.y - 2];
+    // behind one that hasn't seen you: a quiet takedown
+    const tk = Actors.enemies.find((e) => e.hp > 0 && Math.sign(e.x - this.x) === this.face && Foes.canTakedown(e));
+    if (tk) { this.strikeT = 0.2; this.strikeCd = S.cd; Foes.takedown(tk); return; }
     if (Actors.enemies.some((e) => { if (e.ally) return false; const b = Actors.hurtbox(e); return box[2] > b[0] && box[0] < b[2] && box[3] > b[1] && box[1] < b[3]; })) { this.strike(); return; }
     const W = Game.weapon();
     if (this.charge < 1) { Game.toast('Recharging.'); this.strikeCd = 0.2; return; }
-    this.charge--; this.strikeCd = W.cd; this.aimT = 0.22; Hud.refresh();
+    this.charge--; this.strikeCd = W.cd; this.aimT = 0.22; Hud.refresh(); Foes.noise(this.x, this.y, 140);
     this.shot(W);
     if (W.burstN) { this.burstQ = W.burstN - 1; this.burstT = 0.07; }
   },

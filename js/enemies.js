@@ -88,10 +88,54 @@ function scaleSprite(s, k) {
   return Object.assign({}, s, { c: sc(s.c), e: sc(s.e), w: s.w * k, h: s.h * k, ax: s.ax * k, ay: s.ay * k });
 }
 
+const D_NAME = (e) => e.named || ENEMY[e.type].name;
 const Foes = {
   def(e) { return ENEMY[e.type]; },
   // how far it sees you: less with stealthy gear, nothing under Ghost
   sees(e, r) { r *= 1 - Game.perk('stealth'); return !Game.ghost && Math.abs(Player.x - e.x) < r && Math.abs((Player.y - 16) - (this.def(e).center ? e.y : e.y - 16)) < r * 0.7; },
+  // ---- awareness. A hostile doesn't fight until it knows you're there. It
+  // notices you only while it's facing you (or you're right on top of it), a
+  // meter filling faster up close, in light and at a run, slower walking and
+  // still in the dark. Half aware, it stops and looks; full, it's alert and
+  // tells the others near it. Out of its sight long enough, it gives up and
+  // goes back to its rounds. Being hit or hearing a shot wakes it at once.
+  // Bosses, allies and fugitives skip all this.
+  lit() {
+    const V = View; if (!V.limg) return 0.5;
+    const i = Math.floor((Player.x - V.cx) / V.LC), j = Math.floor((Player.y - 18 - V.cy) / V.LC);
+    if (i < 0 || j < 0 || i >= V.lc.width || j >= V.lc.height) return 0.5;
+    const o = (j * V.lc.width + i) * 4, d = V.limg.data; return Math.max(d[o], d[o + 1], d[o + 2]) / 255;
+  },
+  hunts(e) { const D = this.def(e); return !(D.boss || e.ally || D.ai === 'flee' || e.type === 'warden'); },
+  notice(e, D, dt) {
+    const r = D.sight || 120;
+    if (e.alert) {
+      if (this.sees(e, r * 1.3)) e.lost = 0; else e.lost = (e.lost || 0) + dt;
+      if (e.lost > 6) { e.alert = false; e.aware = 0.5; e.lookX = Player.x; e.state = 'idle'; e.aim = 0; }
+      return;
+    }
+    const dx = Player.x - e.x, d = Math.abs(dx), close = d < 16 && Math.abs(Player.y - e.y) < 24;
+    const facing = Math.sign(dx) === e.face || d < 4, v = Math.abs(Player.vx);
+    if (this.sees(e, r) && (facing || close)) {
+      const move = v > 64 ? 1.6 : v > 6 ? 0.75 : 0.6, light = 0.35 + 0.9 * this.lit();
+      e.aware = (e.aware || 0) + dt * (facing ? 3 * (1 - 0.7 * d / r) * light * move : v > 64 ? 1.2 : 0.25);
+      e.lookX = Player.x;
+    } else e.aware = Math.max(0, (e.aware || 0) - dt * 0.3);
+    if (e.aware >= 1) this.alarm(e);
+  },
+  // it knows: so do the others close by
+  alarm(e, quiet) {
+    if (e.alert || !this.hunts(e)) return;
+    e.alert = true; e.aware = 1; e.lost = 0; e.seen = 1.2;
+    if (!quiet) for (const q of Actors.enemies) if (q !== e && q.hp > 0 && !q.alert && Math.abs(q.x - e.x) < 110 && Math.abs(q.y - e.y) < 60) this.alarm(q, true);
+  },
+  // a shot is loud: everything near enough turns to look, and close by, knows
+  noise(x, y, r) { for (const e of Actors.enemies) { if (e.hp <= 0 || !this.hunts(e) || e.alert) continue; const d = Math.hypot(e.x - x, e.y - y); if (d < r) { e.aware = Math.max(e.aware || 0, d < r * 0.5 ? 1 : 0.6); e.lookX = x; if (e.aware >= 1) this.alarm(e); } } },
+  // what's alert hunts you within its sight, whichever way it was facing
+  hunt(e, r) { return (e.alert || !this.hunts(e)) && this.sees(e, e.alert ? r * 1.3 : r); },
+  // from behind, unseen: put it down quietly
+  canTakedown(e) { const D = this.def(e); return this.hunts(e) && !e.alert && D.ai !== 'flyer' && D.ai !== 'turret' && Math.sign(Player.x - e.x) !== e.face && Math.abs(Player.x - e.x) < 22 && Math.abs(Player.y - e.y) < 20; },
+  takedown(e) { e.subdued = true; Actors.damage(e, 9999, Math.sign(e.x - Player.x) || 1); Game.toast(D_NAME(e) + ' goes down without a sound.', 'good'); },
   hurtbox(e) {
     const D = this.def(e);
     if (e.type === 'warden') return [e.x - 30, e.y - 80 - (e.hop || 0), e.x + 30, e.y - (e.hop || 0)];
@@ -102,15 +146,19 @@ const Foes = {
     const D = this.def(e);
     if (e.type === 'warden') return Actors.warden(e, dt);
     if (e.stun > 0) { if (D.ai === 'flyer') e.y += Math.sin(e.t * 20) * 0.3; return; }
+    if (this.hunts(e)) { this.notice(e, D, dt); if (e.seen > 0) e.seen -= dt; }
     this[D.ai](e, dt, D);
   },
   // walk along its stretch of floor, never off it
   move(e, dt) { const r = e.range || [e.x - 80, e.x + 80], nx = clamp(e.x + e.vx * dt, r[0], r[1]); if (!World.hits(nx - 5, e.y - 28, nx + 5, e.y - 1)) e.x = nx; e.moving = Math.abs(e.vx) > 5; e.walked = (e.walked || 0) + Math.abs(e.vx * dt); },
-  patrol(e, D) { const r = e.range || [e.x - 80, e.x + 80]; e.vx = (e.dir || 1) * D.speed * 0.45; if (e.x >= r[1] - 1) e.dir = -1; if (e.x <= r[0] + 1) e.dir = 1; e.face = e.dir || 1; },
+  patrol(e, D) {
+    // half aware: stop, and look where it saw something
+    if (!e.alert && e.aware > 0.3) { e.vx = 0; e.face = Math.sign((e.lookX === undefined ? Player.x : e.lookX) - e.x) || e.face; return; }
+    const r = e.range || [e.x - 80, e.x + 80]; e.vx = (e.dir || 1) * D.speed * 0.45; if (e.x >= r[1] - 1) e.dir = -1; if (e.x <= r[0] + 1) e.dir = 1; e.face = e.dir || 1; },
   // a blow lands if you're still in front of it when the wind-up ends
   blow(e, D, reach, dmg) { const x0 = e.face > 0 ? e.x : e.x - reach, pb = Player.box(); if (pb[2] > x0 && pb[0] < x0 + reach && Math.abs(Player.y - e.y) < 22) Game.hurt(dmg, e); },
   walker(e, dt, D) {
-    const near = this.sees(e, D.sight) && Math.abs(Player.y - e.y) < 26;
+    const near = this.hunt(e, D.sight) && Math.abs(Player.y - e.y) < 26;
     e.vx *= Math.pow(0.002, dt);
     if (e.state === 'wind') { e.st -= dt; if (e.st <= 0) { e.state = 'rest'; e.st = 0.6; this.blow(e, D, D.reach + 2, D.dmg); } }
     else if (e.state === 'rest') { e.st -= dt; if (e.st <= 0) e.state = 'idle'; }
@@ -132,7 +180,7 @@ const Foes = {
   // fire at the runner, a few bolts fanned a little
   shoot(e, D, ox, oy) { const F = D.fire, n = F.n || 1; for (let k = 0; k < n; k++) { const a = Math.atan2(Player.y - 16 - (e.y + oy), Player.x - (e.x + ox)) + (k - (n - 1) / 2) * 0.12; Actors.bolts.push({ x: e.x + ox, y: e.y + oy, vx: Math.cos(a) * F.speed, vy: Math.sin(a) * F.speed, t: 2.4, dmg: F.dmg, c: [255, 60, 80] }); } Game.flash = { x: e.x + ox, y: e.y + oy, t: 0.05 }; },
   shooter(e, dt, D) {
-    const near = this.sees(e, D.sight) && Math.abs(Player.y - e.y) < 60, F = D.fire;
+    const near = this.hunt(e, D.sight) && Math.abs(Player.y - e.y) < 60, F = D.fire;
     e.vx *= Math.pow(0.002, dt);
     if (near) {
       e.face = Math.sign(Player.x - e.x) || e.face; const d = Math.abs(Player.x - e.x);
@@ -155,7 +203,7 @@ const Foes = {
       e.cd -= dt; if (t && e.cd <= 0) { e.cd = 0.8; Actors.fire(e, t.x, t.y - 10, 160, 14, true); }
       return;
     }
-    if (this.sees(e, D.sight)) {
+    if (this.hunt(e, D.sight)) {
       const gx = Player.x - Math.sign(Player.x - e.x || 1) * 56, gy = Player.y - 26 + Math.sin(e.t * 2) * 5;
       e.x += clamp(gx - e.x, -D.speed * dt, D.speed * dt); e.y += clamp(gy - e.y, -D.speed * 0.8 * dt, D.speed * 0.8 * dt); e.face = Math.sign(Player.x - e.x) || e.face;
       e.cd -= dt; if (e.cd <= 0) { e.cd = F.cd; this.shoot(e, D, 0, 0); }
@@ -168,7 +216,7 @@ const Foes = {
   },
   turret(e, dt, D) {
     const F = D.fire;
-    if (!this.sees(e, D.sight)) { e.n = 0; e.cd = Math.max(e.cd, 0.4); return; }
+    if (!this.hunt(e, D.sight)) { e.n = 0; e.cd = Math.max(e.cd, 0.4); return; }
     e.face = Math.sign(Player.x - e.x) || e.face; e.cd -= dt;
     if (e.cd <= 0) { this.shoot(e, D, e.face * 9, 0); e.n = (e.n || 0) + 1; if (e.n >= F.burst) { e.n = 0; e.cd = F.pause; } else e.cd = F.cd; }
   },

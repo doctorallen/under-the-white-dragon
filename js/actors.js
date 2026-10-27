@@ -41,6 +41,7 @@ const Actors = {
     const e = Object.assign({ i: n, x, y, vx: 0, vy: 0, face: -1, hp: 0, max: 0, cd: 1 + n * 0.3, t: hash(n, 3, 7) * 6, stun: 0, ally: 0, flash: 0, state: 'idle', st: 0, type }, o, { type });
     e.max = e.hp = Math.round(D.hp * (o.hpx || 1));
     if (D.boss) this.boss = e;
+    if (o.minion) e.alert = true;
     this.enemies.push(e); return e;
   },
   // named targets a quest or a warrant wants, if they're not here yet
@@ -151,7 +152,7 @@ const Actors = {
   },
   damage(e, dmg, face, stun) {
     if (e.hp <= 0) return;
-    const D = ENEMY[e.type]; e.hp -= dmg; e.flash = 0.12;
+    const D = ENEMY[e.type]; e.hp -= dmg; e.flash = 0.12; if (!e.subdued) Foes.alarm(e);
     if (e.type === 'fugitive' && e.hp <= e.max * 0.35) { e.hp = 0; Cases.surrender(e.caseId, e.x, e.y); return; }
     if (!D.boss && !D.center && D.ai !== 'charger') { e.vx = face * T.strike.knock; if (e.state !== 'dash') { e.state = 'rest'; e.st = 0.35; } e.aim = 0; }
     if (D.ai === 'flyer') { e.x += face * 6; e.stun = Math.max(e.stun, 0.2); }

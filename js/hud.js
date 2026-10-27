@@ -26,7 +26,10 @@ const Hud = {
     this.set('place', World.L.name);
     this.set('obj', this.objective());
     const tg = Player.target;
-    this.set('prompt', tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : '');
+    // behind someone who hasn't seen you: Fire takes them down quietly
+    const tk = !Game.paused && Actors.enemies.some((e) => e.hp > 0 && Math.sign(e.x - Player.x) === Player.face && Foes.canTakedown(e));
+    this.set('prompt', tk ? 'Fire: take them down quietly' : tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : '');
+    this.set('bStrike', tk ? 'Take down' : 'Fire');
     // the Use button says what it would do, in a word
     const verb = tg && !Game.paused ? tg.pr.verb || 'Use' : 'Use';
     this.set('bUse', verb);
