@@ -34,7 +34,7 @@ const WorldMap = {
   cv: null, img: null, K: 1.3, s: 1, ox: 0, oy: 0, sel: null, browse: false, timer: 0,
   // every place on the map: its pin and what you know of it
   places() {
-    return Object.keys(LEVELS).filter((id) => LEVELS[id].metres !== undefined && LEVELS[id].mapX !== undefined).map((id) => {
+    return Object.keys(LEVELS).filter((id) => LEVELS[id].metres !== undefined && LEVELS[id].mapX !== undefined && !LEVELS[id].hidden).map((id) => {
       const L = LEVELS[id]; return { id, name: L.name, x: L.mapX, y: wmapY(L.metres), m: L.metres, L };
     });
   },

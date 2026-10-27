@@ -31,6 +31,7 @@ const Travel = {
     const L = LEVELS[id], f = (k) => Game.flag(k);
     if (!L || L.metres === undefined) return false;
     if (!LEGACY && (id === 'home' || id === 'precinct')) return false;
+    if (L.hidden) return false; // (the basement: only through the trapdoor)
     if (f('been:' + id) || id === 'd_dragon' || id === 'stack') return true;
     if (id === 'spires') return Game.s.pack.spirepass > 0;
     if (id === 'oldtown') return Game.s.pack.subwaypass > 0 && f('been:street');

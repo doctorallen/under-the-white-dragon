@@ -1,11 +1,12 @@
 'use strict';
 // The game played headlessly in Chrome, sideways on a phone and on a desktop:
-// it boots without an error in the back room of the White Dragon (the desktop
-// run without WebGL2, so the 2D path is played too); the bench and the shelf
-// answer Use; a nav unit is opened, probed, fixed and powered up on the bench;
-// Ozzy's job is taken, fixed, handed back and slept on; the vending machine
+// it boots without an error in the basement under the White Dragon (the
+// desktop run without WebGL2, so the 2D path is played too); the bench and the
+// shelf answer Use, and the basement isn't on the city map; a nav unit is opened, probed, fixed and powered up on the bench;
+// the ladder leads up through the trapdoor into the storeroom; Ozzy's job is
+// taken, fixed, handed back and slept on; the vending machine
 // out front gives a scrap part; there's no gun, and the help and the pack talk
-// about the back room; the spinner flies to the Overpass Market, where Ana
+// about the basement; the spinner flies to the Overpass Market, where Ana
 // sells a part; the map and dev settings work; on Clinic Row Kade's stall
 // opens, a ganger is taken down from behind and one in front notices, and the
 // cabinet gives a Meridian servo and heat; a terminal is jacked into; Ozzy's
@@ -69,17 +70,17 @@ async function run(B, url, vp, name, failures) {
   const E = (fn, arg) => page.evaluate(fn, arg);
   console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))));
   const st = await E(() => ({ level: Game.s.level, x: Player.x, frame: Game.frame }));
-  if (st.level !== 'd_dragon' || Math.abs(st.x - 1000) > 40) fail('the game does not start in the back room by the cot ' + JSON.stringify(st));
+  if (st.level !== 'd_cellar' || Math.abs(st.x - 450) > 40) fail('the game does not start in the basement by the cot ' + JSON.stringify(st));
   if (!st.frame) fail('the loop is not running');
-  await shot('backroom');
-  // the bench and the shelf answer Use; the sign hangs out front
+  await shot('basement');
+  // the bench and the shelf answer Use; the basement isn't on the city map
   const room = await E(() => {
     const at = (k) => World.props.find((p) => p.kind === k);
     T_.walkTo(at('workbench').x); const bench = Player.target && Player.target.p && Player.target.p.kind;
     T_.walkTo(at('shelf').x); const shelf = Player.target && Player.target.p && Player.target.p.kind;
-    return { bench, shelf, sign: !!World.props.find((p) => p.id === 'wdsign'), lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
+    return { bench, shelf, hidden: !WorldMap.places().some((p) => p.id === 'd_cellar') && !Travel.open('d_cellar') };
   });
-  if (room.bench !== 'workbench' || room.shelf !== 'shelf' || !room.sign || !room.lin) fail('the back room is not set up ' + JSON.stringify(room));
+  if (room.bench !== 'workbench' || room.shelf !== 'shelf' || !room.hidden) fail('the basement is not set up ' + JSON.stringify(room));
   // the bench: open a nav unit with a dead cell, find it, swap it, test it
   const fix = await E(() => {
     const B = Bench, hold = (x, y, n, fn) => { B.press(x, y); for (let k = 0; k < n; k++) { B.step(1 / 60); if (fn) fn(); } B.release(); };
@@ -99,7 +100,14 @@ async function run(B, url, vp, name, failures) {
   });
   await shot('bench');
   if (fix.open !== 'bench' || !fix.learnt || fix.res !== 'works' || fix.loose || fix.scorch) fail('the bench repair did not work ' + JSON.stringify(fix));
-  // a job: Ozzy's waiting in the back room; take it, fix it, hand it back, sleep on it
+  // up the ladder, through the trapdoor, into the storeroom: Lin at the bar, the sign out front
+  const up = await E(() => {
+    Hud.toggle(null); Bench.clear(); T_.walkTo(World.props.find((p) => p.kind === 'trapdoor').x); const pr = Player.target && Player.target.p && Player.target.p.kind; T_.tap('useHit'); T_.run({}, 90);
+    return { pr, level: Game.s.level, x: Math.round(Player.x), rug: !!World.props.find((p) => p.kind === 'trapdoor'), sign: !!World.props.find((p) => p.id === 'wdsign'), lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
+  });
+  if (up.pr !== 'trapdoor' || up.level !== 'd_dragon' || Math.abs(up.x - 1010) > 30 || !up.rug || !up.sign || !up.lin) fail('the ladder did not lead up to the storeroom ' + JSON.stringify(up));
+  await shot('storeroom');
+  // a job: Ozzy's waiting at the bar; take it, fix it, hand it back, sleep on it
   const job = await E(() => {
     Hud.toggle(null); Bench.clear(); const oz = Actors.npcs.find((n) => n.def.name === 'Ozzy'); if (!oz) return { oz: false };
     Actors.talk(oz); const talk = Hud.open; Jobs.take('ozzy'); const on = Bench.b && Bench.b.job;
@@ -121,7 +129,7 @@ async function run(B, url, vp, name, failures) {
   const nogun = await E(() => { const b0 = Actors.bolts.length; Input.strikeHit = true; T_.run({}, 4); Hud.tick(); return { bolts: Actors.bolts.length - b0, hidden: $('bStrike').classList.contains('gone'), blaster: RUNNER.blaster || !!Game.s.gear.on.ranged };
   });
   if (nogun.bolts || !nogun.hidden || nogun.blaster) fail('there is still a gun ' + JSON.stringify(nogun));
-  // the help and the pack talk about the back room, not the precinct
+  // the help and the pack talk about the basement, not the precinct
   const words = await E(() => { Hud.toggle('pause'); const p = $('panelBody').textContent; Hud.toggle(null); Hud.toggle('pack'); const k = $('panelBody').textContent; Hud.toggle(null); return { old: /tracer|detective|Hale|case board/i.test(p + k), jobs: /Ozzy/.test(k) }; });
   if (words.old || !words.jobs) fail('the help or the pack still talks about the detective ' + JSON.stringify(words));
   // out to the spinner, to the Overpass Market, and Ana's parts

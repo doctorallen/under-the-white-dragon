@@ -396,3 +396,11 @@ function medCabinet(open) {
   S.box(15, 14, 18, 19, rp('#1a1e22', 4), { lo: 1, hi: 3 }); S.px(16, 15, '#3aff80', true); S.px(17, 17, '#3af0e0', true);
   return S.done();
 }
+// a worn rug on the storeroom floor, red and gold, its fringe frayed: the
+// trapdoor's under it
+function rug() {
+  const W = 40, H = 4, S = new Spr(W, H, 443); S.ax = W / 2; S.ay = H - 1;
+  for (let x = 2; x < W - 2; x++) for (let y = 0; y < H; y++) S.px(x, y, y === 0 || x === 2 || x === W - 3 ? '#c8a050' : (x + y) % 6 < 3 ? '#8a2228' : y === 2 && x % 4 === 0 ? '#e8c070' : '#621a1e');
+  for (const x of [0, 1, W - 2, W - 1]) S.px(x, H - 1, '#c8b890');
+  return S.done();
+}

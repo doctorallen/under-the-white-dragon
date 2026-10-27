@@ -1,23 +1,24 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// The jobs that come to the back room, the heat, and the morning after.
+// The jobs that come to the White Dragon, the heat, and the morning after.
 // A job is a person, a broken thing and a choice: they turn up at the White
 // Dragon with it (Jobs.spawn puts them there), you take it to the bench,
 // fix it, and hand it back at the counter. The next morning (after you've
 // slept) you hear what your fix did. Their state is in Game.s.jobs; the thing
-// itself is on the bench (Game.s.bench) while you work on it.
-// Heat (Game.s.heat, 0 to 100) is how close the precinct is to your door:
+// itself is on your bench in the basement (Game.s.bench) while you work on it.
+// Heat (Game.s.heat, 0 to 100) is how close the precinct is to your trapdoor:
 // illegal work on the bench, parts taken from where you shouldn't be, a
 // Meridian serial that gets traced. Honest repairs and time bring it down. At
-// 40 a patrol drone works your street; at 70 there's a knock before dawn.
+// 40 a patrol drone works your street; at 70 there's a knock before dawn,
+// and a search of the bar and the storeroom; at 90 they find the trapdoor.
 // ---------------------------------------------------------------------------
 const JOBS = {
   ozzy: {
-    name: 'Ozzy', title: 'Ozzy\'s nav unit', dev: 'navunit', at: 792, wait: 520, pay: 80, honest: true,
+    name: 'Ozzy', title: 'Ozzy\'s nav unit', dev: 'navunit', at: 500, wait: 520, pay: 80, honest: true,
     look: { skin: SKINS[1], hair: 'cap', capCol: '#ffd040', top: '#4a4430', coat: 'jacket', legs: '#2a2a34', wide: 1 },
     parts: { board: ['street', 'ok'], cell: ['street', 'dead'], aerial: ['street', 'burnt'] },
     lines: ['Rain\'s bad for business. Good for yours, I guess.'],
-    offer: ['"You the one who fixes things? Auntie Lin said knock."', '"My cab\'s nav went dark mid-run. Smelled like a fuse. No nav, no fares; no fares, no rent."', '"Eighty when it works. Honest money, for once in this room."'],
+    offer: ['"You the one who fixes things? Auntie Lin said ask for the noodles with nothing in them."', '"My cab\'s nav went dark mid-run. Smelled like a fuse. No nav, no fares; no fares, no rent."', '"Eighty when it works. Honest money, for once in this room."'],
     waiting: '"I\'ll be at the counter. Lin\'s noodles are the only thing in this city that still works."',
   },
   vey: {
@@ -41,7 +42,7 @@ const Jobs = {
     if (why && n < 0) Game.toast(`Heat ${s.heat - was}. ${why}`, 'good');
     Hud.refresh();
   },
-  // ---- the people, in the bar and the back room ----
+  // ---- the people, at the bar ----
   // where each one stands today, if they're here at all
   where(id) {
     const J = JOBS[id], c = this.st(id);
@@ -96,8 +97,8 @@ const Jobs = {
     const J = JOBS[id], c = this.st(id); if (Game.s.bench) return;
     Bench.put(J.dev, { job: id, name: J.title, parts: J.parts, rusty: J.rusty });
     c.st = 'bench'; c.since = Game.s.day;
-    Game.toast(`${J.title} is on your bench.`, 'good');
-    if (J.illegal) this.heat(5, 'Illegal chrome in the back room.');
+    Game.toast(`You take ${J.title} down to your bench.`, 'good');
+    if (J.illegal) this.heat(5, 'Illegal chrome under the bar.');
     this.spawn(); Save.write();
   },
   // a Meridian part that came from somewhere it shouldn't: a serial someone can trace
@@ -115,7 +116,7 @@ const Jobs = {
   list() {
     const b = Game.s.bench, rows = JOB_ORDER.map((id) => {
       const J = JOBS[id], c = this.st(id);
-      const st = { offer: 'Waiting to talk to you at the White Dragon.', bench: b && b.job === id ? (b.tested ? `On your bench: tested, ${{ works: 'it works', half: 'it half works', dead: 'nothing', smoke: 'it smoked' }[b.tested.res]}.` : 'On your bench.') : 'Waiting.', back: 'Handed back. You\'ll hear how it went in the morning.', done: 'Done.', seized: 'Seized by the precinct.' }[c.st];
+      const st = { offer: 'Waiting at the bar upstairs.', bench: b && b.job === id ? (b.tested ? `On your bench: tested, ${{ works: 'it works', half: 'it half works', dead: 'nothing', smoke: 'it smoked' }[b.tested.res]}.` : 'On your bench.') : 'Waiting.', back: 'Handed back. You\'ll hear how it went in the morning.', done: 'Done.', seized: 'Seized by the precinct.' }[c.st];
       const notes = c.st === 'bench' ? Game.s.notes.log.filter((e) => e.key.startsWith(id + ':')).map((e) => e.text.replace(/^[^:]*: /, '')).join(' ') : '';
       return `<div class="row ${c.st === 'done' || c.st === 'seized' ? 'passed' : ''}"><div><b>${J.title}</b><small>${st}${notes ? ' ' + notes : ''}</small></div></div>`;
     }).join('');
@@ -124,7 +125,7 @@ const Jobs = {
   // the line at the top of the screen: what the job on the bench needs next
   objective() {
     const b = Game.s.bench;
-    if (!b) { const id = JOB_ORDER.find((k) => this.st(k).st === 'offer'); return id ? `▸ ${JOBS[id].name} is waiting at the White Dragon` : ''; }
+    if (!b) { const id = JOB_ORDER.find((k) => this.st(k).st === 'offer'); return id ? `▸ ${JOBS[id].name} is waiting at the bar upstairs` : ''; }
     if (b.tested && (b.tested.res === 'works' || b.tested.res === 'half')) return `▸ Hand ${b.name.toLowerCase().replace(/^\w+'s /, 'back the ')} to ${JOBS[b.job] ? JOBS[b.job].name : 'them'}`;
     const need = Object.keys(DEVICE[b.dev].slots).filter((k) => b.probed[k] && b.slots[k].p && (b.slots[k].p.st !== 'ok' || (DEVICE[b.dev].slots[k].gauge && b.slots[k].p.gauge !== DEVICE[b.dev].slots[k].gauge))).map((k) => PART[DEVICE[b.dev].slots[k].kind].took);
     return need.length ? `▸ ${b.name} needs ${need.join(' and ')}` : `▸ ${b.name} is on your bench`;
@@ -152,9 +153,11 @@ const Jobs = {
     const b = s.bench;
     if (b && b.job && JOBS[b.job].illegal) { this.heat(10); news.push('Word gets around about what\'s on your bench. Heat +10.'); }
     if (s.heat >= 70) {
-      news.push('A knock before dawn: a precinct detective, polite, wet coat. He looks over the back room for a long time.');
-      if (b && b.job && JOBS[b.job].illegal) { const J = JOBS[b.job]; news.push(`He takes ${J.title} off your bench as evidence. ${J.name} won't be coming back for it.`); this.st(b.job).st = 'seized'; Bench.clear(); }
-      else news.push('He finds a cold iron and nothing he can use, and leaves. For now.');
+      const found = s.heat >= 90;
+      news.push('A knock before dawn: a precinct detective, polite, wet coat. He goes through the bar and the storeroom for a long time, and Auntie Lin watches him do it.');
+      if (found && b && b.job && JOBS[b.job].illegal) { const J = JOBS[b.job]; news.push(`He moves the rug. He finds the trapdoor, and ${J.title} on your bench, and takes it as evidence. ${J.name} won't be coming back for it.`); this.st(b.job).st = 'seized'; Bench.clear(); }
+      else if (found) news.push('He moves the rug and finds the trapdoor. Down there he finds a cold iron and nothing he can use, and leaves. He knows where you work now.');
+      else news.push('He stands on the rug for a while, talking to Lin about the weather. Then he leaves.');
       this.heat(-30);
     } else this.heat(-5);
     this.news = news; return news;

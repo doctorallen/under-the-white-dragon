@@ -1,14 +1,14 @@
-# Behind the White Dragon: design
+# Under the White Dragon: design
 
-The game is becoming Behind the White Dragon: you fix things in a back room behind a noodle bar, and heat, not shooting, is the danger. Its design is in [the design doc](https://claude.ai/artifact/6q6FiLoTUN74PSnhsy7hNT); its first slice is built (see **Built: the back room**). The rest of this file describes Downlevel, the detective game it grew out of, whose cases, jobs and fights are still in the code.
+The game is becoming Under the White Dragon: you fix things in a hidden basement under a noodle bar, and heat, not shooting, is the danger. Its design is in [the design doc](https://claude.ai/artifact/6q6FiLoTUN74PSnhsy7hNT); its first slice is built (see **Built: the basement**). The rest of this file describes Downlevel, the detective game it grew out of, whose cases, jobs and fights are still in the code.
 
-## Built: the back room
+## Built: the basement
 
-- **Home is the White Dragon** (`d_dragon.js`): a street with the tall neon sign (`dragon.js`), Auntie Lin's bar, and the back room through the curtain (bench, parts shelf, cot). New games start by the cot.
+- **Home is under the White Dragon** (`d_dragon.js`): a street with the neon sign (`dragon.js`), Auntie Lin's bar, her storeroom with a rug over the trapdoor, and down the ladder the basement (`d_cellar`, its own place, `hidden` so it's not on the city map or open to travel): bench, parts shelf, cot, a terminal. New games start by the cot. Customers wait at the bar.
 - **The bench** (`bench.js`), hands-on and saved as it stands (`Game.s.bench`), so a job waits: unscrew (a screw binds now and then: ease off, or strip it, and it never holds tight again), probe (fine, worn, dead, burnt, wrong gauge), desolder and solder with the iron (three scorches cook the control board), lift parts out and seat new ones, close up, power up: works, half works, dead or smoke. The lens shows wear, burns and serials.
 - **Parts** (`parts.js`) have a kind, a grade (scrap, street, clinic, Meridian), a state, sometimes a gauge, and where they came from and how. Stripping a machine gives a scrap part; Mechanic Ana (Overpass Market) and Nurse Kade (Clinic Row) sell them; the clinic cabinet on Clinic Row holds a Meridian servo, for heat. **The notebook** learns a device once you've probed every part, and jots each fault.
 - **Jobs** (`jobs.js`): Ozzy's dead nav unit (a dead cell and a burnt aerial; 80 cr; a clean fix means free cab rides) and Vey's seizing arm (a dead heavy servo and a worn cell; a scrap servo fitted cleanly holds and she leaves a Spires schematic; a sloppy fix gives out; a stolen Meridian servo gets traced and she's taken).
-- **Heat** (`Game.s.heat`, the meter under health): illegal work on the bench, the cabinet (more if you're seen), a traced serial. Honest repairs and each night bring it down. At 40 a drone patrols your street; at 70 a detective knocks before dawn and seizes illegal work.
+- **Heat** (`Game.s.heat`, the meter under health): illegal work on the bench, the cabinet (more if you're seen), a traced serial. Honest repairs and each night bring it down. At 40 a drone patrols your street; at 70 a detective knocks before dawn and searches the bar and the storeroom; at 90 he finds the trapdoor, and seizes illegal work on the bench.
 - **The morning after:** sleeping in the cot shows what your fixes did.
 
 The full design doc with painted art for every level: https://claude.ai/artifact/Jr4SRs1tDLfp29Q5UrXr1s

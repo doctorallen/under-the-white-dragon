@@ -1,7 +1,7 @@
 {
-  "name": "Behind the White Dragon",
+  "name": "Under the White Dragon",
   "short_name": "White Dragon",
-  "description": "A noir tinkerer game for the phone: fix what the city breaks, in the back room behind a noodle bar.",
+  "description": "A noir tinkerer game for the phone: fix what the city breaks, in a hidden basement under a noodle bar.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

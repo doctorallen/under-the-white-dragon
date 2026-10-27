@@ -13,7 +13,7 @@ function boot() {
   Actors.load(); Life.load();
   Game.cam.x = Player.x; Game.cam.y = Player.y - 30;
   Hud.init();
-  Game.toast(loaded ? 'Back at ' + World.L.name + '.' : 'Behind the White Dragon. The back room is yours: the bench, the parts shelf, the cot. Auntie Lin keeps the bar out front, and people know where to find you. Someone\'s already waiting.');
+  Game.toast(loaded ? 'Back at ' + World.L.name + '.' : 'Under the White Dragon. The basement is yours, down the trapdoor under Auntie Lin\'s storeroom: the bench, the parts shelf, the cot. Nobody upstairs knows what you do down here, and people know to ask at the bar. Someone\'s already waiting up there.');
   addEventListener('visibilitychange', () => { if (document.hidden) Save.write(); });
   addEventListener('pagehide', () => Save.write());
   $('loading').hidden = true;
