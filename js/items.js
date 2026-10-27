@@ -131,6 +131,7 @@ const GEAR_START = { head: 'beanie', outer: 'workjacket', inner: 'shirt', legs: 
 // what the vendors sell, and for how much
 // (gear, mods and items alike, by id)
 const SHOP = {
+  Mo: { noodlecup: 8, medpatch: 25, stim: 40 }, Jun: { noodlecup: 8, medpatch: 25, stim: 40 },
   Kit: { beanie: 30, mask: 90, bomber: 160, cargo: 110, noodlecup: 10, medpatch: 30 },
   Ozu: { heavy: 380, ballistic: 300, plated: 240, grips: 320, katana: 600, scatter: 260 },
   'Quartermaster Ito': { emp: 45, medpatch: 25, stim: 45 },

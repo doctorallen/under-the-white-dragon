@@ -5,7 +5,8 @@
 // shelf answer Use, and the basement isn't on the city map; a nav unit is opened, probed, fixed and powered up on the bench;
 // the ladder leads up through the trapdoor into the noodle bar's storeroom,
 // where people eat; Ozzy's job is taken, fixed, handed back and slept on; the
-// front door leads out onto the street; the vending machine
+// front door leads out onto the street; the block's residents shop, work the
+// till and eat when their days say, and talk when stopped; the vending machine
 // out front gives a scrap part; there's no gun, and the help and the pack talk
 // about the basement; a cab flies from the stand to the Overpass Market, where Ana
 // sells a part; the map and dev settings work; on Clinic Row Kade's stall
@@ -104,9 +105,9 @@ async function run(B, url, vp, name, failures) {
   // up the ladder, through the trapdoor, into the storeroom: Lin at the bar, the sign out front
   const up = await E(() => {
     Hud.toggle(null); Bench.clear(); T_.walkTo(World.props.find((p) => p.kind === 'trapdoor').x); const pr = Player.target && Player.target.p && Player.target.p.kind; T_.tap('useHit'); T_.run({}, 90);
-    return { pr, level: Game.s.level, x: Math.round(Player.x), rug: !!World.props.find((p) => p.kind === 'trapdoor'), diners: Actors.npcs.filter((n) => n.def.sched[0][3] === 'sit').length, lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
+    return { pr, level: Game.s.level, x: Math.round(Player.x), rug: !!World.props.find((p) => p.kind === 'trapdoor'), diners: Actors.npcs.filter((n) => n.act === 'sit').length, lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
   });
-  if (up.pr !== 'trapdoor' || up.level !== 'd_noodles' || Math.abs(up.x - 846) > 30 || !up.rug || up.diners < 4 || !up.lin) fail('the ladder did not lead up to the storeroom of the noodle bar ' + JSON.stringify(up));
+  if (up.pr !== 'trapdoor' || up.level !== 'd_noodles' || Math.abs(up.x - 846) > 30 || !up.rug || up.diners < 3 || !up.lin) fail('the ladder did not lead up to the storeroom of the noodle bar ' + JSON.stringify(up));
   await shot('storeroom');
   // a job: Ozzy's waiting at the bar; take it, fix it, hand it back, sleep on it
   const job = await E(() => {
@@ -128,6 +129,19 @@ async function run(B, url, vp, name, failures) {
   if (out.pr !== 'door' || out.level !== 'd_dragon' || Math.abs(out.x - 424) > 30 || !out.sign || !out.door) fail('the front door did not lead out to the street ' + JSON.stringify(out));
   await E(() => { T_.walkTo(380); });
   await shot('frontage');
+  // the block's people keep their own days: at a quarter to seven Mo's on the till
+  // and people are shopping; stop one and they say what they're about; the
+  // clerk sells you things; at twenty past eight people are eating at the White Dragon
+  const town = await E(() => {
+    const t0 = Game.s.time, see = (lv, h) => { Game.s.time = h; Game.arrive(lv, 'door'); T_.run({}, 30); return Actors.npcs.filter((n) => n.def.town); };
+    const g = see('d_grocery', 18.75), mo = g.find((n) => n.def.town === 'mo'), shoppers = g.filter((n) => n.def.town !== 'mo').length;
+    const shopper = g.find((n) => n.def.town !== 'mo'); if (shopper) Actors.talk(shopper); const said = shopper && shopper.bubble && shopper.bubble.text;
+    if (mo) Actors.talk(mo); const till = Hud.open; Hud.toggle(null);
+    const eating = see('d_noodles', 20.3).filter((n) => !n.moving && n.act === 'sit').length;
+    Game.s.time = t0; Game.arrive('d_dragon', 'door'); T_.run({}, 10);
+    return { mo: !!(mo && mo.act === 'work'), shoppers, said, till, eating };
+  });
+  if (!town.mo || !town.shoppers || !town.said || town.till !== 'grocer' || town.eating < 2) fail('the block\'s people are not keeping their days ' + JSON.stringify(town));
   // the machine out front, stripped: salvage and a scrap part
   const strip = await E(() => { const v = World.props.find((p) => p.kind === 'vending'); T_.walkTo(v.x); T_.hold(200); return { done: v.done, parts: Game.s.parts.filter((p) => p.how === 'strip' && p.g === 'scrap').length }; });
   if (!strip.done || !strip.parts) fail('stripping the vending machine gave no part ' + JSON.stringify(strip));

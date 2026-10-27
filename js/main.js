@@ -4,7 +4,7 @@
 // and a spare chunk painted ahead of the camera when there's time.
 // ---------------------------------------------------------------------------
 function boot() {
-  Dev.load();
+  Dev.load(); Town.init();
   const loaded = Save.start();
   View.init(); Input.init();
   World.load(Game.s.level);

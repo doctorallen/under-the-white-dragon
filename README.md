@@ -83,7 +83,8 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/d_old.js` | Old Town and its districts |
 | `js/d_works.js` | The Works and its districts |
 | `js/d_deep.js` | The Bowels and its districts |
-| `js/d_dragon.js` | The White Dragon: the street, the bar, the storeroom; and the basement under it |
+| `js/d_dragon.js` | The White Dragon: its street, the noodle bar and storeroom, and the basement under it |
+| `js/d_block.js` | The block's other interiors: Mo's grocery, the flats |
 | `js/things.js` | Props in play: looks, yields, prompts, uses |
 | `js/game.js` | `Game`: state and rules; programs |
 | `js/save.js` | localStorage save and load |
@@ -95,6 +96,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/parts.js` | Parts, devices, stall stock and the notebook (`Parts`) |
 | `js/bench.js` | The bench: the repair, its tools and its drawing (`Bench`) |
 | `js/jobs.js` | Jobs at the White Dragon, heat, the morning after (`Jobs`) |
+| `js/town.js` | The block's residents: homes, jobs, friends, a day plan each, walked out from the clock (`Town`, `RESIDENTS`) |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
 | `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |
 | `js/worldmap.js` | The city map: the city in cross-section, every place at its depth; travel from it |

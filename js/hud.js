@@ -229,7 +229,7 @@ const Hud = {
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
     body.innerHTML = h; body.scrollTop = keep;
     // where money changes hands, what you have is in the header
-    const crEl = $('panelCr'); crEl.hidden = !['vendor', 'fab', 'qm', 'cab', 'pack', 'fixer', 'partshop'].includes(which); crEl.textContent = s.cr + ' cr';
+    const crEl = $('panelCr'); crEl.hidden = !['vendor', 'fab', 'qm', 'cab', 'pack', 'fixer', 'partshop', 'grocer'].includes(which); crEl.textContent = s.cr + ' cr';
     // the buttons
     const act = { resume: () => this.toggle(null), sleep: () => { Game.s.hp = T.player.hp; Game.s.ram = T.ram.max; const h0 = Game.hour(); Game.pass(((8 - h0) + 24) % 24 || 24); const news = Jobs.morning(); Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
       sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },

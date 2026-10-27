@@ -13,7 +13,7 @@
 const WD = { FRONT: 300, DOOR: 424, END: 470, CEIL: 122 };
 
 addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, and on it a noodle bar with what nobody knows under it.', 'The White Dragon', () => district({
-  id: 'd_dragon', name: 'The White Dragon', tier: 1, W: 1500, crowd: 7, crowdFrom: 150, crowdTo: 1400, amb: [0.2, 0.17, 0.26], layerDy: 0,
+  id: 'd_dragon', name: 'The White Dragon', tier: 1, W: 1500, crowd: 0, amb: [0.2, 0.17, 0.26], layerDy: 0,
   build(L, G) {
     const C = G - WD.CEIL;
     // the street: a shophouse, then an alley, the White Dragon, then the rest of the block
@@ -53,6 +53,12 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street in the Stack, a
     L.paint(318, G - 48, 324, G, (P) => { for (let y = G - 48; y < G - 4; y++) { P.put(320, y, [20, 22, 28]); P.put(321, y, [58, 62, 72]); } for (const y of [G - 40, G - 24, G - 10]) { P.put(319, y, [90, 96, 108]); P.put(322, y, [90, 96, 108]); } });
     L.prop('deco', 312, G - 46, { art: () => dragonSign(), id: 'wdsign' });
     L.light(316, G - 100, 90, [0.75, 0.9, 1], 0.8); L.light(296, G - 120, 40, [1, 0.3, 0.38], 0.5);
+    // the other doors on the block: Mo's grocery in the teal shophouse, the flats over the mint one
+    L.paint(200, G - 40, 232, G, (P) => { kFill(P, 204, G - 38, 228, G, '#0e1a1a'); for (let y = G - 36; y < G; y++) for (let x = 206; x < 226; x++) P.put(x, y, [170, 230, 210], 0.18); kFill(P, 204, G - 46, 228, G - 40, '#0a0e10'); for (let x = 207; x < 226; x += 2) P.put(x, G - 43, [80, 255, 160], 0.9); });
+    L.prop('door', 216, G, { label: 'Mo\'s Grocery, open all hours', to: ['d_grocery', 'door'] }); L.light(216, G - 30, 40, [0.6, 1, 0.8], 0.5);
+    L.paint(1026, G - 44, 1056, G, (P) => { kFill(P, 1028, G - 42, 1054, G, '#1a1410'); for (let y = G - 40; y < G; y++) P.put(1041, y, [255, 200, 130], 0.3); kFill(P, 1026, G - 44, 1056, G - 42, '#4a4a52'); for (let k = 0; k < 6; k++) P.put(1030 + k * 4, G - 26, [200, 200, 210]); });
+    L.prop('door', 1041, G, { label: 'Wan Fat Mansions: the flats', to: ['d_flats', 'door'] }); L.light(1041, G - 34, 30, [1, 0.8, 0.5], 0.5);
+    L.spawns.grocery = [216, G]; L.spawns.flats = [1041, G];
     // a machine and a junk pile to strip
     L.prop('vending', 250, G, { look: { col: '#3af0e0', body: '#2a3a4a' }, label: 'vending machine' }); L.light(250, G - 12, 30, [0.3, 0.9, 1], 0.5);
     L.prop('junk', 186, G, { label: 'junk pile' });
@@ -107,15 +113,10 @@ LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2,
     for (const x of [400, 450, 500, 550]) L.prop('deco', x, G, { art: () => stool(), id: 'wnstool' + x });
     L.npc({ name: 'Auntie Lin', role: 'noodles', look: { skin: SKINS[0], hair: 'bun', hairCol: '#c8c8c8', top: '#e8e0d0', apron: '#8a1a24', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 470, y: G - 2, face: 1, sched: [[0, 24, 470, 'work']], behind: true, lines: ['Eat first. Then fix things.', 'The cellar is yours as long as the rent comes and nobody lifts that rug.', 'Nobody asks what you do down there. Nobody asks me what\'s in the broth either.'] });
     // people eating: at the tables and at the counter, chopsticks up
-    const DINE = [
-      ['Mr Okonkwo', 144, 1, { skin: SKINS[5], hair: 'bald', top: '#3a4a3a', coat: 'jacket', legs: '#2a2a2a' }, ['Best broth this side of the canal.', 'Don\'t talk to me while I eat.']],
-      ['A courier', 214, 1, { skin: SKINS[2], hair: 'cap', capCol: '#ff8a20', top: '#2a2a3a', legs: '#2a2a34' }, ['Ten minutes, then I\'m back on the bike.', 'Lin puts something in it. Don\'t ask.']],
-      ['Two shifts', 284, 1, { skin: SKINS[3], hair: 'bun', hairCol: '#1a1414', top: '#e0e8e8', legs: '#3a4a4a' }, ['Eighteen hours at the clinic. This is the good part.']],
-      ['A regular', 500, 1, { skin: SKINS[1], hair: 'short', hairCol: '#5a3a1a', top: '#5a2a2a', coat: 'long', legs: '#2a2a2a' }, ['Every night for eleven years. Same stool.', 'Lin\'s got a basement, you know. Wine, I think.']],
-      ['A ganger, off duty', 550, 1, { skin: SKINS[4], hair: 'mohawk', hairCol: '#3af0e0', hairGlow: true, top: '#1a1a1e', legs: '#2a1a1e', cyArm: true }, ['Even we eat.', 'Not here for trouble. Here for noodles.']],
-    ];
-    for (const x of [144, 214, 284]) L.prop('deco', x, G, { art: () => stool(), id: 'wnstoolt' + x });
-    for (const [name, x, face, look, lines] of DINE) L.npc({ name, look: Object.assign({ hands: { fx: 25, fy: 27 } }, look), x, y: G - 2, face, sched: [[0, 24, x, 'sit']], lines });
+    // a regular who's always on the same stool of an evening; the rest of the
+    // diners are the block's residents, in at their own times (town.js)
+    const DINE = [['A regular', 500, 1, { skin: SKINS[1], hair: 'short', hairCol: '#5a3a1a', top: '#5a2a2a', coat: 'long', legs: '#2a2a2a' }, ['Every night for eleven years. Same stool.', 'Lin\'s got a basement, you know. Wine, I think.']]];
+    for (const [name, x, face, look, lines] of DINE) L.npc({ name, look: Object.assign({ hands: { fx: 25, fy: 27 } }, look), x, y: G - 2, face, sched: [[0, 17, x, 'away'], [17, 24, x, 'sit']], lines });
     // the storeroom's light, crates, and the rug over the trapdoor
     L.light(730, C + 16, 60, [1, 0.8, 0.55], 0.7); L.light(803, G - 4, 26, [0.5, 0.8, 1], 0.4);
     for (const [x, w, h, col] of [[664, 14, 12, '#5a4a32'], [680, 12, 10, '#4a3a2a'], [670, 12, 9, '#6a5a3a'], [870, 16, 14, '#4a4a3a'], [888, 12, 10, '#5a4a32']]) L.prop('deco', x, x === 670 ? G - 12 : G, { art: () => crate({ w, h, col }), id: 'wncrate' + x + h });

@@ -53,12 +53,13 @@ const Actors = {
     for (const k of Quests.elites(L.id)) add(k, ELITES[k], ELITES[k].name, {});
     for (const w of Warrants.here(L.id)) add('w' + w.id, w, w.name, { warrant: w.id });
     this.caseNpcs();
-    Jobs.spawn();
+    Jobs.spawn(); Town.sync();
   },
   entry(n) { const h = Game.hour(); for (const e of n.def.sched) if (h >= e[0] && h < e[1]) return e; return n.def.sched[0]; },
   nearest(test, r) { let best = null, bd = r; for (const e of this.enemies) { if (!test(e)) continue; const d = Math.hypot(e.x - Player.x, (e.y - 10) - (Player.y - 16)); if (d < bd) { bd = d; best = e; } } return best; },
   say(n, text) { n.bubble = { text, t: 3.6 }; },
   talk(n) {
+    if (n.def.town) { Town.talk(n); return; }
     // a case or a quest has something to say through them: the talk panel
     // (someone with a trade and only work to offer opens their trade, the work on top)
     const acts = Cases.actionsFor(n.def.name).concat(Quests.actionsFor(n.def.name), Jobs.actionsFor(n.def.name)), trade = ['vendor', 'qm', 'fab', 'parts'].includes(n.def.role);
@@ -68,9 +69,11 @@ const Actors = {
     n.face = Math.sign(Player.x - n.x) || n.face;
   },
   step(dt) {
-    // ---- people
+    // ---- people (the block's residents go where the clock says: town.js)
+    Town.sync(); Town.chatter(dt);
     for (const n of this.npcs) {
       if (n.bubble) { n.bubble.t -= dt; if (n.bubble.t <= 0) n.bubble = null; }
+      if (n.def.town) continue;
       const e = this.entry(n), act = e[3];
       let tx = e[2];
       if (act === 'wander') { n.wt -= dt; if (n.wt <= 0) { n.wt = 3 + hash(n.i, Game.frame, 2) * 5; n.tx = e[2] + (hash(n.i, Game.frame, 3) - 0.5) * 120; } tx = n.tx; }

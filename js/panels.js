@@ -92,6 +92,8 @@ const PANELS = {
     h += stock.map(([k, g, cr, gauge, note], i) => `<div class="part" style="--r:${GRADE[g].col}"><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr} cr</button></div></div>`).join('');
     return [n.def.name + '\'s parts', h + '</div>'];
   },
+  // the grocery's till: whoever's on shift sells you things
+  grocer(s) { const n = Hud.who; return [n.def.name + ' · Mo\'s Grocery', `<p class="sub">"${Town.talkLine(n)}"</p>` + Hud.shopHtml(SHOP[n.def.name])]; },
   bench() { return ['The bench · ' + Bench.b.name, Bench.html()]; },
   // the shelf: the parts you have, and the notebook
   shelf(s) {
