@@ -36,7 +36,7 @@ const Hud = {
     if (Game.toasts.length && Game.t - Game.toasts[0].t > 4.2) { Game.toasts.shift(); this.toasts(); }
     // speech over heads
     let h = ''; const V = View, sc = V.scale / (window.devicePixelRatio || 1);
-    for (const n of Actors.npcs) if (n.bubble && !n.hidden) { const x = V.sx(n.x) * sc, y = V.sy(n.y - 44) * sc; h += `<div class="bubble" style="left:${x}px;top:${y}px"><b>${n.def.name}</b> ${n.bubble.text}</div>`; }
+    for (const n of Actors.npcs) if (n.bubble && !n.hidden) { const x = (n.x - V.cx) * sc, y = (n.y - 44 - V.cy) * sc; h += `<div class="bubble" style="left:${x}px;top:${y}px"><b>${n.def.name}</b> ${n.bubble.text}</div>`; }
     this.set('bubbles', h, 'innerHTML');
   },
   toasts() { $('toasts').innerHTML = Game.toasts.map((t) => `<div class="toast ${t.kind}" data-t="${t.t}">${t.text}</div>`).join(''); },
@@ -71,13 +71,13 @@ const Hud = {
     const key = 'g:' + g; if (this.thumbs[key]) return this.thumbs[key];
     const o = Object.assign({}, RUNNER, { seed: 5, pose: 'stand', blaster: false }), crop = { scanner: [13, 12, 16, 14], jets: [12, 40, 20, 12], cutter: [22, 22, 22, 16] }[g];
     if (g === 'scanner') o.goggles = '#3af0e0'; if (g === 'jets') Object.assign(o, { jets: true, pose: 'jump', hands: POSE_HANDS.jump }); if (g === 'cutter') Object.assign(o, { pose: 'cut', cutter: true, hands: POSE_HANDS.cut });
-    const sp = person(o), [sx, sy, sw, sh] = crop.map((v) => v * AP), N = 48 * AP, [c, gg] = canvasOf(N, N), k = N / Math.max(sw, sh);
-    gg.drawImage(sp.c, sx, sy, sw, sh, (N - sw * k) / 2, (N - sh * k) / 2, sw * k, sh * k); if (sp.e) { gg.globalAlpha = 0.6; gg.drawImage(sp.e, sx, sy, sw, sh, (N - sw * k) / 2, (N - sh * k) / 2, sw * k, sh * k); }
+    const sp = person(o), [sx, sy, sw, sh] = crop, [c, gg] = canvasOf(48, 48), k = 48 / Math.max(sw, sh);
+    gg.drawImage(sp.c, sx, sy, sw, sh, (48 - sw * k) / 2, (48 - sh * k) / 2, sw * k, sh * k); if (sp.e) { gg.globalAlpha = 0.6; gg.drawImage(sp.e, sx, sy, sw, sh, (48 - sw * k) / 2, (48 - sh * k) / 2, sw * k, sh * k); }
     return (this.thumbs[key] = c.toDataURL());
   },
   // salvage icons, as images (made once)
   icons: {},
-  icon(k) { if (this.icons[k]) return this.icons[k]; const N = 48 * AP, sp = itemIcon(k), [c, g] = canvasOf(N, N); g.drawImage(sp.c, 0, 0, N, N); if (sp.e) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.5; g.drawImage(sp.e, 0, 0, N, N); } return (this.icons[k] = c.toDataURL()); },
+  icon(k) { if (this.icons[k]) return this.icons[k]; const sp = itemIcon(k), [c, g] = canvasOf(48, 48); g.drawImage(sp.c, 0, 0, 48, 48); if (sp.e) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.5; g.drawImage(sp.e, 0, 0, 48, 48); } return (this.icons[k] = c.toDataURL()); },
   // a grid of salvage tiles; `btn(k)` adds a button under each
   tiles(o, btn) { const ks = SALVAGE_ORDER.filter((k) => o === null || o[k]); return ks.length ? '<div class="tiles">' + ks.map((k) => `<div class="tile" style="--r:${SALVAGE[k].col[1]}"><img src="${this.icon(k)}" alt=""><b>${SALVAGE[k].name}</b>${o ? `<span class="n">× ${o[k]}</span>` : ''}${btn ? btn(k) : ''}</div>`).join('') + '</div>' : '<p class="dim">No salvage. Hold Use on a machine to strip it.</p>'; },
   // a shop's stock: things to carry, then gear
@@ -107,8 +107,7 @@ const Hud = {
     if (G.slot === 'feet') Object.assign(o, { pose: 'walk1', fixedHands: true });
     if (G.slot === 'ranged') Object.assign(o, { pose: 'aim', blaster: true, hands: POSE_HANDS.aim });
     if (G.slot === 'melee') Object.assign(o, { pose: 'strike', blade: G.look.bladeCol, sheath: null, hands: POSE_HANDS.strike });
-    // (the crop in authored px; the picture finer at a fine grain)
-    const sp = person(o), [sx, sy, sw, sh] = crop.map((v) => v * AP), N = 48 * AP, k = N / Math.max(sw, sh), c = document.createElement('canvas'); c.width = c.height = N;
+    const sp = person(o), [sx, sy, sw, sh] = crop, N = 48, k = N / Math.max(sw, sh), c = document.createElement('canvas'); c.width = c.height = N;
     const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
     const dx = (N - sw * k) / 2, dy = (N - sh * k) / 2;
     g.drawImage(sp.c, sx, sy, sw, sh, dx, dy, sw * k, sh * k);
@@ -216,7 +215,7 @@ const Hud = {
       h += `<p class="sub">${World.L.name} · ${Game.clock()} · day ${s.day}. Saved as you go.</p>
         <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Fire</b> J (up close, a blow instead). <b>Use</b> E (hold it to strip machines and cut). <b>Program</b> Q to run, R to pick. <b>Item</b> G to use, T to switch. <b>Gear</b> I. <b>Map</b> M.</p>
         <p>You\'re a tracer with the precinct. Four synths ran from the Spires and went down into the city; Lieutenant Hale gives you their cases one at a time, and the night desk always has a short one. Find the clues (pick things up, enhance photos, ask people, press them), follow the leads to the suspect, run the baseline test, and decide: retire, arrest or let go. Retire a human and it costs you. Your spinner is on the pad at the end of your hall; the old subway and the lift cages go deeper. Strip machines for parts, sell them, or take them to Mags for gear. Anywhere, a cab takes you home for a fare.</p></div>
-        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button><button data-act="dev">Dev settings</button>${GL.ok || AP > 1 ? `<button data-act="fine" class="${AP > 1 ? 'on' : ''}">Fine grain: ${AP > 1 ? 'on' : 'off'}</button>` : ''}<button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
+        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button><button data-act="dev">Dev settings</button><button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     if (['vendor', 'qm', 'fab'].includes(which) && this.who) h = workHtml(this.who.def.name) + h;
     const keep = this.lastPanel === which + (this.tab || '') + (this.fabTab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '') + (this.fabTab || '');
@@ -229,9 +228,7 @@ const Hud = {
       install: () => Pwa.install(),
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => this.toggle('dev'),
       cab: () => { const fare = Flight.cabFare(); if (World.L.id === 'home' || !Game.pay({ cr: fare })) return; Flight.start('home', 'pad', true); },
-      // FINE GRAIN: three art px to a world px; it's built in from the start, so it reloads
-      fine: (b) => { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = AP > 1 ? 'Tap again: back to normal grain (reloads)' : 'Tap again: fine grain (reloads; costs more)'; return; } Game.s.settings = Object.assign({}, Game.s.settings, { fine: AP === 1 }); Save.write(); location.href = location.pathname + location.search.replace(/[?&](fine|coarse)\b/g, '').replace(/^&/, '?'); },
-      newgame: (b) => { if (b.dataset.sure) { const keep = Game.s.settings; Save.wipe(); try { localStorage.setItem(Save.key, JSON.stringify({ settings: keep })); } catch (e) { /* storage unavailable */ } location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
+      newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     panelBind(body, which);
     if (which === 'map') MapView.attach();
@@ -249,7 +246,7 @@ const Hud = {
     body.querySelectorAll('button[data-break]').forEach((b) => (b.onclick = () => { Game.breakDown(b.dataset.break); this.refresh(); }));
     body.querySelectorAll('button[data-part]').forEach((b) => (b.onclick = () => { const [k, n] = b.dataset.part.split(':'); Game.buyPart(k, +n); this.refresh(); }));
     body.querySelectorAll('button[data-floor]').forEach((b) => (b.onclick = () => { this.toggle(null); Game.go(b.dataset.floor, 'elevator'); }));
-    const dc = $('dollcv'); if (dc) { const g = dc.getContext('2d'), sp = RunnerArt.get('stand', false); g.imageSmoothingEnabled = false; g.clearRect(0, 0, dc.width, dc.height); const z = 3 / AP; g.drawImage(sp.c, (dc.width - sp.w * z) / 2, dc.height - sp.h * z, sp.w * z, sp.h * z); if (sp.e) { g.globalCompositeOperation = 'lighter'; g.drawImage(sp.e, (dc.width - sp.w * z) / 2, dc.height - sp.h * z, sp.w * z, sp.h * z); g.globalCompositeOperation = 'source-over'; } }
+    const dc = $('dollcv'); if (dc) { const g = dc.getContext('2d'), sp = RunnerArt.get('stand', false); g.imageSmoothingEnabled = false; g.clearRect(0, 0, dc.width, dc.height); g.drawImage(sp.c, (dc.width - sp.w * 3) / 2, dc.height - sp.h * 3, sp.w * 3, sp.h * 3); if (sp.e) { g.globalCompositeOperation = 'lighter'; g.drawImage(sp.e, (dc.width - sp.w * 3) / 2, dc.height - sp.h * 3, sp.w * 3, sp.h * 3); g.globalCompositeOperation = 'source-over'; } }
     body.querySelectorAll('button[data-prog]').forEach((b) => (b.onclick = () => { s.prog = b.dataset.prog; this.refresh(); }));
     body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = (this.who && this.who.def.rate) || 1, n = s.pack[k] || 0; s.cr += Math.round(n * SALVAGE[k].price * rate); s.pack[k] = 0; this.refresh(); }));
     body.querySelectorAll('button[data-gadget]').forEach((b) => (b.onclick = () => { const g = b.dataset.gadget; if (s.gadgets[g] || !Game.payBuying(GADGETS[g].cost)) return; s.gadgets[g] = 1; Game.toast(GADGETS[g].name + '. ' + GADGETS[g].note, 'good'); RunnerArt.cache.clear(); this.refresh(); Save.write(); }));

@@ -90,8 +90,7 @@ function kNoren(P, x0, x1, y, h, col, o = {}) {
 function kLantern(P, x, y, col, o = {}) {
   const c = col3(col), r = o.r || 3, h = o.h || 5;
   kV(P, x, y - 3, y, '#1a1414');
-  if (AP > 1) P.each(x - r - 1, y, x + r + 2, y + h, (xa, ya) => { const j = ya - y, t = (j + 0.5 / AP) / h, w = r * Math.sin(Math.PI * t) + 0.9, i = xa + 0.5 / AP - x - 0.5; if (Math.abs(i) > w) return null; return [Math.floor(j) % 2 ? mixRgb(c, [255, 240, 200], 0.35 - Math.abs(i) * 0.08) : mixRgb(c, [0, 0, 0], 0.15), 0.9]; });
-  else for (let j = 0; j < h; j++) { const t = (j + 0.5) / h, w = Math.round(r * Math.sin(Math.PI * t) + 0.6); for (let i = -w; i <= w; i++) P.put(x + i, y + j, j % 2 ? mixRgb(c, [255, 240, 200], 0.35 - Math.abs(i) * 0.08) : mixRgb(c, [0, 0, 0], 0.15), 0.9); }
+  for (let j = 0; j < h; j++) { const t = (j + 0.5) / h, w = Math.round(r * Math.sin(Math.PI * t) + 0.6); for (let i = -w; i <= w; i++) P.put(x + i, y + j, j % 2 ? mixRgb(c, [255, 240, 200], 0.35 - Math.abs(i) * 0.08) : mixRgb(c, [0, 0, 0], 0.15), 0.9); }
   kH(P, x - 1, x + 2, y, '#141010'); kH(P, x - 1, x + 2, y + h, '#141010');
   if (o.glyph) P.put(x, y + (h >> 1), [30, 10, 10]);
 }
@@ -125,8 +124,6 @@ function kBalcony(P, x0, x1, y, o = {}) {
 // a round window: a thick frame and a lit or dark disc
 function kPort(P, cx, cy, r, lit, o = {}) {
   const fr = o.frame || MAT.chrome, glass = lit ? col3(lit) : [16, 22, 32];
-  // (at a fine grain: round, art px by art px)
-  if (AP > 1) { P.each(cx - r - 1, cy - r - 1, cx + r + 2, cy + r + 2, (xa, ya) => { const x = xa + 0.5 / AP - cx - 0.5, y = ya + 0.5 / AP - cy - 0.5, d = Math.hypot(x, y); if (d <= r - 0.6) return [lit ? mixRgb(glass, [255, 255, 255], (x + y < -r * 0.6) ? 0.4 : 0) : mixRgb(glass, [80, 100, 130], x + y < -r * 0.5 ? 0.3 : 0), lit ? 0.45 : 0]; if (d <= r + 1.2) return [tone(fr, 0.55 - (x + y) / (r * 4) + (d > r + 0.6 ? -0.15 : 0))]; return null; }); return; }
   for (let y = -r - 1; y <= r + 1; y++) for (let x = -r - 1; x <= r + 1; x++) {
     const d = Math.hypot(x, y);
     if (d <= r - 1) P.put(cx + x, cy + y, lit ? mixRgb(glass, [255, 255, 255], (x + y < -r * 0.6) ? 0.4 : 0) : mixRgb(glass, [80, 100, 130], x + y < -r * 0.5 ? 0.3 : 0), lit ? 0.45 : 0);
@@ -137,8 +134,7 @@ function kPort(P, cx, cy, r, lit, o = {}) {
 function kAC(P, x, y, o = {}) {
   const ramp = rp(o.col || '#8a8a84', 6);
   for (let j = 0; j < 7; j++) for (let i = 0; i < 10; i++) P.put(x + i, y + j, tone(ramp, j === 0 ? 0.9 : 0.6 - j * 0.04 - (i > 8 ? 0.2 : 0)));
-  if (AP > 1) P.each(x + 0.4, y + 0.4, x + 5.6, y + 5.6, (xa, ya) => { const d = Math.hypot(xa + 0.5 / AP - x - 3.5, ya + 0.5 / AP - y - 3.5); if (d >= 2.6) return null; const a = Math.atan2(ya - y - 3.5, xa - x - 3.5); return [d < 0.7 ? [70, 70, 74] : Math.floor((a + Math.PI) / (Math.PI / 4)) % 2 ? [24, 24, 26] : [50, 50, 54]]; });
-  else for (let j = 1; j < 6; j++) for (let i = 1; i < 6; i++) if (Math.hypot(i - 3, j - 3) < 2.6) P.put(x + i, y + j, (i + j) % 2 ? [24, 24, 26] : [50, 50, 54]);
+  for (let j = 1; j < 6; j++) for (let i = 1; i < 6; i++) if (Math.hypot(i - 3, j - 3) < 2.6) P.put(x + i, y + j, (i + j) % 2 ? [24, 24, 26] : [50, 50, 54]);
   for (let j = 7; j < 7 + (o.drip || 12); j++) P.tint(x + 7, y + j, [10, 12, 10], 0.35);
 }
 // a down pipe with brackets
@@ -146,16 +142,7 @@ function kDrain(P, x, y0, y1, ramp = MAT.steelD) { for (let y = y0; y < y1; y++)
 // a window with a frame, a sill, and what's behind it
 function kWin(P, x, y, w, h, o = {}) {
   const lit = o.lit, fr = o.frame || [10, 10, 14], c = lit ? col3(lit) : col3(o.dark || '#0e141e');
-  // (at a fine grain: graded smoothly, art px by art px)
-  if (AP > 1) P.each(x, y, x + w, y + h, (xa, ya) => {
-    const i = xa - x, j = ya - y, fi = Math.floor(i), fj = Math.floor(j);
-    let col = lit ? mixRgb(c, [0, 0, 0], j / h * 0.35) : mixRgb(c, [70, 90, 110], (i + j < 3 ? 0.25 : 0) + hash(x + fi, y + fj, 5) * 0.06);
-    if (lit && o.blinds && fj % 2) col = mixRgb(col, [0, 0, 0], 0.4);
-    if (lit && o.curtain && (i < 2 || i >= w - 2)) col = mixRgb(col3(o.curtain), [0, 0, 0], 0.3 + (i < 2 ? i : w - i) * 0.08);
-    if (lit && o.figure && i > w / 3 && i < w / 3 + 3 && j > h / 3) col = mixRgb(col, [12, 8, 12], 0.85);
-    return [col, lit ? 0.35 : 0];
-  });
-  else for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
     let col = lit ? mixRgb(c, [0, 0, 0], j / h * 0.35) : mixRgb(c, [70, 90, 110], (i + j < 3 ? 0.25 : 0) + hash(x + i, y + j, 5) * 0.06);
     if (lit && o.blinds && j % 2) col = mixRgb(col, [0, 0, 0], 0.4);
     if (lit && o.curtain && (i < 2 || i > w - 3)) col = mixRgb(col3(o.curtain), [0, 0, 0], 0.3);

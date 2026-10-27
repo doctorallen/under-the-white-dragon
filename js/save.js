@@ -30,7 +30,6 @@ const Save = {
       Game.s.gear.lvl = Game.s.gear.lvl || {};
       return true;
     }
-    if (d && d.settings) f.settings = d.settings; // (a new game keeps its settings)
     Game.s = f; return false;
   },
 };

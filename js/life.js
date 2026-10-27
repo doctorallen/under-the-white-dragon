@@ -75,7 +75,7 @@ const Life = {
     for (const d of L.drips) if (hash(d.x, Math.floor(t * 2 + d.x), 10) < 0.5 && Math.floor(t * 2 + d.x) !== d.last) { d.last = Math.floor(t * 2 + d.x); this.drops.push({ x: d.x, y: d.y0, vy: 0, y1: d.y1 }); }
     for (const d of this.drops) { d.vy += 500 * dt; d.y += d.vy * dt; if (d.y >= d.y1) { d.done = true; this.splashes.push({ x: d.x, y: d.y1, t: 0 }); } }
     this.drops = this.drops.filter((d) => !d.done);
-    if (L.rain) for (const w of L.wet) for (let k = 0; k < 3; k++) { const x = Game.cam.x + (hash(Game.frame, k, 21) - 0.5) * View.w / AP; if (x > w.x0 && x < w.x1 && !(L.dry || []).some((r) => x > r[0] && x < r[2] && w.y - 1 > r[1] && w.y - 1 < r[3])) this.splashes.push({ x, y: w.y - 1, t: 0 }); }
+    if (L.rain) for (const w of L.wet) for (let k = 0; k < 3; k++) { const x = Game.cam.x + (hash(Game.frame, k, 21) - 0.5) * View.w; if (x > w.x0 && x < w.x1 && !(L.dry || []).some((r) => x > r[0] && x < r[2] && w.y - 1 > r[1] && w.y - 1 < r[3])) this.splashes.push({ x, y: w.y - 1, t: 0 }); }
     for (const s of this.splashes) s.t += dt;
     this.splashes = this.splashes.filter((s) => s.t < 0.18);
     if (this.splashes.length > 80) this.splashes.splice(0, this.splashes.length - 80);
@@ -125,47 +125,42 @@ const Life = {
   // place worked out from the clock, so nothing needs keeping
   drawTraffic(g, gg, cx, cy, layer) {
     const L = World.L;
-    const t = Game.t, w = View.w, A = AP, D = A > 1 ? 2 : 1;
+    const t = Game.t, w = View.w;
     L.traffic.forEach((lane, li) => {
       if ((lane.layer === undefined ? -1 : lane.layer) !== (layer === undefined ? -1 : layer)) return;
       const F = layer === undefined ? World.far : World.layers[layer]; if (!F) return;
       const span = (layer === undefined ? L.far.w : L.layers[layer].w) + 200, scale = lane.scale;
       for (let j = 0; j < lane.n; j++) {
         const off = hash(li, j, 31) * span, x = ((off + t * lane.speed * lane.dir) % span + span) % span - 100;
-        const sx = Math.round((x - cx * F.f) * A), sy = Math.round((lane.y + Math.sin(t * 0.9 + j) * 1.5 - cy * F.fy) * A);
-        if (sx < -30 * A || sx > w + 30 * A) continue;
-        const s = this.art('av' + li + j + lane.dir, () => { const c = car({ col: ['#2a2a3a', '#3a2a2a', '#d8d8e0', '#2a3a3a'][j % 4] }); const [cv, cg] = canvasOf(Math.ceil(60 * scale * A), Math.ceil(22 * scale * A)); cg.imageSmoothingEnabled = true; if (lane.dir < 0) { cg.translate(cv.width, 0); cg.scale(-1, 1); } cg.drawImage(c.c, 0, 0, cv.width, cv.height); return { c: cv, w: cv.width, h: cv.height }; });
+        const sx = Math.round(x - cx * F.f), sy = Math.round(lane.y + Math.sin(t * 0.9 + j) * 1.5 - cy * F.fy);
+        if (sx < -30 || sx > w + 30) continue;
+        const s = this.art('av' + li + j + lane.dir, () => { const c = car({ col: ['#2a2a3a', '#3a2a2a', '#d8d8e0', '#2a3a3a'][j % 4] }); const [cv, cg] = canvasOf(Math.ceil(60 * scale), Math.ceil(22 * scale)); cg.imageSmoothingEnabled = true; if (lane.dir < 0) { cg.translate(cv.width, 0); cg.scale(-1, 1); } cg.drawImage(c.c, 0, 0, cv.width, cv.height); return { c: cv, w: cv.width, h: cv.height }; });
         g.globalAlpha = lane.fog; g.drawImage(s.c, sx - s.w / 2, sy - s.h / 2); g.globalAlpha = 1;
         // head and tail lights, and the glow under
         const front = sx + lane.dir * s.w / 2, back = sx - lane.dir * s.w / 2;
-        gg.fillStyle = '#fff4d8'; gg.fillRect(front - (lane.dir > 0 ? D : 0), sy, D, D);
-        gg.fillStyle = '#ff3030'; gg.fillRect(back - (lane.dir > 0 ? 0 : D), sy, D, D);
-        if (hash(li, j, 33) < 0.4) { gg.fillStyle = ['#3af0e0', '#ff4ab0'][j % 2]; gg.fillRect(sx - s.w / 3, sy + Math.ceil(s.h / 2), Math.ceil(s.w * 0.66), D); }
+        gg.fillStyle = '#fff4d8'; gg.fillRect(front - (lane.dir > 0 ? 1 : 0), sy, 1, 1);
+        gg.fillStyle = '#ff3030'; gg.fillRect(back - (lane.dir > 0 ? 0 : 1), sy, 1, 1);
+        if (hash(li, j, 33) < 0.4) { gg.fillStyle = ['#3af0e0', '#ff4ab0'][j % 2]; gg.fillRect(sx - s.w / 3, sy + Math.ceil(s.h / 2), Math.ceil(s.w * 0.66), 1); }
       }
     });
   },
   // litter, critters, smoke: in the world, lit by the light map
   drawWorld(g, gg, cx, cy) {
     const t = Game.t;
-    worldGrid(g, (ix, iy) => this.drawBits(g, ix, iy));
-    for (const c of this.critters) {
-      const moving = Math.abs(c.vx) > 3, fr = moving ? Math.floor(t * 12) % 2 : 0;
-      const s = c.kind === 'rat' ? this.rat(fr, c.face < 0) : c.kind === 'dog' ? this.dog(fr, c.face < 0) : c.kind === 'owl' ? this.owl(hash(Math.floor(t * 2), c.i, 3) < 0.08 ? 1 : 0, c.face < 0) : this.cat(c.kind === 'cat' && !moving ? Math.floor(t * 0.7 + c.i) % 2 : fr, c.face < 0);
-      const x = Math.round(c.x * AP - s.ax - View.cxA), y = Math.round(c.y * AP - s.ay - View.cyA);
-      if (x > -16 * AP && x < View.w + 16 * AP && y > -12 * AP && y < View.h + 12 * AP) { g.drawImage(s.c, x, y); if (s.e) gg.drawImage(s.e, x, y); }
-    }
-  },
-  // smoke and litter, in world px (on the world grid: see worldGrid)
-  drawBits(g, cx, cy) {
-    const vw = View.w / AP, vh = View.h / AP;
     for (const p of this.puffs) { const a = (1 - p.t / p.life) * (p.thin ? 0.25 : 0.35), r = 1 + (p.t / p.life) * (p.thin ? 2 : 5); g.globalAlpha = a; g.fillStyle = p.kind === 'steam' ? '#c8ccd8' : '#8a8690'; g.fillRect(Math.round(p.x - r - cx), Math.round(p.y - r - cy), Math.ceil(r * 2), Math.ceil(r * 2)); }
     g.globalAlpha = 1;
     for (const p of this.trash) {
-      const x = Math.round(p.x - cx), y = Math.round(p.y - cy); if (x < -6 || x > vw + 6 || y < -6 || y > vh + 6) continue;
+      const x = Math.round(p.x - cx), y = Math.round(p.y - cy); if (x < -6 || x > View.w + 6 || y < -6 || y > View.h + 6) continue;
       const f = Math.floor(p.spin) % 3;
       if (p.kind === 'paper') { g.fillStyle = '#c8c0a8'; if (f === 0 || p.y >= p.y0) g.fillRect(x - 2, y - 1, 4, 1); else if (f === 1) g.fillRect(x - 1, y - 2, 2, 2); else g.fillRect(x - 1, y - 3, 1, 3); g.fillStyle = '#5a5448'; g.fillRect(x - 1, y - 1, 1, 1); }
       else if (p.kind === 'bag') { g.fillStyle = '#d8dce8'; g.fillRect(x - 2, y - 3 + (f === 1 ? 1 : 0), 3, 3); g.fillStyle = '#9aa0b0'; g.fillRect(x - 2, y - 1, 3, 1); }
       else { g.fillStyle = '#b83a2a'; g.fillRect(x - 1, y - 2, f % 2 ? 2 : 3, f % 2 ? 2 : 1); g.fillStyle = '#e8e8e8'; g.fillRect(x - 1, y - 2, 1, 1); }
+    }
+    for (const c of this.critters) {
+      const moving = Math.abs(c.vx) > 3, fr = moving ? Math.floor(t * 12) % 2 : 0;
+      const s = c.kind === 'rat' ? this.rat(fr, c.face < 0) : c.kind === 'dog' ? this.dog(fr, c.face < 0) : c.kind === 'owl' ? this.owl(hash(Math.floor(t * 2), c.i, 3) < 0.08 ? 1 : 0, c.face < 0) : this.cat(c.kind === 'cat' && !moving ? Math.floor(t * 0.7 + c.i) % 2 : fr, c.face < 0);
+      const x = Math.round(c.x - s.ax - cx), y = Math.round(c.y - s.ay - cy);
+      if (x > -16 && x < View.w + 16 && y > -12 && y < View.h + 12) { g.drawImage(s.c, x, y); if (s.e) gg.drawImage(s.e, x, y); }
     }
   },
   // drips and splashes catch the light: they go in the glow, faintly
@@ -178,7 +173,7 @@ const Life = {
   drawAds(gg, cx, cy) {
     const t = Game.t;
     for (const A of World.L.ads) {
-      const x0 = A.x - cx, y0 = A.y - cy; if (x0 > View.w / AP || y0 > View.h / AP || x0 + A.w < 0 || y0 + A.h < 0) continue;
+      const x0 = A.x - cx, y0 = A.y - cy; if (x0 > View.w || y0 > View.h || x0 + A.w < 0 || y0 + A.h < 0) continue;
       const [c1, c2] = A.cols, put = (x, y, c, a = 1) => { if (x < 0 || y < 0 || x >= A.w || y >= A.h) return; gg.globalAlpha = a * (y % 2 ? 0.6 : 1); gg.fillStyle = css(c); gg.fillRect(Math.round(x0 + x), Math.round(y0 + y), 1, 1); };
       let lit = c1;
       if (A.kind === 'marquee') {

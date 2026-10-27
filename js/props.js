@@ -97,8 +97,8 @@ function holo(w, h, colr, kind = 'fish', seed = 1) {
   if (kind === 'face') { for (let a = 0; a < Math.PI * 2; a += 0.04) put(w / 2 + Math.cos(a) * w * 0.3, h * 0.45 + Math.sin(a) * h * 0.38); for (const ex of [-0.12, 0.12]) for (let k = -2; k <= 2; k++) put(w / 2 + ex * w + k, h * 0.38, 2); for (let k = -4; k <= 4; k++) put(w / 2 + k, h * 0.62 + Math.abs(k) * 0.3); }
   if (kind === 'bars') { for (let k = 0; k < 6; k++) { const bh = 4 + hash(k, 1, seed) * (h - 8); for (let y = 0; y < bh; y++) if (y % 2 === 0) for (let x = 0; x < 3; x++) put(4 + k * 6 + x, h - 3 - y); } }
   // scanlines: every other row dimmed
-  const out = S.done(), g = out.e.getContext('2d'); g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,0.55)'; for (let y = 0; y < h; y += 2) g.fillRect(0, y * AP, w * AP, AP);
-  const g2 = out.c.getContext('2d'); g2.globalCompositeOperation = 'destination-out'; g2.fillStyle = 'rgba(0,0,0,0.75)'; g2.fillRect(0, 0, w * AP, h * AP);
+  const out = S.done(), g = out.e.getContext('2d'); g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,0.55)'; for (let y = 0; y < h; y += 2) g.fillRect(0, y, w, 1);
+  const g2 = out.c.getContext('2d'); g2.globalCompositeOperation = 'destination-out'; g2.fillStyle = 'rgba(0,0,0,0.75)'; g2.fillRect(0, 0, w, h);
   return out;
 }
 // the part of a sprite below a line, for drawing in front of people

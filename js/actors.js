@@ -167,7 +167,7 @@ const Actors = {
       g.translate(0, up.w); g.rotate(-Math.PI / 2); g.drawImage(up.c, 0, 0); g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(10,6,12,0.35)'; g.fillRect(0, 0, up.h, up.w);
       const d = g.getImageData(0, 0, up.h, up.w).data; let low = 0; for (let y = up.w - 1; y >= 0 && !low; y--) for (let x = 0; x < up.h; x++) if (d[(y * up.h + x) * 4 + 3]) { low = y; break; }
-      s = { c, e: null, w: up.h, h: up.w, ax: up.ay - 16 * AP, ay: low };
+      s = { c, e: null, w: up.h, h: up.w, ax: up.ay - 16, ay: low };
       if (b.face > 0) s = flipSprite(s);
       this.bodyCache.set(k, s);
     }

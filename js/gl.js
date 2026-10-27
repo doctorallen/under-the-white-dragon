@@ -9,9 +9,6 @@
 //   picture + glow + bloom, the wet ground's reflections, the fade, scaled
 //   up to the screen by whole pixels
 //
-// At a fine grain (AP art px to a world px) the glow is first shrunk to world
-// px by averaging AP x AP, so the bloom spreads as far in the world as ever.
-//
 // Halving by averaging keeps a glow's total light the same wherever it lands
 // on the grid, so the bloom holds steady as the camera moves (the 2D canvas
 // downscale skips pixels instead, and its bloom flickered). Without WebGL2
@@ -47,11 +44,6 @@ const GL = {
     };
     // halve: one filtered sample in the middle of each 2 x 2 block averages it
     this.down = prog('uniform sampler2D src; uniform vec2 size; out vec4 o; void main(){ o = vec4(texture(src, gl_FragCoord.xy / size).rgb, 1.0); }');
-    // shrink by k: the average of each k x k block
-    this.shrink = prog(`uniform sampler2D src; uniform vec2 size, srcSize; uniform int k; out vec4 o;
-      void main(){ vec2 base = floor(gl_FragCoord.xy) * float(k); vec3 c = vec3(0.0);
-        for (int j = 0; j < 4; j++) for (int i = 0; i < 4; i++) { if (i >= k || j >= k) continue; c += texture(src, (base + vec2(float(i), float(j)) + 0.5) / srcSize).rgb; }
-        o = vec4(c / float(k * k), 1.0); }`);
     // a 9-tap gaussian in five filtered samples, along one direction
     this.blur = prog(`uniform sampler2D src; uniform vec2 size; uniform vec2 dir; out vec4 o;
       void main(){ vec2 uv = gl_FragCoord.xy / size, d = dir / size;
@@ -60,12 +52,12 @@ const GL = {
         c += (texture(src, uv + d * 3.230769).rgb + texture(src, uv - d * 3.230769).rgb) * 0.070270;
         o = vec4(c, 1.0); }`);
     // the picture, its glow and bloom, the reflections, the fade
-    this.comp = prog(`uniform sampler2D scene, glow, b1, b2; uniform vec2 low, b1s, b2s; uniform float scale, screenH, fade, time, ap;
+    this.comp = prog(`uniform sampler2D scene, glow, b1, b2; uniform vec2 low, b1s, b2s; uniform float scale, screenH, fade, time;
       uniform vec4 wet[4]; uniform vec2 wetk[4]; uniform int nwet; out vec4 o;
       vec3 at(vec2 p) {
         vec2 uv = (floor(p) + 0.5) / low;
         vec3 c = texture(scene, uv).rgb + texture(glow, uv).rgb;
-        c += texture(b1, p / (b1s * 2.0 * ap)).rgb * 0.8 + texture(b2, p / (b2s * 4.0 * ap)).rgb * 0.55;
+        c += texture(b1, p / (b1s * 2.0)).rgb * 0.8 + texture(b2, p / (b2s * 4.0)).rgb * 0.55;
         return c;
       }
       void main() {
@@ -73,10 +65,10 @@ const GL = {
         vec3 c = at(p);
         for (int i = 0; i < 4; i++) {
           if (i >= nwet) break;
-          vec4 w = wet[i]; float k = floor(p.y) - w.y, kw = k / ap;
+          vec4 w = wet[i]; float k = floor(p.y) - w.y;
           if (p.x >= w.x && p.x < w.z && k >= 0.0 && k < w.w && w.y - 1.0 - k >= 0.0) {
-            float off = kw > 2.0 ? floor(sin(kw * 0.9 + time * 2.0 + kw * kw * 0.05) + 0.5) : 0.0;
-            float a = wetk[i].x * (1.0 - k / wetk[i].y) * (mod(floor(kw), 2.0) > 0.5 ? 0.8 : 1.0);
+            float off = k > 2.0 ? floor(sin(k * 0.9 + time * 2.0 + k * k * 0.05) + 0.5) : 0.0;
+            float a = wetk[i].x * (1.0 - k / wetk[i].y) * (mod(k, 2.0) > 0.5 ? 0.8 : 1.0);
             c += at(vec2(floor(p.x) + off + 0.5, w.y - 1.0 - k + 0.5)) * a;
           }
         }
@@ -85,14 +77,14 @@ const GL = {
     this.vao = g.createVertexArray();
     const tex = (filter) => { const t = g.createTexture(); g.bindTexture(g.TEXTURE_2D, t); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, filter); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, filter); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE); return t; };
     this.tScene = tex(g.NEAREST); this.tGlow = tex(g.LINEAR);
-    this.fb = []; for (let i = 0; i < 5; i++) { const t = tex(g.LINEAR), f = g.createFramebuffer(); this.fb.push({ t, f, w: 0, h: 0 }); }
+    this.fb = []; for (let i = 0; i < 4; i++) { const t = tex(g.LINEAR), f = g.createFramebuffer(); this.fb.push({ t, f, w: 0, h: 0 }); }
     this.w = 0; this.h = 0;
   },
   // the view's size: the bloom targets follow it
   size(w, h) {
     const g = this.g; this.w = w; this.h = h;
-    const sw = Math.ceil(w / AP), sh = Math.ceil(h / AP), half = [Math.ceil(sw / 2), Math.ceil(sh / 2)], quarter = [Math.ceil(sw / 4), Math.ceil(sh / 4)];
-    [half, half, quarter, quarter, [sw, sh]].forEach(([fw, fh], i) => {
+    const half = [Math.ceil(w / 2), Math.ceil(h / 2)], quarter = [Math.ceil(w / 4), Math.ceil(h / 4)];
+    [half, half, quarter, quarter].forEach(([fw, fh], i) => {
       const F = this.fb[i]; F.w = fw; F.h = fh;
       g.bindTexture(g.TEXTURE_2D, F.t); g.texImage2D(g.TEXTURE_2D, 0, g.RGBA8, fw, fh, 0, g.RGBA, g.UNSIGNED_BYTE, null);
       g.bindFramebuffer(g.FRAMEBUFFER, F.f); g.framebufferTexture2D(g.FRAMEBUFFER, g.COLOR_ATTACHMENT0, g.TEXTURE_2D, F.t, 0);
@@ -116,10 +108,8 @@ const GL = {
     g.pixelStorei(g.UNPACK_FLIP_Y_WEBGL, false); g.pixelStorei(g.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     g.bindTexture(g.TEXTURE_2D, this.tScene); g.texImage2D(g.TEXTURE_2D, 0, g.RGBA8, g.RGBA, g.UNSIGNED_BYTE, scene);
     g.bindTexture(g.TEXTURE_2D, this.tGlow); g.texImage2D(g.TEXTURE_2D, 0, g.RGBA8, g.RGBA, g.UNSIGNED_BYTE, glow);
-    const [A, B, C, D, E] = this.fb;
-    // at a fine grain, the glow shrunk to world px first
-    if (AP > 1) { this.pass(this.shrink, E, this.tGlow, (u) => { g.uniform2f(u.srcSize, V.w, V.h); g.uniform1i(u.k, AP); }); this.pass(this.down, A, E.t); }
-    else this.pass(this.down, A, this.tGlow);
+    const [A, B, C, D] = this.fb;
+    this.pass(this.down, A, this.tGlow);
     this.pass(this.blur, B, A.t, (u) => g.uniform2f(u.dir, 1, 0));
     this.pass(this.blur, A, B.t, (u) => g.uniform2f(u.dir, 0, 1));
     this.pass(this.down, C, A.t);
@@ -129,7 +119,7 @@ const GL = {
     g.useProgram(P.p); g.bindFramebuffer(g.FRAMEBUFFER, null); g.viewport(0, 0, g.drawingBufferWidth, g.drawingBufferHeight);
     [[this.tScene, 'scene'], [this.tGlow, 'glow'], [A.t, 'b1'], [C.t, 'b2']].forEach(([t, name], i) => { g.activeTexture(g.TEXTURE0 + i); g.bindTexture(g.TEXTURE_2D, t); g.uniform1i(P.u[name], i); });
     g.uniform2f(P.u.low, V.w, V.h); g.uniform2f(P.u.b1s, A.w, A.h); g.uniform2f(P.u.b2s, C.w, C.h);
-    g.uniform1f(P.u.scale, V.out); g.uniform1f(P.u.ap, AP); g.uniform1f(P.u.screenH, g.drawingBufferHeight); g.uniform1f(P.u.fade, clamp(fade, 0, 1)); g.uniform1f(P.u.time, Game.t);
+    g.uniform1f(P.u.scale, V.out); g.uniform1f(P.u.screenH, g.drawingBufferHeight); g.uniform1f(P.u.fade, clamp(fade, 0, 1)); g.uniform1f(P.u.time, Game.t);
     const wv = new Float32Array(16), wk = new Float32Array(8); wets.slice(0, 4).forEach((w, i) => { wv.set([w.x0, w.y0, w.x1, w.depth], i * 4); wk.set([w.k, w.depth], i * 2); });
     g.uniform4fv(P.u.wet, wv); g.uniform2fv(P.u.wetk, wk); g.uniform1i(P.u.nwet, Math.min(4, wets.length));
     g.drawArrays(g.TRIANGLES, 0, 3);
