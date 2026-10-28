@@ -93,15 +93,16 @@ Object.assign(DEVICE, {
 });
 
 const Parts = {
-  make(k, g, o = {}) { const s = Game.s; s.pid = (s.pid || 1) + 1; return Object.assign({ id: s.pid, k, g, st: 'ok', from: World.L ? World.L.id : 'd_dragon', how: 'strip' }, o); },
+  // (a part is a thing of its own, Tycho.items.things: its id from Game.s.pid)
+  make(k, g, o = {}) { return things.make(things.nextId(Game.s, 'pid', 1), { k, g, st: 'ok', from: World.L ? World.L.id : 'd_dragon', how: 'strip' }, o); },
   give(p, quiet) { Game.s.parts.push(p); if (!quiet) Game.toast('Onto the shelf: ' + this.name(p) + '.', 'good'); return p; },
-  take(id) { const s = Game.s, i = s.parts.findIndex((p) => p.id === id); return i < 0 ? null : s.parts.splice(i, 1)[0]; },
-  have(k) { return Game.s.parts.filter((p) => p.k === k); },
+  take(id) { return things.pull(Game.s.parts, id); },
+  have(k) { return things.where(Game.s.parts, { k }); },
   // dead and burnt parts are only good for scrap: what a stall gives for them
   junk() { return Game.s.parts.filter((p) => p.st === 'dead' || p.st === 'burnt'); },
   // (and the salvage you've stripped: wire, alloy, glass, coolant, chips)
-  junkValue() { return this.junk().reduce((a, p) => a + (p.st === 'dead' ? 3 : 1) + (p.g === 'clinic' || p.g === 'military' ? 4 : 0), 0) + SALVAGE_ORDER.reduce((a, k) => a + (Game.s.pack[k] || 0) * SALVAGE[k].price, 0); },
-  sellJunk() { const v = this.junkValue(); if (!v) return; Game.s.parts = Game.s.parts.filter((p) => p.st !== 'dead' && p.st !== 'burnt'); for (const k of SALVAGE_ORDER) Game.s.pack[k] = 0; Game.s.cr += v; Game.s.flags.sold = 1; Game.toast(`You tip it all into the scrap bin: ${v} cr.`, 'good'); Hud.refresh(); Save.write(); },
+  junkValue() { return this.junk().reduce((a, p) => a + (p.st === 'dead' ? 3 : 1) + (p.g === 'clinic' || p.g === 'military' ? 4 : 0), 0) + bag.worth(Game.s.pack, (k, n) => n * SALVAGE[k].price, SALVAGE_ORDER); },
+  sellJunk() { const v = this.junkValue(); if (!v) return; Game.s.parts = Game.s.parts.filter((p) => p.st !== 'dead' && p.st !== 'burnt'); bag.empty(Game.s.pack, SALVAGE_ORDER); Game.s.cr += v; Game.s.flags.sold = 1; Game.toast(`You tip it all into the scrap bin: ${v} cr.`, 'good'); Hud.refresh(); Save.write(); },
   name(p) { return GRADE[p.g].name + ' ' + PART[p.k].name.toLowerCase(); },
   // where it's from: "bought at the Overpass Market"
   from(p) { const L = LEVELS[p.from]; return (HOW[p.how] || 'found') + (p.how === 'pull' ? ' from ' + (p.out || 'a job') : L ? (p.how === 'trade' ? ' at ' : ' in ') + L.name : ''); },
@@ -125,21 +126,12 @@ const Parts = {
   // a kind at a time, in PART's order; under each, a row per grade and gauge,
   // best first; on each row, how many are fine, worn, dead and burnt. Where a
   // part came from isn't shown: a worn street cell is a worn street cell.
+  // (Counted by Tycho.items.group, a level at a time.)
   grades: ['military', 'clinic', 'street', 'scrap'],
   states: ['ok', 'worn', 'dead', 'burnt'],
   stock(list = Game.s.parts) {
-    return Object.keys(PART).map((k) => {
-      const mine = list.filter((p) => p.k === k), rows = [];
-      for (const g of this.grades) {
-        const gauges = [...new Set(mine.filter((p) => p.g === g).map((p) => p.gauge || ''))].sort();
-        for (const ga of gauges) {
-          const these = mine.filter((p) => p.g === g && (p.gauge || '') === ga), st = {};
-          for (const s of this.states) { const n = these.filter((p) => p.st === s).length; if (n) st[s] = n; }
-          rows.push({ g, gauge: ga, n: these.length, st });
-        }
-      }
-      return { k, n: mine.length, rows };
-    }).filter((x) => x.n);
+    return group(list, [{ by: 'k', order: Object.keys(PART) }, { by: 'g', order: this.grades }, { by: (p) => p.gauge || '' }, { by: 'st', order: this.states }])
+      .map(({ key: k, n, groups }) => ({ k, n, rows: groups.flatMap((G) => G.groups.map((ga) => ({ g: G.key, gauge: ga.key, n: ga.n, st: Object.fromEntries(ga.groups.map((s) => [s.key, s.n])) }))) }));
   },
   // "fine ×2 · worn ×1", as chips colored by state
   counts(st) { return this.states.filter((s) => st[s]).map((s) => `<em class="st ${s}">${PART_STATE[s]} ×${st[s]}</em>`).join(''); },
@@ -155,12 +147,8 @@ const Parts = {
   // (grade, gauge, state), best first; a part pulled from this very job is
   // the one taken, so putting it back counts as putting it back
   choices(k, job) {
-    const have = this.have(k), out = [];
-    for (const g of this.grades) for (const s of this.states) {
-      const these = have.filter((p) => p.g === g && p.st === s), gauges = [...new Set(these.map((p) => p.gauge || ''))].sort();
-      for (const ga of gauges) { const same = these.filter((p) => (p.gauge || '') === ga); out.push({ g, st: s, gauge: ga, n: same.length, id: (same.find((p) => p.how === 'pull' && p.out === job) || same[0]).id }); }
-    }
-    return out;
+    return group(this.have(k), [{ by: 'g', order: this.grades }, { by: 'st', order: this.states }, { by: (p) => p.gauge || '' }])
+      .flatMap((G) => G.groups.flatMap((S) => S.groups.map((ga) => ({ g: G.key, st: S.key, gauge: ga.key, n: ga.n, id: (ga.items.find((p) => p.how === 'pull' && p.out === job) || ga.items[0]).id }))));
   },
   // a part's picture, as on the bench (made once a kind and grade)
   icons: {},

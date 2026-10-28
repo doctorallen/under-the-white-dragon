@@ -69,7 +69,7 @@ const Hud = {
     this.open = which; this.who = who || this.who; Game.paused = true; $('panel').hidden = false; this.panel(which);
   },
   items(o, cls = '') { return SALVAGE_ORDER.filter((k) => o[k]).map((k) => `<span class="item ${cls}"><i style="background:${SALVAGE[k].col[1]}"></i>${SALVAGE[k].name} <b>${o[k]}</b></span>`).join('') || '<span class="dim">Nothing.</span>'; },
-  cost(c) { return Object.keys(c).map((k) => { const ok = k === 'cr' ? Game.s.cr >= c.cr : (Game.s.pack[k] || 0) >= c[k]; return `<span class="need ${ok ? 'ok' : ''}">${k === 'cr' ? c.cr + ' cr' : `<img class="ico" src="${this.icon(k)}" alt="">${c[k]} ${SALVAGE[k].name.toLowerCase()}`}${k !== 'cr' && !ok ? ` <i class="have">(${Game.s.pack[k] || 0})</i>` : ''}</span>`; }).join(' '); },
+  cost(c) { return Object.keys(c).map((k) => { const ok = k === 'cr' ? Game.s.cr >= c.cr : bag.count(Game.s.pack, k) >= c[k]; return `<span class="need ${ok ? 'ok' : ''}">${k === 'cr' ? c.cr + ' cr' : `<img class="ico" src="${this.icon(k)}" alt="">${c[k]} ${SALVAGE[k].name.toLowerCase()}`}${k !== 'cr' && !ok ? ` <i class="have">(${bag.count(Game.s.pack, k)})</i>` : ''}</span>`; }).join(' '); },
   // salvage icons, as images (made once)
   icons: {},
   icon(k) { if (this.icons[k]) return this.icons[k]; const sp = itemIcon(k), [c, g] = canvasOf(48, 48); g.drawImage(sp.c, 0, 0, 48, 48); if (sp.e) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.5; g.drawImage(sp.e, 0, 0, 48, 48); } return (this.icons[k] = c.toDataURL()); },
@@ -91,9 +91,9 @@ const Hud = {
       title.textContent = 'Call a cab';
       h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down out front of the White Dragon.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>${fare ? `Call a cab · ${fare} cr` : 'Call Ozzy · free'}</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
     } else if (which === 'vendor') {
-      const n = this.who, rate = (n && n.def.rate) || 1, worth = SALVAGE_ORDER.reduce((a, k) => a + Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate), 0);
+      const n = this.who, rate = (n && n.def.rate) || 1, worth = bag.worth(s.pack, (k, c) => Math.round(c * SALVAGE[k].price * rate), SALVAGE_ORDER);
       title.textContent = n ? n.def.name : 'Vendor';
-      h += `<p class="sub">${n ? n.def.lines[0] : ''}</p>${talkBtn(n)}<div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${s.pack[k] || 0}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
+      h += `<p class="sub">${n ? n.def.lines[0] : ''}</p>${talkBtn(n)}<div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${bag.count(s.pack, k)}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
       h += `<div class="buttons"><button data-act="sellAll" ${worth ? '' : 'disabled'}>Sell everything for ${worth} cr</button></div>`;
     } else if (PANELS[which]) {
       const [t, html] = PANELS[which](s); title.textContent = t; h += html;
@@ -117,7 +117,7 @@ const Hud = {
     const crEl = $('panelCr'); crEl.hidden = !['vendor', 'cab', 'pack', 'partshop', 'grocer'].includes(which); crEl.textContent = s.cr + ' cr';
     // the buttons
     const act = { resume: () => this.toggle(null), sleep: () => { const h0 = Game.hour(); Game.pass(h0 < 8 ? 8 - h0 : 32 - h0); const fresh = Game.s.morning !== Game.s.day; Game.s.morning = Game.s.day; const news = fresh ? Jobs.morning() : (Jobs.news = []); /* (one morning a day: a nap before eight doesn't bring another) */ Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
-      sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; s.flags.sold = 1; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
+      sellAll: () => { const rate = (this.who && this.who.def.rate) || 1, cr = bag.worth(s.pack, (k, n) => Math.round(n * SALVAGE[k].price * rate), SALVAGE_ORDER); bag.empty(s.pack, SALVAGE_ORDER); s.cr += cr; s.flags.sold = 1; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => this.toggle('dev'),
       cab: () => { const fare = Flight.cabFare(); if (['d_dragon', 'd_noodles', 'd_cellar'].includes(World.L.id) || (fare && !Game.pay({ cr: fare }))) return; Flight.start('d_dragon', 'enter', true); },
@@ -129,6 +129,6 @@ const Hud = {
     if (which === 'tyrell') TyrellMode.attach();
     if (which === 'dev') Dev.bind(body);
     body.querySelectorAll('button[data-tab]').forEach((b) => (b.onclick = () => { this.tab = b.dataset.tab; this.panel('pack'); }));
-    body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = (this.who && this.who.def.rate) || 1, n = s.pack[k] || 0; s.cr += Math.round(n * SALVAGE[k].price * rate); s.pack[k] = 0; s.flags.sold = 1; this.refresh(); }));
+    body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = (this.who && this.who.def.rate) || 1, n = bag.count(s.pack, k); s.cr += Math.round(n * SALVAGE[k].price * rate); bag.empty(s.pack, [k]); s.flags.sold = 1; this.refresh(); }));
   },
 };

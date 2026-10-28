@@ -6,7 +6,7 @@
 // what's hostile. With the dev setting on, a tap on the map puts you there.
 // ---------------------------------------------------------------------------
 const MapView = {
-  cache: {}, cv: null, s: 1, ox: 0, oy: 0, img: null,
+  cache: {}, cv: null, s: 1, ox: 0, oy: 0, img: null, unlisten: null,
   html() { return '<div class="mapwrap"><canvas id="mapcv"></canvas><div class="mapbtns"><button data-map="in">+</button><button data-map="out">−</button><button data-map="fit">Fit</button><button data-map="me">You</button></div><p class="maphint">Drag to look around, pinch or scroll to zoom.' + (Dev.s.teleport ? ' Tap to teleport.' : '') + '</p></div>'; },
   // the level as one picture, made once per level
   picture() {
@@ -24,18 +24,14 @@ const MapView = {
     const cv = (this.cv = $('mapcv')); if (!cv) return;
     const dpr = window.devicePixelRatio || 1; cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr);
     this.img = this.picture(); this.fit(); this.draw();
-    // dragging, pinching, the wheel; a tap teleports in dev mode
-    const pts = new Map(); let moved = 0, pinch = 0;
-    cv.onpointerdown = (e) => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); } };
-    cv.onpointermove = (e) => {
-      if (!pts.has(e.pointerId)) return; const [px, py] = pts.get(e.pointerId), dx = e.clientX - px, dy = e.clientY - py; pts.set(e.pointerId, [e.clientX, e.clientY]);
-      if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) this.zoom(d / pinch, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); pinch = d; moved = 99; return; }
-      moved += Math.abs(dx) + Math.abs(dy); this.ox += dx * dpr; this.oy += dy * dpr; this.draw();
-    };
-    cv.onpointerup = (e) => {
-      pts.delete(e.pointerId); if (pts.size < 2) pinch = 0;
-      if (moved < 6 && Dev.s.teleport) { const r = cv.getBoundingClientRect(), x = ((e.clientX - r.left) * dpr - this.ox) / this.s, y = ((e.clientY - r.top) * dpr - this.oy) / this.s; Player.place(x, y); Player.vx = Player.vy = 0; Game.cam.x = x; Game.cam.y = y - 30; Hud.toggle(null); }
-    };
+    // dragging and pinching (Tycho's gestures), the wheel; a tap teleports in dev mode
+    if (this.unlisten) this.unlisten();
+    this.unlisten = new Tycho.input.Gestures({
+      travel: 6,
+      onPan: (dx, dy) => { this.ox += dx * dpr; this.oy += dy * dpr; this.draw(); },
+      onPinch: (k, mx, my) => { if (k !== null) this.zoom(k, mx, my); },
+      onTap: (tx, ty) => { if (!Dev.s.teleport) return; const r = cv.getBoundingClientRect(), x = ((tx - r.left) * dpr - this.ox) / this.s, y = ((ty - r.top) * dpr - this.oy) / this.s; Player.place(x, y); Player.vx = Player.vy = 0; Game.cam.x = x; Game.cam.y = y - 30; Hud.toggle(null); },
+    }).listen(cv);
     cv.onwheel = (e) => { e.preventDefault(); const r = cv.getBoundingClientRect(); this.zoom(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX - r.left, e.clientY - r.top); };
     document.querySelectorAll('button[data-map]').forEach((b) => (b.onclick = () => { const k = b.dataset.map; if (k === 'fit') this.fit(); else if (k === 'me') { this.s = Math.max(this.s, 2 * dpr); this.ox = cv.width / 2 - Player.x * this.s; this.oy = cv.height / 2 - Player.y * this.s; } else this.zoom(k === 'in' ? 1.5 : 1 / 1.5, cv.clientWidth / 2, cv.clientHeight / 2); this.draw(); }));
   },

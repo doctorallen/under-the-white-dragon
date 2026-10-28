@@ -77,14 +77,14 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/things.js` | Props in play: looks, yields, prompts, uses |
 | `js/game.js` | `Game`: state and rules |
 | `js/save.js` | localStorage save and load |
-| `js/input.js` | Keyboard and touch |
+| `js/input.js` | Keyboard and touch, on Tycho's controls (`Tycho.input`) |
 | `js/player.js` | The runner: movement, ladders, Use; sparks |
 | `js/actors.js` | People's routines, roles and talk |
 | `js/parts.js` | Parts, devices, stall stock and the notebook (`Parts`) |
 | `js/bench.js` | The bench: the repair, its tools and its drawing (`Bench`) |
 | `js/jobs.js` | Jobs at the White Dragon, residents' odd jobs, heat, the morning after (`Jobs`) |
 | `js/tips.js` | Residents' tips about parts out in the city, and the tool tiers that strip them (`Tips`, `TOOLS`, `TIPS`) |
-| `js/tutorial.js` | The opening: Lin's radio on the bench, walked through step by step, then Ozzy's nav unit and where parts come from (`Tutorial`, `TUT`) |
+| `js/tutorial.js` | The opening: Lin's radio on the bench, walked through step by step, then Ozzy's nav unit and where parts come from (`Tutorial`, `TUT`, on Tycho's guide) |
 | `js/town.js` | The city's people on screen: the block's own residents and their days, the routes between places, who's in your level now (`Town`, `RESIDENTS`) |
 | `js/census.js` | Every place in the city people live, work and spend time, read from the levels: streets, rooms, doors, spots, posts (`Census`) |
 | `js/folk.js` | The city's population: households made to fill the jobs and homes, with schools and hobbies (`Folk`) |

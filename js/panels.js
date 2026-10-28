@@ -28,7 +28,7 @@ const PANELS = {
     const n = Hud.who, stock = PART_STOCK[n.def.stock];
     let h = `<p class="sub">"${n.def.lines[n.line % n.def.lines.length]}"</p>${talkBtn(n)}<div class="parts">`;
     h += stockHtml(n.def.stock, s);
-    const jn = Parts.junk().length, sv = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0), 0); if (jn || sv) h += `<div class="part tool" style="--r:#8a8a90"><b>The scrap bin</b><small>${[jn ? jn + ' dead or burnt part' + (jn > 1 ? 's' : '') + ' off your shelf' : '', sv ? sv + ' bits of salvage' : ''].filter(Boolean).join(' and ')}: good for nothing but the metal.</small><div class="tbtns"><button data-selljunk>Sell for ${Parts.junkValue()} cr</button></div></div>`;
+    const jn = Parts.junk().length, sv = bag.total(s.pack, SALVAGE_ORDER); if (jn || sv) h += `<div class="part tool" style="--r:#8a8a90"><b>The scrap bin</b><small>${[jn ? jn + ' dead or burnt part' + (jn > 1 ? 's' : '') + ' off your shelf' : '', sv ? sv + ' bits of salvage' : ''].filter(Boolean).join(' and ')}: good for nothing but the metal.</small><div class="tbtns"><button data-selljunk>Sell for ${Parts.junkValue()} cr</button></div></div>`;
     const t = Tips.forSale(n.def.stock);
     if (t) { const T = TOOLS[t], can = Tips.tier() === t - 1; h += `<div class="part tool" style="--r:#ffd040"><b>${T.name} · tools</b><small>${T.note}${can ? '' : ' (After the ' + TOOLS[t - 1].name.toLowerCase() + ': one thing at a time.)'}</small><div class="tbtns"><button data-buytool="${t}" ${can && s.cr >= T.cr ? '' : 'disabled'}>${T.cr} cr</button></div></div>`; }
     return [n.def.name + '\'s parts', h + '</div>'];
@@ -63,10 +63,10 @@ function stockHtml(key, s) {
 // what you carry: the parts on your shelf at home (out in the city it helps
 // to know), and the salvage in your pockets
 function itemsTab(s) {
-  const worth = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0) * SALVAGE[k].price, 0);
+  const worth = bag.worth(s.pack, (k, n) => n * SALVAGE[k].price, SALVAGE_ORDER);
   let h = `<p class="sub">${s.cr} cr. Salvage sells at the stalls' scrap bins.</p>`;
   h += `<h3>On your shelf at home · ${TOOLS[Tips.tier()].name.toLowerCase()}</h3>` + (s.parts.length ? Parts.stockHtml() : '<p class="dim">No parts yet. Strip machines, or buy them at the stalls.</p>');
-  const ks = SALVAGE_ORDER.filter((k) => s.pack[k] > 0);
+  const ks = SALVAGE_ORDER.filter((k) => bag.count(s.pack, k) > 0);
   if (ks.length) h += `<h3>Salvage · worth about ${worth} cr for scrap</h3><div class="tiles">` + ks.map((k) => `<div class="tile" style="--r:${SALVAGE[k].col[1]}"><img src="${Hud.icon(k)}" alt=""><b>${SALVAGE[k].name}</b><span class="n">× ${s.pack[k]}</span><small>${SALVAGE[k].price} cr each for scrap</small></div>`).join('') + '</div>';
   return h;
 }
