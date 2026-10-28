@@ -197,8 +197,8 @@ const Bench = {
     $('benchmsg').textContent = this.msg || this.hint();
     let tray = '';
     if (b.open && this.sel && !b.slots[this.sel].p) {
-      const S = this.D.slots[this.sel], have = Parts.have(S.kind);
-      tray = `<h3>Fit ${PART[S.kind].took}</h3>` + (have.length ? have.map((p) => `<button class="part" data-fit="${p.id}" style="--r:${GRADE[p.g].col}"><b>${Parts.name(p)}${p.gauge ? ' · ' + p.gauge : ''}</b><small>${PART_STATE[p.st]} · ${Parts.from(p)}</small></button>`).join('') : `<p class="dim">You've nothing that fits on the shelf.</p>`);
+      const S = this.D.slots[this.sel], have = Parts.choices(S.kind, b.name);
+      tray = `<h3>Fit ${PART[S.kind].took}</h3>` + (have.length ? have.map((c) => `<button class="part" data-fit="${c.id}" style="--r:${GRADE[c.g].col}"><b>${GRADE[c.g].name} ${PART[S.kind].name.toLowerCase()}${c.gauge ? ' · ' + c.gauge + ' gauge' : ''}</b><small><em class="st ${c.st}">${PART_STATE[c.st]} ×${c.n}</em></small></button>`).join('') : `<p class="dim">You've nothing that fits on the shelf.</p>`);
     }
     $('benchtray').innerHTML = tray;
     const inn = b.screws.filter((s) => s.st === 'in').length;

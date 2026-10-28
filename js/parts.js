@@ -121,6 +121,47 @@ const Parts = {
     const t = Tips.tier(), d = Game.s.day, g = p.kind === 'rack' || (t >= 2 && hash(p.x, p.y + d, 79) < 0.4) ? 'street' : 'scrap';
     return [this.give(this.make(k, g, { st: hash(p.x, p.y + d, 77) < (t >= 2 ? 0.9 : 0.7) ? 'ok' : 'worn' }), true)];
   },
+  // ---- the shelf, counted ----
+  // a kind at a time, in PART's order; under each, a row per grade and gauge,
+  // best first; on each row, how many are fine, worn, dead and burnt. Where a
+  // part came from isn't shown: a worn street cell is a worn street cell.
+  grades: ['military', 'clinic', 'street', 'scrap'],
+  states: ['ok', 'worn', 'dead', 'burnt'],
+  stock(list = Game.s.parts) {
+    return Object.keys(PART).map((k) => {
+      const mine = list.filter((p) => p.k === k), rows = [];
+      for (const g of this.grades) {
+        const gauges = [...new Set(mine.filter((p) => p.g === g).map((p) => p.gauge || ''))].sort();
+        for (const ga of gauges) {
+          const these = mine.filter((p) => p.g === g && (p.gauge || '') === ga), st = {};
+          for (const s of this.states) { const n = these.filter((p) => p.st === s).length; if (n) st[s] = n; }
+          rows.push({ g, gauge: ga, n: these.length, st });
+        }
+      }
+      return { k, n: mine.length, rows };
+    }).filter((x) => x.n);
+  },
+  // "fine ×2 · worn ×1", as chips colored by state
+  counts(st) { return this.states.filter((s) => st[s]).map((s) => `<em class="st ${s}">${PART_STATE[s]} ×${st[s]}</em>`).join(''); },
+  gradeName(g, gauge) { return GRADE[g].name + (gauge ? ', ' + gauge + ' gauge' : ''); },
+  stockHtml(list = Game.s.parts) {
+    const kinds = this.stock(list); if (!kinds.length) return '';
+    let h = '<div class="stocks">' + kinds.map(({ k, n, rows }) => `<div class="stock" style="--r:${PART[k].col[1]}"><img class="picon" src="${this.icon(k, rows[0].g)}" alt=""><div class="sk"><b>${PART[k].name}</b><span class="n">×${n}</span></div><div class="srows">${rows.map((r) => `<div class="sr"><i style="--g:${GRADE[r.g].col}">${this.gradeName(r.g, r.gauge)}</i><span>${this.counts(r.st)}</span></div>`).join('')}</div></div>`).join('') + '</div>';
+    const jn = list.filter((p) => p.st === 'dead' || p.st === 'burnt').length;
+    if (jn) h += `<p class="dim">${jn === 1 ? 'One part is' : jn + ' parts are'} dead or burnt: only good for a stall's scrap bin.</p>`;
+    return h;
+  },
+  // the parts that could go in a mount, one choice for each that's alike
+  // (grade, gauge, state), best first; a part pulled from this very job is
+  // the one taken, so putting it back counts as putting it back
+  choices(k, job) {
+    const have = this.have(k), out = [];
+    for (const g of this.grades) for (const s of this.states) {
+      const these = have.filter((p) => p.g === g && p.st === s), gauges = [...new Set(these.map((p) => p.gauge || ''))].sort();
+      for (const ga of gauges) { const same = these.filter((p) => (p.gauge || '') === ga); out.push({ g, st: s, gauge: ga, n: same.length, id: (same.find((p) => p.how === 'pull' && p.out === job) || same[0]).id }); }
+    }
+    return out;
+  },
   // a part's picture, as on the bench (made once a kind and grade)
   icons: {},
   icon(k, g = 'street') { const key = k + g; if (this.icons[key]) return this.icons[key]; const [c, x] = canvasOf(40, 24); partArt(x, { id: 3, k, g, st: 'ok' }, 2, 4, 36, 16, false, 0); return (this.icons[key] = c.toDataURL()); },

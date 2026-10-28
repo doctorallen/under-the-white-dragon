@@ -37,7 +37,7 @@ git -C vendor/tyrell pull origin main   # take a newer Tyrell (then run the test
 
 ## The look of the menus
 
-Menus and the HUD are a game's, not a web page's: Dragon Pixel (`fonts/dragon.woff`, our own font, built by `python3 tools/mkfont.py fonts/dragon.woff` from the glyphs in that script; add a glyph there if text needs one) at 15px for text and 20px for titles and buttons; windows and cards with cut corners (`--cut`, `--cut-s` in `css/style.css`) over the dimmed game; chunky buttons (`.go` the main one). The skin is the last section of `css/style.css`. Anything a job needs is shown as a checklist with the part's picture (`Jobs.needs`, `Parts.icon`, `Parts.sources`).
+Menus and the HUD are a game's, not a web page's: Dragon Pixel (`fonts/dragon.woff`, our own font, built by `python3 tools/mkfont.py fonts/dragon.woff` from the glyphs in that script; add a glyph there if text needs one) at 15px for text and 20px for titles and buttons; windows and cards with cut corners (`--cut`, `--cut-s` in `css/style.css`) over the dimmed game; chunky buttons (`.go` the main one). The skin is the last section of `css/style.css`. Anything a job needs is shown as a checklist with the part's picture (`Jobs.needs`, `Parts.icon`, `Parts.sources`). The parts you have are counted, not listed: a card a kind, a row a grade and gauge, a chip a state (`Parts.stock`, `Parts.stockHtml`; on the bench, one choice for each alike, `Parts.choices`), and never where they came from.
 
 ## Testing changes
 

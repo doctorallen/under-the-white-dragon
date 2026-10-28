@@ -41,7 +41,7 @@ const PANELS = {
   // the shelf: the parts you have, and the notebook
   shelf(s) {
     const n = s.notes, tl = TOOLS[Tips.tier()], up = TOOLS[Tips.tier() + 1]; let h = `<h3>Tools</h3><p><b>${tl.name}.</b> ${tl.note}${up ? ` <span class="dim">Next: the ${up.name.toLowerCase()}, ${up.cr} cr from ${up.at === 'ana' ? 'Mechanic Ana at the Overpass Market' : 'Nurse Kade on Clinic Row'}.</span>` : ''}</p><h3>Parts</h3>`;
-    h += s.parts.length ? '<div class="parts">' + s.parts.map((p) => `<div class="part" style="--r:${GRADE[p.g].col}"><img class="picon" src="${Parts.icon(p.k, p.g)}" alt=""><b>${Parts.name(p)}${p.gauge ? ' · ' + p.gauge + ' gauge' : ''}</b><small>${PART_STATE[p.st]} · ${Parts.from(p)}</small></div>`).join('') + '</div>' : '<p class="dim">Empty shelves. Strip machines, trade at the stalls, or pull parts from what comes to the bench.</p>';
+    h += s.parts.length ? Parts.stockHtml() : '<p class="dim">Empty shelves. Strip machines, trade at the stalls, or pull parts from what comes to the bench.</p>';
     h += '<h3>Notebook</h3>';
     const known = Object.keys(n.known);
     h += known.length ? known.map((d) => `<p><b>${DEVICE[d].name}</b> <span class="dim">(${DEVICE[d].kind.toLowerCase()})</span>: ${Parts.build(d).join(', ')}.</p>`).join('') : '<p class="dim">Nothing yet. Open things up and probe them, and the notebook learns how they\'re built.</p>';
@@ -60,7 +60,7 @@ function stockHtml(key, s) {
 function itemsTab(s) {
   const worth = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0) * SALVAGE[k].price, 0);
   let h = `<p class="sub">${s.cr} cr. Salvage sells at the stalls' scrap bins.</p>`;
-  h += `<h3>On your shelf at home · ${TOOLS[Tips.tier()].name.toLowerCase()}</h3>` + (s.parts.length ? '<div class="parts">' + s.parts.map((p) => `<div class="part" style="--r:${GRADE[p.g].col}"><img class="picon" src="${Parts.icon(p.k, p.g)}" alt=""><b>${Parts.name(p)}${p.gauge ? ' · ' + p.gauge + ' gauge' : ''}</b><small>${PART_STATE[p.st]} · ${Parts.from(p)}</small></div>`).join('') + '</div>' : '<p class="dim">No parts yet. Strip machines, or buy them at the stalls.</p>');
+  h += `<h3>On your shelf at home · ${TOOLS[Tips.tier()].name.toLowerCase()}</h3>` + (s.parts.length ? Parts.stockHtml() : '<p class="dim">No parts yet. Strip machines, or buy them at the stalls.</p>');
   const ks = SALVAGE_ORDER.filter((k) => s.pack[k] > 0);
   if (ks.length) h += `<h3>Salvage · worth about ${worth} cr for scrap</h3><div class="tiles">` + ks.map((k) => `<div class="tile" style="--r:${SALVAGE[k].col[1]}"><img src="${Hud.icon(k)}" alt=""><b>${SALVAGE[k].name}</b><span class="n">× ${s.pack[k]}</span><small>${SALVAGE[k].price} cr each for scrap</small></div>`).join('') + '</div>';
   return h;
