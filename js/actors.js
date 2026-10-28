@@ -5,7 +5,7 @@
 // residents are moved by Town (town.js) and their minds by Tyrell (city.js).
 // ---------------------------------------------------------------------------
 const NPC_ROLE = {
-  noodles: { verb: 'Eat', prompt: () => 'A bowl of noodles · 6 cr', use: (n) => { const paid = Game.pay({ cr: 6 }); Game.pass(0.25); n.line = (n.line || 0) + 1; Actors.say(n, paid ? n.def.lines[n.line % n.def.lines.length] : 'Eat. Pay me when you\'ve got it.'); Hud.refresh(); } },
+  noodles: { verb: 'Eat', prompt: () => 'A bowl of noodles · 6 cr', use: (n) => { const paid = Game.pay({ cr: 6 }); Game.rest(0.25); n.line = (n.line || 0) + 1; Actors.say(n, paid ? n.def.lines[n.line % n.def.lines.length] : 'Eat. Pay me when you\'ve got it.'); Hud.refresh(); } },
   vendor: { verb: 'Trade', prompt: (n) => 'Trade with ' + n.def.name, use: (n) => Hud.toggle('vendor', n) },
   parts: { verb: 'Trade', prompt: (n) => 'Parts from ' + n.def.name, use: (n) => Hud.toggle('partshop', n) },
 };

@@ -34,7 +34,12 @@ const Game = {
   clock() { const h = Math.floor(this.hour()), m = Math.floor((this.hour() % 1) * 60); return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'); },
   pass(hours) { this.s.time += hours; while (this.s.time >= 24) { this.s.time -= 24; this.s.day++; } },
   // ---- moving between levels ----
-  go(level, spawn) { this.fadeTo = { level, spawn }; this.fade = 0.001; },
+  // (hours: time that passes on the way, passed once the screen's dark, so
+  // nobody's seen jumping about on the screen you're leaving)
+  go(level, spawn, hours = 0) { this.fadeTo = { level, spawn, hours }; this.fade = 0.001; },
+  // time passing where you are (a bowl of noodles, a cup of tea): the screen
+  // goes dark, the time passes, and it comes back up on whoever's there now
+  rest(hours) { if (this.fadeTo) return; this.fadeTo = { stay: true, hours }; this.fade = 0.001; },
   arrive(level, spawn) {
     this.s.level = level; this.s.flags['been:' + level] = true; World.load(level);
     const sp = World.L.spawns[spawn] || Object.values(World.L.spawns)[0];

@@ -44,7 +44,9 @@ const TOWN_PLACE = {
 const TOWN_GAP = 0.3; // game hours to cross a street between two you can see someone on (off screen)
 const TOWN_RIDE = 0.25; // game hours in a cab, down a manhole, on the subway or in an elevator, and a tenth more a band
 // a street's ends, out to the next street
-function townEnd(street, side) { const L = LEVELS[street].built || (LEVELS[street].built = LEVELS[street].make()); return side === 'west' ? 18 : L.w - 18; }
+// (just past the edge of what you can see, so people walk on and off the screen
+// rather than appearing or vanishing at the end of the street)
+function townEnd(street, side) { const L = LEVELS[street].built || (LEVELS[street].built = LEVELS[street].make()); return side === 'west' ? -24 : L.w + 24; }
 const SHELF = [175, 259, 335, 392, 424]; // the grocery's shelves and fridges
 // what each act is done at, when a place has no spot of its own for it
 const SPOT_ALIAS = { browse: 'shop', pay: 'shop', stock: 'work', drink: 'eat', host: 'home', visit: 'home', eat_home: 'home', temple: 'pray', bathe: 'loaf' };
@@ -228,7 +230,7 @@ const Town = {
   // cabs fly, the cab stand or either end of the street (a cab picks you up
   // round the corner), whichever's nearest; below, the manhole, the subway
   // or the elevator, wherever it is
-  rank(sid, x) { const S = Census.streets[sid]; if (!['sky', 'high', 'street'].includes(S.band)) return S.transit; return [S.transit, 18, S.w - 18].reduce((q, t) => (Math.abs(t - x) < Math.abs(q - x) ? t : q)); },
+  rank(sid, x) { const S = Census.streets[sid]; if (!['sky', 'high', 'street'].includes(S.band)) return S.transit; return [S.transit, townEnd(sid, 'west'), townEnd(sid, 'east')].reduce((q, t) => (Math.abs(t - x) < Math.abs(q - x) ? t : q)); },
   // a ride between bands of the city: a cab, a manhole, the subway, an elevator
   ride(ba, bb) { const ids = STRATA.map((q) => q.id); return TOWN_RIDE + 0.1 * Math.abs(ids.indexOf(ba) - ids.indexOf(bb)); },
   // the way from one point to the next: legs, each in one level (or off

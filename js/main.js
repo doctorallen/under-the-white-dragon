@@ -27,7 +27,7 @@ function step(dt) {
   Game.t += dt; Game.frame++;
   if (Flight.on) { Flight.step(dt); return; }
   // between levels: fade out, arrive, fade in
-  if (Game.fadeTo) { Game.fade += dt * 3; if (Game.fade >= 1) { const f = Game.fadeTo; Game.fadeTo = null; Game.arrive(f.level, f.spawn); } return; }
+  if (Game.fadeTo) { Game.fade += dt * 3; if (Game.fade >= 1) { const f = Game.fadeTo; Game.fadeTo = null; if (f.hours) Game.pass(f.hours); if (f.stay) { Actors.spawns(); Save.write(); } else Game.arrive(f.level, f.spawn); } return; }
   if (Game.fade > 0) Game.fade = Math.max(0, Game.fade - dt * 2.5);
   if (!Dev.s.freeze) Game.pass(dt * 24 / T.day.length);
   Player.step(dt);

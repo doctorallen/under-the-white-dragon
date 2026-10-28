@@ -62,7 +62,7 @@ const Travel = {
     const e = this.edgeAhead(); if (!e) return;
     const off = e.dir === 'west' ? Player.x < 16 && Input.ax < 0 : Player.x > World.L.w - 16 && Input.ax > 0;
     if (!off) return;
-    Game.pass(0.15); Game.go(e.to, e.dir === 'west' ? 'east' : 'west');
+    Game.go(e.to, e.dir === 'west' ? 'east' : 'west', 0.15);
   },
 };
 
