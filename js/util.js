@@ -1,6 +1,6 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// Shared helpers: maths, seeded randomness and noise, colours and ramps.
+// Shared helpers: math, seeded randomness and noise, colors and ramps.
 // Every file is a classic script in one global scope (index.html loads them
 // in order), so names here are used everywhere.
 // ---------------------------------------------------------------------------
@@ -31,14 +31,14 @@ class Rng {
   pick(arr) { return arr[Math.floor(this.f() * arr.length)]; }
 }
 
-// ---- colours ---------------------------------------------------------------
+// ---- colors ---------------------------------------------------------------
 const rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const mixRgb = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const lum = (c) => c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
 const css = (c) => `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`;
 const SOOT = [8, 6, 12], WARM = [255, 238, 200];
 // A painter's ramp: n tones from soot through the anchors (dark to light) to
-// a warm light, evenly spaced in lightness, so neighbouring tones always
+// a warm light, evenly spaced in lightness, so neighboring tones always
 // differ by a visible step and the strokes show.
 function rampOf(anchors, n = 9, deep = 0.55, high = 0.3) {
   const A = anchors.map((a) => (typeof a === 'string' ? rgb(a) : a));

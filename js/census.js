@@ -4,7 +4,7 @@
 // their time, read once from the levels as they're built (Census.take, at
 // start, before the population is made: folk.js).
 //   streets: the open levels, each with its ground, its ends and its way out
-//     of the band (the cab stand, the manhole, the subway, the lift cage)
+//     of the band (the cab stand, the manhole, the subway, the cage elevator)
 //   places: where someone can be, each reached from a street:
 //     room: behind a door, a hidden level you can walk into (the noodle bar,
 //       the Red Lantern), with spots inside for what's done there
@@ -24,7 +24,7 @@
 const POST_KIND = {
   'ramen cook': 'food', 'grill man': 'food', 'dumpling auntie': 'food', 'skewer kid': 'food', 'tea seller': 'food', 'kiosk cook': 'food', 'Old Sato': 'food', 'Auntie Bo': 'food', 'tea master': 'food', 'Cookie': 'canteen',
   'bouncer': 'night', 'DJ Halcyon': 'club', 'lookout': 'night',
-  'bridge warden': 'watch', 'porter': 'dock', 'dock worker': 'dock', 'Harbourmaster Ilse': 'dock', 'picker': 'yard', 'boatwoman': 'dock', 'The Ferryman': 'dock',
+  'bridge warden': 'watch', 'porter': 'dock', 'dock worker': 'dock', 'Harbormaster Ilse': 'dock', 'picker': 'yard', 'boatwoman': 'dock', 'The Ferryman': 'dock',
   'office worker': 'office', 'archivist': 'office', 'keeper': 'keeper', 'shopkeeper': 'stall',
   'Head gardener Mori': 'garden', 'gardener': 'garden',
   'Doctor Reyes': 'clinic', 'Doc Nine': 'clinic',
@@ -70,7 +70,7 @@ const Census = {
     for (const id in LEVELS) this.built(id);
     // ---- the streets: each open level, its ground and its way out of the band
     for (const id in LEVELS) {
-      const D = LEVELS[id]; if (D.metres === undefined || D.hidden) continue; // (the hubs too: Old Town, the Works, the Bowels, the Spires)
+      const D = LEVELS[id]; if (D.meters === undefined || D.hidden) continue; // (the hubs too: Old Town, the Works, the Bowels, the Spires)
       const L = this.built(id), t = L.props.find((p) => p.kind === 'transit');
       this.streets[id] = { id, band: Travel.band(id), G: L.ground, w: L.w, transit: t ? t.x : 70 };
     }
@@ -193,7 +193,7 @@ const Census = {
   },
 };
 const ACT_TAG = { eat: 'food', drink: 'social', dance: 'fun', pachi: 'fun', watch: 'fun', arcade: 'fun', festival: 'fun', loaf: 'outdoors', play: 'play', pray: 'faith', clinic: 'clinic', shop: 'shop', bathe: 'fun' };
-const SPOT_LABEL = { park: 'A park bench', play: 'Somewhere to play', temple: 'The temple steps', food: 'A stall counter', market: 'A stall', festival: 'The festival', loaf: 'A corner', clinic: 'The clinic queue', eat: 'Somewhere to eat', pray: 'Somewhere to pray' };
+const SPOT_LABEL = { park: 'A park bench', play: 'Somewhere to play', temple: 'The temple steps', food: 'A stall counter', market: 'A stall', festival: 'The festival', loaf: 'A corner', clinic: 'The clinic line', eat: 'Somewhere to eat', pray: 'Somewhere to pray' };
 const AMEN_TITLE = { eatery: 'cook', bar: 'bartender', club: 'door and bar', pachinko: 'floor hand', arcade: 'arcade hand', shop: 'shopkeeper', clinic: 'clinic nurse', temple: 'temple keeper', office: 'office worker', theater: 'usher', bath: 'bath attendant', school: 'teacher', hospital: 'nurse', depot: 'depot hand', hotel: 'hotel hand', laundry: 'laundry hand' };
 const AMEN_LOOK = {
   eatery: 'Steam, a counter, somebody eating with their head down. They don\'t serve tinkers in work clothes.', bar: 'Low light and a long counter. Nothing in there\'s broken that you could fix.', club: 'The bass comes through the door before you open it.',

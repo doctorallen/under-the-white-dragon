@@ -3,7 +3,7 @@
 // The architect's kit: the pieces hand-built districts are made of. Buildings
 // with shops on the bottom and people living above (shophouses), a capsule
 // tower, wooden townhouses, temples, shrine gates and pagodas, glass towers,
-// dilapidated stacks of shacks, slab blocks, theatres, bathhouses, arcades,
+// dilapidated stacks of shacks, slab blocks, theaters, bathhouses, arcades,
 // clinics and pharmacies, parks and their trees; and the painting tricks
 // they share: tiled roofs, lattices, curtains, paper lanterns, awnings,
 // balconies, round windows. Each building paints its stretch [x0, x1] above
@@ -45,7 +45,7 @@ const KMAT = {
 };
 
 // ---- painting tricks -----------------------------------------------------------
-// a flat fill, a stroke-free rectangle of one colour (for frames and shadows)
+// a flat fill, a stroke-free rectangle of one color (for frames and shadows)
 function kFill(P, x0, y0, x1, y1, col, glow = 0) { const c = col3(col); for (let y = Math.max(y0, P.oy); y < Math.min(y1, P.oy + P.h); y++) for (let x = Math.max(x0, P.ox); x < Math.min(x1, P.ox + P.w); x++) P.put(x, y, c, glow); }
 // a horizontal line and a vertical one
 function kH(P, x0, x1, y, col, glow = 0) { const c = col3(col); for (let x = x0; x < x1; x++) P.put(x, y, c, glow); }
@@ -226,7 +226,7 @@ function kTorii(P, x0, x1, G, h, o = {}) {
 }
 // steps up to a platform, painted (pair them with L.stairs for feet)
 function kSteps(P, x0, x1, G, h, ramp) { const n = Math.ceil(h / 3); for (let k = 0; k < n; k++) P.block(x0 + k * 2, G - (k + 1) * 3, x1 - k * 2, G - k * 3, ramp, { base: 0.55 - k * 0.02 }); }
-// a lit display of goods behind glass: shelves of little coloured things
+// a lit display of goods behind glass: shelves of little colored things
 function kShelves(P, x0, y0, x1, y1, cols, o = {}) {
   const s = o.seed || x0;
   kFill(P, x0, y0, x1, y1, o.back || '#1a1612', 0);
@@ -235,7 +235,7 @@ function kShelves(P, x0, y0, x1, y1, cols, o = {}) {
 
 // ---- shopfronts -------------------------------------------------------------------
 // the ground floor of a building, [x0, x1] by h px over G; `kind` says what's
-// sold there, `col` its colour. Lights and signs go in with it.
+// sold there, `col` its color. Lights and signs go in with it.
 function kShop(L, x0, x1, G, kind, col, o = {}) {
   const h = Math.max(o.h || KS.gh, KS.door + 4), w = x1 - x0, c = col3(col || '#ffd040'), mid = Math.round((x0 + x1) / 2), seed = o.seed || x0;
   L.paint(x0, G - h - 12, x1, G, (P) => {
@@ -319,14 +319,14 @@ const SHOP_WORD = { bakery: 'bakery', food: 'diner', ramen: 'ramen bar', noren: 
 function shopName(L, kind, seed) { const n = NAME_LAST[Math.floor(hash(seed, L.id.length, 61) * NAME_LAST.length)]; return n + '\'s ' + SHOP_WORD[kind]; }
 
 // ---- buildings ------------------------------------------------------------------
-// Scale: an adult is 33 px, about 19 px to the metre, so a door is 40 px high
-// and 18-20 wide, a storey about 50 px, a window about 18 x 22 (KS). A
+// Scale: an adult is 33 px, about 19 px to the meter, so a door is 40 px high
+// and 18-20 wide, a story about 50 px, a window about 18 x 22 (KS). A
 // district can ask for a lower ground floor (gh) to meet a gallery, never
 // lower than a door.
 // A shophouse: shops on the ground, people above. o.floors, o.fh (floor
-// height), o.wall (material), o.shops ([[kind, colour], ...] across the
+// height), o.wall (material), o.shops ([[kind, color], ...] across the
 // front), o.roof ('flat', 'tank', 'garden', 'tin', 'tile', 'shack'), o.balcony,
-// o.blade (a hanging sign's colour), o.ac.
+// o.blade (a hanging sign's color), o.ac.
 function bShophouse(L, x0, x1, G, o = {}) {
   const seed = o.seed || x0 * 7 + 3, r = new Rng(seed), fl = o.floors || 3, fh = Math.max(o.fh || 0, KS.fh), gh = Math.max(o.gh || KS.gh, KS.door + 4), top = G - gh - fl * fh, wall = o.wall || r.pick([KMAT.stucco, KMAT.cream, KMAT.teal, KMAT.pink, MAT.concrete, KMAT.mint]), w = x1 - x0;
   L.paint(x0 - 12, top - 40, x1 + 12, G - gh + 2, (P) => {
@@ -361,7 +361,7 @@ function bShophouse(L, x0, x1, G, o = {}) {
   const sw = w / shops.length; shops.forEach(([kind, col, amen], i) => kShop(L, Math.round(x0 + i * sw), Math.round(x0 + (i + 1) * sw), G, kind, col, { h: gh, seed: seed + i, signN: Math.max(3, Math.min(7, Math.round(sw / 10))), amen }));
   if (o.awning) L.paint(x0, G - gh - 2, x1, G - gh + 12, (P) => kAwning(P, x0 + 2, x1 - 2, G - gh + 1, o.awning, { stripe: o.stripe }));
   if (o.blade) L.sign(o.bladeLeft ? x0 - 9 : x1 + 2, top + 12, Math.min(9, Math.round(fl * fh / 8)), o.blade, { vert: true, r: 70, seed });
-  if (o.homes !== false) L.home(x1 - 6, G, 'flat', fl); // (a stair door at the side, up to the flats)
+  if (o.homes !== false) L.home(x1 - 6, G, 'apartment', fl); // (a stair door at the side, up to the apartments)
   return { top, x0, x1 };
 }
 // A capsule tower: two concrete cores with boxes plugged into them, each a
@@ -369,7 +369,7 @@ function bShophouse(L, x0, x1, G, o = {}) {
 function bCapsules(L, x0, x1, G, o = {}) {
   const seed = o.seed || 77, h = o.h || 300, top = G - h, w = x1 - x0, cores = [x0 + Math.round(w * 0.28), x0 + Math.round(w * 0.68)];
   L.paint(x0 - 30, top - 30, x1 + 30, G, (P) => {
-    // the cores: lift shafts with slit windows, stairs lit at night
+    // the cores: elevator shafts with slit windows, stairs lit at night
     for (const cx of cores) { P.block(cx - 16, top, cx + 16, G - 54, KMAT.concreteL, { base: 0.42, panels: [24, 16], drips: 0.1, dripLen: 30 }); for (let y = top + 10; y < G - 64; y += 25) kFill(P, cx - 3, y, cx + 3, y + 14, hash(cx, y, seed) < 0.5 ? '#ffe0a0' : '#1a1e24', hash(cx, y, seed) < 0.5 ? 0.4 : 0); P.block(cx - 14, top - 10, cx + 14, top, KMAT.concreteL, { base: 0.55 }); for (let y = top - 22; y < top - 10; y++) P.put(cx + 6, y, tone(MAT.steel, 0.5)); P.put(cx + 6, top - 23, [255, 50, 60], 1); }
     // the capsules: each fixed to a core, sticking out one side or the other
     let k = 0;
@@ -442,7 +442,7 @@ function bTemple(L, x0, x1, G, o = {}) {
   L.hangout(Math.round((x0 + x1) / 2), G, 'temple', 3);
   return { ey, wall };
 }
-// A pagoda: storeys of roofs getting smaller, a spire with rings on top
+// A pagoda: stories of roofs getting smaller, a spire with rings on top
 function bPagoda(L, cx, G, o = {}) {
   const n = o.tiers || 5, w0 = o.w || 60, th = o.th || 30, lac = o.lac || KMAT.lacquer;
   const topY = G - 14 - n * th - 40;
@@ -537,10 +537,10 @@ function bDanchi(L, x0, x1, G, o = {}) {
     const num = String(o.number || 7), nx = x1 - 26; for (let i = 0; i < num.length; i++) for (const [a, b] of GLYPHS[(num.charCodeAt(i) * 3) % GLYPHS.length]) kFill(P, nx + i * 14 + a * 4, top + 12 + b * 4, nx + i * 14 + a * 4 + 4, top + 16 + b * 4, '#d8c8a0');
   });
   for (let f = 1; f < fl; f++) if (hash(f, 1, seed) < 0.6) L.tube(x0 + 30 + Math.round(hash(f, 2, seed) * (w - 60)), G - f * fh - 44, 12, '#e8f4e8', 0.45);
-  L.home(x0 + 13, G, 'flat', fl * Math.max(2, Math.floor((w - 30) / 46))); // (in by the stair tower)
+  L.home(x0 + 13, G, 'apartment', fl * Math.max(2, Math.floor((w - 30) / 46))); // (in by the stair tower)
   return { top };
 }
-// A theatre: a marquee of chasing bulbs, posters in lit frames, a tall sign
+// A theater: a marquee of chasing bulbs, posters in lit frames, a tall sign
 // up the front, a ticket window, doors
 function bTheater(L, x0, x1, G, o = {}) {
   const seed = o.seed || x0, w = x1 - x0, top = G - (o.h || 150), c = col3(o.col || '#ffd040'), mid = Math.round((x0 + x1) / 2);
@@ -724,13 +724,13 @@ const STALL_LINES = {
   flowers: ['Real flowers. Smell them. That\'s free.', 'For the dead or the living? Different price.'], parts: ['Chips, screens, coils. Nothing stolen. Nothing I know of.', 'Need a part? I\'ve got the part. Somewhere.'],
   med: ['Patches, painkillers, stitches. No chrome. I\'m legal.', 'Bleeding? Sit. Pay after.'], herbs: ['Roots for the lungs. The air down here eats them.', 'Old remedies. They work as well as the new ones. Which is to say, a bit.'],
   organs: ['Cold box. Don\'t open the cold box.', 'Everything in here\'s grown, not taken. You have my word. My word\'s cheap.'], masks: ['Fox, demon, cat. Hide your face, tinker. Everyone does.', 'Festival\'s on the fourth. Every month.'],
-  books: ['Paper books. Nobody reads them. I do.', 'A first edition of a manual for a car that doesn\'t exist any more.'], skewers: ['Two for one. One for two. Whatever.', 'Mum says don\'t talk to cops.'],
+  books: ['Paper books. Nobody reads them. I do.', 'A first edition of a manual for a car that doesn\'t exist anymore.'], skewers: ['Two for one. One for two. Whatever.', 'Mom says don\'t talk to cops.'],
 };
 
 // ---- a district ---------------------------------------------------------------------
 // The frame every hand-built place shares: the ground, what's behind (the
 // city's layers, or for places under the street a back wall and a ceiling),
-// the way in at the west end (a spinner pad, a subway platform, a lift cage,
+// the way in at the west end (a spinner pad, a subway platform, a cage elevator,
 // a manhole ladder), light and weather. o.build(L, G) places the
 // rest by hand. Spots (places to stand: L.spots) the place gives are kept;
 // if it gives fewer than ten, the ground is shared out.
@@ -766,9 +766,9 @@ function district(o) {
   return L;
 }
 // a district's entry in LEVELS: where it sits on the world map (x across the
-// city, depth in metres) and a line about it
+// city, depth in meters) and a line about it
 function addDistrict(id, name, tier, depth, mapX, blurb, label, make) {
-  LEVELS[id] = { name, tier, district: true, depth: (depth > 0 ? '+' : '') + depth + ' m', metres: depth, mapX, blurb, label, make };
+  LEVELS[id] = { name, tier, district: true, depth: (depth > 0 ? '+' : '') + depth + ' m', meters: depth, mapX, blurb, label, make };
 }
 // the painted pieces placed straight into a level
 function bTorii(L, x0, x1, G, h = 70, o = {}) { L.paint(x0 - 8, G - h - 10, x1 + 8, G, (P) => kTorii(P, x0, x1, G, h, o)); }

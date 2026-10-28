@@ -212,8 +212,8 @@ function lowerPart(s, y0) {
   return Object.assign({}, s, { c: cut(s.c), e: cut(s.e) });
 }
 
-// the freight lift: a cage, dark until you get it running
-function liftCage(o = {}) {
+// the cage elevator: a cage, dark until you get it running
+function elevatorCage(o = {}) {
   const S = new Spr(34, 46, 71); S.ax = 17; S.ay = 45; const r = MAT.steel;
   for (let x = 0; x < 34; x++) { S.px(x, 0, r[6]); S.px(x, 1, r[3]); S.px(x, 45, r[2]); S.px(x, 44, r[5]); }
   for (let y = 2; y < 44; y++) { S.px(0, y, r[5]); S.px(1, y, r[2]); S.px(32, y, r[4]); S.px(33, y, r[1]); }
@@ -324,7 +324,7 @@ function subwayDoor() {
 }
 
 // an icon for anything you carry: salvage as before; the rest by kind, in
-// the item's own colours
+// the item's own colors
 // what you carry, as an icon: salvage only now
 function itemIcon(k) { return salvageIcon(k); }
 
@@ -390,7 +390,7 @@ function innerDoor(o = {}) {
   const W = 26, H = 46, S = new Spr(W, H, 445); S.ax = W / 2; S.ay = H - 1; const k = o.kind || 'glass';
   const fr = rp(k === 'noren' ? '#3a2014' : k === 'steel' ? '#4a4e58' : '#2a3a3a', 6);
   S.box(1, 3, W - 2, H - 2, fr, { lo: 1, hi: 5 }); // the frame
-  // the street through it: night, a wet pavement, a couple of signs across the way
+  // the street through it: night, a wet sidewalk, a couple of signs across the way
   for (let y = 6; y < H - 3; y++) for (let x = 4; x < W - 4; x++) { const v = hash(x >> 1, y >> 2, 446 + (o.seed || 0)); S.px(x, y, y > H - 12 ? (v < 0.2 ? '#3a5a7a' : '#14202e') : v < 0.05 ? '#ff4ab0' : v < 0.09 ? '#3af0e0' : y < 20 ? '#0c1220' : '#121a2a', true); }
   if (k === 'glass') { for (let x = 4; x < W - 4; x++) S.px(x, 26, '#c8d0d8'); S.px(W - 6, 26, '#ffffff'); for (let y = 8; y < 16; y++) S.px(6 + (y >> 1), y, '#8aa0b0', true); }
   if (k === 'steel') { for (let y = 6; y < H - 3; y++) for (let x = 4; x < W - 4; x++) if ((x + y) % 5 === 0) S.px(x, y, '#5a6470'); S.box(4, 24, W - 5, H - 3, rp('#4a4e58', 6), { lo: 1, hi: 5 }); S.px(W - 7, 27, '#c8c8d0'); }
@@ -411,7 +411,7 @@ function droneWreck() {
   for (let x = 13; x < 22; x += 3) S.px(x, 8, '#ffd8a0'); S.px(15, 11, '#ff3040', true);
   return S.done();
 }
-// a junction box the city forgot: grey steel, its door hanging open, a
+// a junction box the city forgot: gray steel, its door hanging open, a
 // hazard stripe, relays in rows inside
 function junctionBox() {
   const W = 30, H = 36, S = new Spr(W, H, 448); S.ax = 13; S.ay = H - 1;
@@ -439,7 +439,7 @@ function rug() {
   for (const x of [0, 1, W - 2, W - 1]) S.px(x, H - 1, '#c8b890');
   return S.done();
 }
-// the work chair: a ripper's recliner, padded blue-grey on a steel pedestal,
+// the work chair: a ripper's recliner, padded blue-gray on a steel pedestal,
 // the back laid low, clamps on the arm for a limb, a little screen lit
 function workChair() {
   const W = 62, H = 42, S = new Spr(W, H, 444); S.ax = 31; S.ay = H - 1;

@@ -24,7 +24,7 @@ const TIPS = {
   chopshop: { who: 'kai', day: 5, level: 'd_chopshop', x: 480, kind: 'dronewreck', label: 'a crashed delivery drone', say: 'A delivery drone crashed in Chop Shop Alley! Go before they strip it! Can I have the propellers?' },
   glasshouse: { who: 'ines', day: 6, level: 'd_glasshouse', x: 300, kind: 'substation', label: 'a junction box left open', say: 'The plaza crew left a junction box open on Glasshouse Plaza. They\'ve been on break for three days.' },
   clinicrow: { who: 'sal', day: 7, level: 'd_clinicrow', x: 600, kind: 'autodoc', label: 'an autodoc out back', say: 'A clinic on the Row got raided. They put their autodoc out the back before anyone could ask about it. Nobody\'s asking about it.' },
-  neonrow: { who: 'sato', day: 8, level: 'd_neonrow', x: 380, kind: 'dronewreck', label: 'a fallen news drone', say: 'A news drone fell on Neon Row in the night. It missed my friend Mrs Ito by a metre. She\'d like it gone.' },
+  neonrow: { who: 'sato', day: 8, level: 'd_neonrow', x: 380, kind: 'dronewreck', label: 'a fallen news drone', say: 'A news drone fell on Neon Row in the night. It missed my friend Mrs Ito by a meter. She\'d like it gone.' },
 };
 const TIP_ORDER = Object.keys(TIPS);
 

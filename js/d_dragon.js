@@ -24,7 +24,7 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street of shophouses a
     bArcade(L, 796, 940, G, { col: '#3af0e0', h: 130, seed: 917 });
     bShophouse(L, 956, 1120, G, { floors: 3, wall: KMAT.mint, shops: [['noren', '#ff4ab0'], ['glass', '#ffd040']], roof: 'flat', seed: 919 });
     bStack(L, 1136, 1400, G, { levels: 4, blade: '#ff4ab0', shop: 'pawn', shopCol: '#ffb040', seed: 921 });
-    // the White Dragon's building: flats above, the shop below
+    // the White Dragon's building: apartments above, the shop below
     L.paint(WD.FRONT, G - 330, WD.END + 6, G, (P) => {
       P.block(WD.FRONT, G - 320, WD.END, C, KMAT.plaster, { base: 0.4, panels: [60, 34], drips: 0.12, dripLen: 24 });
       for (let fy = C - 50 + 12; fy > G - 316; fy -= 50) for (let fx = 334; fx < WD.END - 22; fx += 34) kWin(P, fx, fy, KS.winW, KS.winH, { lit: hash(fx, fy, 31) < 0.45 ? (hash(fx, fy, 32) < 0.5 ? '#ffd8a0' : '#a8e0ff') : null, blinds: hash(fx, fy, 33) < 0.4, curtain: hash(fx, fy, 34) < 0.3 ? '#5a2a3a' : null });
@@ -58,12 +58,12 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street of shophouses a
     L.paint(318, G - 48, 324, G, (P) => { for (let y = G - 48; y < G - 4; y++) { P.put(320, y, [20, 22, 28]); P.put(321, y, [58, 62, 72]); } for (const y of [G - 40, G - 24, G - 10]) { P.put(319, y, [90, 96, 108]); P.put(322, y, [90, 96, 108]); } });
     L.prop('deco', 312, G - 46, { art: () => dragonSign(), id: 'wdsign' });
     L.light(316, G - 100, 90, [0.75, 0.9, 1], 0.8); L.light(296, G - 120, 40, [1, 0.3, 0.38], 0.5);
-    // the other doors on the block: Mo's grocery in the teal shophouse, the flats over the mint one
+    // the other doors on the block: Mo's grocery in the teal shophouse, the apartments over the mint one
     L.paint(200, G - 40, 232, G, (P) => { kFill(P, 204, G - 38, 228, G, '#0e1a1a'); for (let y = G - 36; y < G; y++) for (let x = 206; x < 226; x++) P.put(x, y, [170, 230, 210], 0.18); kFill(P, 204, G - 46, 228, G - 40, '#0a0e10'); for (let x = 207; x < 226; x += 2) P.put(x, G - 43, [80, 255, 160], 0.9); });
     L.prop('door', 216, G, { label: 'Mo\'s Grocery, open all hours', to: ['d_grocery', 'door'] }); L.light(216, G - 30, 40, [0.6, 1, 0.8], 0.5);
     L.paint(1026, G - 44, 1056, G, (P) => { kFill(P, 1028, G - 42, 1054, G, '#1a1410'); for (let y = G - 40; y < G; y++) P.put(1041, y, [255, 200, 130], 0.3); kFill(P, 1026, G - 44, 1056, G - 42, '#4a4a52'); for (let k = 0; k < 6; k++) P.put(1030 + k * 4, G - 26, [200, 200, 210]); });
-    L.prop('door', 1041, G, { label: 'Wan Fat Mansions: the flats', to: ['d_flats', 'door'] }); L.light(1041, G - 34, 30, [1, 0.8, 0.5], 0.5);
-    L.spawns.grocery = [216, G]; L.spawns.flats = [1041, G];
+    L.prop('door', 1041, G, { label: 'Wan Fat Mansions: the apartments', to: ['d_apartments', 'door'] }); L.light(1041, G - 34, 30, [1, 0.8, 0.5], 0.5);
+    L.spawns.grocery = [216, G]; L.spawns.apartments = [1041, G];
     // a machine and a junk pile to strip
     L.prop('vending', 250, G, { look: { col: '#3af0e0', body: '#2a3a4a' }, label: 'vending machine' }); L.light(250, G - 12, 30, [0.3, 0.9, 1], 0.5);
     L.prop('junk', 186, G, { label: 'junk pile' });
@@ -74,13 +74,13 @@ addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street of shophouses a
 // ---- the shop: through the front door. The dining room, Auntie Lin at the
 // counter, and through the curtain her storeroom with the rug and the trapdoor.
 const WN = { W: 940, DOOR: 340, CEIL: 128, PART: 618, BACK: 630, END: 912 };
-LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2, depth: '+2 m', mapX: 230, blurb: 'Auntie Lin\'s noodle bar.', label: 'Noodle bar', make: () => district({
+LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, meters: 2, depth: '+2 m', mapX: 230, blurb: 'Auntie Lin\'s noodle bar.', label: 'Noodle bar', make: () => district({
   id: 'd_noodles', name: 'The White Dragon', tier: 1, W: WN.W, sky: false, rain: 0, amb: [0.5, 0.4, 0.34], floor: KMAT.darkwood,
   build(L, G) {
     const C = G - WN.CEIL;
     L.props = L.props.filter((p) => p.kind !== 'transit');
     L.paint(0, 0, WN.W, G, (P) => {
-      P.block(0, 0, WN.W, C, MAT.concreteD, { base: 0.14, lip: 0, panels: [80, 40] }); // the flats' floor over the shop
+      P.block(0, 0, WN.W, C, MAT.concreteD, { base: 0.14, lip: 0, panels: [80, 40] }); // the apartments' floor over the shop
       kFill(P, 0, C, WN.W, C + 6, '#1a0e0a');
       // the dining room: warm tile, the menu boards, steam stains
       P.block(24, C + 6, WN.PART, G, KMAT.terracotta, { base: 0.36, lip: 0, panels: [8, 8] });
@@ -138,7 +138,7 @@ LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2,
 const CL = { W: 720, CEIL: 132 };
 // a line of pixels, for arms and cables (glow > 0 lights it)
 function clLine(P, x0, y0, x1, y1, col, glow = 0) { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); for (let k = 0; k <= n; k++) P.put(Math.round(x0 + ((x1 - x0) * k) / n), Math.round(y0 + ((y1 - y0) * k) / n), col, glow); }
-LEVELS.d_cellar = { name: 'Under the White Dragon', tier: 1, hidden: true, metres: -4, depth: '-4 m', mapX: 230, blurb: 'Your workshop, under the noodle bar. Nobody knows.', label: 'Workshop', make: () => district({
+LEVELS.d_cellar = { name: 'Under the White Dragon', tier: 1, hidden: true, meters: -4, depth: '-4 m', mapX: 230, blurb: 'Your workshop, under the noodle bar. Nobody knows.', label: 'Workshop', make: () => district({
   id: 'd_cellar', name: 'Under the White Dragon', tier: 1, W: CL.W, sky: false, rain: 0, amb: [0.26, 0.22, 0.28], floor: MAT.concreteD,
   build(L, G) {
     const C = G - CL.CEIL, W = CL.W, TT = C + 24; // TT: the top of the tile

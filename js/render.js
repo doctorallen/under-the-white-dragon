@@ -97,7 +97,7 @@ function render() {
     // by more than a step: walking under strings of lamps, it would otherwise
     // need a new tinted copy every few paces
     if (who) { const L = who.litCol; if (L && Math.abs(L[0] - col[0]) < 14 && Math.abs(L[1] - col[1]) < 14 && Math.abs(L[2] - col[2]) < 14) col = L; else who.litCol = col = col.map((q) => ((q >> 4) << 4) + 8); }
-    // the sprite lit by that colour, kept: most figures stand in the same light frame after frame
+    // the sprite lit by that color, kept: most figures stand in the same light frame after frame
     const key = flash ? 'f' : ((col[0] >> 3) << 10) | ((col[1] >> 3) << 5) | (col[2] >> 3);
     if (!s.lit) s.lit = new Map();
     let lc = s.lit.get(key);
@@ -182,7 +182,7 @@ function finishFrame(wets) {
 // whole frame at the end, so without this a sign or a monitor behind
 // someone would shine through them
 function occlude(c, x, y) { const gg = View.gg; gg.globalCompositeOperation = 'destination-out'; gg.drawImage(c, x, y); gg.globalCompositeOperation = 'source-over'; }
-// the light map's colour at a point on the screen (0..255)
+// the light map's color at a point on the screen (0..255)
 function lightAt(x, y, ox, oy) {
   const V = View, lw = V.lc.width, lh = V.lc.height, i = clamp(Math.floor((x - ox) / V.LC), 0, lw - 1), j = clamp(Math.floor((y - oy) / V.LC), 0, lh - 1), o = (j * lw + i) * 4, d = V.limg.data;
   let r = d[o], g = d[o + 1], b = d[o + 2]; const m = Math.max(r, g, b), fl = 0.62 * 255;

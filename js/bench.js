@@ -349,7 +349,7 @@ function partArt(g, p, X, Y, w, h, lens, t) {
   if (lens && p.g === 'military') for (let i = 0; i < 6; i++) R(3 + i * 3, h - 6, 2, 2, '#ffd0d8');
 }
 
-// the casing, closed: the device's own face over a bevelled shell
+// the casing, closed: the device's own face over a beveled shell
 function casingArt(g, D, b, ox, oy, t, fx) {
   const C = D.col, R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(ox + x, oy + y, w, h); }, w = D.w, h = D.h;
   R(0, 1, w, h - 2, '#06080a'); R(1, 0, w - 2, h, '#06080a');

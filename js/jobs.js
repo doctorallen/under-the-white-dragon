@@ -47,9 +47,9 @@ const ODD = {
   cooker: { dev: 'cooker', name: 'rice cooker', who: ['sato', 'rina', 'ines'], faults: ['relay', 'cell', 'board'], base: 12,
     ask: ['"The rice cooker clicks and does nothing. Thirty years old, it\'s family."', '"You fix things, yes? Lin says you fix things."'], waiting: '"The rice cooker? No hurry. Some hurry."', thanks: 'Rice tonight. Bless you.' },
   drone: { dev: 'toydrone', name: 'toy drone', who: ['kai'], faults: ['aerial', 'cell'], base: 4, cap: 30,
-    ask: ['"My drone won\'t fly! It just beeps at me."', '"Mum gave me money for it. Thirty. Is thirty enough?"'], waiting: '"Is it fixed? Is it fixed yet?"', thanks: 'IT FLIES! Thank you thank you.' },
+    ask: ['"My drone won\'t fly! It just beeps at me."', '"Mom gave me money for it. Thirty. Is thirty enough?"'], waiting: '"Is it fixed? Is it fixed yet?"', thanks: 'IT FLIES! Thank you thank you.' },
   fan: { dev: 'fan', name: 'desk fan', who: ['teo', 'ines', 'jun'], faults: ['relay', 'cell'], base: 16,
-    ask: ['"The fan died. Our flat\'s an oven without it."', '"Can you get it going?"'], waiting: '"How\'s the fan?"', thanks: 'Air! Real moving air.' },
+    ask: ['"The fan died. Our apartment\'s an oven without it."', '"Can you get it going?"'], waiting: '"How\'s the fan?"', thanks: 'Air! Real moving air.' },
 };
 const STALL_COST = { cell: 25, aerial: 30, relay: 20, board: 45, servo: 80 };
 
@@ -217,14 +217,14 @@ const Jobs = {
   },
   // the jobs, for the Jobs tab: a card each, with a face, where it stands and what it needs
   list() {
-    const h = Game.s.heat, place = (res) => { const st = Town.state(res, Game.hour()); return st.hidden ? 'asleep in the flats' : !st.level ? 'out, off the block' : st.moving ? 'on the move' : st.level === 'd_noodles' ? 'at the White Dragon' : st.level === 'd_grocery' ? 'at Mo\'s' : st.level === 'd_flats' ? 'in the flats' : st.level === 'd_dragon' ? 'on the street' : 'at ' + LEVELS[st.level].name; };
+    const h = Game.s.heat, place = (res) => { const st = Town.state(res, Game.hour()); return st.hidden ? 'asleep in the apartments' : !st.level ? 'out, off the block' : st.moving ? 'on the move' : st.level === 'd_noodles' ? 'at the White Dragon' : st.level === 'd_grocery' ? 'at Mo\'s' : st.level === 'd_apartments' ? 'in the apartments' : st.level === 'd_dragon' ? 'on the street' : 'at ' + LEVELS[st.level].name; };
     let out = `<div class="heatbar">HEAT ${h}<i style="--h:${h}%"></i>${h >= 70 ? 'Expect a knock.' : h >= 40 ? 'The block is talking.' : ''}</div>`;
     const card = (id, chip, state, extra, cls) => `<div class="jobcard ${cls || ''}"><img class="face" src="${this.face(id)}" alt=""><div><h3>${this.def(id).title}<span class="chip">${chip}</span></h3><div class="state">${state}</div></div>${extra || ''}</div>`;
     const doing = (id) => { const J = this.def(id), d = this.dev(id), on = Game.s.bench === d, ready = this.ready(id); return card(id, ready ? 'ready' : on ? 'on the bench' : 'set aside', ready ? `Tested: ${d.tested.res === 'works' ? 'it works' : 'it half works'}. ${J.odd ? `${J.name} will come by the White Dragon for it (${place(J.res)} now), and Lin will hand it over.` : `${J.name}'s at the counter and will take it shortly.`} ${J.pay ? 'Pays ' + (d.tested.res === 'works' ? J.pay : Math.round(J.pay / 2)) + ' cr on collection.' : ''}` : (on ? 'On your bench in the basement.' : 'Waiting in the basement: set it on the bench.') + (J.pay ? ' Pays ' + J.pay + ' cr.' : '') + (J.illegal ? ' <span style="color:#ff8aa0">Illegal: heat while it\'s down there.</span>' : ''), ready ? '' : this.needs(id), ready ? 'ready' : ''); };
     const busy = Object.keys(Game.s.jobs).filter((id) => Game.s.jobs[id].st === 'bench');
     if (busy.length) out += '<h3>In the basement</h3>' + busy.map(doing).join('');
     const asks = this.oddToday().filter((id) => !Game.s.jobs[id]), story = JOB_ORDER.filter((id) => this.st(id).st === 'offer');
-    if (asks.length || story.length) out += '<h3>Asking for you</h3>' + story.map((id) => card(id, 'new', `${JOBS[id].name} is waiting at the bar upstairs. ${JOBS[id].pay ? JOBS[id].pay + ' cr.' : 'A favour.'}`)).join('') + asks.map((id) => { const c = this.oddMake(id), R = RESIDENTS[c.res]; return card(id, 'today', `${R.name}'s ${ODD[c.tpl].name} is broken. ${R.name} is ${place(c.res)} right now. Pays about ${c.pay} cr.`); }).join('');
+    if (asks.length || story.length) out += '<h3>Asking for you</h3>' + story.map((id) => card(id, 'new', `${JOBS[id].name} is waiting at the bar upstairs. ${JOBS[id].pay ? JOBS[id].pay + ' cr.' : 'A favor.'}`)).join('') + asks.map((id) => { const c = this.oddMake(id), R = RESIDENTS[c.res]; return card(id, 'today', `${R.name}'s ${ODD[c.tpl].name} is broken. ${R.name} is ${place(c.res)} right now. Pays about ${c.pay} cr.`); }).join('');
     out += Tips.list();
     const past = Object.keys(Game.s.jobs).filter((id) => ['back', 'done', 'seized'].includes(Game.s.jobs[id].st));
     if (past.length) out += '<h3>Done</h3>' + past.slice(-6).map((id) => card(id, Game.s.jobs[id].st === 'seized' ? 'seized' : 'done', Game.s.jobs[id].st === 'back' ? 'You\'ll hear how it went in the morning.' : Game.s.jobs[id].st === 'seized' ? 'Taken by the precinct.' : 'Done.', '', 'done')).join('');

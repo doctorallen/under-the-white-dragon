@@ -7,7 +7,7 @@
 // read at its middle, and every block is lit side-on: a lit lip on top, the
 // west face lit, soot under, the east face shaded, grime running down.
 //
-// A chunk is a colour canvas (transparent where the far layer shows through)
+// A chunk is a color canvas (transparent where the far layer shows through)
 // and a glow canvas (what lights itself). Strokes depend only on the place
 // and each operation's own seed, so chunks meet without seams.
 // ---------------------------------------------------------------------------
@@ -49,7 +49,7 @@ class Pix {
     if (glow) { this.g[o] = col[0] * glow; this.g[o + 1] = col[1] * glow; this.g[o + 2] = col[2] * glow; this.g[o + 3] = 255; this.glowed = true; }
     else this.g[o] = this.g[o + 1] = this.g[o + 2] = this.g[o + 3] = 0;
   }
-  // mix what's there towards a colour (haze, steam)
+  // mix what's there toward a color (haze, steam)
   tint(x, y, col, k) { x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy; if (x < 0 || y < 0 || x >= this.w || y >= this.h) return; const o = (y * this.w + x) * 4; if (!this.c[o + 3]) return; this.c[o] = lerp(this.c[o], col[0], k); this.c[o + 1] = lerp(this.c[o + 1], col[1], k); this.c[o + 2] = lerp(this.c[o + 2], col[2], k); }
   // a painted area: inside(x, y) says what's in it, v(x, y) its value (0..1).
   // Flat (PAINT_FLAT): each pixel its own tone, no brushwork; otherwise read at

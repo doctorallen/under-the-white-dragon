@@ -1,7 +1,7 @@
 'use strict';
 // ---------------------------------------------------------------------------
 // Day and night. The city never really gets bright: by day the sky's a low
-// grey-blue overcast, the towers behind go pale in
+// gray-blue overcast, the towers behind go pale in
 // the haze and the neon shows less; dawn and dusk come in rose and amber. Only
 // places open to the sky (L.open, from district's sky) change; interiors,
 // the undercity and the basement keep their own light. Driven by the clock

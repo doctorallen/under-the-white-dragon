@@ -1,7 +1,7 @@
 'use strict';
 // ---------------------------------------------------------------------------
 // Tyrell mode (dev): the city's minds laid out to watch. Everyone is drawn
-// where the simulation has them, coloured by what they're doing:
+// where the simulation has them, colored by what they're doing:
 //   the city: every street a line, band by band from the Spires down; people
 //     out on a street sit on its line, people indoors stack under their door,
 //     people between streets or riding between bands hang between the lines;
@@ -81,7 +81,7 @@ const TyrellMode = {
     const st = City.state(id), C = Census.places;
     if (st.gap) return { st, between: st.gap };
     if (st.level && Census.streets[st.level]) return { st, street: st.level, x: st.x, out: !st.hidden };
-    const pl = C[st.place] || (st.level && C[st.level]) || (st.flat && C['flat:' + st.flat]);
+    const pl = C[st.place] || (st.level && C[st.level]) || (st.apt && C['apt:' + st.apt]);
     if (pl) return { st, street: pl.street, x: pl.x, room: pl.kind === 'room' ? (pl.level || st.level) : null, door: pl.id, out: false };
     return { st };
   },

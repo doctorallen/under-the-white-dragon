@@ -96,16 +96,16 @@ async function run(B, url, vp, name, failures) {
     // screws out, easing off whenever one binds
     B.b.screws.forEach((_, i) => { const [x, y] = B.screwAt(i); for (let t = 0; t < 4 && B.b.screws[i].st === 'in'; t++) hold(x, y, 120, () => { if (B.rt[i] && B.rt[i].bind > 0.1) B.release(); }); });
     B.tool = 'hands'; B.lift(); B.tool = 'probe'; for (const k in B.D.slots) { const S = B.D.slots[k]; B.press(B.ox + S.x + 4, B.oy + S.y + 4); B.release(); }
-    const learnt = Parts.knows('navunit');
+    const learned = Parts.knows('navunit');
     B.tool = 'iron'; for (const [x, y] of B.joints('cell')) hold(x, y, 60);
     B.tool = 'hands'; const S = B.D.slots.cell; B.press(B.ox + S.x + 8, B.oy + S.y + 4); B.release();
     B.fit(Parts.have('cell').find((p) => p.st === 'ok').id); for (const [x, y] of B.joints('cell')) hold(x, y, 60);
     B.close(); B.b.screws.forEach((_, i) => { const [x, y] = B.screwAt(i); for (let t = 0; t < 4 && B.b.screws[i].st !== 'in'; t++) hold(x, y, 120, () => { if (B.rt[i] && B.rt[i].bind > 0.1) B.release(); }); });
     B.test(); B.draw();
-    return { open, learnt, res: B.b.tested && B.b.tested.res, loose: B.loose(), scorch: B.b.scorch.length };
+    return { open, learned, res: B.b.tested && B.b.tested.res, loose: B.loose(), scorch: B.b.scorch.length };
   });
   await shot('bench');
-  if (fix.open !== 'bench' || !fix.learnt || fix.res !== 'works' || fix.loose || fix.scorch) fail('the bench repair did not work ' + JSON.stringify(fix));
+  if (fix.open !== 'bench' || !fix.learned || fix.res !== 'works' || fix.loose || fix.scorch) fail('the bench repair did not work ' + JSON.stringify(fix));
   // up the ladder, through the trapdoor, into the storeroom: Lin at the bar, the sign out front
   const up = await E(() => {
     Hud.toggle(null); Bench.clear(); T_.walkTo(World.props.find((p) => p.kind === 'trapdoor').x); const pr = Player.target && Player.target.p && Player.target.p.kind; T_.tap('useHit'); T_.run({}, 90);
@@ -250,7 +250,7 @@ async function run(B, url, vp, name, failures) {
   if (name === 'phone') {
     const lv = await E(() => { const bad = [], names = {}, res = new Set(Object.values(RESIDENTS).map((r) => r.name)); const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); for (const d of World.L.npcs) { if (PARTS.includes(d.name)) bad.push(id + ': someone still called ' + d.name); if (d.title) { const w = names[d.name]; if (w && w !== id + d.x) bad.push(d.name + ' twice (' + w + ', ' + id + ')'); if (res.has(d.name)) bad.push(d.name + ' is a resident\'s name'); names[d.name] = id + d.x; } } for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
     if (lv.bad.length || lv.n < 30) fail('levels failed to load: ' + JSON.stringify(lv));
-    const cm = await E(() => { Hud.toggle('citymap'); const ok = !!WorldMap.img && !!$('worldcv'); const off = Object.keys(LEVELS).filter((id) => LEVELS[id].metres === undefined || LEVELS[id].mapX === undefined); Hud.toggle(null); return { ok, off }; });
+    const cm = await E(() => { Hud.toggle('citymap'); const ok = !!WorldMap.img && !!$('worldcv'); const off = Object.keys(LEVELS).filter((id) => LEVELS[id].meters === undefined || LEVELS[id].mapX === undefined); Hud.toggle(null); return { ok, off }; });
     if (!cm.ok || cm.off.length) fail('the city map did not open, or places are missing from it ' + JSON.stringify(cm));
   }
   // a reload brings it back

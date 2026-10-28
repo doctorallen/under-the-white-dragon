@@ -26,7 +26,7 @@ const Dev = {
     const spawn = (id) => { const L = LEVELS[id].built; return L.spawns.enter ? 'enter' : L.spawns.door ? 'door' : Object.keys(L.spawns)[0]; };
     const seen = new Set(), tree = (id) => { seen.add(id); return (kids[id] || []).filter((k) => !seen.has(k)).map((k) => { seen.add(k); return b(k, spawn(k), 'room') + tree(k); }).join(''); };
     return STRATA.map((S) => {
-      const ids = Object.keys(LEVELS).filter((id) => !LEVELS[id].hidden && LEVELS[id].metres !== undefined && Travel.band(id) === S.id).sort((a, c) => (LEVELS[a].mapX || 0) - (LEVELS[c].mapX || 0));
+      const ids = Object.keys(LEVELS).filter((id) => !LEVELS[id].hidden && LEVELS[id].meters !== undefined && Travel.band(id) === S.id).sort((a, c) => (LEVELS[a].mapX || 0) - (LEVELS[c].mapX || 0));
       if (!ids.length) return '';
       return `<h4 class="band">${S.name}</h4><div class="streets">` + ids.map((id) => `<div class="street">${b(id, spawn(id))}${tree(id)}</div>`).join('') + '</div>';
     }).join('');

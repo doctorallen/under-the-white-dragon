@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 const LEVELS = {};
 // what a door with homes behind it says
-const HOME_LABEL = { capsule: 'Capsule homes', flat: 'Flats', house: 'A house', shack: 'Shacks', penthouse: 'Penthouses', squat: 'Somebody\'s corner' };
+const HOME_LABEL = { capsule: 'Capsule homes', apartment: 'Apartments', house: 'A house', shack: 'Shacks', penthouse: 'Penthouses', squat: 'Somebody\'s corner' };
 
 function newLevel(id, name, w, h) {
   const L = {
@@ -45,7 +45,7 @@ function newLevel(id, name, w, h) {
     prop(kind, x, y, o = {}) { const p = Object.assign({ id: this.id + ':' + kind + ':' + Math.round(x) + ':' + Math.round(y), kind, x, y }, o); this.props.push(p); return p; },
     npc(def) { personName(this, def); this.npcs.push(def); return def; }, // (everyone gets a name: levels.js)
     // where the city's people live and go (census.js reads these): a door
-    // with homes behind it (o.n households of a kind: capsule, flat, house,
+    // with homes behind it (o.n households of a kind: capsule, apartment, house,
     // shack, penthouse), a door to somewhere they work or go (a school, a
     // bath, offices: kind), and a spot in the open where they spend time
     // (a park bench, a stall's counter, a temple's steps: kind, n people)

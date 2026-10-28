@@ -15,7 +15,7 @@ function dragonHead (N, o = {}) {
   const mask = (draw, whole) => { const c = document.createElement('canvas'); c.width = N; c.height = H0; const g = c.getContext('2d'); g.scale(S, S); if (!whole) { g.translate(xf[0], xf[1]); g.scale(xf[2], xf[2]); } g.fillStyle = '#fff'; g.strokeStyle = '#fff'; g.lineCap = 'round'; g.lineJoin = 'round'; draw(g); const d = g.getImageData(0, 0, N, H0).data, m = new Uint8Array(N * H0); for (let i = 0; i < N * H0; i++) m[i] = d[i * 4 + 3] > 120 ? 1 : 0; return m; };
   const poly = (g, pts) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); };
   const lw = (g, w, whole) => { g.lineWidth = Math.max(w, 1.15 / S / (whole ? 1 : xf[2])); };
-  // the parts, back to front: [name, mask, tube colour, fill]
+  // the parts, back to front: [name, mask, tube color, fill]
   const P = [];
   const skip = new Set(o.skip || []);
   const add = (name, draw, tube, fill, whole) => { if (!skip.has(name)) P.push({ name, m: mask(draw, whole), tube, fill }); };

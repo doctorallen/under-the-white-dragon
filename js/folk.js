@@ -5,7 +5,7 @@
 //   - every post's shifts need someone, the first shift its own person (the
 //     ramen cook keeps her name and look), the rest someone in its uniform;
 //   - whoever takes a job lives in a home near enough to it: a single in a
-//     capsule or a shack, a couple or a family in a flat or a house; the
+//     capsule or a shack, a couple or a family in an apartment or a house; the
 //     deep's jobs go to people from street level and Old Town, who ride down;
 //   - a family's children go to the school in their part of the city, and
 //     play near home after; some adults keep house; some couples are retired,
@@ -25,7 +25,7 @@ const FOLK = {
   // which bands someone who works in a band may live in, nearest first
   live: { sky: ['high'], high: ['high', 'street'], street: ['street', 'high', 'old'], under: ['street', 'old'], old: ['old', 'street'], works: ['old', 'street'], bowels: ['old', 'street'] },
   // homes a household fits, by its size
-  fits: { 1: ['capsule', 'shack', 'flat', 'squat'], 2: ['flat', 'house', 'shack', 'penthouse'], 3: ['flat', 'house'], 4: ['flat', 'house'] },
+  fits: { 1: ['capsule', 'shack', 'apartment', 'squat'], 2: ['apartment', 'house', 'shack', 'penthouse'], 3: ['apartment', 'house'], 4: ['apartment', 'house'] },
   hobbies: { adult: ['drink', 'pachi', 'watch', 'dance', 'arcade', 'bathe', 'loaf', 'festival', 'pray'], young: ['dance', 'arcade', 'drink', 'watch', 'festival'], senior: ['pray', 'bathe', 'loaf', 'watch', 'drink', 'pachi'], kid: ['play', 'arcade'] },
 };
 // what generated people say about their day, by what they're doing
@@ -50,8 +50,8 @@ const Folk = {
     const band = (pid) => Travel.band(C.places[pid].street);
     // ---- homes: each door's households, as rooms to fill
     for (const h of C.homes) { this.byHome[h.id] = []; for (let k = 0; k < h.n; k++) homes.push({ place: h.id, kind: h.home, band: band(h.id), free: true }); }
-    // the block's flats, written by hand (d_block.js), and the people in them
-    for (const k in FLATS) { const id = 'flat:' + k; C.places[id] = { id, kind: 'room', level: 'd_flats', street: 'd_dragon', x: TOWN_PLACE.flats.door, y: BK.G, inside: TOWN_PLACE.flats.inside, G: BK.G, flat: k, spots: {}, tags: ['home'], label: 'Flat ' + k, home: 'flat' }; this.byHome[id] = []; }
+    // the block's apartments, written by hand (d_block.js), and the people in them
+    for (const k in APARTMENTS) { const id = 'apt:' + k; C.places[id] = { id, kind: 'room', level: 'd_apartments', street: 'd_dragon', x: TOWN_PLACE.apartments.door, y: BK.G, inside: TOWN_PLACE.apartments.inside, G: BK.G, apt: k, spots: {}, tags: ['home'], label: 'Apartment ' + k, home: 'apartment' }; this.byHome[id] = []; }
     // a name nobody else in the city has
     for (const id in RESIDENTS) names.add(RESIDENTS[id].name);
     for (const p of C.posts) if (p.name) names.add(p.name);
@@ -62,9 +62,9 @@ const Folk = {
       R.age = R.age || 'adult'; R.likes = R.likes || {};
       if (typeof R.job === 'string') R.job = { place: TOWN_PLACE[R.job].level, title: { grocery: 'grocer', izakaya: 'keeps the bar', menagerie: 'pet shop hand', pachinko: 'floor man', cinema: 'usher', coil: 'bartender', shrine: 'shrine keeper' }[R.job] || 'staff', hand: R.job };
       if (typeof R.school === 'string' && R.school.startsWith('@')) { const sc = Object.values(C.places).find((q) => q.label === R.school.slice(1)); R.school = sc ? sc.id : null; }
-      if (R.home && FLATS[R.home]) R.homePlace = 'flat:' + R.home;
-      else if (R.lives) { const h = homes.find((q) => q.free && C.places[q.place].street === R.lives && (q.kind === 'capsule' || q.kind === 'shack' || q.kind === 'flat' || q.kind === 'house')) || homes.find((q) => q.free && band(q.place) === Travel.band(R.lives)); h.free = false; R.homePlace = h.place; }
-      if (R.homePlace) { const hh = { id: 'hh:' + id, home: R.homePlace, members: [id], label: R.name + '\'s home', kind: 'single' }; const twin = this.households.find((q) => q.home === R.homePlace && R.homePlace.startsWith('flat:')); if (twin) twin.members.push(id); else { this.households.push(hh); this.byHome[R.homePlace].push(hh); } R.hh = (twin || hh).id; }
+      if (R.home && APARTMENTS[R.home]) R.homePlace = 'apt:' + R.home;
+      else if (R.lives) { const h = homes.find((q) => q.free && C.places[q.place].street === R.lives && (q.kind === 'capsule' || q.kind === 'shack' || q.kind === 'apartment' || q.kind === 'house')) || homes.find((q) => q.free && band(q.place) === Travel.band(R.lives)); h.free = false; R.homePlace = h.place; }
+      if (R.homePlace) { const hh = { id: 'hh:' + id, home: R.homePlace, members: [id], label: R.name + '\'s home', kind: 'single' }; const twin = this.households.find((q) => q.home === R.homePlace && R.homePlace.startsWith('apt:')); if (twin) twin.members.push(id); else { this.households.push(hh); this.byHome[R.homePlace].push(hh); } R.hh = (twin || hh).id; }
     }
     // ---- the jobs: every shift of every post, the deep's first (fewest homes near them)
     const jobs = [];
@@ -129,7 +129,7 @@ const Folk = {
     for (const id of idle) RESIDENTS[id].keepsHouse = true;
     // ---- the old: retired couples and people living alone
     for (let k = 0; k < FOLK.seniors; k++) {
-      const b = r.pick(['high', 'high', 'street', 'old']), h = homes.find((q) => q.free && q.band === b && (q.kind === 'flat' || q.kind === 'house')) || homes.find((q) => q.free && q.kind === 'flat');
+      const b = r.pick(['high', 'high', 'street', 'old']), h = homes.find((q) => q.free && q.band === b && (q.kind === 'apartment' || q.kind === 'house')) || homes.find((q) => q.free && q.kind === 'apartment');
       if (!h) break;
       h.free = false;
       const last = r.pick(NAME_LAST), pair = r.f() < 0.5, hh = { id: 'hh:' + nid(), home: h.place, members: [], kind: pair ? 'couple' : 'single', last };

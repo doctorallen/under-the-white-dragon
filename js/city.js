@@ -29,7 +29,7 @@ const CITY = {
   hunger: 0.04, energy: 0.045, fun: 0.03, company: 0.03, chores: 0.018,
   reportHeat: 6, // heat when someone reports what they saw you do
   money: [40, 160], // what residents start with
-  pop: 2, // the population's version: a save with another starts the city over
+  pop: 3, // the population's version: a save with another starts the city over
 };
 // what's done where: the free choices, each at the places tagged for it
 const CITY_FREE = {
@@ -169,7 +169,7 @@ const City = {
   anchor(pid) {
     const P = Census.places[pid];
     if (!P) return { place: pid, x: 0, y: 0 };
-    if (P.flat) { const F = FLATS[P.flat]; return { place: pid, x: F.table, y: F.y }; }
+    if (P.apt) { const F = APARTMENTS[P.apt]; return { place: pid, x: F.table, y: F.y }; }
     if (P.kind === 'room') return { place: pid, x: P.inside, y: P.G };
     return { place: pid, x: P.x, y: P.y };
   },
@@ -238,7 +238,7 @@ const City = {
   },
   at(id, place, act, start) {
     const b = Town.spot(id, place, act, start, undefined, this.seat(id, place, act, start)), e = { act, h: (((start / 60) % 24) + 24) % 24, o: {} };
-    return { level: b.level, x: b.x, y: b.y, moving: false, act, e, flat: b.flat, hidden: b.hidden, depth: b.depth, face: b.face, place };
+    return { level: b.level, x: b.x, y: b.y, moving: false, act, e, apt: b.apt, hidden: b.hidden, depth: b.depth, face: b.face, place };
   },
   // ---- every frame (from Town.sync): keep up with the game's clock --------
   sync() {

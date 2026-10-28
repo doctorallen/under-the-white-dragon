@@ -12,11 +12,11 @@
 // from one place to another, or something at a place), and the route between
 // two places is worked out here, through the census's places (census.js): out
 // of a room's door, along the street, off the end to the next street (or to the
-// cab stand, the manhole, the subway, the lift, and off screen to another band
+// cab stand, the manhole, the subway, the elevator, and off screen to another band
 // of the city), and in at another door. Town.sync puts whoever is in the level
 // you're in among the people (Actors.npcs, def.town) and moves them, and
 // Town.chatter has them talk: greetings in passing, small talk over noodles
-// and at a neighbour's table, the till.
+// and at a neighbor's table, the till.
 //
 // Without the engine, the block's own residents keep their written days by
 // the clock alone (Town.clockState), and nobody else is about.
@@ -28,7 +28,7 @@ const PXH = 1300; // pixels walked in a game hour (26 px a second, 50 seconds an
 const TOWN_PLACE = {
   noodles: { level: 'd_noodles', door: 424, inside: 340, spots: { eat: [144, 214, 284, 400, 450, 500, 550], collect: [425, 590] } },
   grocery: { level: 'd_grocery', door: 216, inside: 114, spots: { shop: [175, 259, 335, 392, 424], browse: [175, 259, 335, 392, 424], pay: [470], work: [488], stock: [265] } },
-  flats: { level: 'd_flats', door: 1041, inside: 86 },
+  apartments: { level: 'd_apartments', door: 1041, inside: 86 },
   izakaya: { level: 'd_izakaya', street: 'd_neonrow', door: 355, inside: 140, spots: { drink: [454, 394], work: [380] }, depth: { work: { lift: 4 } } },
   menagerie: { level: 'd_menagerie', street: 'd_neonrow', door: 652, inside: 290, spots: { browse: [120, 160, 350, 410], work: [214] }, depth: { work: { lift: 4 } } },
   pachinko: { level: 'd_pachinko', street: 'd_neonrow', door: 1050, inside: 320, spots: { pachi: [104, 200, 448, 520], work: [260] } },
@@ -40,7 +40,7 @@ const TOWN_PLACE = {
 // lifted onto its step, or in the seats seen from behind; drawn behind the
 // counter or the row of seats in front of them)
 const TOWN_GAP = 0.3; // game hours to cross a street between two you can see someone on (off screen)
-const TOWN_RIDE = 0.25; // game hours in a cab, down a manhole, on the subway or in a lift, and a tenth more a band
+const TOWN_RIDE = 0.25; // game hours in a cab, down a manhole, on the subway or in an elevator, and a tenth more a band
 // a street's ends, out to the next street
 function townEnd(street, side) { const L = LEVELS[street].built || (LEVELS[street].built = LEVELS[street].make()); return side === 'west' ? 18 : L.w - 18; }
 const SHELF = [175, 259, 335, 392, 424]; // the grocery's shelves and fridges
@@ -55,7 +55,7 @@ const TOWN_POSE = { eat: 'sit', home: 'sit', visit: 'sit', host: 'sit', work: 'w
 // name (@The Mercy), or the nearest place of a kind (near:faith). `shop`
 // expands into a few shelves and the till. `with` walks a step behind a
 // friend going the same way. `lives`: the street the home is on, for those
-// who don't live in the block's flats; `workAt`: the city's door they work
+// who don't live in the block's apartments; `workAt`: the city's door they work
 // behind ([its name, the hour they start]), so nobody else is hired for it.
 const RESIDENTS = {
   okonkwo: { name: 'Mr Okonkwo', home: 'A', seat: 3, age: 'senior', look: { skin: SKINS[5], hair: 'bald', top: '#3a4a3a', coat: 'jacket', legs: '#2a2a2a' }, who: 'retired, a widower, forty years on the pumps',
@@ -70,12 +70,12 @@ const RESIDENTS = {
   ines: { name: 'Ines', home: 'C', seat: 2, workAt: ['The canal parcel depot', 8.5], look: { skin: SKINS[1], hair: 'short', hairCol: '#2a1a14', top: '#3a5a7a', legs: '#2a2a3a' }, who: 'sorts parcels at the Docks',
     plan: [[0, 'home', 'sleep', { with: 'teo' }], [7, 'home', 'home'], [8.5, '@The canal parcel depot', 'work'], [17.5, 'grocery', 'shop', { with: 'teo' }], [18.6, 'noodles', 'eat', { with: 'teo' }], [20.5, 'cinema', 'watch', { with: 'teo' }]],
     say: { work: 'Nine hours of other people\'s parcels. Some of them tick.', shop: 'The good soy. Don\'t let him talk you out of it.', eat: 'Date night. It\'s always noodles. I don\'t mind.', home: 'Teo\'s asleep before the titles.', watch: 'Shh. It\'s the good bit.' } },
-  rina: { name: 'Rina', home: 'D', seat: 6, workAt: ['The Mercy', 18.6], look: { skin: SKINS[2], hair: 'bun', hairCol: '#1a1414', top: '#7ae8d8', legs: '#3a4a4a' }, who: 'night nurse at the Mercy, Kai\'s mum',
+  rina: { name: 'Rina', home: 'D', seat: 6, workAt: ['The Mercy', 18.6], look: { skin: SKINS[2], hair: 'bun', hairCol: '#1a1414', top: '#7ae8d8', legs: '#3a4a4a' }, who: 'night nurse at the Mercy, Kai\'s mom',
     plan: [[0, '@The Mercy', 'work'], [7.4, 'home', 'home'], [8.2, 'home', 'sleep'], [15, 'home', 'home'], [16, 'grocery', 'shop'], [17.2, 'home', 'home'], [18.6, '@The Mercy', 'work']],
     say: { work: 'Night shift at the Mercy. Lin feeds Kai. I owe that woman everything.', shop: 'Milk, bread, whatever Kai\'s decided he eats this week.', home: 'Two hours with my boy, then back on shift.' } },
   kai: { name: 'Kai', home: 'D', seat: 6, age: 'kid', school: '@Kessler Primary', look: { skin: SKINS[2], hair: 'cap', capCol: '#3aff80', top: '#ff8a20', legs: '#2a2a3a', tall: 0.72 }, who: 'eleven, Rina\'s boy, wants a drone',
     plan: [[0, 'home', 'sleep'], [7, 'home', 'home'], [7.6, '@Kessler Primary', 'school'], [15.4, 'home', 'home'], [16, 'menagerie', 'browse'], [18.4, 'noodles', 'eat'], [21, 'home', 'home'], [21.7, 'home', 'sleep']],
-    say: { school: 'School. Boring. Do you fix drones? Can you make one fly?', play: 'I\'m waiting for the drones to go over. Sometimes one drops something.', browse: 'There\'s a dog here that bites synths. I want it.', eat: 'Auntie Lin says I have to finish the broth.', home: 'Mum\'s on nights. I\'m allowed the screen till nine.' } },
+    say: { school: 'School. Boring. Do you fix drones? Can you make one fly?', play: 'I\'m waiting for the drones to go over. Sometimes one drops something.', browse: 'There\'s a dog here that bites synths. I want it.', eat: 'Auntie Lin says I have to finish the broth.', home: 'Mom\'s on nights. I\'m allowed the screen till nine.' } },
   dara: { name: 'Dara', home: 'E', seat: 0, workAt: ['Overpass Couriers', 9.5], look: { skin: SKINS[4], hair: 'cap', capCol: '#ff8a20', top: '#2a2a3a', legs: '#2a2a34' }, who: 'bike courier',
     plan: [[0, 'home', 'sleep'], [8, 'home', 'home'], [9.5, '@Overpass Couriers', 'work'], [13, 'noodles', 'eat'], [14, '@Overpass Couriers', 'work'], [19.2, 'noodles', 'eat'], [20.2, 'pachinko', 'pachi']],
     say: { work: 'Forty drops today. My knees are older than me.', eat: 'Lunch is noodles. Dinner is noodles. Ask me why I\'m fast.', pachi: 'Lucky Seven owes me a week\'s wages. I\'m collecting.', home: 'Bike\'s busted. Again.' } },
@@ -118,10 +118,10 @@ const TOWN_GOING = {
   home: 'Home. My feet have opinions.', sleep: 'Bed.', shop: 'To Mo\'s, before I forget what for.', eat: 'Noodles. Lin\'s, where else?', work: 'Work. Don\'t make me late.',
   visit: 'Visiting. Don\'t keep me.', collect: 'To the White Dragon. Something of mine\'s fixed.', drink: 'One drink at the Red Lantern.', pachi: 'Lucky Seven. Don\'t judge me.', watch: 'The pictures, at the Orpheum.', browse: 'The pet shop!', pray: 'To the shrine.', temple: 'To the temple.', school: 'School. Ugh.', play: 'Out.', sweep: 'Next stretch of street.', stock: 'Shift\'s starting.',
 };
-// small talk: for any two neighbours, and for some, their own
+// small talk: for any two neighbors, and for some, their own
 const TOWN_SMALL = [
   ['Did you hear the drone go over last night?', 'Three of them. Low. Looking for somebody.'],
-  ['Lift\'s broken in Kessler again.', 'Lift\'s broken everywhere.'],
+  ['Elevator\'s broken in Kessler again.', 'Elevator\'s broken everywhere.'],
   ['Rain\'s not stopping.', 'Rain\'s never stopping.'],
   ['Lin put the price up.', 'Lin put the portions up too. Don\'t complain.'],
   ['You look tired.', 'I am tired. Everyone\'s tired.'],
@@ -186,10 +186,10 @@ const Town = {
   spot(id, pid, act, t = 0, xo, seat) {
     const R = RESIDENTS[id], P = Census.places[pid], idn = this.idn(id);
     if (!P) return { place: pid, level: null, hidden: true, x: 0, y: 0 };
-    if (P.flat) { // the block's flats: the table, the bed, a visit
-      const F = FLATS[P.flat], mine = R.homePlace === pid, twin = Folk.householdsAt(pid).flatMap((hh) => hh.members).indexOf(id);
-      if (act === 'sleep') return { place: pid, level: 'd_flats', flat: P.flat, x: F.bed + (twin > 0 ? (P.flat === 'C' ? 36 : -36) : 0), y: F.y, hidden: true };
-      return { place: pid, level: 'd_flats', flat: P.flat, x: F.table + (mine ? (twin > 0 ? 12 : -12) : 14), y: F.y };
+    if (P.apt) { // the block's apartments: the table, the bed, a visit
+      const F = APARTMENTS[P.apt], mine = R.homePlace === pid, twin = Folk.householdsAt(pid).flatMap((hh) => hh.members).indexOf(id);
+      if (act === 'sleep') return { place: pid, level: 'd_apartments', apt: P.apt, x: F.bed + (twin > 0 ? (P.apt === 'C' ? 36 : -36) : 0), y: F.y, hidden: true };
+      return { place: pid, level: 'd_apartments', apt: P.apt, x: F.table + (mine ? (twin > 0 ? 12 : -12) : 14), y: F.y };
     }
     if (P.kind === 'door') return { place: pid, level: null, hidden: true, x: P.x, y: P.y };
     let pos = null;
@@ -208,19 +208,19 @@ const Town = {
     return { place: pid, level: P.level, x, y: pos.y, hidden: act === 'sleep', depth: dp, face: pos.face };
   },
   idn(id) { let n = 7; for (let i = 0; i < id.length; i++) n = (n * 31 + id.charCodeAt(i)) % 100003; return n; },
-  // inside the flats: across a floor, or by the stairs between floors
-  inFlats(a, b) {
+  // inside the apartments: across a floor, or by the stairs between floors
+  inApartments(a, b) {
     if (a.y === b.y) return [a, b];
-    const lo = { x: FLAT_STAIRS.x0, y: BK.G }, hi = { x: FLAT_STAIRS.x1, y: BK.F1 };
+    const lo = { x: APT_STAIRS.x0, y: BK.G }, hi = { x: APT_STAIRS.x1, y: BK.F1 };
     return a.y === BK.G ? [a, lo, hi, b] : [a, hi, lo, b];
   },
-  inside(P, a, b) { return P.flat || P.id === 'd_flats' ? this.inFlats(a, b) : [a, b]; },
+  inside(P, a, b) { return P.apt || P.id === 'd_apartments' ? this.inApartments(a, b) : [a, b]; },
   // where someone gets a ride from on a street, going from x: up where the
   // cabs fly, the cab stand or either end of the street (a cab picks you up
   // round the corner), whichever's nearest; below, the manhole, the subway
-  // or the lift, wherever it is
+  // or the elevator, wherever it is
   rank(sid, x) { const S = Census.streets[sid]; if (!['sky', 'high', 'street'].includes(S.band)) return S.transit; return [S.transit, 18, S.w - 18].reduce((q, t) => (Math.abs(t - x) < Math.abs(q - x) ? t : q)); },
-  // a ride between bands of the city: a cab, a manhole, the subway, a lift
+  // a ride between bands of the city: a cab, a manhole, the subway, an elevator
   ride(ba, bb) { const ids = STRATA.map((q) => q.id); return TOWN_RIDE + 0.1 * Math.abs(ids.indexOf(ba) - ids.indexOf(bb)); },
   // the way from one point to the next: legs, each in one level (or off
   // screen, between streets and bands: `len`, in pixels at walking pace)
@@ -276,7 +276,7 @@ const Town = {
         d -= len;
       }
     }
-    return { level: b.hidden ? b.level || null : b.level, x: b.x, y: b.y, moving: false, act: e.act, e, flat: b.flat, hidden: b.hidden, depth: b.depth, place: b.place };
+    return { level: b.hidden ? b.level || null : b.level, x: b.x, y: b.y, moving: false, act: e.act, e, apt: b.apt, hidden: b.hidden, depth: b.depth, place: b.place };
   },
   // ---- the people here, now: in the level you're in, moved to where they are
   sync() {
@@ -295,7 +295,7 @@ const Town = {
       const dx = st.x - n.x;
       if (st.moving) { n.face = st.dir; n.walked = (n.walked || 0) + Math.abs(dx); }
       else if (st.act === 'eat' && st.place === 'd_noodles') n.face = 1;
-      else if (st.flat && TOWN_POSE[st.act] === 'sit') n.face = st.x > FLATS[st.flat].table ? -1 : 1;
+      else if (st.apt && TOWN_POSE[st.act] === 'sit') n.face = st.x > APARTMENTS[st.apt].table ? -1 : 1;
       else if (st.act === 'work' && here === 'd_grocery') n.face = -1;
       else if (st.act === 'pay') n.face = 1;
       else if (st.face) n.face = st.face;
@@ -309,7 +309,7 @@ const Town = {
       if (st.moving) this.lastAct[id] = null;
     }
   },
-  // on arriving: the till, the counter, a neighbour's door
+  // on arriving: the till, the counter, a neighbor's door
   arrived(n, id, st) {
     const other = (pred) => Actors.npcs.find((q) => q !== n && pred(q));
     if (st.act === 'pay') { Actors.say(n, ['Just these.', 'And a bag, please.', 'Put it on my tab?'][Math.floor(hash(id.length, Game.s.day, 3) * 3)]); const clerk = other((q) => q.def.town && RESIDENTS[q.def.town].job && RESIDENTS[q.def.town].job.place === 'd_grocery'); if (clerk) setTimeout(() => Actors.say(clerk, ['Fourteen.', 'Nine-fifty. Call it nine.', 'No tabs. Fine. Tab.'][Math.floor(hash(id.length, Game.s.day, 4) * 3)]), 1300); }

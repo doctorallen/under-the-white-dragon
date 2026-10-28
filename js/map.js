@@ -49,7 +49,7 @@ const MapView = {
       const to = p.to && LEVELS[p.to[0]], name = to ? to.name : p.place ? Census.mapLabel(p) : p.label || 'Door';
       return (p.out ? 'Out to ' + name : p.kind === 'trapdoor' ? (p.up ? 'Up to ' : 'Down to ') + name : name) + (p.hours && !Props.openNow(p.hours) ? ' (shut)' : '');
     }
-    if (p.kind === 'transit') return { spinner: 'Cab stand', subway: 'Subway', hatch: 'Ladder up', manhole: 'Manhole' }[p.mode] || 'Lift cage';
+    if (p.kind === 'transit') return { spinner: 'Cab stand', subway: 'Subway', hatch: 'Ladder up', manhole: 'Manhole' }[p.mode] || 'Cage elevator';
     return { bed: 'Cot', workbench: 'Bench', shelf: 'Parts shelf' }[p.kind] || 'Lead';
   },
   draw() {
@@ -63,7 +63,7 @@ const MapView = {
     const PLACES = { bed: 1, workbench: 1, shelf: 1, trapdoor: 1, door: 1, transit: 1, dronewreck: 1, substation: 1, autodoc: 1 };
     for (const p of World.props) if (PLACES[p.kind] && !(p.done && TIP_YIELD[p.kind])) mark(p.x, p.y - 20, this.label(p), '#3af0e0', 2.5, 2);
     // where the street goes on, at its ends
-    const L = World.L, nb = Travel.neighbours(L.id);
+    const L = World.L, nb = Travel.neighbors(L.id);
     for (const side of ['west', 'east']) if (nb[side] && LEVELS[nb[side]] && L.spawns[side]) mark(side === 'west' ? 6 : L.w - 6 - 120, L.spawns[side][1] - 20,(side === 'west' ? '< ' : '') + LEVELS[nb[side]].name + (side === 'east' ? ' >' : ''), '#3af0e0', 2.5, 2);
     for (const n of Actors.npcs) if (!n.hidden) { const named = n.def.role || !n.def.title || !/^(lives near here|commuter|passer-by|night worker)$/.test(n.def.title); mark(n.x, n.y - 20, named ? n.def.name : '', n.def.role ? '#ffb040' : '#a69cb6', n.def.role ? 3 : 2, n.def.role ? 3 : 1); }
     mark(Player.x, Player.y - 16, 'You', '#ffd040', 4 + Math.sin(performance.now() / 200) * 1.5, 9);

@@ -14,7 +14,7 @@ const DECO = {
 // what the city's people say about their lives, when there's nothing more to
 // the moment (folk.js deals them out)
 const STREET_LINES = [
-  'Third shift this week. Fourth if you count this one.', 'Rain\'s warm tonight. That\'s the chemicals.', 'Lift\'s out again. Lift\'s always out.',
+  'Third shift this week. Fourth if you count this one.', 'Rain\'s warm tonight. That\'s the chemicals.', 'Elevator\'s out again. Elevator\'s always out.',
   'My kid wants a chrome arm for her birthday. She\'s nine.', 'They\'re hiring at the Works. Nobody comes back up to say how it is.', 'You see the fish on the billboard? It follows you if you look at it.',
   'Got any change? No? Me neither.', 'They say synths don\'t sleep. I don\'t sleep either. Doesn\'t make me one.', 'Don\'t eat the street noodles. Eat Lin\'s.',
   'You fix things? My whole life\'s broken. Kidding. Mostly.', 'I haven\'t seen the sky in eleven years. I hear it\'s overrated.', 'Somebody stole the copper out of my wall again.',

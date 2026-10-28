@@ -77,7 +77,7 @@ function otTiles(P, x0, y0, x1, y1, seed, band = '#2a6a5a') {
 
 // ---- Old Town: the hub. The subway platform, an old street, a canal, a
 // temple, Ferrin's stall, and the Mayor's hall at the east end
-LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', metres: -140, tier: 3, hub: true, mapX: 500, label: 'The first city', blurb: 'The first city, sunk under the new one: canals, temples, lanterns, and the Old Mayor who runs it.', make: () => district({
+LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', meters: -140, tier: 3, hub: true, mapX: 500, label: 'The first city', blurb: 'The first city, sunk under the new one: canals, temples, lanterns, and the Old Mayor who runs it.', make: () => district({
   id: 'oldtown', name: 'Old Town', tier: 3, W: 3400, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.21, 0.18, 0.19],
   local: { name: 'Old-timer', lines: LOCAL_LINES.flood, look: { hair: 'long', hairCol: '#c8c8c8', top: '#4a3a2a', coat: 'long' } },
   build(L, G) {
@@ -185,7 +185,7 @@ addDistrict('d_chapel', 'Drowned Chapel', 3, -165, 560, 'The old city\'s great h
     L.paint(200, G - 40, 560, G, (P) => { for (let x = 230; x < 540; x += 22) otGrave(P, x, G, 51); });
     for (const x of [260, 360, 460]) bToro(L, x, G);
     bTree(L, 330, G, 'dead', { h: 80 }); bTorii(L, 500, 560, G, 60, { ramp: KMAT.stone }); otCandles(L, 240, 320, G - 2, 4); otCandles(L, 400, 470, G - 2, 3);
-    // the great hall: tall walls, arched windows of coloured glass
+    // the great hall: tall walls, arched windows of colored glass
     const H0 = 580, H1 = 1760, TOP = G - 168;
     L.paint(H0, TOP - 20, H1, G, (P) => {
       P.block(H0, TOP, H1, G, KMAT.stone, { base: 0.3, panels: [40, 20], drips: 0.25, dripLen: 60, seed: 5 });

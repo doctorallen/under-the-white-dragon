@@ -203,7 +203,7 @@ const Life = {
         put(head, base, [255, 255, 255]);
         for (const [i, j] of GLYPHS[(Math.floor(t / 2) + A.x) % GLYPHS.length]) put(2 + i, 2 + j, c2); for (const [i, j] of GLYPHS[(Math.floor(t / 2) + 3) % GLYPHS.length]) put(6 + i, 2 + j, c2);
       } else if (A.kind === 'readout') {
-        // rows of figures ticking over, one line flagged in the second colour
+        // rows of figures ticking over, one line flagged in the second color
         for (let r = 0; r < Math.floor((A.h - 2) / 6); r++) { const flag = (Math.floor(t / 1.5) + r) % 5 === 0; for (let k = 0; k < Math.floor((A.w - 4) / 5); k++) { const gl = GLYPHS[(k * 3 + r * 5 + Math.floor(t * (r % 2 ? 3 : 1.5))) % GLYPHS.length]; for (const [i, j] of gl) put(2 + k * 5 + i, 2 + r * 6 + j, flag ? c2 : c1, flag ? 1 : 0.8); } }
         if (Math.floor(t * 2) % 2) put(A.w - 3, A.h - 3, c2);
       } else if (A.kind === 'bars') {

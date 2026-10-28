@@ -49,7 +49,7 @@ nrRoom('d_izakaya', 'The Red Lantern', 560, 140, 'noren', [0.44, 0.32, 0.28], (L
   // the counter: the master behind it, the regulars on stools in front
   bCounter(L, 240, 510, G, { top: KMAT.darkwood, body: KMAT.lacquer, panel: 36, stools: [274, 334, 394, 454] });
   L.light(370, G - 50, 140, [1, 0.5, 0.3], 0.9); L.light(110, G - 40, 90, [1, 0.6, 0.35], 0.6);
-  L.prop('register', 488, G, { label: 'the till', lift: 22, front: true }); L.prop('karaoke', 520, G, { label: 'the karaoke machine' }); L.prop('dryer', 36, G, { label: 'the hand dryer by the toilet' });
+  L.prop('register', 488, G, { label: 'the till', lift: 22, front: true }); L.prop('karaoke', 520, G, { label: 'the karaoke machine' }); L.prop('dryer', 36, G, { label: 'the hand dryer by the restroom' });
   nrPerson(L, 'Salaryman', 274, G, 'sit', { skin: SKINS[1], hair: 'short', top: '#2a2a3a', coat: 'jacket', legs: '#1a1a24' }, ['One more. Then home. Then one more.', 'My boss is a chip in a tower. I report to a chip.'], { hours: [18, 2] });
   nrPerson(L, 'Office girl', 334, G, 'sit', { skin: SKINS[0], hair: 'bob', hairCol: '#1a1414', top: '#c8c0b0', legs: '#2a2a34' }, ['Don\'t make me sing. Last time I sang, the machine died.', 'He\'s been saying one more for an hour.'], { face: -1 }, { hours: [18, 2] });
   nrPerson(L, 'Old drunk', 61, G, 'sit', { skin: SKINS[4], hair: 'bald', top: '#5a4a3a', legs: '#2a2420' }, ['The Row was all paper lanterns when I was young. Now it\'s plastic lanterns.', 'I sang here in \'61. They still talk about it. Badly.'], { hours: [18, 2] });

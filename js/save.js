@@ -21,10 +21,15 @@ const Save = {
   wipe() { this.off = true; try { localStorage.removeItem(this.key); } catch (e) { /* ignore */ } },
   // start from the save if there is one; true if there was. Old saves are
   // deleted, and a save of another version is started over.
+  // ids renamed since a save could have been made (American English: the
+  // block's flats are its apartments now), put right in an old save
+  RENAMED: [[/\bd_flats\b/g, 'd_apartments']],
+  renamed(d) { let j = JSON.stringify(d); for (const [a, b] of this.RENAMED) j = j.replace(a, b); return JSON.parse(j); },
   start() {
     for (const k of this.OLD) try { localStorage.removeItem(k); } catch (e) { /* ignore */ }
     const d = this.read(), f = Game.fresh();
     if (d && d.v === f.v) {
+      Object.assign(d, this.renamed(d));
       Game.s = Object.assign(f, d, { notes: Object.assign(f.notes, d.notes || {}) });
       for (const k of Game.OLD) delete Game.s[k]; // (what Downlevel kept: health, gear, cases...)
       return true;

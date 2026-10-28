@@ -1,6 +1,6 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// The Works: heavy industry far under the city, reached by the lift cages.
+// The Works: heavy industry far under the city, reached by the cage elevators.
 // The hub (the workers' floor, the Foreman's crane hall), Pump Hall Seven,
 // the Foundry, the Server Farm and the Coolant Vats, each built by hand from
 // the kit (kit.js) and the industrial painters below.
@@ -96,16 +96,16 @@ function wkFurnace(P, x0, x1, G, o = {}) {
   for (let x = cx - mw - 3; x <= cx + mw + 3; x++) { const yy = my - mw * 0.4 - Math.sqrt(Math.max(0, (mw + 3) ** 2 - (x - cx) ** 2)); P.put(x, yy, tone(MAT.steel, 0.7)); P.put(x, yy + 1, tone(MAT.steelD, 0.3)); }
   wkGauge(P, x0 + 20, top + 20, 5, 0.85); wkGauge(P, x1 - 20, top + 20, 5, 0.9);
 }
-// a ladle hung from a crane hook, tipped, pouring a stream into a mould
+// a ladle hung from a crane hook, tipped, pouring a stream into a mold
 function wkLadle(P, cx, y, G, o = {}) {
   const r = 16;
   P.area(cx - r, y, cx + r, y + 26, MAT.steelD, (x, yy) => 0.55 - (x - cx) / r * 0.3, { inside: (x, yy) => Math.abs(x - cx) < r - (yy - y) * 0.25 });
   for (let x = cx - r + 2; x < cx + r - 2; x++) P.put(x, y + 1, [255, 200, 80], 1);
   for (const dx of [-r + 2, r - 2]) for (let yy = y - 30; yy < y; yy++) P.put(cx + dx + Math.round((yy - y + 30) / 30 * (dx < 0 ? 6 : -6)), yy, tone(MAT.steel, 0.5));
-  // the pour, from the lip down to the mould
+  // the pour, from the lip down to the mold
   const lx = cx + r - 1; for (let yy = y + 2; yy < G - 12; yy++) { const sx = lx + 2 + Math.round(Math.sqrt(yy - y) * 0.6); for (let i = -1; i <= 1; i++) P.put(sx + i, yy, i ? [255, 140, 30] : [255, 240, 170], 1); }
 }
-// moulds on the floor: steel boxes of glowing metal, cooling
+// molds on the floor: steel boxes of glowing metal, cooling
 function wkMoulds(P, x0, x1, G, o = {}) {
   for (let x = x0; x < x1 - 20; x += 28) {
     const hot = hash(x, 1, x0); P.block(x, G - 12, x + 22, G, MAT.steelD, { base: 0.45 });
@@ -157,13 +157,13 @@ function wkFrost(P, x0, x1, y0, y1, seed) { for (let y = y0; y < y1; y++) for (l
 function wkDuct(P, x0, y0, x1, y1, ramp = MAT.chrome) { P.area(x0, y0, x1, y1, ramp, (x, y) => { const vert = x1 - x0 < y1 - y0, t = vert ? (x - x0) / (x1 - x0) : (y - y0) / (y1 - y0); return 0.55 - t * 0.35 + (((vert ? y : x) % 30) < 1 ? -0.25 : 0); }); }
 
 // ---- the Works hub: the workers' floor, the canteen, the Foreman's crane hall
-LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub: true, mapX: 500, label: 'The machine floors', blurb: 'The machine floors under everything: Cookie\'s canteen, the conveyors, the Foreman\'s crane hall and the shaft down to the Bowels.',
-  make: () => district({ id: 'works', name: 'The Works', tier: 4, W: 3400, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.25, 0.21, 0.19],
+LEVELS.works = { name: 'The Works', depth: '-260 m', meters: -260, tier: 4, hub: true, mapX: 500, label: 'The machine floors', blurb: 'The machine floors under everything: Cookie\'s canteen, the conveyors, the Foreman\'s crane hall and the shaft down to the Bowels.',
+  make: () => district({ id: 'works', name: 'The Works', tier: 4, W: 3400, sky: false, transit: 'elevator', floor: MAT.steel, amb: [0.25, 0.21, 0.19],
     local: { name: 'Worker', lines: LOCAL_LINES.works, look: { hair: 'cap', capCol: '#e8b030', top: '#5a4a2a', coat: 'jacket', legs: '#2a2a2a' } },
     build(L, G) {
-      L.spawns.lift = [140, G];
+      L.spawns.elevator = [140, G];
       wkHall(L, 3400, G, { wall: MAT.steelD, seed: 4, colStep: 400 });
-      // the lift landing: a cage frame, stripes, the shift board
+      // the elevator landing: a cage frame, stripes, the shift board
       L.paint(20, G - 120, 300, G, (P) => { wkStripes(P, 20, G - 6, 130, G - 2); wkBoard(P, 180, G - 100, 280, G - 60); P.block(176, G - 112, 284, G - 104, MAT.steelD, { base: 0.5 }); for (const [a, b] of GLYPHS[3]) P.put(222 + a, G - 110 + b, [255, 190, 90], 1); });
       L.light(230, G - 80, 60, [1, 0.7, 0.4], 0.6);
       
@@ -202,7 +202,7 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
 
 // ---- Pump Hall Seven: a cathedral of pumps, pipes as wide as a man, the sump
 addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps that keeps the lower city from drowning: flywheels, pistons, the flooded sump.', 'Pumps and the sump', () => district({
-  id: 'd_pumphall', name: 'Pump Hall Seven', tier: 4, W: 2600, sky: false, transit: 'lift', floor: MAT.concreteD, amb: [0.22, 0.22, 0.23],
+  id: 'd_pumphall', name: 'Pump Hall Seven', tier: 4, W: 2600, sky: false, transit: 'elevator', floor: MAT.concreteD, amb: [0.22, 0.22, 0.23],
   local: { name: 'Pump hand', lines: ['Seven pumps. Six working. The seventh just sounds angry.', 'If the pumps stop, Old Town is a lake by morning.', 'Don\'t lean on the pipes. They\'re hotter than they look.'], look: { hair: 'cap', capCol: '#3a6a8a', top: '#3a4a5a', legs: '#2a2a2a' } },
   build(L, G) {
     wkHall(L, 2600, G, { wall: MAT.machine, ceil: MAT.concreteD, colStep: 300, col0: 200, pipeRamp: MAT.copper, seed: 11 });
@@ -243,9 +243,9 @@ addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps
   },
 }));
 
-// ---- The Foundry: furnaces, ladles pouring, moulds glowing, the slag heap
-addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go out: ladles of molten metal, moulds glowing on the floor, a slag heap and a crane overhead.', 'Furnaces and molten metal', () => district({
-  id: 'd_foundry', name: 'The Foundry', tier: 4, W: 2400, sky: false, transit: 'lift', floor: MAT.asphalt, amb: [0.25, 0.18, 0.15],
+// ---- The Foundry: furnaces, ladles pouring, molds glowing, the slag heap
+addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go out: ladles of molten metal, molds glowing on the floor, a slag heap and a crane overhead.', 'Furnaces and molten metal', () => district({
+  id: 'd_foundry', name: 'The Foundry', tier: 4, W: 2400, sky: false, transit: 'elevator', floor: MAT.asphalt, amb: [0.25, 0.18, 0.15],
   local: { name: 'Smelter', lines: ['Two thousand degrees in the ladle. Stand back of the yellow line.', 'We cast the bones of the city here. Beams for the Spires.', 'Lost a glove in the pour once. Hand was still in it.'], look: { hair: 'helmet', armor: '#c8a040', visor: '#ff8a3a', top: '#5a3a2a', apron: '#3a2a1a', legs: '#2a2420' } },
   build(L, G) {
     wkHall(L, 2400, G, { wall: MAT.brickD, colRamp: MAT.brickD, colStep: 420, col0: 340, pipeRamp: MAT.rust, seed: 21 });
@@ -253,12 +253,12 @@ addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go ou
     const fur = [[300, 470], [900, 1080], [1500, 1680]];
     L.paint(280, 30, 1700, G, (P) => { for (const [a, b] of fur) wkFurnace(P, a, b, G, { h: 140 }); });
     for (const [a, b] of fur) { const c = (a + b) / 2; L.light(c, G - 30, 160, [1, 0.55, 0.2], 1.2, 1, { mode: 'fire', seed: a }); L.vents.push({ x: c, y: 50, kind: 'smoke' }); }
-    // the casting floor: a crane carrying a ladle, the pour, moulds
+    // the casting floor: a crane carrying a ladle, the pour, molds
     L.paint(480, 60, 900, G, (P) => { wkCrane(P, 480, 900, G - 150, { trolley: 660, hookY: G - 128 }); wkLadle(P, 660, G - 96, G); wkMoulds(P, 560, 880, G); });
     L.light(690, G - 30, 140, [1, 0.6, 0.2], 1.1, 1, { mode: 'fire', seed: 3 }); L.light(670, G - 90, 70, [1, 0.7, 0.3], 0.8);
     L.paint(1090, 60, 1500, G, (P) => { wkMoulds(P, 1110, 1480, G); wkCrane(P, 1090, 1500, G - 150, { trolley: 1380, hookY: G - 64 }); });
     L.light(1300, G - 10, 160, [1, 0.45, 0.15], 0.8);
-    // the slag heap, still smouldering, and a skip of scrap
+    // the slag heap, still smoldering, and a dumpster of scrap
     L.paint(1720, G - 110, 2080, G, (P) => {
       heap(P, 1730, 2070, G, 90, R(['#0e0806', '#2a1a12', '#4a3020', '#7a5a40']), 13);
       for (let k = 0; k < 120; k++) { const x = 1740 + hash(k, 1, 4) * 320, y = G - hash(k, 2, 4) * 60; if (hash(k, 3, 4) < 0.5) P.put(x, y, [255, 110 + hash(k, 4, 4) * 100, 30], 0.9); }
@@ -277,7 +277,7 @@ addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go ou
     // a gantry over the casting floor
     L.walk(480, 1490, G - 180, 5, MAT.steel); L.ladder(1480, G - 180, G); L.ladder(490, G - 180, G); L.spots.push([800, G - 180], [1250, G - 180]);
     L.paint(0, G - 8, 2400, G, (P) => { for (const [a, b] of [[520, 900], [1100, 1490]]) wkStripes(P, a, G - 4, b, G - 2); });
-    L.prop('junk', 1740, G, { label: 'scrap skip' }); L.prop('ac', 520, G, { label: 'blower' }); L.prop('wreck', 1120, G, { label: 'burnt-out loader' });
+    L.prop('junk', 1740, G, { label: 'scrap dumpster' }); L.prop('ac', 520, G, { label: 'blower' }); L.prop('wreck', 1120, G, { label: 'burnt-out loader' });
     L.spots.push([220, G], [520, G], [760, G], [1080, G], [1320, G], [1720, G], [2080, G]);
     L.critter('rat', 200, 2300, G, 2);
   },
@@ -285,7 +285,7 @@ addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go ou
 
 // ---- The Server Farm: cold blue aisles of racks, ducts, frost, the watch room
 addDistrict('d_servers', 'Server Farm', 4, -300, 820, 'The city\'s thinking, racked floor to ceiling in the cold: blue aisles, ducts breathing frost, a watch room full of screens.', 'Racks in the cold', () => district({
-  id: 'd_servers', name: 'Server Farm', tier: 4, W: 2500, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.17, 0.21, 0.27],
+  id: 'd_servers', name: 'Server Farm', tier: 4, W: 2500, sky: false, transit: 'elevator', floor: MAT.steel, amb: [0.17, 0.21, 0.27],
   local: { name: 'Night tech', lines: ['Cold enough to keep the racks happy. Not me.', 'Every screen up top is running on something down here.', 'Don\'t touch the blue lights. Don\'t touch anything.'], look: { hair: 'short', top: '#2a3a4a', coat: 'long', legs: '#1a2030', shades: '#3af0e0' } },
   build(L, G) {
     wkHall(L, 2500, G, { wall: KMAT.blackglass, ceil: MAT.steelD, colStep: 500, col0: 460, colRamp: MAT.steelD, pipes: false, seed: 31 });
@@ -319,7 +319,7 @@ addDistrict('d_servers', 'Server Farm', 4, -300, 820, 'The city\'s thinking, rac
 
 // ---- The Coolant Vats: tanks of glowing coolant, open vats, drums, the lab
 addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant is mixed: tanks and open vats glowing green and blue, drums of worse, a lab of people in suits.', 'Tanks of coolant', () => district({
-  id: 'd_vats', name: 'Coolant Vats', tier: 4, W: 2300, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.18, 0.23, 0.21],
+  id: 'd_vats', name: 'Coolant Vats', tier: 4, W: 2300, sky: false, transit: 'elevator', floor: MAT.steel, amb: [0.18, 0.23, 0.21],
   local: { name: 'Vat hand', lines: ['Don\'t breathe the green. Don\'t touch the blue. Don\'t drink either.', 'Coolant keeps the racks cold and the Works from melting.', 'Somebody\'s been skimming drums. Again.'], look: { hair: 'hood', top: '#c8c840', legs: '#c8c840', mask: '#3a4a3a' } },
   build(L, G) {
     wkHall(L, 2300, G, { wall: MAT.machine, ceil: MAT.concreteD, colStep: 380, col0: 260, pipeRamp: MAT.steel, seed: 41 });

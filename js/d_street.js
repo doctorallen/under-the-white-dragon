@@ -72,7 +72,7 @@ function stBoat(P, x0, x1, wy, o = {}) {
   P.put(x0 + 4, deck - 1, [255, 50, 50], 1); P.put(x1 - 12, deck - 1, [60, 255, 120], 1);
   for (let x = x0 + 6; x < x1 - 14; x++) P.put(x, wy + 7, mixRgb(col3(o.col || '#2a3a4a'), [255, 220, 160], 0.15), 0.1);
 }
-// a harbour beacon on a pier end: a striped tower, a lamp room
+// a harbor beacon on a pier end: a striped tower, a lamp room
 function stBeacon(P, x, G, h) {
   for (let y = G - h; y < G; y++) for (let i = -5 + Math.floor((y - G + h) / h * 3) * 0; i <= 5; i++) { const w = 4 + (y - G + h) / h * 3; if (Math.abs(i) > w) continue; P.put(x + i, y, tone(Math.floor((y - G + h) / 14) % 2 ? KMAT.plaster : KMAT.lacquer, 0.55 - i / 14)); }
   P.block(x - 6, G - h - 12, x + 6, G - h, MAT.steelD, { base: 0.4 }); kFill(P, x - 4, G - h - 10, x + 4, G - h - 2, '#fff2c0', 1);
@@ -190,7 +190,7 @@ addDistrict('d_overpass', 'Overpass Market', 2, -40, 300, 'A market packed under
     L.prop('ac', 2210, G - 70, { label: 'air conditioner' });
     for (const [x, c] of [[2160, '#3a4a5a'], [2176, '#5a4a2a'], [2168, '#4a5a3a']]) L.prop('deco', x, x === 2168 ? G - 10 : G, { art: DECO.crate({ col: c, w: 14, h: 10 }), id: 'ovcr' + x });
     kStallAt(L, 2240, G, 'yakitori');
-    // bay 6: the market's end, junk and a car at the kerb
+    // bay 6: the market's end, junk and a car at the curb
     kStallAt(L, 2420, G, 'fruit', { col: '#2a6a8a' }); L.prop('junk', 2500, G, { label: 'junk pile' }); L.prop('car', 2600, G, { look: { col: '#3a3a2a', under: '#ffb040' }, label: 'parked car' });
     L.prop('wreck', 1520, DY, { label: 'downed drone' });
     L.spots.push([330, G], [580, G], [870, G], [1060, G], [1380, G], [1590, G], [1960, G], [2280, G], [2460, G], [2220, G - 70], [1300, DY]);
@@ -199,7 +199,7 @@ addDistrict('d_overpass', 'Overpass Market', 2, -40, 300, 'A market packed under
 }));
 
 // ---- Canal Docks: quays on piles, cranes, containers, boats on black water ------
-addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: cranes, container stacks, a fish market, Warehouse Seven and the harbour light.', 'Docks', () => district({
+addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: cranes, container stacks, a fish market, Warehouse Seven and the harbor light.', 'Docks', () => district({
   id: 'd_docks', name: 'Canal Docks', tier: 2, W: 2800, amb: [0.15, 0.17, 0.22], layerDy: 30, wet: false,
   local: { name: 'Dock worker', lines: LOCAL_LINES.docks, look: { hair: 'cap', capCol: '#c8a020', top: '#d86a20', coat: 'jacket', legs: '#2a2a3a' } },
   build(L, G) {
@@ -249,11 +249,11 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     L.spots.push([1700, G - 96]);
     for (const [cx, c, h] of [[1780, '#3a4a5a', 0], [1796, '#5a4a2a', 0], [1788, '#4a5a3a', 10], [1640, '#5a3a2a', 0]]) L.prop('deco', cx, G - h, { art: DECO.crate({ col: c, w: 16, h: 10 }), id: 'dkcr' + cx + h });
     L.prop('ac', 1620, G - 96, { label: 'air conditioner' });
-    // the harbourmaster's office and the dockers' canteen
+    // the harbormaster's office and the dock workers' canteen
     bShophouse(L, 1980, 2090, G, { floors: 2, wall: KMAT.concreteL, shops: [['izakaya', '#ff8a3a']], roof: 'tank', seed: 301 });
     bShophouse(L, 2090, 2200, G, { floors: 3, wall: KMAT.corrBlue, shops: [['glass', '#3af0e0', { kind: 'depot', label: 'The canal parcel depot', staff: 3 }]], roof: 'flat', balcony: false, seed: 302 });
-    L.npc({ name: 'Harbourmaster Ilse', look: { skin: SKINS[0], hair: 'short', hairCol: '#c8c8c8', top: '#2a3a5a', coat: 'long', legs: '#1a2030' }, x: 2150, y: G, face: -1, sched: [[0, 24, 2150, 'stand']], lines: ['Nothing\'s floated in this canal since I was born. Plenty\'s sunk.', 'Manifests say machine parts. Manifests lie.', 'The light out there\'s been burning eighty years. Longer than me.'] });
-    // the third water and the harbour beacon on its pier
+    L.npc({ name: 'Harbormaster Ilse', look: { skin: SKINS[0], hair: 'short', hairCol: '#c8c8c8', top: '#2a3a5a', coat: 'long', legs: '#1a2030' }, x: 2150, y: G, face: -1, sched: [[0, 24, 2150, 'stand']], lines: ['Nothing\'s floated in this canal since I was born. Plenty\'s sunk.', 'Manifests say machine parts. Manifests lie.', 'The light out there\'s been burning eighty years. Longer than me.'] });
+    // the third water and the harbor beacon on its pier
     L.paint(2210, G - 160, 2500, G + 20, (P) => { stBeacon(P, 2440, G, 120); for (const bx of [2260, 2330]) { P.area(bx - 4, G + 2, bx + 4, G + 12, KMAT.lacquer, (xx, y) => 0.6 - (y - G) / 20, { inside: (xx, y) => Math.abs(xx - bx) < 4 - (y - G - 2) * 0.2 }); P.put(bx, G + 1, [60, 255, 120], 1); } });
     L.light(2440, G - 128, 140, [1, 0.95, 0.75], 1, 1, { mode: 'sign', seed: 7 }); L.light(2260, G + 2, 20, [0.3, 1, 0.5], 0.6); L.light(2330, G + 2, 20, [0.3, 1, 0.5], 0.6);
     L.walk(2420, 2470, G - 120, 3, MAT.steel); L.ladder(2462, G - 120, G);
@@ -378,9 +378,9 @@ addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of ill
 // ---- Clinic Row: legal medicine, mostly ---------------------------------------
 addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics: pharmacies, a dentist, a vet, an optician, the Mercy hospital, street medics and a blood bank.', 'Clinics', () => district({
   id: 'd_clinicrow', name: 'Clinic Row', tier: 2, W: 2500, amb: [0.18, 0.2, 0.24], layerDy: 0,
-  local: { name: 'Patient', lines: ['Six hours in the queue. Six. For a cough.', 'The hospital takes your blood as payment. Half a litre a visit.', 'Doctor Reyes is the only one on the Row who doesn\'t sell to the gangs.'], look: { hair: 'bob', hairCol: '#3a2a20', top: '#c8c0b0', coat: 'long', mask: '#d8e8e8' } },
+  local: { name: 'Patient', lines: ['Six hours in line. Six. For a cough.', 'The hospital takes your blood as payment. Half a liter a visit.', 'Doctor Reyes is the only one on the Row who doesn\'t sell to the gangs.'], look: { hair: 'bob', hairCol: '#3a2a20', top: '#c8c0b0', coat: 'long', mask: '#d8e8e8' } },
   build(L, G) {
-    // the head of the street: a pharmacy and an optician, flats above
+    // the head of the street: a pharmacy and an optician, apartments above
     bShophouse(L, 190, 320, G, { floors: 4, wall: KMAT.cream, shops: [['pharmacy', '#3aff80']], roof: 'tank', blade: '#3aff80', seed: 501 });
     bShophouse(L, 320, 440, G, { floors: 3, wall: KMAT.mint, shops: [['glass', '#9af0ff', { kind: 'school', label: 'St Agnes School', staff: 2, hours: [7, 17] }]], roof: 'garden', seed: 502 });
     L.paint(330, G - 66, 430, G - 44, (P) => { kFill(P, 340, G - 64, 420, G - 46, '#06101a'); for (const cx of [362, 398]) for (let a = 0; a < Math.PI * 2; a += 0.05) P.put(Math.round(cx + Math.cos(a) * 9), Math.round(G - 55 + Math.sin(a) * 6), [154, 240, 255], 1); for (let x = 371; x < 389; x++) P.put(x, G - 57 - Math.round(Math.sin((x - 371) / 18 * Math.PI) * 2), [154, 240, 255], 1); });
@@ -393,7 +393,7 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     L.light(610, G - 82, 50, [0.85, 0.95, 1], 0.6);
     bShophouse(L, 670, 780, G, { floors: 2, wall: KMAT.ochre, shops: [['vet', '#ffd040']], roof: 'tin', seed: 504 }); stWait(L, 670, 780, G);
     L.critter('dog', 680, 780, G, 1); L.critter('cat', 670, 780, G, 1);
-    // Mercy Hospital: a white block, a red cross, the ambulance bay, a queue
+    // Mercy Hospital: a white block, a red cross, the ambulance bay, a line
     L.paint(800, G - 330, 1240, G, (P) => {
       P.block(800, G - 300, 1240, G - 60, KMAT.whitepanel, { base: 0.48, panels: [40, 30], drips: 0.15, dripLen: 30 });
       for (let fy = G - 290; fy < G - 80; fy += 30) for (let fx = 812; fx < 1228; fx += 20) kWin(P, fx, fy, 12, 16, { lit: hash(fx, fy, 6) < 0.6 ? '#e8f8ff' : null, blinds: true, cross: false });
@@ -406,8 +406,8 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     L.sign(840, G - 72, 9, '#ff3a4a', { r: 70, seed: 51 }); L.light(900, G - 30, 100, [0.85, 0.95, 1], 0.65); L.paint(1150, G - 98, 1230, G - 62, (P) => { kFill(P, 1150, G - 96, 1230, G - 64, '#0a0e10'); kCross(P, 1166, G - 80, 9, '#ff2a3a'); for (let i = 0; i < 6; i++) for (const [a, b] of GLYPHS[(i * 5 + 3) % GLYPHS.length]) P.put(1182 + i * 7 + a, G - 82 + b, [255, 90, 100], 1); }); L.light(1190, G - 80, 70, [1, 0.25, 0.3], 0.7, 1, { mode: 'sign', seed: 17 }); L.tube(1030, G - 54, 60, '#e8f4ff', 0.6); L.light(1120, G - 30, 80, [1, 0.3, 0.35], 0.6, 1, { mode: 'bad', seed: 2 });
     L.prop('deco', 1120, G, { art: () => spinner({ col: '#e8eef2' }), id: 'ambulance' }); L.light(1120, G - 26, 30, [1, 0.2, 0.25], 0.8, 1, { mode: 'bad', seed: 13 });
     L.npc({ name: 'Doctor Reyes', look: { skin: SKINS[4], hair: 'bun', hairCol: '#1a1414', top: '#e0e8e8', coat: 'long', legs: '#3a4a4a', glasses: true }, x: 940, y: G, face: -1, sched: [[0, 24, 940, 'stand']], lines: ['Eighteen-hour shift. Ask quickly.', 'We treat anyone. Chrome or no chrome, a wound is a wound.', 'Synths don\'t come here. They don\'t get sick. They get broken.'] });
-    const queue = [['Patient', SKINS[1], '#5a3a3a', 'long'], ['Old patient', SKINS[5], '#3a3a5a', 'bun'], ['Patient', SKINS[3], '#3a5a3a', 'cap'], ['Mother', SKINS[2], '#6a3a5a', 'bob']];
-    queue.forEach(([n, sk, t, h], i) => L.npc({ name: n, look: { skin: sk, hair: h, top: t, legs: '#2a2a2a', coat: i % 2 ? 'long' : 'jacket', tall: i === 3 ? 0.9 : 1 }, x: 860 - i * 18, y: G, face: 1, sched: [[0, 24, 860 - i * 18, 'stand']], lines: [['Don\'t cut in. I\'ve been here since noon.', 'It\'s my lungs. It\'s everyone\'s lungs.', 'They took my blood last time. I\'m back for the change.', 'My boy swallowed a battery. He\'s fine. Probably.'][i]] }));
+    const line = [['Patient', SKINS[1], '#5a3a3a', 'long'], ['Old patient', SKINS[5], '#3a3a5a', 'bun'], ['Patient', SKINS[3], '#3a5a3a', 'cap'], ['Mother', SKINS[2], '#6a3a5a', 'bob']];
+    line.forEach(([n, sk, t, h], i) => L.npc({ name: n, look: { skin: sk, hair: h, top: t, legs: '#2a2a2a', coat: i % 2 ? 'long' : 'jacket', tall: i === 3 ? 0.9 : 1 }, x: 860 - i * 18, y: G, face: 1, sched: [[0, 24, 860 - i * 18, 'stand']], lines: [['Don\'t cut in. I\'ve been here since noon.', 'It\'s my lungs. It\'s everyone\'s lungs.', 'They took my blood last time. I\'m back for the change.', 'My boy swallowed a battery. He\'s fine. Probably.'][i]] }));
     // the street medics and the blood bank
     L.npc({ name: 'Nurse Kade', role: 'parts', stock: 'kade', look: { skin: SKINS[2], hair: 'short', hairCol: '#2a1a1a', top: '#7ae8d8', legs: '#3a4a4a', coat: 'jacket' }, x: 1100, y: G, face: 1, sched: [[0, 24, 1100, 'stand']], lines: ['Night shift. Things fall off the trolley on night shift.', 'I don\'t ask what it\'s for. Don\'t tell me.'] });
     L.prop('cabinet', 1700, G - 82, { label: 'parts cabinet' }); L.light(1700, G - 112, 30, [0.8, 0.95, 1], 0.5);

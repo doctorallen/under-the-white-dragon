@@ -36,7 +36,7 @@ const Actors = {
     // the way out they take when they go away (and come back in by): the
     // nearest door, cab stand or subway they can walk to, or the end of the
     // street if it goes on; with none, they go where they stand, as before
-    const L = World.L, nb = Travel.neighbours(L.id), xs = World.props.filter((p) => (p.kind === 'door' || p.kind === 'transit') && Math.abs(p.y - n.y) < 12).map((p) => p.x);
+    const L = World.L, nb = Travel.neighbors(L.id), xs = World.props.filter((p) => (p.kind === 'door' || p.kind === 'transit') && Math.abs(p.y - n.y) < 12).map((p) => p.x);
     if (nb.west) xs.push(2); if (nb.east) xs.push(L.w - 2);
     const ok = xs.filter((x) => x >= a - 12 && x <= b + 12);
     n.out = ok.length ? ok.reduce((q, x) => (Math.abs(x - n.x) < Math.abs(q - n.x) ? x : q)) : null;

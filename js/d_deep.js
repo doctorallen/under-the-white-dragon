@@ -3,11 +3,11 @@
 // The Bowels: the bottom of the city, -400 m and down, where the Root lives.
 // Half machine, half grown: cables like roots and veins, glowing violet and
 // green, and whatever the city buried here being swallowed by it. Reached by
-// the lift cages. Each place is built by hand from the kit (kit.js) and the
+// the cage elevators. Each place is built by hand from the kit (kit.js) and the
 // painters below.
 // ---------------------------------------------------------------------------
 
-// ---- the deep's own colours ---------------------------------------------------------
+// ---- the deep's own colors ---------------------------------------------------------
 const DPMAT = {
   rock: R(['#0e0b14', '#1e1828', '#30263c', '#5e4c6a']),
   rockG: R(['#080c0a', '#121a14', '#1e2a20', '#3e5244']),
@@ -72,7 +72,7 @@ function dpHangRoots(P, x0, x1, y, len, glow, seed) {
   }
 }
 // the back of the place: rock or old concrete, sweating, ribbed if grown
-// over; a ceiling slab with drips; the light is low and coloured
+// over; a ceiling slab with drips; the light is low and colored
 function dpBack(L, W, G, o = {}) {
   const wall = o.wall || DPMAT.rock, ceil = o.ceil || DPMAT.rock, seed = o.seed || 5, top = o.top || 54;
   L.block(0, 0, W, top, ceil, { base: 0.22, lip: 0, drips: 0.25, dripLen: 22, seed });
@@ -170,10 +170,10 @@ function dpCamp(L, x, G, seed) {
 }
 
 // ---- The Bowels: the hub, and the Root's chamber at the end ---------------------
-LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', metres: -400, mapX: 500, tier: 5, hub: true, label: 'The bottom', blurb: 'The bottom of the city, where the cables turn into roots and the Root thinks in the dark.', make: () => district({
-  id: 'bowels', name: 'The Bowels', tier: 5, W: 3500, sky: false, transit: 'lift', floor: DPMAT.rock, amb: [0.25, 0.2, 0.31],
+LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', meters: -400, mapX: 500, tier: 5, hub: true, label: 'The bottom', blurb: 'The bottom of the city, where the cables turn into roots and the Root thinks in the dark.', make: () => district({
+  id: 'bowels', name: 'The Bowels', tier: 5, W: 3500, sky: false, transit: 'elevator', floor: DPMAT.rock, amb: [0.25, 0.2, 0.31],
   build(L, G) {
-    L.spawns.lift = [140, G];
+    L.spawns.elevator = [140, G];
     dpBack(L, 3500, G, { wall: DPMAT.rock, ribs: 60, seed: 41 });
     // the old foundations: pillars of the city above, roots wrapped round them
     L.paint(0, 54, 2400, G, (P) => {
@@ -181,7 +181,7 @@ LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', metres: -400, mapX: 500, 
       dpHangRoots(P, 0, 2400, 54, 210, DP_VIOLET, 3); dpGrowth(P, 180, 2400, G, DP_VIOLET, 4); dpGrowth(P, 300, 2300, G, DP_GREEN, 5, { climb: 60 });
     });
     for (const x of [253, 783, 1403, 1983]) L.light(x, G - 60, 70, [0.75, 0.55, 1], 0.45);
-    // the Hermit's camp by the lift
+    // the Hermit's camp by the elevator
     dpCamp(L, 560, G, 1);
     L.npc(dpHermit('The Hermit', 620, G, ['Nobody comes down here on purpose.', 'Listen. The hum. That\'s the Root, thinking.', 'The girl with the drawings went past me. She was humming along.']));
     // a chasm of cables, a walkway over it
@@ -200,7 +200,7 @@ LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', metres: -400, mapX: 500, 
     L.light(1540, 300, 80, [0.3, 1, 0.6], 0.6, 1, { mode: 'bad', seed: 7 });
     for (const x of [1500, 1560]) L.prop('rack', x, G, { label: 'server rack' }); L.prop('wreck', 1780, G, { label: 'dead drone' }); L.prop('junk', 1620, G, { label: 'junk pile' });
     L.walk(1460, 1860, G - 96, 4, MAT.steelD); L.ladder(1850, G - 96, G); L.spots.push([1650, G - 96]);
-    // the roots thicken towards the chamber
+    // the roots thicken toward the chamber
     L.paint(2000, 54, 2400, G, (P) => { for (let k = 0; k < 5; k++) dpTube(P, [[2000 + k * 50, 54], [2100 + k * 40, 180], [2200 + k * 30, 300], [2300 + k * 20, G + 2]], 4 + k, k % 2 ? DPMAT.cable : DPMAT.cableG, { glow: k % 2 ? DP_VIOLET : DP_GREEN, seed: 30 + k, rib: 11 }); });
     L.light(2200, G - 100, 140, [0.7, 0.4, 1], 0.6);
     // the Root's chamber
@@ -219,8 +219,8 @@ LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', metres: -400, mapX: 500, 
 }) };
 
 // ---- Cable Run: where every cable in the city comes down ------------------------
-addDistrict('d_cables', 'Cable Run', 5, -420, 180, 'A tunnel where every cable in the city comes down: bundles thick as trees, curtains of wire, fibre glowing in the dark.', 'Cable tunnel', () => district({
-  id: 'd_cables', name: 'Cable Run', tier: 5, W: 2600, sky: false, transit: 'lift', floor: MAT.steelD, amb: [0.23, 0.2, 0.29],
+addDistrict('d_cables', 'Cable Run', 5, -420, 180, 'A tunnel where every cable in the city comes down: bundles thick as trees, curtains of wire, fiber glowing in the dark.', 'Cable tunnel', () => district({
+  id: 'd_cables', name: 'Cable Run', tier: 5, W: 2600, sky: false, transit: 'elevator', floor: MAT.steelD, amb: [0.23, 0.2, 0.29],
   local: dpHermit('Linesman', 260, 386, ['Every call, every screen, every lie up there runs through here.', 'Touch the green ones and you hear people talking. Don\'t.', 'Somebody\'s been drawing on the junction boxes. Little pictures. Birds.'], { hair: 'cap', capCol: '#c8a030', mask: null, top: '#4a4020', coat: 'jacket' }),
   build(L, G) {
     dpBack(L, 2600, G, { wall: R(['#08060c', '#120e18', '#1e1828', '#3a3048']), panels: [80, 60], seed: 51 });
@@ -228,7 +228,7 @@ addDistrict('d_cables', 'Cable Run', 5, -420, 180, 'A tunnel where every cable i
     L.paint(0, 50, 2600, G, (P) => {
       for (const [x, w, g] of [[320, 30, DP_GREEN], [520, 20, DP_VIOLET], [700, 44, DP_VIOLET], [1060, 26, DP_GREEN], [1260, 18, DP_VIOLET], [1480, 50, DP_VIOLET], [1700, 22, DP_GREEN], [1900, 34, DP_GREEN], [2100, 20, DP_VIOLET], [2300, 40, DP_VIOLET]]) dpBundle(P, x, 54, G, w, x % 3 ? DPMAT.cableL : DPMAT.cableLG, g, x);
       for (const [a, b] of [[380, 640], [760, 1000], [1120, 1420], [1560, 1840], [1960, 2240]]) dpCurtain(P, a, b, 54, 200 + (a % 5) * 20, a % 2 ? DP_GREEN : DP_VIOLET, a);
-      // cable trays along the wall, heavy runs in them feeding the trunks, sagging fibre across
+      // cable trays along the wall, heavy runs in them feeding the trunks, sagging fiber across
       for (const ty of [G - 200, G - 150]) { for (let x = 0; x < 2600; x++) { P.put(x, ty, tone(MAT.steel, 0.6)); P.put(x, ty + 1, tone(MAT.steelD, 0.35)); if (x % 40 < 2) for (let j = 2; j < 10; j++) P.put(x, ty + j, tone(MAT.steelD, 0.4)); } for (let k = 0; k < 4; k++) dpTube(P, [[0, ty - 3 - k * 3], [2600, ty - 3 - k * 3]], 1.6, k % 2 ? DPMAT.cableL : DPMAT.cableLG, { glow: k === 1 ? (ty % 2 ? DP_VIOLET : DP_GREEN) : null, seed: ty + k, nodes: false, vein: 0.55 }); }
       for (let k = 0; k < 10; k++) { const x = k * 260 + 40; dpTube(P, [[x, G - 196], [x + 130, G - 140 + (k % 3) * 10], [x + 260, G - 196]], 2.2, k % 2 ? DPMAT.cableL : DPMAT.cableLG, { glow: k % 2 ? DP_VIOLET : DP_GREEN, seed: 900 + k }); }
       for (let k = 0; k < 13; k++) { const x = k * 200 + 10; dpTube(P, [[x, G - 150], [x + 100, G - 90 - (k % 3) * 12], [x + 200, G - 150]], 3.4, k % 2 ? DPMAT.cableL : DPMAT.cableLG, { glow: k % 3 === 0 ? DP_GREEN : null, seed: 950 + k, rib: 8 }); }
@@ -256,7 +256,7 @@ addDistrict('d_cables', 'Cable Run', 5, -420, 180, 'A tunnel where every cable i
 
 // ---- Cooling Vaults: the city's memory, kept cold ------------------------------
 addDistrict('d_vaults', 'Cooling Vaults', 5, -430, 360, 'The city\'s memory kept cold: frosted vaults of storage cores, ice, and the drones that froze tending them.', 'Frozen data vaults', () => district({
-  id: 'd_vaults', name: 'Cooling Vaults', tier: 5, W: 2300, sky: false, transit: 'lift', floor: R(['#1a2a38', '#3a5a72', '#6a8aa8', '#c8e0f0']), amb: [0.21, 0.26, 0.34],
+  id: 'd_vaults', name: 'Cooling Vaults', tier: 5, W: 2300, sky: false, transit: 'elevator', floor: R(['#1a2a38', '#3a5a72', '#6a8aa8', '#c8e0f0']), amb: [0.21, 0.26, 0.34],
   local: dpHermit('Archivist', 260, 386, ['It\'s the city\'s memory, kept cold. Every face it ever saw.', 'Breath freezes on the racks. Mind the ice.', 'Something lives in the vents. Something warm.'], { hair: 'hood', top: '#3a4a5a', mask: '#8ab0c8' }),
   build(L, G) {
     dpBack(L, 2300, G, { wall: DPMAT.vault, ceil: DPMAT.vault, panels: [60, 40], seed: 61 });
@@ -285,7 +285,7 @@ addDistrict('d_vaults', 'Cooling Vaults', 5, -430, 360, 'The city\'s memory kept
 
 // ---- The Gut: where the waste ends up, and something digests it -----------------
 addDistrict('d_gut', 'The Gut', 5, -450, 680, 'Where the city\'s waste ends up and something digests it: swallowing pipes, bubbling pools, the ferals\' nests.', 'Waste digesters', () => district({
-  id: 'd_gut', name: 'The Gut', tier: 5, W: 2400, sky: false, transit: 'lift', floor: R(['#0e0c08', '#1e1a10', '#2e2a1a', '#5a523a']), amb: [0.25, 0.27, 0.17],
+  id: 'd_gut', name: 'The Gut', tier: 5, W: 2400, sky: false, transit: 'elevator', floor: R(['#0e0c08', '#1e1a10', '#2e2a1a', '#5a523a']), amb: [0.25, 0.27, 0.17],
   local: dpHermit('Scavenger', 260, 386, ['Everything that falls down the city ends here. Everything.', 'The pipes swallow. Hear them? Gulp. Gulp.', 'Don\'t drink from the pools. The ferals did. Look at them.'], { hair: 'bald', top: '#3a3a20', mask: '#5a5a3a' }),
   build(L, G) {
     dpBack(L, 2400, G, { wall: R(['#0c0a06', '#1a1610', '#2a2418', '#4a4430']), ribs: 40, seed: 71 });
@@ -316,7 +316,7 @@ addDistrict('d_gut', 'The Gut', 5, -450, 680, 'Where the city\'s waste ends up a
 
 // ---- Old Roots: the first city's foundations, swallowed ------------------------
 addDistrict('d_roots', 'Old Roots', 5, -460, 860, 'The oldest buried things, a station and the footings of the first towers, with the Root\'s cables pouring through them.', 'Buried ruins', () => district({
-  id: 'd_roots', name: 'Old Roots', tier: 5, W: 2200, sky: false, transit: 'lift', floor: DPMAT.ruin, amb: [0.23, 0.22, 0.29],
+  id: 'd_roots', name: 'Old Roots', tier: 5, W: 2200, sky: false, transit: 'elevator', floor: DPMAT.ruin, amb: [0.23, 0.22, 0.29],
   local: dpHermit('Pilgrim', 260, 386, ['The first city is under the first city. And under that, this.', 'The shrine was here before the towers. The roots came to it. Like they were praying.', 'Leave an offering. A coin, a cable. It knows.'], { hair: 'hood', top: '#5a4a3a' }),
   build(L, G) {
     dpBack(L, 2200, G, { wall: DPMAT.ruin, ceil: DPMAT.rock, panels: [24, 12], seed: 81 });

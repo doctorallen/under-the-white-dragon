@@ -6,7 +6,7 @@
 // ---------------------------------------------------------------------------
 const LOCAL_LINES = {
   neon: ['Everything on the Row is for sale. Even the rain, if you ask the right stall.', 'Don\'t stand still too long, tinker. People notice.', 'My cousin sold a synth dog once. Got more for it than for his kidney.'],
-  blocks: ['Forty floors and the lift works on Tuesdays.', 'The walls are thin. I know everyone\'s business. Ask me.', 'Somebody on twelve keeps a real cat. Real! Imagine the money.'],
+  blocks: ['Forty floors and the elevator works on Tuesdays.', 'The walls are thin. I know everyone\'s business. Ask me.', 'Somebody on twelve keeps a real cat. Real! Imagine the money.'],
   plaza: ['You\'re not cleared for this level, are you? I won\'t tell.', 'Meridian owns the floor you\'re standing on. Literally.', 'Clean air up here. Costs extra.'],
   docks: ['Nothing\'s floated in this canal since I was born. Plenty\'s sunk.', 'The cranes run themselves now. Mostly.', 'Crates come in marked "machine parts". Some of them breathe.'],
   scrap: ['Everything ends up here eventually. People too.', 'The fires keep the dogs off. The real ones and the other kind.', 'You buying or burying?'],
@@ -19,29 +19,29 @@ const LOCAL_LINES = {
 };
 
 // ---- travel between places: what's open, and how you get there -----------------
-// Any way out (a cab stand, a subway platform, a lift cage, a manhole)
+// Any way out (a cab stand, a subway platform, a cage elevator, a manhole)
 // opens the city map, and from it you can go anywhere you've opened: the
 // cab flies the sky and the street (for a fare, until Ozzy owes you), a
 // manhole ladder takes you down into the undercity, the old subway runs
-// from street level to Old Town, and lift cages go on down, to the Works
+// from street level to Old Town, and cage elevators go on down, to the Works
 // and the Bowels. Each band down opens once you've been in the one above.
 const BAND_ABOVE = { under: 'street', old: 'street', works: 'old', bowels: 'works' };
 const Travel = {
   // the band of the city a place is in, from its depth
-  band(id) { const L = LEVELS[id]; return L && L.metres !== undefined ? stratumOf(L.metres).id : 'high'; },
+  band(id) { const L = LEVELS[id]; return L && L.meters !== undefined ? stratumOf(L.meters).id : 'high'; },
   // is a place open to you yet
   open(id) {
     const L = LEVELS[id];
-    if (!L || L.metres === undefined || L.hidden) return false; // (the basement: only through the trapdoor)
+    if (!L || L.meters === undefined || L.hidden) return false; // (the basement: only through the trapdoor)
     if (Game.flag('been:' + id) || id === 'd_dragon') return true;
     const above = BAND_ABOVE[this.band(id)];
     return !above || this.row(above).some((k) => Game.flag('been:' + k));
   },
   // why a place isn't open yet
-  lock(id) { return { under: 'Walk the street-level places first: the manholes are there', old: 'Get down to street level first: the old subway runs from there', works: 'Ride the subway down to Old Town first: the lift cages are there', bowels: 'Take a lift down to the Works first' }[this.band(id)] || 'Not yet'; },
+  lock(id) { return { under: 'Walk the street-level places first: the manholes are there', old: 'Get down to street level first: the old subway runs from there', works: 'Ride the subway down to Old Town first: the cage elevators are there', bowels: 'Take an elevator down to the Works first' }[this.band(id)] || 'Not yet'; },
   // how you'd get there
-  how(id) { const f = Flight.cabFare(); const cab = f ? 'Cab · ' + f + ' cr' : 'Ozzy\'s cab'; return { sky: cab, high: cab, street: cab, under: 'Down a manhole', old: 'Subway', works: 'Lift cage', bowels: 'Lift cage' }[this.band(id)]; },
-  spawnFor(id) { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); if (L.spawns.enter) return 'enter'; if (World.L && this.band(World.L.id) === 'under' && L.spawns.manhole) return 'manhole'; for (const k of ['pad', 'elevator', 'subway', 'lift']) if (L.spawns[k]) return k; return Object.keys(L.spawns)[0]; },
+  how(id) { const f = Flight.cabFare(); const cab = f ? 'Cab · ' + f + ' cr' : 'Ozzy\'s cab'; return { sky: cab, high: cab, street: cab, under: 'Down a manhole', old: 'Subway', works: 'Cage elevator', bowels: 'Cage elevator' }[this.band(id)]; },
+  spawnFor(id) { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); if (L.spawns.enter) return 'enter'; if (World.L && this.band(World.L.id) === 'under' && L.spawns.manhole) return 'manhole'; for (const k of ['pad', 'elevator', 'subway']) if (L.spawns[k]) return k; return Object.keys(L.spawns)[0]; },
   go(id) {
     Hud.toggle(null);
     const sp = this.spawnFor(id), b = this.band(id);
@@ -53,10 +53,10 @@ const Travel = {
   // ---- on foot: the places at one depth run on from each other, west to east
   // as they sit on the city map, so walking off the end of one street takes
   // you onto the next
-  row(b) { return Object.keys(LEVELS).filter((k) => LEVELS[k].district && !LEVELS[k].hidden && LEVELS[k].metres !== undefined && this.band(k) === b).sort((a, c) => LEVELS[a].mapX - LEVELS[c].mapX || (a < c ? -1 : 1)); },
-  neighbours(id) { const L = LEVELS[id]; if (!L || !L.district || L.hidden) return {}; const row = this.row(this.band(id)), i = row.indexOf(id); return { west: row[i - 1], east: row[i + 1] }; },
+  row(b) { return Object.keys(LEVELS).filter((k) => LEVELS[k].district && !LEVELS[k].hidden && LEVELS[k].meters !== undefined && this.band(k) === b).sort((a, c) => LEVELS[a].mapX - LEVELS[c].mapX || (a < c ? -1 : 1)); },
+  neighbors(id) { const L = LEVELS[id]; if (!L || !L.district || L.hidden) return {}; const row = this.row(this.band(id)), i = row.indexOf(id); return { west: row[i - 1], east: row[i + 1] }; },
   // near an end: where it goes (for the prompt), and walking off it
-  edgeAhead() { const L = World.L, nb = this.neighbours(L.id), x = Player.x; if (x < 60 && nb.west) return { dir: 'west', to: nb.west }; if (x > L.w - 60 && nb.east) return { dir: 'east', to: nb.east }; return null; },
+  edgeAhead() { const L = World.L, nb = this.neighbors(L.id), x = Player.x; if (x < 60 && nb.west) return { dir: 'west', to: nb.west }; if (x > L.w - 60 && nb.east) return { dir: 'east', to: nb.east }; return null; },
   edge() {
     if (Game.fadeTo || Flight.on || Game.paused || !World.L) return;
     const e = this.edgeAhead(); if (!e) return;

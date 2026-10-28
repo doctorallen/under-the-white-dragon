@@ -43,7 +43,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 ## The city
 
 - **Every place built by hand**, from the Spires above the clouds down to the Bowels: up high the White Dragon's block, Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge and the Arcology Gardens; on the street the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley and Clinic Row; under the street the Main Drain, Boiler House Nine, Substation Seven and the Waterworks; then Old Town and its districts, the Works and its districts, and the Bowels. Each band down opens once you've been in the one above.
-- **The city map:** every way out (a cab stand, a subway platform, a lift cage, a manhole) opens a cross-section of the whole city with every place pinned at its depth; tap one and go. The pause menu shows it too.
+- **The city map:** every way out (a cab stand, a subway platform, a cage elevator, a manhole) opens a cross-section of the whole city with every place pinned at its depth; tap one and go. The pause menu shows it too.
 - **Its people:** the block's residents live their days (homes, jobs, friends, errands) whether you're watching or not, and remember what you do in front of them; everyone else has a name of their own.
 - **Weather:** rain comes and goes through the day, and the streets shine only while they're wet.
 
@@ -53,7 +53,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 |---|---|
 | `index.html` | The page; loads every script in order |
 | `css/style.css` | HUD, touch controls, panels |
-| `js/util.js` | Maths, `hash`, `noise`, `Rng`, colours, `rampOf`, `strokeRow` |
+| `js/util.js` | Math, `hash`, `noise`, `Rng`, colors, `rampOf`, `strokeRow` |
 | `js/tuning.js` | Every number (`T`) |
 | `js/spr.js` | The shape painter for sprites (`Spr`) |
 | `js/paint.js` | Materials, the city painter (`Pix`), decals, the chunk cache |
@@ -63,7 +63,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/items.js` | Salvage: what you carry |
 | `js/world.js` | The level builder and `World` |
 | `js/levels.js` | What places share: deco by name, everyone's names, what people say, `cityLayers` |
-| `js/kit.js` | The architect's kit: shophouses, capsule towers, townhouses, temples, shrine gates, pagodas, glass towers, shanty stacks, slab blocks, theatres, bathhouses, arcades, shopfronts, trees, fifteen kinds of stall; and `district()`, the frame every place is built in |
+| `js/kit.js` | The architect's kit: shophouses, capsule towers, townhouses, temples, shrine gates, pagodas, glass towers, shanty stacks, slab blocks, theaters, bathhouses, arcades, shopfronts, trees, fifteen kinds of stall; and `district()`, the frame every place is built in |
 | `js/travel.js` | `Travel` (what's open and how you get there), great halls, locals' lines |
 | `js/d_high.js` | Up high: Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge, the Arcology Gardens, the Spires |
 | `js/d_street.js` | Street level: the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley, Clinic Row |

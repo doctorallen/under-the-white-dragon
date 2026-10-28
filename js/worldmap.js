@@ -3,12 +3,12 @@
 // The city map: the whole city in cross-section, from the Spires above the
 // clouds down through the towers, the street, the undercity, Old Town, the
 // Works and the Bowels, every place pinned at its depth. Opened at a way out
-// (a spinner pad, a subway platform, a lift cage, a manhole) it's how you
+// (a spinner pad, a subway platform, a cage elevator, a manhole) it's how you
 // travel: tap a place, then Go. From the pause menu it's just to look at.
 // The picture is painted once, then dragged and zoomed; pins and names are
 // drawn over it at screen resolution.
 // ---------------------------------------------------------------------------
-// the strata, top to bottom: the depths each spans (metres) and its height on
+// the strata, top to bottom: the depths each spans (meters) and its height on
 // the map; gaps between them are rock
 const STRATA = [
   { id: 'sky', name: 'Above the clouds', top: 340, bot: 190, h: 150, gap: 0 },
@@ -21,7 +21,7 @@ const STRATA = [
 ];
 (() => { let y = 0; for (const S of STRATA) { S.y = y; y += S.h + S.gap; } })();
 const WMAP_W = 1000, WMAP_H = STRATA[STRATA.length - 1].y + STRATA[STRATA.length - 1].h;
-// a depth in metres to a height on the map
+// a depth in meters to a height on the map
 function wmapY(m) {
   for (const S of STRATA) if (m <= S.top && m >= S.bot) return S.y + ((S.top - m) / (S.top - S.bot)) * S.h;
   if (m > STRATA[0].top) return 0;
@@ -34,8 +34,8 @@ const WorldMap = {
   cv: null, img: null, K: 1.3, s: 1, ox: 0, oy: 0, sel: null, browse: false, timer: 0,
   // every place on the map: its pin and what you know of it
   places() {
-    return Object.keys(LEVELS).filter((id) => LEVELS[id].metres !== undefined && LEVELS[id].mapX !== undefined && !LEVELS[id].hidden).map((id) => {
-      const L = LEVELS[id]; return { id, name: L.name, x: L.mapX, y: wmapY(L.metres), m: L.metres, L };
+    return Object.keys(LEVELS).filter((id) => LEVELS[id].meters !== undefined && LEVELS[id].mapX !== undefined && !LEVELS[id].hidden).map((id) => {
+      const L = LEVELS[id]; return { id, name: L.name, x: L.mapX, y: wmapY(L.meters), m: L.meters, L };
     });
   },
   html(browse) {
@@ -106,7 +106,7 @@ const WorldMap = {
     earth(bw.y, bw.y + bw.h, '#120c18', '#08060c');
     for (let k = 0; k < 70; k++) { g.strokeStyle = k % 3 ? 'rgba(170,90,255,0.35)' : 'rgba(80,255,150,0.3)'; g.lineWidth = 1 + H(k, 1, 101) * 2; g.beginPath(); let x = H(k, 2, 101) * WMAP_W, y = bw.y; g.moveTo(x, y); for (let j = 0; j < 8; j++) { x += (H(k, j, 102) - 0.5) * 60; y += bw.h / 8; g.lineTo(x, y); } g.stroke(); }
     const core = g.createRadialGradient(560, bw.y + bw.h * 0.6, 0, 560, bw.y + bw.h * 0.6, 70); core.addColorStop(0, 'rgba(200,120,255,0.6)'); core.addColorStop(1, 'rgba(200,120,255,0)'); g.fillStyle = core; g.fillRect(490, bw.y, 140, bw.h);
-    // the ways down: the subway, the lift shafts, manholes
+    // the ways down: the subway, the elevator shafts, manholes
     g.strokeStyle = 'rgba(255,208,64,0.55)'; g.lineWidth = 2; g.setLineDash([]); g.beginPath(); g.moveTo(330, streetY); g.lineTo(330, old.y + old.h - 30); g.lineTo(WMAP_W - 40, old.y + old.h - 30); g.stroke();
     g.strokeStyle = 'rgba(255,140,60,0.5)'; g.setLineDash([4, 3]); g.beginPath(); g.moveTo(700, old.y + old.h - 30); g.lineTo(700, wk.y + wk.h - 14); g.moveTo(560, wk.y + wk.h - 14); g.lineTo(560, bw.y + bw.h * 0.6); g.stroke(); g.setLineDash([]);
     // depth marks down the left
@@ -148,11 +148,11 @@ const WorldMap = {
   info() {
     const el = $('wminfo'); if (!el) return;
     if (!this.sel) { el.innerHTML = `<p class="dim">${this.browse ? 'The city, top to bottom. Tap a place to see what it is.' : 'Tap a place to travel there.'}</p>`; return; }
-    const L = LEVELS[this.sel], here = this.sel === World.L.id, ok = Travel.open(this.sel), S = stratumOf(L.metres), want = this.wanted().has(this.sel);
+    const L = LEVELS[this.sel], here = this.sel === World.L.id, ok = Travel.open(this.sel), S = stratumOf(L.meters), want = this.wanted().has(this.sel);
     let act = '';
     if (here) act = '<span class="tag">You are here</span>';
     else if (!ok) act = `<span class="tag lock">${Travel.lock(this.sel)}</span>`;
-    else if (this.browse) act = '<span class="tag">Travel from a cab stand, a subway platform, a lift or a manhole</span>';
+    else if (this.browse) act = '<span class="tag">Travel from a cab stand, a subway platform, an elevator or a manhole</span>';
     else act = `<button data-go="${this.sel}" class="go">Go · ${Travel.how(this.sel)}</button>`;
     el.innerHTML = `<div class="wmcard"><div><b>${L.name}${want ? ' <i class="mark">◆</i>' : ''}</b><small>${S.name} · ${L.depth || ''}${L.label ? ' · ' + L.label : ''}</small><p>${ok || here ? L.blurb || '' : 'You haven\'t been there yet.'}</p></div>${act}</div>`;
     el.querySelectorAll('button[data-go]').forEach((b) => (b.onclick = () => Travel.go(b.dataset.go)));

@@ -88,7 +88,7 @@ function unLamp(L, x, y, col = [1, 0.82, 0.55], k = 0.8, o = {}) {
   L.paint(x - 4, y - 6, x + 5, y + 6, (P) => { kH(P, x - 4, x + 1, y - 5, tone(MAT.steelD, 0.5)); kV(P, x, y - 5, y - 2, tone(MAT.steelD, 0.4)); const c = col.map((q) => q * 255); for (let j = 0; j < 5; j++) for (let i = -2; i <= 2; i++) { const edge = Math.abs(i) === 2 || j === 0 || j === 4; if (edge && (i === 0 || j === 2 || Math.abs(i) + Math.abs(j - 2) > 3)) continue; P.put(x + i, y - 2 + j, edge ? [34, 32, 28] : mixRgb(c, [255, 255, 255], i === 0 && j === 2 ? 0.7 : 0.25), edge ? 0 : 1); } });
   L.light(x, y + 2, o.r || 80, col, k, 1, o.flick ? { mode: o.flick, seed: x } : null);
 }
-// a ladder painted up a shaft (no feet on it), a manhole at the top, the grey
+// a ladder painted up a shaft (no feet on it), a manhole at the top, the gray
 // light of the street coming down it, and rain through the grate
 function unShaft(L, x, G, top, o = {}) {
   L.paint(x - 14, top - 10, x + 14, G, (P) => {
@@ -188,7 +188,7 @@ function unHopper(P, x0, x1, G, o = {}) {
 }
 addDistrict('d_boilers', 'Boiler House Nine', 2, -105, 520, 'The district heating plant under the blocks: riveted boilers burning day and night, coal on a conveyor, steam everywhere, the stokers.', 'Boiler house', () => district({
   id: 'd_boilers', name: 'Boiler House Nine', tier: 2, W: 2600, sky: false, transit: 'hatch', amb: [0.27, 0.22, 0.19], floor: UNMAT.iron,
-  local: { name: 'Stoker Ama', lines: ['Nine boilers. Every flat from here to the Stack is warm because of us.', 'Coal, if you can believe it. The Works sends it up. Nobody asks from where.', 'Don\'t touch number four. She\'s been angry since Tuesday.', 'You want a cup of tea? Water\'s always hot down here.'], look: { skin: SKINS[4], hair: 'cap', capCol: '#3a2a1a', top: '#5a3a2a', apron: '#2a1a10', legs: '#2a2420', wide: 1 } },
+  local: { name: 'Stoker Ama', lines: ['Nine boilers. Every apartment from here to the Stack is warm because of us.', 'Coal, if you can believe it. The Works sends it up. Nobody asks from where.', 'Don\'t touch number four. She\'s been angry since Tuesday.', 'You want a cup of tea? Water\'s always hot down here.'], look: { skin: SKINS[4], hair: 'cap', capCol: '#3a2a1a', top: '#5a3a2a', apron: '#2a1a10', legs: '#2a2420', wide: 1 } },
   build(L, G) {
     const W = L.w, HEAD = G - 214;
     // the hall: green tile below, sooty brick above, trusses under the ceiling

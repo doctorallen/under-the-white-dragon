@@ -7,7 +7,7 @@
 const PROP_ART = {
   vending: (p) => vending(p.look || {}), ac: () => acUnit(), rack: (p) => rack({ h: 40, seed: p.x, warn: true }), car: (p) => car(p.look || {}),
   junk: (p) => junk({ seed: p.x % 7 }), wreck: () => wreck(),
-  register: (p) => cashRegister(p), dryer: (p) => handDryer(p), jukebox: () => jukebox(), arcadecab: (p) => arcadeCab({ col: p.col, body: p.body, seed: p.x }), pachinko: () => pachinko(), coffee: (p) => coffeeMachine(p), atm: () => atm(), ticket: () => ticketMachine(), karaoke: () => karaoke(), offering: () => offeringBox(), dronewreck: () => droneWreck(), substation: () => junctionBox(), autodoc: () => autodoc(), door: (p) => (p.out ? innerDoor({ kind: p.look, seed: p.x }) : null), workbench: () => workbench(), trapdoor: (p) => (p.up ? null : rug()), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), bed: () => bed(), transit: (p) => (p.mode === 'spinner' ? cabStand() : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : liftCage({ on: true })),
+  register: (p) => cashRegister(p), dryer: (p) => handDryer(p), jukebox: () => jukebox(), arcadecab: (p) => arcadeCab({ col: p.col, body: p.body, seed: p.x }), pachinko: () => pachinko(), coffee: (p) => coffeeMachine(p), atm: () => atm(), ticket: () => ticketMachine(), karaoke: () => karaoke(), offering: () => offeringBox(), dronewreck: () => droneWreck(), substation: () => junctionBox(), autodoc: () => autodoc(), door: (p) => (p.out ? innerDoor({ kind: p.look, seed: p.x }) : null), workbench: () => workbench(), trapdoor: (p) => (p.up ? null : rug()), cabinet: (p) => medCabinet(p.done), shelf: () => partsShelf(), bed: () => bed(), transit: (p) => (p.mode === 'spinner' ? cabStand() : p.mode === 'subway' ? subwayDoor() : p.mode === 'hatch' ? manholeLadder() : p.mode === 'manhole' ? manholeCover() : elevatorCage({ on: true })),
   deco: (p) => p.art(),
 };
 // what each kind gives when stripped: [item, min, max]
@@ -42,7 +42,7 @@ const Props = {
     if (p.kind === 'cabinet') return p.done ? null : { verb: 'Jimmy', text: 'A locked parts cabinet: Meridian stock', hold: 1.6 };
     if (p.kind === 'shelf') return { verb: 'Look', text: 'The parts shelf', tap: true };
     if (p.kind === 'transit' && p.mode === 'spinner') { const f = Flight.cabFare(); return { verb: 'Hail', text: f ? `A cab: ${f} cr a ride` : 'Ozzy\'s cab: free', tap: true }; }
-    if (p.kind === 'transit') return { verb: p.mode === 'spinner' ? 'Fly' : p.mode === 'hatch' ? 'Climb' : p.mode === 'manhole' ? 'Climb down' : 'Ride', text: p.mode === 'spinner' ? 'Your spinner' : p.mode === 'subway' ? 'The subway' : p.mode === 'hatch' ? 'The ladder up to the street' : p.mode === 'manhole' ? 'The manhole, down into the undercity' : 'The lift cage', tap: true };
+    if (p.kind === 'transit') return { verb: p.mode === 'spinner' ? 'Fly' : p.mode === 'hatch' ? 'Climb' : p.mode === 'manhole' ? 'Climb down' : 'Ride', text: p.mode === 'spinner' ? 'Your spinner' : p.mode === 'subway' ? 'The subway' : p.mode === 'hatch' ? 'The ladder up to the street' : p.mode === 'manhole' ? 'The manhole, down into the undercity' : 'The cage elevator', tap: true };
     return null;
   },
   // Use, done: on a tap, or when a held bar fills
