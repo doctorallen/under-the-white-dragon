@@ -72,14 +72,17 @@ function itemsTab(s) {
 }
 function panelBind(body, which) {
   const s = Game.s, n = Hud.who, re = () => Hud.panel(Hud.open);
-  body.querySelectorAll('button[data-selljunk]').forEach((b) => (b.onclick = () => { Parts.sellJunk(); re(); }));
-  body.querySelectorAll('button[data-buytool]').forEach((b) => (b.onclick = () => { if (Tips.buy(+b.dataset.buytool)) re(); }));
-  body.querySelectorAll('button[data-buypart]').forEach((b) => (b.onclick = () => { const [k, g, cr, gauge] = PART_STOCK[Hud.open === 'grocer' ? 'mo' : n.def.stock][+b.dataset.buypart]; if (!Game.pay({ cr })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); }));
-  body.querySelectorAll('button[data-benchload]').forEach((b) => (b.onclick = () => Bench.load(b.dataset.benchload)));
-  body.querySelectorAll('button[data-job]:not([data-say])').forEach((b) => (b.onclick = () => { const c = b.dataset.job; Jobs.act(c); if (!c.startsWith('back')) re(); }));
-  body.querySelectorAll('button[data-say]').forEach((b) => (b.onclick = () => Talk.answer(+b.dataset.say))); // (what you say, in a talk: talk.js)
-  body.querySelectorAll('button[data-talk]').forEach((b) => (b.onclick = () => Talk.open(n)));
-  body.querySelectorAll('button[data-role]').forEach((b) => (b.onclick = () => { Hud.toggle(null); NPC_ROLE[n.def.role].use(n); }));
+  // each button by its data attribute (Tycho.ui.bind)
+  Tycho.ui.bind(body, {
+    selljunk: () => { Parts.sellJunk(); re(); },
+    buytool: (t) => { if (Tips.buy(+t)) re(); },
+    buypart: (i) => { const [k, g, cr, gauge] = PART_STOCK[Hud.open === 'grocer' ? 'mo' : n.def.stock][+i]; if (!Game.pay({ cr })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); },
+    benchload: (id) => Bench.load(id),
+    'job:not([data-say])': (c) => { Jobs.act(c); if (!c.startsWith('back')) re(); },
+    say: (i) => Talk.answer(+i), // (what you say, in a talk: talk.js)
+    talk: () => Talk.open(n),
+    role: () => { Hud.toggle(null); NPC_ROLE[n.def.role].use(n); },
+  });
   if (which === 'bench') Bench.attach();
   if (which === 'travel' || which === 'citymap') WorldMap.attach();
 }

@@ -8,7 +8,7 @@
 // ---------------------------------------------------------------------------
 const Game = {
   frame: 0, t: 0, paused: false, fade: 0, fadeTo: null,
-  s: null, cam: { x: 0, y: 0 }, toasts: [], gains: [], particles: [],
+  s: null, cam: { x: 0, y: 0 }, particles: [],
   fresh() {
     return {
       v: 1, level: 'd_cellar', spawn: 'bed', px: 0, py: 0, cr: 40, pack: {},
@@ -51,12 +51,7 @@ const Game = {
     this.toast(LEVELS[level].name + ' · ' + LEVELS[level].depth);
   },
   // what Use just got, a line each ("+1 coil"), rising over where it came from
-  gain(x, y, list) { list.forEach((g, i) => this.gains.push(Object.assign({ x, y, t: this.t + i * 0.12, i, of: list.length }, g))); },
-  toast(text, kind = '') {
-    const last = this.toasts[this.toasts.length - 1];
-    if (last && last.text === text && this.t - last.t < 2.5) { last.t = this.t; return; }
-    this.toasts.push({ text, kind, t: this.t });
-    if (this.toasts.length > 2) this.toasts.shift();
-    Hud.toasts();
-  },
+  gain(x, y, list) { Hud.rising.add(x, y, list); },
+  // news, a line or two at the top (the same words again soon keep the last one up)
+  toast(text, kind = '') { Hud.toaster.show(text, kind); },
 };

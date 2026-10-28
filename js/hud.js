@@ -7,6 +7,11 @@
 // ---------------------------------------------------------------------------
 const Hud = {
   open: null, who: null, last: {}, tab: 'jobs', mode: 'spinner',
+  // toasts (Tycho.ui): two at most, on the game's clock, faded at 3.6 s and
+  // gone at 4.2, the same words again within 2.5 s keeping the last one up
+  toaster: new Tycho.ui.Toasts({ box: () => $('toasts'), redraw: true, html: true, most: 2, life: 4.2, fadeAt: 3.6, merge: 2.5, clock: () => Game.t, cls: (kind) => 'toast ' + kind }),
+  // what you just got, a line each over where it came from (Game.gain)
+  rising: new Tycho.ui.Rising({ clock: () => Game.t, line: (g) => `<b>+${g.n}</b> ${g.name}${g.icon ? `<img src="${g.icon}" alt="">` : ''}${g.tag ? `<i>${g.tag}</i>` : ''}` }),
   init() {
     $('bPack').onclick = () => this.toggle('pack');
     $('bMenu').onclick = () => this.toggle('pause');
@@ -35,8 +40,7 @@ const Hud = {
     if (this.last.useState !== (tg ? (tg.pr.no ? 'no' : 'on') : 'off')) { this.last.useState = tg ? (tg.pr.no ? 'no' : 'on') : 'off'; $('bUse').classList.toggle('idle', !tg); $('bUse').classList.toggle('no', !!(tg && tg.pr.no)); }
     $('prompt').classList.toggle('no', !!(tg && tg.pr.no));
     $('holdbar').style.width = Player.hold ? Math.min(100, (Player.hold.t / Player.hold.need) * 100) + '%' : '0';
-    const el = $('toasts'); for (const n of el.children) n.style.opacity = Game.t - +n.dataset.t > 3.6 ? 0 : 1;
-    if (Game.toasts.length && Game.t - Game.toasts[0].t > 4.2) { Game.toasts.shift(); this.toasts(); }
+    this.toaster.tick();
     // speech over heads
     let h = ''; const V = View, sc = V.scale / (window.devicePixelRatio || 1);
     // oldest first, so the newest is drawn on top; then any older one it
@@ -44,9 +48,7 @@ const Hud = {
     const said = Actors.npcs.filter((n) => n.bubble && !n.hidden).sort((a, b) => (a.bubble.seq || 0) - (b.bubble.seq || 0));
     for (const n of said) { const x = (n.x - V.cx) * sc, y = (n.y - 44 - V.cy) * sc; h += `<div class="bubble${n === said[said.length - 1] ? ' new' : ''}" style="left:${x}px;top:${y}px"><b>${n.def.name}</b> ${n.bubble.text}</div>`; }
     // what you just got: a line each, stacked first on top, rising and fading
-    let gh = ''; Game.gains = Game.gains.filter((g) => Game.t - g.t < 2.4);
-    for (const g of Game.gains) { const a = Game.t - g.t; if (a < 0) continue; const x = (g.x - V.cx) * sc, y = (g.y - V.cy) * sc - (g.of - 1 - g.i) * 21 - a * 12, o = a > 1.8 ? Math.max(0, 1 - (a - 1.8) / 0.6) : 1; gh += `<div class="gain${g.kind ? ' ' + g.kind : ''}" style="left:${(x - 34).toFixed(1)}px;top:${y.toFixed(1)}px;opacity:${o.toFixed(2)}"><b>+${g.n}</b> ${g.name}${g.icon ? `<img src="${g.icon}" alt="">` : ''}${g.tag ? `<i>${g.tag}</i>` : ''}</div>`; }
-    this.set('gains', gh, 'innerHTML');
+    this.set('gains', this.rising.html((x, y) => [(x - V.cx) * sc, (y - V.cy) * sc]), 'innerHTML');
     if (this.set('bubbles', h, 'innerHTML') !== false && said.length > 1) {
       const els = [...$('bubbles').children], placed = [];
       for (let i = els.length - 1; i >= 0; i--) {
@@ -56,7 +58,6 @@ const Hud = {
       }
     }
   },
-  toasts() { $('toasts').innerHTML = Game.toasts.map((t) => `<div class="toast ${t.kind}" data-t="${t.t}">${t.text}</div>`).join(''); },
   refresh() {
     const s = Game.s; if (!s) return;
     $('cr').textContent = s.cr + ' cr';

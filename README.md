@@ -88,7 +88,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/town.js` | The city's people on screen: the block's own residents and their days, the routes between places, who's in your level now (`Town`, `RESIDENTS`) |
 | `js/census.js` | Every place in the city people live, work and spend time, read from the levels: streets, rooms, doors, spots, posts (`Census`) |
 | `js/folk.js` | The city's population: households made to fill the jobs and homes, with schools and hobbies (`Folk`) |
-| `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`) |
+| `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`, on Tycho's inspector) |
 | `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which runs their days, needs, hobbies, memories and gossip, and saves them (`City`) |
 | `js/talk.js` | Conversations, on Tyrell's Voice: the ways of coming at someone, the subjects (a job pitched and haggled, the hand-back, a lead, a witness having it out with you, small talk from their lives) and their words (`Talk`) |
 | `vendor/tycho/` | Tycho, the engine, with Tyrell, the minds engine, inside it (a git submodule; the game loads the built scripts in `dist/`) |
@@ -100,7 +100,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/flight.js` | Flying: the spinner's destinations, cabs, the flight through the city |
 | `js/skyline.js` | The city behind: layered towers, clouds, giant holograms, the monorail |
 | `js/render.js` | The frame: layers, light, actors, rain, drawn on the GPU through Tycho's renderer (or on 2D canvases without WebGL2, finished in 2D) |
-| `js/hud.js` | HUD and panels |
+| `js/hud.js` | HUD and panels (toasts and rising lines on Tycho's `Tycho.ui`) |
 | `js/panels.js` | Panels: talk, the morning, the stalls, the bench, the shelf, travel, pockets |
 | `js/pwa.js` | Installing, and reloading onto a new deploy |
 | `js/main.js` | Boot and the loop |

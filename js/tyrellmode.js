@@ -1,7 +1,10 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// Tyrell mode (dev): the city's minds laid out to watch. Everyone is drawn
-// where the simulation has them, colored by what they're doing:
+// Tyrell mode (dev): the city's minds laid out to watch, on Tycho's minds
+// inspector (Tycho.inspect: vendor/tycho/docs/inspect.md), which shows
+// anyone's mind and runs the clock; the map it's drawn on is the game's.
+// Everyone is drawn where the simulation has them, colored by what they're
+// doing:
 //   the city: every street a line, band by band from the Spires down; people
 //     out on a street sit on its line, people indoors stack under their door,
 //     people between streets or riding between bands hang between the lines;
@@ -20,61 +23,70 @@ const TM_WORD = { work: 'working', school: 'at school', sleep: 'asleep', home: '
 const TM_SPEEDS = [1, 10, 60, 240]; // game minutes a second
 
 const TyrellMode = {
-  view: 'city', level: null, sel: null, playing: false, speed: 60, follow: false, ox: 0, zoom: 1, dots: [], badges: [], pics: new Map(), raf: 0, sideT: 0, list: null,
+  view: 'city', level: null, follow: false, ox: 0, zoom: 1, pics: new Map(), rows: null,
+  // the inspector: the mind, the clock and the side are Tycho's; the words
+  // for places and people, the buttons and the map are the game's
+  ins: new Tycho.inspect.Inspector({
+    prefix: 'tm', bg: '#0a0812', speeds: TM_SPEEDS, speed: 60,
+    world: () => (City.on ? City.w : null),
+    people: () => TOWN_ORDER,
+    kinds: Object.fromEntries(Object.keys(TM_COL).map((k) => [k, { color: TM_COL[k], word: TM_WORD[k] }])),
+    kind: (id) => TyrellMode.kind(City.state(id)),
+    note: (id) => City.state(id).act,
+    // the game's clock (day and hour) as Tyrell's minutes, and the minds brought there
+    clock: {
+      now: () => (Game.s.day * 24 + Game.s.time) * 60,
+      set(m) { const s = Game.s, t = m / 60; s.day = Math.max(0, Math.floor(t / 24)); s.time = t - s.day * 24; City.sync(); },
+      text: () => `Day ${Game.s.day} · ${Game.clock()}`,
+    },
+    say: (t) => Game.toast(t, 'warn'),
+    name: (id) => RESIDENTS[id].name,
+    who: (id) => Folk.who(id),
+    place: (pid, id) => (!pid ? 'anywhere' : pid === RESIDENTS[id].homePlace ? 'home' : Census.places[pid] ? Census.places[pid].label : pid),
+    walking: (id) => (City.state(id).gap ? ' (off screen)' : ''),
+    about(id, p) { const R = RESIDENTS[id]; return `${p.vars && p.vars.money !== undefined ? ` · ${Math.round(p.vars.money)} cr` : ''}${R.likes && Object.keys(R.likes).length ? ' · likes ' + Object.keys(R.likes).join(', ') : ''}`; },
+    selectable: (id) => !!RESIDENTS[id],
+    buttons(id) { const st = City.state(id), T = TyrellMode; return `<button data-tmdo="follow" class="${T.follow ? 'go' : ''}">${T.follow ? 'Following' : 'Follow'}</button><button data-tmdo="street">Their street</button><button data-tmdo="go" ${st.level && !st.hidden ? '' : 'disabled'}>Go there</button>`; },
+    bar: () => '<button data-tm="city" id="tmcity">City</button><span class="tmwhere" id="tmwhere"></span>',
+    status() { const T = TyrellMode, c = $('tmcity'); if (c) c.classList.toggle('go', T.view === 'city'); const wh = $('tmwhere'); if (wh) wh.textContent = T.view === 'street' ? LEVELS[T.level].name : 'Everyone, everywhere'; },
+    summary: () => TyrellMode.summary(),
+    // picked from a list or a mind: on a street, to their street
+    onSelect(id) { const T = TyrellMode, w = T.where(id); if (T.view === 'street' && w.st.level && w.st.level !== T.level && !w.st.hidden) T.open(w.st.level); },
+    act(k, id) {
+      const T = TyrellMode;
+      if (k === 'city') { T.view = 'city'; T.level = null; }
+      if (k === 'follow') { T.follow = !T.follow; const st = City.state(id); if (T.follow && st.level && !st.hidden) T.open(st.level); }
+      if (k === 'street') { const w = T.where(id); if (w.street) T.open(w.room && LEVELS[w.room] && LEVELS[w.room].hidden && !w.st.hidden ? w.room : w.street); }
+      if (k === 'go') { const st = City.state(id); if (st.level && !st.hidden) { Hud.toggle(null); Dev.landAt = { level: st.level, x: st.x + 14, y: st.y }; Game.go(st.level, Object.keys(Census.built(st.level).spawns)[0]); } return false; }
+    },
+    open: () => Hud.open === 'tyrell',
+    view: {
+      // the city scrolls: as tall as its rows
+      height: (box) => (TyrellMode.view === 'city' ? Math.max(box, TyrellMode.cityRows().h) : box),
+      draw: (g) => (TyrellMode.view === 'city' ? TyrellMode.drawCity(g) : TyrellMode.drawStreet(g)),
+      tap: (b) => TyrellMode.tapBadge(b),
+      // a drag scrolls a street, the wheel zooms it
+      grab: () => TyrellMode.ox,
+      drag(dx, dy, ox) { const T = TyrellMode; if (T.view === 'street') { T.ox = ox - dx; T.ins.draw(); } },
+      wheel(e, mx) { const T = TyrellMode; if (T.view !== 'street') return; e.preventDefault(); const k = e.deltaY < 0 ? 1.25 : 0.8, z0 = T.zoom; T.zoom = clamp(T.zoom * k, 0.5, 6); T.ox = (T.ox + mx) * (T.zoom / z0) - mx; T.ins.draw(); },
+    },
+  }),
+  get sel() { return this.ins.sel; }, set sel(v) { this.ins.sel = v; },
+  get list() { return this.ins.list; }, set list(v) { this.ins.list = v; },
+  get dots() { return this.ins.dots; },
+  get badges() { return this.ins.badges; },
+  get w() { return this.ins.w; },
+  get h() { return this.ins.h; },
   html() {
     if (!City.on) return '<p class="sub">Tyrell isn\'t running: there are no minds to watch.</p>';
-    const sp = TM_SPEEDS.map((v) => `<option value="${v}"${v === this.speed ? ' selected' : ''}>×${v === 1 ? '1 (game)' : v}</option>`).join('');
-    return `<div class="tm"><div class="tmbar">
-      <span class="tmclock" id="tmclock"></span>
-      <button data-tm="-60" title="Back an hour">−1h</button><button data-tm="-15">−15m</button><button data-tm="play" class="go" id="tmplay">Play</button><button data-tm="15">+15m</button><button data-tm="60">+1h</button>
-      <select id="tmspeed" aria-label="Speed">${sp}</select>
-      <button data-tm="city" id="tmcity">City</button><span class="tmwhere" id="tmwhere"></span>
-    </div><div class="tmbody"><div class="tmview" id="tmview"><canvas id="tmcv"></canvas></div><div class="tmside" id="tmside"></div></div></div>`;
+    return this.ins.html();
   },
-  attach() {
-    const cv = $('tmcv'); if (!cv) return;
-    const body = $('panelBody');
-    body.querySelectorAll('button[data-tm]').forEach((b) => (b.onclick = () => {
-      const k = b.dataset.tm;
-      if (k === 'play') { this.playing = !this.playing; this.last = performance.now(); }
-      else if (k === 'city') { this.view = 'city'; this.level = null; }
-      else this.step(+k);
-      this.draw(); this.side(true);
-    }));
-    $('tmspeed').onchange = (e) => { this.speed = +e.target.value; };
-    // a tap picks someone, a street, or a door's count; a drag scrolls a street
-    let down = null;
-    cv.onpointerdown = (e) => { down = { x: e.clientX, y: e.clientY, ox: this.ox, moved: 0 }; cv.setPointerCapture(e.pointerId); };
-    cv.onpointermove = (e) => { if (!down) return; const dx = e.clientX - down.x; down.moved = Math.max(down.moved, Math.abs(dx) + Math.abs(e.clientY - down.y)); if (this.view === 'street') { this.ox = down.ox - dx; this.draw(); } };
-    cv.onpointerup = (e) => { const d = down; down = null; if (d && d.moved < 6) this.tap(e); };
-    cv.onwheel = (e) => { if (this.view !== 'street') return; e.preventDefault(); const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, k = e.deltaY < 0 ? 1.25 : 0.8, z0 = this.zoom; this.zoom = clamp(this.zoom * k, 0.5, 6); this.ox = (this.ox + mx) * (this.zoom / z0) - mx; this.draw(); };
-    this.size(); this.draw(); this.side(true);
-    cancelAnimationFrame(this.raf); this.last = performance.now();
-    const tick = (t) => {
-      if (Hud.open !== 'tyrell' || !$('tmcv')) { this.playing = false; return; }
-      const dt = Math.min(0.1, (t - this.last) / 1000); this.last = t;
-      if (this.playing) { this.step(this.speed * dt, true); this.draw(); }
-      if (t - this.sideT > 250) { this.sideT = t; this.side(); this.clock(); }
-      this.raf = requestAnimationFrame(tick);
-    };
-    this.raf = requestAnimationFrame(tick);
-  },
-  // the canvas, sized to its box (taller than it for the city: the box scrolls)
-  size() {
-    const cv = $('tmcv'), box = $('tmview'), dpr = window.devicePixelRatio || 1;
-    const w = box.clientWidth, h = this.view === 'city' ? Math.max(box.clientHeight, this.cityRows().h) : box.clientHeight;
-    cv.style.width = w + 'px'; cv.style.height = h + 'px'; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-    this.w = w; this.h = h; this.dpr = dpr;
-  },
-  // ---- the clock: on (or back) by some game minutes ----------------------------
-  step(min, quiet) {
-    const s = Game.s; let t = s.day * 24 + s.time + min / 60;
-    if (min < 0 && City.on) { const e = City.w.esper.earliest() / 60; if (t < e) { t = Math.ceil(e * 4) / 4; if (!quiet) Game.toast('Esper only remembers back to ' + this.hhmm(e * 60) + '.', 'warn'); } }
-    s.day = Math.max(0, Math.floor(t / 24)); s.time = t - s.day * 24;
-    City.sync(); this.clock();
-  },
-  clock() { const el = $('tmclock'); if (el) el.textContent = `Day ${Game.s.day} · ${Game.clock()}`; const p = $('tmplay'); if (p) p.textContent = this.playing ? 'Pause' : 'Play'; const c = $('tmcity'); if (c) c.classList.toggle('go', this.view === 'city'); const wh = $('tmwhere'); if (wh) wh.textContent = this.view === 'street' ? LEVELS[this.level].name : 'Everyone, everywhere'; },
-  hhmm(m) { const h = (((m / 60) % 24) + 24) % 24; return String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0'); },
+  attach() { if ($('tmcv')) this.ins.attach($('panelBody')); },
+  // ---- the clock, the side and the picture: the inspector's -------------------
+  step(min, quiet) { this.ins.step(min, quiet); },
+  side(force) { this.ins.side(force); },
+  draw() { this.ins.draw(); },
+  size() { this.ins.size(); },
   kind(st) { return TM_KIND[st.act] || 'other'; },
   // ---- where everyone is, for drawing: a street and an x, out or in -----------
   where(id) {
@@ -97,14 +109,6 @@ const TyrellMode = {
     }
     return (this.rows = { rows, h: y + 8 });
   },
-  draw() {
-    const cv = $('tmcv'); if (!cv) return;
-    if ((this.view === 'city') !== (this.drawn === 'city') || cv.width !== Math.round($('tmview').clientWidth * this.dpr)) this.size();
-    this.drawn = this.view;
-    const g = cv.getContext('2d'); g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0); g.fillStyle = '#0a0812'; g.fillRect(0, 0, this.w, this.h);
-    this.dots = []; this.badges = [];
-    if (this.view === 'city') this.drawCity(g); else this.drawStreet(g);
-  },
   drawCity(g) {
     const R = this.cityRows(), LW = 118, x0 = LW, x1 = this.w - 10, maxW = Math.max(...Object.values(Census.streets).map((s) => s.w)), sx = (id, x) => x0 + (x / maxW) * (x1 - x0), rowY = {};
     g.font = '11px ui-monospace, monospace'; g.textBaseline = 'middle';
@@ -122,21 +126,14 @@ const TyrellMode = {
       if (w.between) {
         const A = w.between, ya = rowY[A.from], yb = rowY[A.to]; if (ya === undefined || yb === undefined) continue;
         const x = sx(A.from, A.x0) + (sx(A.to, A.x1) - sx(A.from, A.x0)) * A.f, y = ya + (yb - ya) * A.f;
-        this.dot(g, x, y, col, id, true); continue;
+        this.ins.dot(g, x, y, col, id, true); continue;
       }
       if (!w.street || rowY[w.street] === undefined) continue;
       const y = rowY[w.street], x = sx(w.street, w.x);
-      if (w.out) { this.dot(g, x, y - 4, col, id, w.st.moving); continue; }
+      if (w.out) { this.ins.dot(g, x, y - 4, col, id, w.st.moving); continue; }
       const key = w.street + ':' + Math.round(x / 3); const n = (stacks[key] = (stacks[key] || 0) + 1) - 1;
-      if (n < 15) this.dot(g, x - 4 + (n % 3) * 4, y + 5 + Math.floor(n / 3) * 4, col, id, false, 1.5);
+      if (n < 15) this.ins.dot(g, x - 4 + (n % 3) * 4, y + 5 + Math.floor(n / 3) * 4, col, id, false, 1.5);
     }
-  },
-  dot(g, x, y, col, id, moving, r = 2.2) {
-    const sel = id === this.sel;
-    if (sel) { g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; g.beginPath(); g.arc(x, y, r + 3, 0, Math.PI * 2); g.stroke(); }
-    g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-    if (moving) { g.strokeStyle = 'rgba(255,255,255,0.7)'; g.lineWidth = 1; g.beginPath(); g.arc(x, y, r + 1.2, 0, Math.PI * 2); g.stroke(); }
-    this.dots.push({ x, y, id });
   },
   // ---- a street or a room: its picture, people on it, counts on its doors ----------
   picture(lid) {
@@ -173,78 +170,25 @@ const TyrellMode = {
     for (const id of TOWN_ORDER) {
       const w = this.where(id), st = w.st; if (st.level !== lid || st.hidden) continue;
       const x = X(st.x), y = Y(st.y - 16 - (st.depth && st.depth.lift ? st.depth.lift : 0));
-      this.dot(g, x, y, TM_COL[this.kind(st)], id, st.moving, 3);
+      this.ins.dot(g, x, y, TM_COL[this.kind(st)], id, st.moving, 3);
       if (k >= 1.1 || id === this.sel) { g.fillStyle = id === this.sel ? '#ffffff' : '#d8d0e8'; g.fillText(RESIDENTS[id].name, x + 6, y - 8); }
     }
     if (this.follow && this.sel) { const st = City.state(this.sel); if (st.level === lid && !st.hidden) this.ox = st.x * k - this.w / 2; }
   },
-  tap(e) {
-    const r = $('tmcv').getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-    let best = null, bd = 9; for (const d of this.dots) { const dd = Math.hypot(d.x - x, d.y - y); if (dd < bd) { bd = dd; best = d; } }
-    if (best) { this.sel = best.id; this.list = null; this.draw(); this.side(true); return; }
-    const b = this.badges.find((q) => x >= q.x0 && x <= q.x1 && y >= q.y0 && y <= q.y1);
+  // a tap that found nobody: a street's name looks along it, a room's count
+  // goes in, another door's count lists who's inside
+  tapBadge(b) {
     if (!b) return;
     if (b.street) { this.open(b.street); return; }
     if (b.room && b.room !== this.level && LEVELS[b.room] && LEVELS[b.room].hidden) { this.open(b.room); return; }
-    this.list = { place: b.place, ids: b.inside }; this.side(true);
+    this.list = { title: `${b.place.label} · ${b.inside.length} inside`, ids: b.inside }; this.side(true);
   },
-  open(lid) { this.view = 'street'; this.level = lid; this.zoom = 1; this.ox = 0; this.size(); this.draw(); this.side(true); this.clock(); },
-  // ---- the side: someone's mind, or who's where -----------------------------------------
-  side(force) {
-    const el = $('tmside'); if (!el) return;
-    if (!force && el.matches(':hover')) return; // (don't redraw under the pointer while it's reading)
-    el.innerHTML = this.sel ? this.mind(this.sel) : this.list ? this.inside(this.list) : this.summary();
-    el.querySelectorAll('[data-tmsel]').forEach((b) => (b.onclick = () => { this.sel = b.dataset.tmsel; this.list = null; const w = this.where(this.sel); if (this.view === 'street' && w.st.level && w.st.level !== this.level && !w.st.hidden) this.open(w.st.level); this.draw(); this.side(true); }));
-    el.querySelectorAll('[data-tmdo]').forEach((b) => (b.onclick = () => {
-      const k = b.dataset.tmdo;
-      if (k === 'close') { this.sel = null; this.list = null; }
-      if (k === 'follow') { this.follow = !this.follow; const st = City.state(this.sel); if (this.follow && st.level && !st.hidden) this.open(st.level); }
-      if (k === 'street') { const w = this.where(this.sel); if (w.street) this.open(w.room && LEVELS[w.room] && LEVELS[w.room].hidden && !w.st.hidden ? w.room : w.street); }
-      if (k === 'go') { const st = City.state(this.sel); if (st.level && !st.hidden) { Hud.toggle(null); Dev.landAt = { level: st.level, x: st.x + 14, y: st.y }; Game.go(st.level, Object.keys(Census.built(st.level).spawns)[0]); } return; }
-      this.draw(); this.side(true);
-    }));
-  },
+  open(lid) { this.view = 'street'; this.level = lid; this.zoom = 1; this.ox = 0; this.size(); this.draw(); this.side(true); this.ins.clock(); },
+  // ---- the side with nobody picked: who's where -----------------------------------------
   summary() {
     const n = {}, out = { street: 0, inside: 0, between: 0 };
     for (const id of TOWN_ORDER) { const w = this.where(id), k = this.kind(w.st); n[k] = (n[k] || 0) + 1; if (w.between) out.between++; else if (w.out) out.street++; else out.inside++; }
     const here = this.view === 'street' ? `<p class="dim">${LEVELS[this.level].name}. Tap someone to see their mind, a count on a door to see who's inside, a room's count to go in. Drag to scroll; the wheel zooms.</p>` : '<p class="dim">Tap someone to see their mind, or a street\'s name to look along it.</p>';
-    return `<h3>${TOWN_ORDER.length} people</h3>${here}<div class="tmlegend">` + Object.keys(TM_COL).filter((k) => n[k]).map((k) => `<span><i style="background:${TM_COL[k]}"></i>${TM_WORD[k]} <b>${n[k]}</b></span>`).join('') + `</div><p class="dim">Out in the streets ${out.street} · indoors ${out.inside} · between streets or riding ${out.between}. A ring is someone on the move.</p>`;
-  },
-  inside(L) {
-    return `<h3>${L.place.label} · ${L.ids.length} inside</h3><div class="tmlist">` + L.ids.map((id) => { const st = City.state(id); return `<button data-tmsel="${id}"><i style="background:${TM_COL[this.kind(st)]}"></i>${RESIDENTS[id].name} <small>${st.act}</small></button>`; }).join('') + '</div><div class="buttons"><button data-tmdo="close">Back</button></div>';
-  },
-  // someone's mind, in parts
-  mind(id) {
-    const w = City.w, p = w.get(id), R = RESIDENTS[id], C = Census.places, st = City.state(id), d = p.doing, at = (pid) => (!pid ? 'anywhere' : pid === R.homePlace ? 'home' : C[pid] ? C[pid].label : pid);
-    const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-    let h = `<h3>${esc(R.name)}</h3><p class="sub">${esc(Folk.who(id))}</p>`;
-    const now = !d ? 'Nothing, waiting to choose.' : d.kind === 'travel' ? `Walking${st.gap ? ' (off screen)' : ''} from ${esc(at(d.from))} to ${esc(at(d.to))}, to ${d.action}, till ${this.hhmm(d.end)}.` : d.kind === 'wait' ? `Waiting at ${esc(at(p.place))} till ${this.hhmm(d.end)}.` : `${d.action} at ${esc(at(d.place || p.place))}, till ${this.hhmm(d.end)}.`;
-    h += `<p><b>Now</b> ${now}${d && d.rank !== undefined ? ` <small class="dim">(${d.layer || 'free'}, rank ${d.rank})</small>` : ''}</p>`;
-    if (p.directive && !p.directive.done) h += `<p class="dim">Told to: ${p.directive.do}${p.directive.label ? ' · ' + esc(p.directive.label) : ''}</p>`;
-    // needs, as bars
-    h += '<div class="tmneeds">' + Object.keys(p.needs).map((k) => { const v = w.needOf(id, k); return `<div><span>${k}</span><i><b style="width:${Math.round(clamp(v, 0, 1) * 100)}%;background:${v > 0.85 ? '#ff4a5a' : v > 0.6 ? '#ffb040' : '#3af0e0'}"></b></i></div>`; }).join('') + '</div>';
-    const rv = w.reverie; if (rv) h += `<p class="dim">Mood ${(rv.mood(id) || 0).toFixed(2)}${p.vars && p.vars.money !== undefined ? ` · ${Math.round(p.vars.money)} cr` : ''}${R.likes && Object.keys(R.likes).length ? ' · likes ' + Object.keys(R.likes).join(', ') : ''}</p>`;
-    // why: the last decision, every option weighed
-    const dec = w.why(id);
-    if (!dec) h += '<h3>Why</h3><p class="dim">No choice made since the last time walk: play the clock on a little.</p>';
-    if (dec) {
-      h += `<h3>Why · ${this.hhmm(dec.t)}</h3><p class="dim">${esc(dec.reason || '')}</p><div class="tmwhy">`;
-      const pk = dec.picked, isPick = (c) => !!pk && c.id === pk.id && c.place === pk.place && c.target === pk.target;
-      const cands = dec.candidates.slice().sort((a, b) => isPick(b) - isPick(a) || b.rank - a.rank || b.weight - a.weight).slice(0, 9);
-      if (pk) h += `<p>Chose <b>${pk.id}</b> at ${esc(at(pk.place))}${pk.layer ? ` <small class="dim">(${pk.layer})</small>` : ''}. It's drawn from the best few, by weight squared, so the top one doesn't always win.</p>`;
-      for (const c of cands) h += `<div class="${isPick(c) ? 'pick' : c.blocked ? 'no' : ''}"><b>${c.id}</b> <small>${esc(at(c.place))} · rank ${c.rank}${c.blocked ? '' : ' · ' + c.weight.toFixed(3)}</small><br><small>${esc(c.blocked || (c.parts || []).map(([n, v]) => n + ' ' + (+v).toFixed(2)).join(' × '))}</small></div>`;
-      h += '</div>';
-    }
-    // today's routine, the hour they're in marked
-    const ra = w.mind.routineAt(p), plan = (w.mind.routineFor(p, w.now) || []).slice().sort((a, b) => a[0] - b[0]), cur = ra && ra.entry;
-    if (plan.length) h += '<h3>Today</h3><div class="tmday">' + plan.map((e) => `<div class="${e === cur ? 'cur' : ''}"><span>${String(Math.floor(e[0])).padStart(2, '0')}:${String(Math.round((e[0] % 1) * 60)).padStart(2, '0')}</span> ${e[2] === '*' ? 'free' : e[2]} <small>${e[1] === null ? '' : esc(e[1] === 'home' ? 'home' : at(e[1]))}${e[3] && e[3].rank ? ' · holds' : ''}</small></div>`).join('') + '</div>';
-    // lately: what they've done
-    const lines = w.westmarch.chronicle(id, w.now - 12 * 60).slice(-10);
-    if (lines.length) h += '<h3>Lately</h3><div class="tmlog">' + lines.map((l) => `<div>${esc(l)}</div>`).join('') + '</div>';
-    // who they know best
-    const fs = w.fellowship ? w.fellowship.relations(id).slice(0, 4) : [];
-    if (fs.length) h += '<h3>People</h3><div class="tmlist">' + fs.map((f) => RESIDENTS[f.id] ? `<button data-tmsel="${f.id}">${esc(RESIDENTS[f.id].name)} <small>regard ${f.regard.toFixed(2)}</small></button>` : `<span class="dim">${esc(f.id)} · ${f.regard.toFixed(2)}</span>`).join('') + '</div>';
-    h += `<div class="buttons"><button data-tmdo="follow" class="${this.follow ? 'go' : ''}">${this.follow ? 'Following' : 'Follow'}</button><button data-tmdo="street">Their street</button><button data-tmdo="go" ${st.level && !st.hidden ? '' : 'disabled'}>Go there</button><button data-tmdo="close">Close</button></div>`;
-    return h;
+    return `<h3>${TOWN_ORDER.length} people</h3>${here}` + this.ins.legend(n) + `<p class="dim">Out in the streets ${out.street} · indoors ${out.inside} · between streets or riding ${out.between}. A ring is someone on the move.</p>`;
   },
 };
