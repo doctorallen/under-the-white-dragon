@@ -50,14 +50,17 @@ function person(o = {}) {
     const L = 5.6 * u, dx = hx - shx, dy = hy - sh, D = Math.min(Math.hypot(dx, dy), 2 * L - 0.1), a = Math.atan2(dy, dx), k = Math.acos(D / (2 * L));
     const ex = shx + Math.cos(a + k) * L, ey = sh + 1 + Math.sin(a + k) * L;
     S.cap(shx, sh + 1, ex, ey, 1.9 + wd * 0.2, 1.6, R);
-    S.cap(ex, ey, hx, hy, 1.6, 1.3, R);
+    S.cap(ex, ey, hx, hy, 1.6, 1.3, o.sleeves && !cy ? (back ? dark(sk) : sk) : R);
+    if (o.sleeves && !cy) S.px(ex, ey, R[4]); // (the rolled cuff)
     if (!cy && acc && o.trim !== false) S.px(hx - Math.sign(hx - ex), hy - Math.sign(hy - ey), acc, true);
-    S.part(); S.cap(hx, hy, hx + 0.6, hy + 0.4, 1.3, 1.2, cy ? chrome : back ? dark(sk) : sk);
+    S.part(); const gl = o.gloves && !cy ? rp(o.gloves, 5) : null; S.cap(hx, hy, hx + 0.6, hy + 0.4, 1.3, 1.2, cy ? chrome : gl ? (back ? dark(gl) : gl) : back ? dark(sk) : sk);
     if (cy && acc) { S.px(ex, ey, acc, true); S.px((ex + hx) / 2, (ey + hy) / 2, acc, true); }
   };
   const H = o.hands || {}, hb = [H.bx === undefined ? cx - 2.5 : H.bx, H.by === undefined ? hip + 0.5 : H.by], hf = [H.fx === undefined ? cx + 4.8 : H.fx, H.fy === undefined ? hip + 1 : H.fy];
   // behind: a pack, an umbrella's shaft, the back arm and leg
   if (o.pack) { const pk = rp(o.pack, 6); S.shape([[cx - 8.6, sh], [cx - 3, sh - 0.5], [cx - 3, waist + 1], [cx - 9, waist + 1]], pk, { down: 0.3 }); S.cap(cx - 8.4, sh - 1.2, cx - 3.6, sh - 1.4, 1.4, 1.4, rp('#5a4a3a', 5)); for (let y = Math.round(sh + 2); y < waist; y += 3) S.px(cx - 8, y, pk[0]); if (acc) S.px(cx - 7, sh + 4, acc, true); }
+  if (o.pack && o.packTools) { S.limb(cx - 7.4, sh - 0.5, cx - 7.8, sh - 5, 0.7, MAT.steel); S.px(cx - 8.6, sh - 5.6, MAT.steel[3]); S.px(cx - 7, sh - 5.6, MAT.steel[3]); S.limb(cx - 4.4, sh - 0.5, cx - 4, sh - 7, 0.4, ['#2a2a2a', '#4a4a4a']); S.px(cx - 4, sh - 7.6, '#ff4a3a', true); }
+  if (o.satchel) { const sc = rp(o.satchel, 5); S.box(cx - 8.2, hip - 2.5, cx - 3.6, hip + 3, sc, { lo: 1, hi: 3 }); S.px(cx - 6, hip - 1, sc[0]); }
   S.part(); arm(cx - 2.6, hb[0], hb[1], true);
   S.part(); leg(st[0], true);
   S.part();
@@ -73,7 +76,7 @@ function person(o = {}) {
   S.shape([[sx0 + 0.6, sh - 0.6], [sx1 - 0.2, sh - 0.6], [sx1 + 0.6, sh + 2], [sx1 - 0.4, waist], [sx1, hip + 0.8], [sx0, hip + 0.8], [sx0 + 0.4, waist], [sx0 - 0.4, sh + 2]], top);
   if (o.shirt) S.shape([[cx + 1.6, sh], [sx1 - 0.6, sh], [sx1 - 0.8, waist - 1], [cx + 2.4, waist - 1]], rp(o.shirt, 5));
   // a vest over the shirt: a plate and its straps, where the coat's open
-  if (o.vest) { const vr = rp(o.vest, 6), x0 = o.coat === 'long' || o.coat === 'jacket' ? cx + 1.4 : sx0 + 0.6; S.shape([[x0, sh + 1.5], [sx1 - 0.4, sh + 1.5], [sx1 - 0.6, waist + 0.5], [x0 + 0.6, waist + 0.5]], vr, { down: 0.2 }); for (let x = Math.round(x0 + 1); x < sx1 - 1; x += 2) S.px(x, waist - 2, vr[1]); }
+  if (o.vest) { const vr = rp(o.vest, 6), x0 = o.coat === 'long' || o.coat === 'jacket' ? cx + 1.4 : sx0 + 0.6; S.shape([[x0, sh + 1.5], [sx1 - 0.4, sh + 1.5], [sx1 - 0.6, waist + 0.5], [x0 + 0.6, waist + 0.5]], vr, { down: 0.2 }); for (let x = Math.round(x0 + 1); x < sx1 - 1; x += 2) S.px(x, waist - 2, vr[1]); if (o.vestStripe) for (let x = Math.round(x0); x <= Math.round(sx1 - 0.6); x++) if (S.get(x, Math.round(waist - 0.5))) S.px(x, waist - 0.5, col3(o.vestStripe), true); }
   if (o.apron) S.shape([[cx - 1, sh + 3], [sx1 + 0.8, sh + 3], [sx1 + 1.6, Y(5)], [cx - 1.5, Y(5)]], rp(o.apron, 6), { down: 0.25 });
   if (o.armor) { S.cap(cx - 2.5, sh + 2.5, cx + 2.5, sh + 2.5, 3.4, 3.4, rp(o.armor, 7)); S.cap(cx - 3.5, sh + 1, cx - 4.5, sh + 1.5, 2.6, 2.6, rp(o.armor, 7)); }
   if (o.collar) S.cap(cx - 3, sh - 1, cx + 0.5, sh - 1.8, 2.2, 1.6, top, { bias: 0.12 });
@@ -96,6 +99,10 @@ function person(o = {}) {
   if (acc && o.trim !== false) for (let y = Math.round(sh + 1); y < (o.coat === 'long' ? Y(6) : hip); y++) { const x = Math.round(sx1 - 0.5 + (y > waist ? (y - waist) * 0.12 : 0)); if (S.get(x, y)) S.px(x, y, acc, (y % 3) === 0); }
   // the front leg, over the body's hem
   if (o.coat !== 'long') { S.part(); leg(st[1], false); }
+  if (o.toolbelt || o.satchel || o.coil) S.part();
+  if (o.coil) { const cc = col3(o.coil); for (let a = 0; a < 18; a++) { const A = (a / 18) * Math.PI * 2; S.px(cx - 1 + Math.cos(A) * 3, sh + 2.6 + Math.sin(A) * 2.4, a % 4 ? cc : mixRgb(cc, [0, 0, 0], 0.45)); } }
+  if (o.toolbelt) { const tb = rp(o.toolbelt, 5); S.limb(cx - 3.6, hip + 0.6, cx - 4.8, hip + 5.4, 0.6, rp('#8a6a3a', 4)); S.px(cx - 5.6, hip + 5.6, MAT.steel[2]); S.px(cx - 4.4, hip + 5.6, MAT.steel[2]); S.box(cx + 1, hip - 0.4, cx + 4.6, hip + 3.4, tb, { lo: 1, hi: 3 }); S.px(cx + 2, hip - 1.2, '#ffb040'); S.px(cx + 3.4, hip - 1.2, MAT.steel[3]); }
+  if (o.satchel) { const sc = rp(o.satchel, 5); for (let k = 0; k <= 10; k++) { const t = k / 10; S.px(cx + 2.4 - t * 5.6, sh + 0.4 + t * (hip - sh - 1), sc[1]); } }
   S.part();
   // the head: neck, skull, face, an ear, an eye, a brow, a nose, a mouth
   S.cap(cx + 0.4, sh, cx + 1, head + 3, 1.5, 1.4, sk);
@@ -113,6 +120,7 @@ function person(o = {}) {
   if (hs === 'long') { S.cap(cx - 0.6, head - 2.4, cx + 2.6, head - 3, 2.6, 2, hair); S.cap(cx - 2.4, head - 1.4, cx - 3, head + 7, 2.2, 1.8, hair); }
   if (hs === 'bun') { S.cap(cx - 0.6, head - 2.4, cx + 2.6, head - 3, 2.6, 2, hair); S.cap(cx - 3, head - 4.4, cx - 3, head - 4.4, 2, 2, hair); S.px(cx - 2.4, head - 6.4, '#d83a3a'); S.px(cx - 1.6, head - 6.8, '#d83a3a'); }
   if (hs === 'hood') { S.cap(cx - 1, head - 1, cx + 1.6, head - 1.6, 4.6, 4.2, top); S.cap(cx + 2.6, head + 0.6, cx + 3, head + 1.4, 2.4, 2, sk); S.px(cx + 3.4, head, '#0c080a'); }
+  if (hs === 'beanie') { const cc = rp(o.capCol || '#3a2a2a'); S.cap(cx - 0.4, head - 2.8, cx + 2, head - 3.4, 3, 2.4, cc); for (let x = -3; x <= 4; x++) S.px(cx + x, head - 1.6, cc[x < 0 ? 1 : 2]); }
   if (hs === 'cap') { const cc = rp(o.capCol || '#3a2a2a'); S.cap(cx - 0.6, head - 2.6, cx + 2.4, head - 3, 2.6, 2, cc); for (let x = 3; x < 8; x++) S.px(cx + x, head - 2, cc[x < 5 ? 2 : 1]); }
   if (hs === 'helmet') { const ar = rp(o.armor || '#c8ccd4', 7), vz = col3(o.visor || '#ff3040'); S.cap(cx + 0.2, head - 1, cx + 1.8, head, 4.4, 4.1, ar); for (let x = 1; x < 6; x++) { S.px(cx + x, head - 0.4, mixRgb(vz, [255, 255, 255], x === 3 ? 0.5 : 0), true); S.px(cx + x, head + 0.4, mixRgb(vz, [0, 0, 0], 0.45), true); } }
   if (hs === 'bald') { S.px(cx + 1, head - 3.4, sk[5]); S.px(cx + 2, head - 3.4, sk[4]); }
@@ -124,7 +132,10 @@ function person(o = {}) {
   // a thin band round the brow, a stone of light at the front
   if (o.hat === 'circlet') { const hc = col3(o.hatCol || '#e8e8ff'); for (let x = -2; x <= 5; x++) S.px(cx + x, head - 2.2, mixRgb(hc, [80, 80, 100], x < 1 ? 0.4 : 0)); S.px(cx + 4, head - 2.4, '#3af0e0', true); }
   // goggles: over the eyes, or pushed up on the forehead if the face is taken
-  if (o.goggles) { const gc = col3(o.goggles), up = o.shades || o.mask, gy = up ? head - 3.2 : head - 0.4; for (let x = -2; x < 6; x++) S.px(cx + x, gy + (up ? 0 : 0.6), '#1a1a20'); for (const lx of [2, 4]) { S.px(cx + lx, gy, gc, true); S.px(cx + lx + 1, gy, mixRgb(gc, [255, 255, 255], 0.4), true); } }
+  if (o.goggles) { const gc = col3(o.goggles), up = o.shades || o.mask || o.gogglesUp, gy = up ? head - 3.2 : head - 0.4; for (let x = -2; x < 6; x++) S.px(cx + x, gy + (up ? 0 : 0.6), '#1a1a20'); for (const lx of [2, 4]) { S.px(cx + lx, gy, gc, true); S.px(cx + lx + 1, gy, mixRgb(gc, [255, 255, 255], 0.4), true); } }
+  // a headlamp on its band, lit; a jeweler's loupe on its band, over the eye
+  if (o.lamp) { for (let x = -2; x <= 3; x++) S.px(cx + x, head - 2.4, '#1a1a20'); S.px(cx + 4, head - 2.4, '#3a3a42'); S.px(cx + 5, head - 2.4, col3(o.lamp), true); S.px(cx + 5, head - 3.2, mixRgb(col3(o.lamp), [255, 255, 255], 0.5), true); }
+  if (o.loupe) { for (let x = -2; x <= 2; x++) S.px(cx + x, head - 1.6, '#2a2a30'); S.px(cx + 4.2, head - 1, '#2a2a30'); S.px(cx + 4.2, head + 0.4, '#2a2a30'); S.px(cx + 5, head - 0.3, '#2a2a30'); S.px(cx + 4.2, head - 0.3, '#c8f0ff', true); }
   // a visor band across the eyes, lit
   if (o.shades) { const vc = col3(o.shades); for (let x = 1; x < 6; x++) S.px(cx + x, head - 0.3, mixRgb(vc, [255, 255, 255], x === 4 ? 0.6 : 0.05), true); S.px(cx, head - 0.3, '#14141a'); }
   if (o.mask) for (let x = 1; x < 6; x++) for (let y = 1; y < 3; y++) S.px(cx + x, head + y + 0.5, rp(o.mask, 4)[y]);
@@ -173,7 +184,8 @@ function personBack(o = {}) {
     const cyb = o.cyArm === 'both' || (o.cyArm && sd > 0), R = cyb ? chrome : top, shx = cx + sd * (w0 - 1), hx = climb ? cx + sd * 5.6 : cx + sd * (w0 + 0.6), hy = climb ? (sd === side ? sh + 0.5 : head - 5.5) : hip + 0.5;
     const ex = climb ? shx + sd * 2.6 : shx + sd * 0.8, ey = climb ? (sh + 1 + hy) / 2 + 1 : (sh + hy) / 2;
     S.cap(shx, sh + 1, ex, ey, 1.9 + wd * 0.2, 1.6, R); S.cap(ex, ey, hx, hy, 1.6, 1.3, R);
-    S.part(); S.cap(hx, hy, hx, hy - 0.4, 1.3, 1.2, cyb ? chrome : sk);
+    if (o.sleeves && !cyb) S.cap(ex, ey, hx, hy, 1.6, 1.3, sk);
+    S.part(); S.cap(hx, hy, hx, hy - 0.4, 1.3, 1.2, cyb ? chrome : o.gloves ? rp(o.gloves, 5) : sk);
     if (cyb && acc) S.px(ex, ey, acc, true);
   };
   // the body: the back of a coat or a jacket, its seam, a collar, a belt
@@ -184,7 +196,12 @@ function personBack(o = {}) {
   if (o.coat !== 'long') for (let x = Math.round(cx - w0); x <= Math.round(cx + w0); x++) if (S.get(x, Math.round(hip))) S.px(x, hip, rp(o.belt || '#141216')[1]);
   if (acc && o.trim !== false) for (let y = Math.round(sh + 1); y < Math.round(hem); y += 2) { S.px(cx - w0 + 0.6, y, acc, true); S.px(cx + w0 - 0.6, y, acc, true); }
   if (o.armor) S.cap(cx - 3, sh + 2.5, cx + 3, sh + 2.5, 3.4, 3.4, rp(o.armor, 7));
+  if (o.vest && !o.pack) { const vr = rp(o.vest, 6); S.shape([[cx - w0 + 0.8, sh + 0.6], [cx + w0 - 0.8, sh + 0.6], [cx + w0 - 1, waist + 0.5], [cx - w0 + 1, waist + 0.5]], vr, { down: 0.2 }); if (o.vestStripe) for (let x = Math.round(cx - w0 + 1); x <= Math.round(cx + w0 - 1); x++) { S.px(x, waist - 0.5, col3(o.vestStripe), true); S.px(x, sh + 3, col3(o.vestStripe), true); } }
   if (o.pack) { const pk = rp(o.pack, 6); S.box(cx - 3.5, sh + 1, cx + 3.5, waist + 1, pk, { lo: 1, hi: 4 }); S.px(cx, sh + 4, pk[0]); if (acc) S.px(cx + 2, sh + 3, acc, true); }
+  if (o.pack && o.packTools) { S.limb(cx - 1.6, sh + 1, cx - 2, sh - 4, 0.7, MAT.steel); S.limb(cx + 2, sh + 1, cx + 2.4, sh - 5, 0.4, ['#2a2a2a', '#4a4a4a']); S.px(cx + 2.4, sh - 5.6, '#ff4a3a', true); }
+  if (o.toolbelt) { const tb = rp(o.toolbelt, 5); for (const sd of [-1, 1]) S.box(cx + sd * (w0 - 1) - 1.6, hip - 0.4, cx + sd * (w0 - 1) + 1.6, hip + 3, tb, { lo: 1, hi: 3 }); }
+  if (o.satchel) { const sc = rp(o.satchel, 5); for (let k = 0; k <= 10; k++) { const t = k / 10; S.px(cx - w0 + 1.4 + t * (2 * w0 - 2.8), sh + 0.6 + t * (hip - sh - 2), sc[1]); } S.box(cx + w0 - 2.4, hip - 2, cx + w0 + 2, hip + 3, sc, { lo: 1, hi: 3 }); }
+  if (o.coil) { const cc = col3(o.coil); for (let a = 0; a < 16; a++) { const A = (a / 16) * Math.PI * 2; S.px(cx - 2.6 + Math.cos(A) * 2.4, sh + 2.6 + Math.sin(A) * 2, a % 4 ? cc : mixRgb(cc, [0, 0, 0], 0.4)); } }
   S.part(); arm(-1); S.part(); arm(1);
   // the collar and the head: the nape, the ears, and over them the hair
   S.part();
@@ -203,7 +220,9 @@ function personBack(o = {}) {
   if (hs === 'helmet') S.cap(cx, head - 0.6, cx, head + 0.6, 4.4, 4.2, rp(o.armor || '#c8ccd4', 7));
   if (hs === 'bald') { S.px(cx - 1, head - 3.2, sk[5]); S.px(cx, head - 3.4, sk[4]); }
   if (o.hat === 'fedora') { const hc = rp(o.hatCol || '#3a3028', 6); S.cap(cx, head - 3.6, cx, head - 3.4, 3.2, 2, hc); for (let x = -6; x <= 6; x++) S.px(cx + x, head - 2 + (Math.abs(x) > 4 ? 0.6 : 0), hc[1]); }
-  if (o.goggles) { for (let x = -4; x <= 4; x++) S.px(cx + x, head - 0.4, '#1a1a20'); }
+  if (o.goggles) { for (let x = -4; x <= 4; x++) S.px(cx + x, (o.gogglesUp ? head - 2.6 : head - 0.4), '#1a1a20'); }
+  if (o.lamp || o.loupe) for (let x = -4; x <= 4; x++) S.px(cx + x, head - (o.lamp ? 2.2 : 1.4), '#1a1a20');
+  if (hs === 'beanie') { const cc = rp(o.capCol || '#3a2a2a'); S.cap(cx, head - 2.4, cx, head - 1.4, 4, 3, cc); for (let x = -4; x <= 4; x++) S.px(cx + x, head - 0.4, cc[1]); }
   if (o.port && acc) S.px(cx, head + 2.4, acc, true);
   const out = S.done(); out.actor = true; return out;
 }
@@ -312,7 +331,7 @@ function personFront(o = {}) {
   if (['short', 'undercut', 'bob', 'long', 'bun'].includes(hs) && !o.hat) { S.px(cx - 1, head - 4.2, hair[5]); S.px(cx, head - 4.4, hair[4]); }
   if (o.hat === 'fedora') { const hc = rp(o.hatCol || '#3a3028', 6); S.cap(cx, head - 3.6, cx, head - 3.2, 3.2, 2, hc); for (let x = -6; x <= 6; x++) S.px(cx + x, head - 2 + (Math.abs(x) > 4 ? 0.6 : 0), hc[Math.abs(x) > 4 ? 1 : 2]); for (let x = -3; x <= 3; x++) S.px(cx + x, head - 2.9, hc[0]); }
   if (o.hat === 'circlet') { const hc = col3(o.hatCol || '#e8e8ff'); for (let x = -3; x <= 3; x++) S.px(cx + x, head - 2.2, hc); S.px(cx, head - 2.4, '#3af0e0', true); }
-  if (o.goggles) { const gc = col3(o.goggles), up = o.shades || o.mask, gy = up ? head - 3 : eyeY; for (let x = -4; x <= 4; x++) S.px(cx + x, gy, '#1a1a20'); for (const gx of [-1.6, 1.6]) S.px(cx + gx, gy, gc, true); }
+  if (o.goggles) { const gc = col3(o.goggles), up = o.shades || o.mask || o.gogglesUp, gy = up ? head - 3 : eyeY; for (let x = -4; x <= 4; x++) S.px(cx + x, gy, '#1a1a20'); for (const gx of [-1.6, 1.6]) S.px(cx + gx, gy, gc, true); }
   if (o.shades) { const vc = col3(o.shades); for (let x = -3; x <= 3; x++) S.px(cx + x, eyeY, mixRgb(vc, [255, 255, 255], x === 1 ? 0.6 : 0.05), true); }
   const out = S.done(); out.actor = true; return out;
 }
