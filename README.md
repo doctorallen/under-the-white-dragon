@@ -45,6 +45,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 - **Every place built by hand**, from the Spires above the clouds down to the Bowels: up high the White Dragon's block, Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge and the Arcology Gardens; on the street the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley and Clinic Row; under the street the Main Drain, Boiler House Nine, Substation Seven and the Waterworks; then Old Town and its districts, the Works and its districts, and the Bowels. Each band down opens once you've been in the one above.
 - **The city map:** every way out (a cab stand, a subway platform, a cage elevator, a manhole) opens a cross-section of the whole city with every place pinned at its depth; tap one and go. The pause menu shows it too.
 - **Its people:** the block's residents live their days (homes, jobs, friends, errands) whether you're watching or not, and remember what you do in front of them; everyone else has a name of their own.
+- **Talk** (`talk.js`): stop someone and you talk. They raise what's theirs first (what they saw you strip, a job for the bench, the thing you fixed, a lead), then you ask after their work, their fun, who's at home, what's going round. How you say it (straight, warm, a joke, a question, haggling, a lie, money) lands well or badly by who they are and how things stand, and moves their regard; a witness you talk round, or pay off, keeps quiet.
 - **Weather:** rain comes and goes through the day, and the streets shine only while they're wet.
 
 ## Files
@@ -89,6 +90,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/folk.js` | The city's population: households made to fill the jobs and homes, with schools and hobbies (`Folk`) |
 | `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`) |
 | `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which runs their days, needs, hobbies, memories and gossip, and saves them (`City`) |
+| `js/talk.js` | Conversations, on Tyrell's Voice: the ways of coming at someone, the subjects (a job pitched and haggled, the hand-back, a lead, a witness having it out with you, small talk from their lives) and their words (`Talk`) |
 | `vendor/tycho/` | Tycho, the engine, with Tyrell, the minds engine, inside it (a git submodule; the game loads the built scripts in `dist/`) |
 | `js/day.js` | Day and night, and the weather (`Day`, `Weather`) |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
