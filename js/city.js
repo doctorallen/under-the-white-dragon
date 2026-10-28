@@ -19,7 +19,9 @@
 //
 // Residents remember. Strip a till in front of someone and they believe it
 // was you, may tell someone at the bar, and may report it (heat). Fix their
-// radio and it goes in their file on you. Their minds are saved with the game
+// radio and it goes in their file on you. And they talk among themselves, on
+// screen and off (Bree: chat.js): small talk that warms them to each other,
+// arguments that leave grudges, a word at the till. Their minds are saved with the game
 // (Game.s.city), and the game's clock drives Tyrell's: when the clock jumps
 // (sleeping, the dev slider) the city runs on, or, going back, rewinds with
 // Esper, Tyrell's time walk.
@@ -30,6 +32,30 @@ const CITY = {
   reportHeat: 6, // heat when someone reports what they saw you do
   money: [40, 160], // what residents start with
   pop: 3, // the population's version: a save with another starts the city over
+  reach: [180, 40], // who sees something done in the open: within this far across, and up or down (px)
+};
+// Their natures, as Bree reads them (temper, warmth, patience, forgiveness):
+// a point from 0.2 to 0.8 each, the same for someone always (City.nature),
+// and for some of the block's own, their own
+const CITY_NATURE = {
+  sal: { temper: 0.8, warmth: 0.3, patience: 0.3 }, goro: { temper: 0.7, patience: 0.4 }, vin: { temper: 0.65, warmth: 0.3 },
+  wen: { temper: 0.6, patience: 0.6, forgiveness: 0.35 }, okonkwo: { temper: 0.3, patience: 0.85, warmth: 0.6 }, sato: { warmth: 0.7, forgiveness: 0.4 },
+  mo: { warmth: 0.7, patience: 0.6 }, jun: { temper: 0.35, patience: 0.7 }, ueda: { patience: 0.8, warmth: 0.5 }, hana: { temper: 0.2, patience: 0.9, forgiveness: 0.85 },
+  rina: { warmth: 0.75, patience: 0.45 }, kai: { temper: 0.55, patience: 0.25, forgiveness: 0.8 }, dara: { temper: 0.55, warmth: 0.6 }, teo: { warmth: 0.65 }, ines: { warmth: 0.65, patience: 0.6 },
+};
+const CITY_ROLES = ['temper', 'warmth', 'patience', 'forgiveness', 'humor'];
+// Bree's settings (vendor/tycho/tyrell/docs/tuning.md#bree, tuned with
+// test/city.js to talk on screen about as much as the old chatter): how often
+// residents strike up a word when they're somewhere together, and again while
+// they stay, how long they talk and the beat between turns (game minutes: a
+// minute is under a second of play), what people about take notice of (a
+// row, or talk turning into one: they remember it and think less of whoever
+// started it, but don't take it as news to pass on, which in a city this size
+// piles up for months), and how long what's kept between two of them lasts
+const CITY_BREE = {
+  traits: { temper: 'nat:temper', warmth: 'nat:warmth', humor: 'nat:humor', patience: 'nat:patience', courage: 'trait.courage', forgiveness: 'nat:forgiveness', talkative: 'trait.talkative' },
+  strike: 0.25, again: 8, turns: { partner: 4, kin: 4, close: 4, friend: 3, acquaintance: 2, stranger: 2, rival: 2, sour: 2 }, talkativeTurns: 1,
+  turnGap: [1.5, 2.5], quiet: ['sleep', 'quiet'], seenAt: 'row', witnessStrength: 0, pairDays: 1, topicMemory: 4, recent: 20, roomWeight: 0,
 };
 // what's done where: the free choices, each at the places tagged for it
 const CITY_FREE = {
@@ -69,12 +95,13 @@ const City = {
     const w = (this.w = Tyrell.create({
       seed: 'white-dragon',
       start: now - 5 * 60, // (a save, if there is one, replaces all of this)
-      modules: ['reverie', 'fellowship', 'wormtongue', 'cityspeak', 'mentat', 'ceres', 'voice'],
-      shell: { travel: (a, b) => this.travel(a, b) },
+      modules: ['reverie', 'fellowship', 'wormtongue', 'cityspeak', 'mentat', 'ceres', 'voice', 'bree'],
+      shell: { travel: (a, b) => this.travel(a, b), check: (fact) => this.check(fact) },
       config: { logSize: Dev.shown() ? 6000 : 200, decisions: Dev.shown() ? 12 : 4 }, // (Tyrell mode, in dev, reads more of what happened and why)
       moduleConfig: {
         fellowship: { forget: 6 }, // (a face in the crowd is forgotten in a week: a city's too big to know everyone)
         voice: { theirs: 1, choices: 4, onWell: ['regard+=0.02'], onBadly: ['regard-=0.02'] }, // (talk.js: what's theirs to raise, they always raise; four answers at most)
+        bree: CITY_BREE, // (chat.js: what passes between residents)
       },
       esper: { every: 60, keep: 26 * 60, sparseAfter: 180, sparseEvery: 240 }, // (hourly for three hours back, every four hours to a day: a big city's snapshots are big)
     }));
@@ -84,6 +111,8 @@ const City = {
     w.need({ id: 'fun', rise: CITY.fun, start: 0.3, urgent: 1.1, emotion: 'bored' });
     w.need({ id: 'company', rise: CITY.company, start: 0.3, urgent: 1.1, emotion: 'lonely' });
     w.need({ id: 'chores', rise: CITY.chores, start: 0.2, urgent: 1.1 });
+    // their natures, as Bree reads them (City.nature)
+    w.term('nat', (c, a) => (c.person ? this.nature(c.person.id, a) : 0.5));
     // places: every one in the census, tagged with what can be done there
     for (const id in Census.places) {
       const P = Census.places[id], tags = P.tags.slice(), slots = {};
@@ -99,18 +128,20 @@ const City = {
     A('sleep', { at: 'home', minutes: [420, 480], relieves: { energy: 0.95 }, rates: { hunger: 0.4, fun: 0.2, company: 0.2, chores: 0.2 }, tags: ['sleep'], considerations: [night] });
     A('home', { at: 'home', relieves: { energy: 0.12, fun: 0.08 }, base: 0.04, label: 'at home' });
     A('eat_home', { at: 'home', minutes: 25, relieves: { hunger: 0.45 }, pose: 'sit', label: 'something from the cupboard' });
+    // (a drink or a meal over a counter: a word with whoever's serving, chat.js)
+    const counter = { drink: 'order', eat: 'order' }, serving = ['target.doing:work'];
     for (const act in CITY_FREE) {
       const F = CITY_FREE[act], who = F.adult ? ['!is:child'] : F.kid ? ['is:child'] : undefined;
-      A(act, { at: 'tag:do:' + act, minutes: F.minutes, relieves: F.relieves, price: F.price, base: F.base, cooldown: F.cooldown, who, slot: act, tags: F.relieves.company ? ['social'] : undefined,
+      A(act, { at: 'tag:do:' + act, minutes: F.minutes, relieves: F.relieves, price: F.price, base: F.base, cooldown: F.cooldown, who, slot: act, tags: F.relieves.company ? ['social'] : undefined, interact: counter[act], interactWith: counter[act] && serving,
         considerations: [F.kid ? close : near, { name: 'likes it', input: 'trait.like_' + act, out: [0.15, 1.5] }].concat(act !== 'play' && act !== 'arcade' ? [{ name: 'a child', input: 'trait.kid', out: [1, 0.2] }] : []) });
     }
     // only when the day says so (rank -1)
     // (each where it's done, so time at home never turns into sweeping the kitchen)
     w.term('ownhome', (ctx) => !!ctx.place && ctx.place === ctx.person.def.home);
-    for (const id of ['work', 'stock', 'sweep', 'school', 'browse']) A(id, { rank: -1, at: 'tag:do:' + id, relieves: id === 'browse' ? { fun: 0.1 } : id === 'school' ? { company: 0.3 } : undefined });
-    A('visit', { rank: -1, at: 'tag:home', if: ['!ownhome'], who: ['is:visits'], relieves: { company: 0.4 } });
+    for (const id of ['work', 'stock', 'sweep', 'school', 'browse']) A(id, { rank: -1, at: 'tag:do:' + id, relieves: id === 'browse' ? { fun: 0.1 } : id === 'school' ? { company: 0.3 } : undefined, tags: id === 'school' ? ['quiet'] : undefined }); // (no chatting in class: CITY_BREE)
+    A('visit', { rank: -1, at: 'tag:home', if: ['!ownhome'], who: ['is:visits'], relieves: { company: 0.4 }, interact: 'visit', interactWith: [] }); // (a word at the door with whoever's in)
     A('host', { rank: -1, at: 'home', who: ['is:visits'], relieves: { company: 0.4 } }); // (the block's own visit each other: their days say when)
-    A('pay', { at: 'tag:do:pay', minutes: 8, rank: -1, price: 8, fill: false });
+    A('pay', { at: 'tag:do:pay', minutes: 8, rank: -1, price: 8, fill: false, interact: 'till', interactWith: serving }); // (a word with the clerk)
     // coming by the White Dragon for something you fixed (Jobs.collections sends them; never arriving in the night)
     A('collect', { at: 'd_noodles', minutes: 12, rank: -1, hours: [7, 22.5], fill: false, label: 'picking something up from Lin' });
     // what deeds mean to the people they're done to
@@ -118,7 +149,8 @@ const City = {
     w.deed('botched', { feeling: 'wronged', regard: -0.25, memory: 6, sentiment: 'botched a repair' });
     w.wormtongue.crime({ kind: 'strip', severity: 0.6, heat: CITY.reportHeat });
     this.reports = Tycho.minds.collect(w, 'report', (r) => r.actor === 'player');
-    Talk.declare(w); // (conversations: talk.js)
+    Talk.declare(w); // (conversations with you: talk.js)
+    Chat.declare(w); // (and between residents: chat.js)
     // the people
     for (let i = 0; i < TOWN_ORDER.length; i++) {
       const id = TOWN_ORDER[i], R = RESIDENTS[id], traits = { honesty: 0.3 + hash(i, 3, 71) * 0.7, talkative: hash(i, 4, 71), courage: hash(i, 5, 71), thrift: hash(i, 6, 71), kid: R.age === 'kid' ? 1 : 0 };
@@ -238,6 +270,7 @@ const City = {
     // back as well as forward: Esper rewinds. Further back than it remembers
     // (the dev clock), the block starts over at that hour, memories and all.
     this.clock.sync();
+    Chat.keepFacts(); // (what the block knows of your doings, for the minds to talk of)
     Jobs.collections(); // (what's fixed gets collected)
     const reported = this.reports.take();
     if (reported.length) {
@@ -251,51 +284,50 @@ const City = {
   // who sees something done at a prop: in a room, everyone in it; on the
   // street, whoever's within shouting distance on the same floor
   witnesses(p) {
-    return Tycho.minds.witnesses(p, Actors.npcs, { room: !!LEVELS[World.L.id].hidden, reach: [180, 40], can: (n) => !n.hidden });
+    return Tycho.minds.witnesses(p, Actors.npcs, { room: !!LEVELS[World.L.id].hidden, reach: CITY.reach, can: (n) => !n.hidden });
   },
   strip(p) {
     const saw = this.witnesses(p);
     const seenBy = saw.filter((n) => n.def.town).map((n) => n.def.town);
     if (this.on && seenBy.length) this.w.sense({ kind: 'strip', actor: 'player', what: p.label || p.kind, seenBy });
-    this.react(p, saw);
+    Chat.react(p, saw); // (what they say: chat.js)
   },
-  // Said out loud, there and then, by whoever saw: the one whose place it is
-  // first (they work here), then a couple of the others, a beat apart, each
-  // turning to look at you. Some residents have their own way of putting it.
-  REACT: {
-    owner: ['Hey! That\'s my {what}!', 'Put that down! That\'s the {place}\'s {what}!', 'What do you think you\'re doing to my {what}?', 'That {what} is not yours!'],
-    first: ['Hey! That\'s not yours!', 'Did you just strip that {what}?', 'You can\'t just take that apart!', 'Whoa. Whose {what} is that?'],
-    other: ['Yeah, we were going to use that!', '{owner}, are you seeing this?', 'Unbelievable.', 'I\'m not getting involved.', 'Somebody call someone.', 'In front of everyone, too.'],
-    by: {
-      kai: ['Whoa. You\'re gonna get it.', 'Can I have a bit?'], wen: ['In my day we paid for things.', 'Shameful. In broad light.'],
-      sato: ['Oh! Oh, that\'s not right.', 'I\'ll be telling people about this.'], okonkwo: ['Forty years I worked machines. You don\'t treat them like that.'],
-      sal: ['Ha. Nice.', 'Not my business. But nice.'], ueda: ['The regulars use that!', 'Out. Out of my bar.'], mo: ['My shop! My shop!', 'I\'ve got cameras, you know. Probably.'],
-      goro: ['Floor\'s got eyes, friend.', 'That\'s the house\'s.'], vin: ['You\'re done in here.', 'Bad idea. Real bad idea.'], hana: ['Not here. Not in front of the fox.'],
-    },
+  // ---- between residents (chat.js) -----------------------------------------
+  // who sees what passes between two people (Bree's witnesses): the same
+  // sight as yours, from where everyone is, not where they're drawn: behind a
+  // door or in a room, everyone there awake; in the open, whoever's at a spot
+  // within reach on that street (people walking by aren't anywhere, to the minds)
+  onlookers(ex, w) {
+    const P = Census.places[ex.place]; if (!P) return [];
+    const out = [];
+    for (const pid of P.kind === 'spot' ? this.around(P) : [P.id]) for (const id of w.ring.present(pid)) { const q = w.s.people[id]; if (q && q.status === 'active' && !(q.doing && q.doing.action === 'sleep')) out.push(id); }
+    return out;
   },
-  react(p, saw) {
-    if (!saw.length) return;
-    const R = this.REACT, what = (p.label || p.kind).replace(/^(a|an|the) /i, ''), here = World.L.id;
-    const used = new Set(), pick = (list, n, k) => { const free = list.filter((l) => !used.has(l)), from = free.length ? free : list, l = from[Math.floor(hash(n.i + k, Game.s.day, what.length) * from.length)]; used.add(l); return l; }; // (nobody says the same thing twice)
-    const fill = (t, owner) => t.replace(/\{what\}/g, what).replace(/\{place\}/g, World.L.name.replace(/^the /i, '')).replace(/\{owner\}/g, owner ? owner.def.name : 'Hey');
-    // the one whose place this is: a resident who works in this level, if they're here
-    const owner = saw.find((n) => { const j = n.def.town && RESIDENTS[n.def.town].job; return j && Census.places[j.place] && Census.places[j.place].level === here; });
-    const order = owner ? [owner].concat(saw.filter((n) => n !== owner)) : saw;
-    order.slice(0, 3).forEach((n, i) => {
-      const own = R.by[n.def.town];
-      let line = i === 0 ? pick(owner ? R.owner : R.first, n, 1) : pick(R.other.filter((l) => owner || !l.includes('{owner}')), n, 2 + i);
-      if (own && hash(n.i, Game.s.day, 7) < 0.6 && !(i === 0 && owner && n !== owner)) line = pick(own, n, 3);
-      this.said.push({ t: Game.t + 0.35 + i * 1.3, n, text: fill(line, owner) });
-    });
+  // the spots in the open within reach of one (worked out once each)
+  around(P) {
+    const near = (this.spotsNear = this.spotsNear || {});
+    if (!near[P.id]) { const [rx, ry] = CITY.reach; near[P.id] = Object.values(Census.places).filter((q) => q.kind === 'spot' && q.street === P.street && Math.abs(q.x - P.x) <= rx && Math.abs(q.y - P.y) <= ry).map((q) => q.id); }
+    return near[P.id];
   },
-  said: [],
-  // what was said, when its moment comes (Town.chatter calls this every frame)
-  speak() {
-    if (!this.said.length) return;
-    const now = Game.t;
-    for (const q of this.said) if (q.t <= now && !q.done) { q.done = true; if (!q.n.hidden && Actors.npcs.includes(q.n)) { q.n.face = Math.sign(Player.x - q.n.x) || q.n.face; Actors.say(q.n, q.text); } }
-    this.said = this.said.filter((q) => !q.done);
+  // could two people talk where they are? In a room you can see, only
+  // side by side (where they'd be drawn, a stool or two along); behind a door
+  // or at a spot in the open, being there together is enough
+  beside(a, b) {
+    if (!a || !b) return false;
+    const P = Census.places[a.place]; if (!P || P.kind !== 'room') return true;
+    const sa = this.spotOf(a), sb = this.spotOf(b);
+    return Math.abs(sa.x - sb.x) + Math.abs(sa.y - sb.y) < CHAT.beside;
   },
+  // where someone at a place is drawn, by what they're doing there (their own spot, not the seat handed out)
+  spotOf(p) { const d = p.doing; return Town.spot(p.id, p.place, d && d.kind === 'act' ? d.action : p.last || 'home', d ? d.start : 0); },
+  // someone's nature in one of Bree's roles (the 'nat' term): theirs, or drawn from who they are
+  nature(id, role) {
+    const N = (this.natures = this.natures || {}), k = id + ':' + role;
+    if (N[k] === undefined) { const own = CITY_NATURE[id]; N[k] = own && own[role] !== undefined ? own[role] : Math.round((0.2 + hash(Town.idn(id), CITY_ROLES.indexOf(role) + 11, 73) * 0.6) * 100) / 100; }
+    return N[k];
+  },
+  // facts the game answers for the minds: is it raining (the weather by the minds' clock, not the dev's)
+  check(fact) { if (fact === 'raining') return Weather.rainAt(this.w.now / 60) > 0.15; return undefined; },
   // tell a resident to do something (a Tyrell directive), or null to release them
   direct(id, d) { if (this.on && this.w.get(id)) this.w.direct(id, d); },
   // a deed done for (or to) a resident: 'fixed', 'botched'

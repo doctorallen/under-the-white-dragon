@@ -8,6 +8,7 @@
     "check": "sh test/check.sh",
     "traces": "node test/traces.js",
     "smoke": "node test/smoke.js",
+    "city": "node test/city.js",
     "golden": "node test/golden.js",
     "golden:update": "node test/golden.js --update",
     "gpu": "node test/gpu.js"

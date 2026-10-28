@@ -137,7 +137,7 @@ const TALK_WORDS = {
   'small.likes': (T, n, id) => { const R = RESIDENTS[id], k = Object.keys(R.likes || {})[0]; return TALK_LIKES[k] || 'Sleep. Is sleep a hobby?'; },
   'small.home': (T, n, id) => talkHome(id),
   'small.next': (T, n, id) => talkNext(id),
-  'small.news': (T, n, id) => { const pool = townNews().concat(TOWN_SMALL), p = pool[Math.floor(hash(Game.s.day, Town.idn(id), 41) * pool.length)]; return p.join(' '); },
+  'small.news': (T, n, id) => { const pool = townNews().concat(Object.values(TOWN_SMALL)), p = pool[Math.floor(hash(Game.s.day, Town.idn(id), 41) * pool.length)]; return p.join(' '); },
   'small.about': (T, n, id) => TALK_ABOUT[id] || Folk.who(id),
   'lin.word': () => {
     const w = City.w, talk = w.wormtongue.witnesses('player', 'strip').filter((q) => RESIDENTS[q]).length, h = Game.s.heat;

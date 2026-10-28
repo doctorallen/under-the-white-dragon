@@ -45,6 +45,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 - **Every place built by hand**, from the Spires above the clouds down to the Bowels: up high the White Dragon's block, Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge and the Arcology Gardens; on the street the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley and Clinic Row; under the street the Main Drain, Boiler House Nine, Substation Seven and the Waterworks; then Old Town and its districts, the Works and its districts, and the Bowels. Each band down opens once you've been in the one above.
 - **The city map:** every way out (a cab stand, a subway platform, a cage elevator, a manhole) opens a cross-section of the whole city with every place pinned at its depth; tap one and go. The pause menu shows it too.
 - **Its people:** the block's residents live their days (homes, jobs, friends, errands) whether you're watching or not, and remember what you do in front of them; everyone else has a name of their own.
+- **Between them** (`chat.js`): residents somewhere together strike up a word now and then, watched or not: small talk on what's going round (and on your doings, once they're out), a word at the till, the bar or a neighbor's door. How it lands is down to their natures, moods and how they stand, so friendships grow, now and then talk turns into an argument, and a grudge keeps two apart till it fades or they make it up. Whoever's about sees a row, and thinks less of whoever started it.
 - **Talk** (`talk.js`): stop someone and you talk. They raise what's theirs first (what they saw you strip, a job for the bench, the thing you fixed, a lead), then you ask after their work, their fun, who's at home, what's going round. How you say it (straight, warm, a joke, a question, haggling, a lie, money) lands well or badly by who they are and how things stand, and moves their regard; a witness you talk round, or pay off, keeps quiet.
 - **Weather:** rain comes and goes through the day, and the streets shine only while they're wet.
 
@@ -90,6 +91,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/folk.js` | The city's population: households made to fill the jobs and homes, with schools and hobbies (`Folk`) |
 | `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`, on Tycho's inspector) |
 | `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which runs their days, needs, hobbies, memories and gossip, and saves them (`City`) |
+| `js/chat.js` | What passes between residents, on Tyrell's Bree: small talk, the till and the counter, arguments, grudges and making up, and their words over their heads; greetings in passing, and what witnesses say when you strip a machine (`Chat`, `TOWN_SMALL`, `TOWN_PAIR`, `TOWN_NEWS`, `CHAT_REACT`) |
 | `js/talk.js` | Conversations, on Tyrell's Voice: the ways of coming at someone, the subjects (a job pitched and haggled, the hand-back, a lead, a witness having it out with you, small talk from their lives) and their words (`Talk`) |
 | `vendor/tycho/` | Tycho, the engine, with Tyrell, the minds engine, inside it (a git submodule; the game loads the built scripts in `dist/`) |
 | `js/day.js` | Day and night, and the weather (`Day`, `Weather`) |
@@ -109,5 +111,6 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `test/check.sh` | Static checks |
 | `test/traces.js` | The runner's movement replayed against traces recorded before it moved onto Tycho (`test/traces.json`), bit for bit |
 | `test/smoke.js` | Headless play-through on phone and desktop |
+| `test/city.js` | The city run for a few days, for tuning what passes between residents: lines said on screen, exchanges, grudges, regard, what people did, a day's CPU (`npm run city`; not in `npm test`) |
 
 Plain JavaScript, no build. `python3 -m http.server` and open `localhost:8000`.

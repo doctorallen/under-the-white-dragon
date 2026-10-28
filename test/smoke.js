@@ -7,7 +7,8 @@
 // where people eat; Ozzy pitches his job in a conversation (Voice), and it's
 // taken there, fixed, handed back and slept on; the
 // front door leads out onto the street; the block's residents shop, work the
-// till and eat when their days say, and talk when stopped; a witness has it out
+// till and eat when their days say, talk among themselves over dinner (Bree),
+// and talk when stopped; a witness has it out
 // with you over a machine you stripped (deny it, own up, pay them off); the vending machine
 // out front gives a scrap part; the old game (enemies, guns, gear, cases) is
 // gone; the help and the pack talk
@@ -36,6 +37,8 @@ window.T_ = {
   tap(name, bot = {}) { Input[name] = true; this.run(bot, 2); },
   walkTo(x, max = 1800) { for (let i = 0; i < max && Math.abs(Player.x - x) > 3; i++) { Input.bot = { ax: Math.sign(x - Player.x) * (Math.abs(Player.x - x) < 12 ? 0.4 : 1) }; step(1 / 60); } Input.bot = null; this.run({}, 20); return Math.round(Player.x); },
   hold(n) { Input.useHit = true; this.run({ use: true }, n); },
+  // the game on until something's so (a stall between shifts: someone's coming), or as long as max steps
+  until(fn, max = 6000) { for (let i = 0; i < max && !fn(); i += 60) this.run({}, 60); return fn(); },
 };
 true`;
 
@@ -180,6 +183,19 @@ async function run(B, url, vp, name, failures) {
     return { mo: !!(mo && mo.act === 'work'), shoppers, said, till, eating };
   });
   if (!town.mo || !town.shoppers || !town.said || town.till !== 'grocer' || town.eating < 2) fail('the block\'s people are not keeping their days ' + JSON.stringify(town));
+  // settled together, residents talk among themselves on the minds' own (Bree,
+  // chat.js): over dinner at the White Dragon a turn of small talk goes up over
+  // its speaker's head; and they talk off screen too
+  const chat = await E(() => {
+    const t0 = Game.s.time, d0 = Game.s.day, w = City.w, said = [], off = w.on('bree:turn', (t) => { if (t.text) said.push(t); });
+    Game.s.time = 19.2; Game.arrive('d_noodles', 'door'); T_.run({}, 10);
+    let shown = null;
+    for (let i = 0; i < 40 && !shown; i++) { T_.run({}, 150); const n = Actors.npcs.find((q) => q.def.town && q.bubble && said.some((t) => t.who === q.def.town && Chat.fill(t.text, t.to) === q.bubble.text)); if (n) shown = n.def.name + ': ' + n.bubble.text; }
+    off(); const between = w.bree.history().filter((e) => e.place !== 'd_noodles').length;
+    Game.s.time = t0; Game.s.day = d0; Game.arrive('d_dragon', 'door'); T_.run({}, 10);
+    return { said: said.length, shown, between };
+  });
+  if (!chat.shown || !chat.between) fail('residents do not talk among themselves ' + JSON.stringify(chat));
   // the residents' minds are Tyrell's: everyone's there, they remember what they
   // saw you do and what you fixed, a rewind gives back the very same block, and
   // the minds go in the save
@@ -252,10 +268,11 @@ async function run(B, url, vp, name, failures) {
   // the help and the pack talk about the basement, not the precinct
   const words = await E(() => { Hud.toggle('pause'); const p = $('panelBody').textContent; Hud.toggle(null); Hud.toggle('pack'); const k = $('panelBody').textContent; Hud.toggle(null); return { old: /tracer|detective|Hale|case board/i.test(p + k), jobs: /Ozzy/.test(k) }; });
   if (words.old || !words.jobs) fail('the help or the pack still talks about the detective ' + JSON.stringify(words));
-  // out to the spinner, to the Overpass Market, and Ana's parts stall (whoever's on shift)
+  // out to the spinner, to the Overpass Market, and Ana's parts stall (whoever's on
+  // shift; between shifts, a while till the next one's there)
   const fly = await E(() => { T_.walkTo(70); T_.tap('useHit'); const o = Hud.open; WorldMap.sel = 'd_overpass'; WorldMap.info(); const b = document.querySelector('button[data-go="d_overpass"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
   if (fly.o !== 'travel' || !fly.on || fly.level !== 'd_overpass') fail('the spinner did not fly to the Overpass Market ' + JSON.stringify(fly));
-  const ana = await E(() => { const a = Actors.npcs.find((n) => n.def.role === 'parts'); if (!a) return { o: 'nobody on the parts stall at ' + Game.hour().toFixed(2), who: Actors.npcs.map((n) => n.def.name + ':' + (n.townState && n.townState.act)).join(',') }; Player.place(a.x - 14, a.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open, n = Game.s.parts.length; Game.s.cr += 30; Hud.panel('partshop'); const b = document.querySelector('button[data-buypart="0"]'); if (b) b.click(); Hud.toggle(null); return { o, bought: Game.s.parts.length - n }; });
+  const ana = await E(() => { const on = () => Actors.npcs.find((n) => n.def.role === 'parts'); T_.until(on); const a = on(); if (!a) return { o: 'nobody on the parts stall at ' + Game.hour().toFixed(2), who: Actors.npcs.map((n) => n.def.name + ':' + (n.townState && n.townState.act)).join(',') }; Player.place(a.x - 14, a.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open, n = Game.s.parts.length; Game.s.cr += 30; Hud.panel('partshop'); const b = document.querySelector('button[data-buypart="0"]'); if (b) b.click(); Hud.toggle(null); return { o, bought: Game.s.parts.length - n }; });
   if (ana.o !== 'partshop' || ana.bought !== 1) fail('the parts stall did not sell a part ' + JSON.stringify(ana));
   await shot('overpass');
   // the map draws the whole level, and a dev button works
@@ -263,7 +280,7 @@ async function run(B, url, vp, name, failures) {
   if (!mapdev.ok || mapdev.cr !== 1000) fail('the map or dev settings failed ' + JSON.stringify(mapdev));
   // Clinic Row: Kade's stall (whoever's on shift), and the cabinet, for heat
   await E(() => { Game.arrive('d_clinicrow', 'enter'); T_.run({}, 10); });
-  const kade = await E(() => { const k = Actors.npcs.find((n) => n.def.role === 'parts'); if (!k) return 'nobody on shift: ' + Actors.npcs.map((n) => n.def.name + ':' + (n.townState && n.townState.act)).join(','); Player.place(k.x - 14, k.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });
+  const kade = await E(() => { const on = () => Actors.npcs.find((n) => n.def.role === 'parts'); T_.until(on); const k = on(); if (!k) return 'nobody on shift: ' + Actors.npcs.map((n) => n.def.name + ':' + (n.townState && n.townState.act)).join(','); Player.place(k.x - 14, k.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });
   if (kade !== 'partshop') fail('Kade\'s stall did not open (' + kade + ')');
   const cab0 = await E(() => { const c = World.props.find((p) => p.kind === 'cabinet'), h0 = Game.s.heat; Player.place(c.x, c.y); T_.run({}, 4); T_.hold(140); return { done: c.done, servo: Game.s.parts.some((p) => p.k === 'servo' && p.g === 'military' && p.how === 'take'), heat: Game.s.heat - h0 }; });
   if (!cab0.done || !cab0.servo || cab0.heat < 15) fail('the cabinet did not give a Meridian servo and heat ' + JSON.stringify(cab0));

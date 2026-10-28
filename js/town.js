@@ -15,8 +15,11 @@
 // cab stand, the manhole, the subway, the elevator, and off screen to another band
 // of the city), and in at another door. Town.sync puts whoever is in the level
 // you're in among the people (Actors.npcs, def.town) and moves them, and
-// Town.chatter has them talk: greetings in passing, small talk over noodles
-// and at a neighbor's table, the till.
+// Town.chatter and Town.arrived have them talk: greetings in passing and a
+// word walking together, and what's said to Lin over the counter. What passes
+// between them settled somewhere (small talk over noodles and at a
+// neighbor's table, the till, an argument) is the minds' own, on screen and
+// off (chat.js).
 //
 // Without the engine, the block's own residents keep their written days by
 // the clock alone (Town.clockState), and nobody else is about.
@@ -122,30 +125,6 @@ const TOWN_GOING = {
   home: 'Home. My feet have opinions.', sleep: 'Bed.', shop: 'To Mo\'s, before I forget what for.', eat: 'Noodles. Lin\'s, where else?', work: 'Work. Don\'t make me late.',
   visit: 'Visiting. Don\'t keep me.', collect: 'To the White Dragon. Something of mine\'s fixed.', drink: 'One drink at the Red Lantern.', pachi: 'Lucky Seven. Don\'t judge me.', watch: 'The pictures, at the Orpheum.', browse: 'The pet shop!', pray: 'To the shrine.', temple: 'To the temple.', school: 'School. Ugh.', play: 'Out.', sweep: 'Next stretch of street.', stock: 'Shift\'s starting.',
 };
-// small talk: for any two neighbors, and for some, their own
-const TOWN_SMALL = [
-  ['Did you hear the drone go over last night?', 'Three of them. Low. Looking for somebody.'],
-  ['Elevator\'s broken in Kessler again.', 'Elevator\'s broken everywhere.'],
-  ['Rain\'s not stopping.', 'Rain\'s never stopping.'],
-  ['Lin put the price up.', 'Lin put the portions up too. Don\'t complain.'],
-  ['You look tired.', 'I am tired. Everyone\'s tired.'],
-  ['Meridian\'s hiring at the Spires.', 'Meridian\'s always hiring. Nobody comes back down.'],
-];
-const TOWN_PAIR = {
-  'okonkwo:sato': [['Your move.', 'I moved. You were asleep.'], ['Black stones today.', 'You always want black.'], ['My knee says rain.', 'Your knee always says rain.']],
-  'ines:teo': [['Good soy?', 'Good soy.'], ['Long day?', 'Long day.'], ['We should go up to the Gardens one weekend.', 'We should.']],
-  'dara:teo': [['You watching the race?', 'I\'m watching the snacks.'], ['Bike\'s busted again.', 'Bring it to the basement guy. Lin knows him.']],
-  'jun:mo': [['Count the till twice.', 'I always count it twice.'], ['Night, Mo.', 'Night. Don\'t let anyone steal the plums.']],
-};
-// what people say once your work's out in the street
-function townNews() {
-  const out = [];
-  if (Game.flag('ozzy:rides')) out.push(['Ozzy\'s cab is flying again.', 'Some fixer sorted it. Down here, someone said.']);
-  if (Game.flag('vey:schematic')) out.push(['That girl with the arm\'s been about.', 'Walks like nothing\'s wrong now.']);
-  if (Game.s.heat >= 40) out.push(['A detective was asking about the White Dragon.', 'Asking what? Lin\'s noodles?'], ['Somebody\'s been noticed round here.', 'Not me. I\'m never noticed.']);
-  return out;
-}
-
 const WORK_ACTS = ['work', 'stock', 'sweep', 'scavenge'];
 const Town = {
   plans: null, said: {}, lastAct: {}, greeted: {}, chatT: 0,
@@ -326,29 +305,31 @@ const Town = {
       if (st.moving) this.lastAct[id] = null;
     }
   },
-  // on arriving: the till, the counter, a neighbor's door
+  // on arriving: what's said to Lin over the counter (with the minds on, the
+  // till, the Red Lantern's counter and a neighbor's door are theirs: chat.js)
   arrived(n, id, st) {
-    const other = (pred) => Actors.npcs.find((q) => q !== n && pred(q));
-    if (st.act === 'pay') { Actors.say(n, ['Just these.', 'And a bag, please.', 'Put it on my tab?'][Math.floor(hash(id.length, Game.s.day, 3) * 3)]); const clerk = other((q) => q.def.town && RESIDENTS[q.def.town].job && RESIDENTS[q.def.town].job.place === 'd_grocery'); if (clerk) setTimeout(() => Actors.say(clerk, ['Fourteen.', 'Nine-fifty. Call it nine.', 'No tabs. Fine. Tab.'][Math.floor(hash(id.length, Game.s.day, 4) * 3)]), 1300); }
-    if (st.act === 'eat' && st.place === 'd_noodles') { Actors.say(n, id === 'kai' ? 'Auntie Lin! I\'m starving.' : 'The usual, Lin.'); const lin = other((q) => q.def.name === 'Auntie Lin'); if (lin) setTimeout(() => Actors.say(lin, id === 'kai' ? 'Sit. Broth first.' : 'Sit.'), 1300); }
-    if (st.act === 'collect') { Actors.say(n, 'Lin! I hear it\'s fixed.'); const lin = other((q) => q.def.name === 'Auntie Lin'); if (lin) setTimeout(() => Actors.say(lin, 'Here. Good as new. Better.'), 1300); }
-    if (st.act === 'drink' && st.place === 'd_izakaya') { Actors.say(n, 'The usual, Master.'); const m = other((q) => q.def.town === 'ueda'); if (m) setTimeout(() => Actors.say(m, 'One cup. I\'m counting.'), 1300); }
-    if (st.act === 'visit') { const host = other((q) => q.def.town && this.state(q.def.town, Game.hour()).act !== 'sleep'); Actors.say(n, 'Only me.'); if (host) setTimeout(() => Actors.say(host, 'Come in, come in.'), 1200); }
+    const other = (pred) => Actors.npcs.find((q) => q !== n && pred(q)), minds = City.on;
+    if (st.act === 'pay' && !minds) { Chat.say(n, ['Just these.', 'And a bag, please.', 'Put it on my tab?'][Math.floor(hash(id.length, Game.s.day, 3) * 3)]); const clerk = other((q) => q.def.town && RESIDENTS[q.def.town].job && RESIDENTS[q.def.town].job.place === 'd_grocery'); if (clerk) Chat.say(clerk, ['Fourteen.', 'Nine-fifty. Call it nine.', 'No tabs. Fine. Tab.'][Math.floor(hash(id.length, Game.s.day, 4) * 3)], 1.3); }
+    if (st.act === 'eat' && st.place === 'd_noodles') { Chat.say(n, id === 'kai' ? 'Auntie Lin! I\'m starving.' : 'The usual, Lin.'); const lin = other((q) => q.def.name === 'Auntie Lin'); if (lin) Chat.say(lin, id === 'kai' ? 'Sit. Broth first.' : 'Sit.', 1.3); }
+    if (st.act === 'collect') { Chat.say(n, 'Lin! I hear it\'s fixed.'); const lin = other((q) => q.def.name === 'Auntie Lin'); if (lin) Chat.say(lin, 'Here. Good as new. Better.', 1.3); }
+    if (st.act === 'drink' && st.place === 'd_izakaya' && !minds) { Chat.say(n, 'The usual, Master.'); const m = other((q) => q.def.town === 'ueda'); if (m) Chat.say(m, 'One cup. I\'m counting.', 1.3); }
+    if (st.act === 'visit' && !minds) { const host = other((q) => q.def.town && this.state(q.def.town, Game.hour()).act !== 'sleep'); Chat.say(n, 'Only me.'); if (host) Chat.say(host, 'Come in, come in.', 1.2); }
   },
-  // ---- talk: small talk at a table or a counter, greetings in passing
+  // ---- talk: greetings in passing, a word walking together (barks: they
+  // change nothing); settled side by side, with the minds on, it's theirs (chat.js)
   chatter(dt) {
-    City.speak(); // (what witnesses say, as it comes)
+    Chat.tick(); // (what's waiting to be said, as its moment comes)
     this.chatT -= dt; if (this.chatT > 0) return; this.chatT = 1.5;
     const people = Actors.npcs.filter((n) => n.def.town && !n.hidden), day = Game.s.day;
     for (const n of people) for (const m of people) {
       if (n === m || n.def.town > m.def.town) continue;
       const a = n.def.town, b = m.def.town, key = a + ':' + b, d = Math.abs(n.x - m.x) + Math.abs(n.y - m.y);
-      // passing in the street or a doorway: a greeting, once a day, for a neighbor
-      if (n.moving && m.moving && d < 18 && n.face !== m.face && this.greeted[key] !== day && this.neighbors(a, b)) { this.greeted[key] = day; const h = Game.hour(), tod = h >= 5 && h < 12 ? 'Morning' : h >= 12 && h < 17 ? 'Afternoon' : 'Evening'; Actors.say(n, tod + ', ' + RESIDENTS[b].name.replace(/^(Mr|Mrs|Old) /, '') + '.'); setTimeout(() => Actors.say(m, tod + '.'), 900); continue; }
-      // side by side, both settled or walking together: now and then, a few words
-      if (d < 70 && !n.bubble && !m.bubble && (n.moving === m.moving) && hash(Math.floor(Game.t / 1.5), a.length * 7 + b.length, 11) < (this.neighbors(a, b) ? 0.12 : 0.03)) {
-        const pool = (TOWN_PAIR[key] || []).concat(TOWN_SMALL, townNews(), townNews()), [l1, l2] = pool[Math.floor(hash(Math.floor(Game.t / 9), key.length, 12) * pool.length)];
-        Actors.say(n, l1); setTimeout(() => { if (Actors.npcs.includes(m)) Actors.say(m, l2); }, 1600);
+      // passing in the street or a doorway: a greeting, once a day, for a neighbor (none from someone with a grudge)
+      if (n.moving && m.moving && d < 18 && n.face !== m.face && this.greeted[key] !== day && this.neighbors(a, b)) { this.greeted[key] = day; const [l1, l2] = Chat.greeting(a, b); if (l1) { Chat.say(n, l1); Chat.say(m, l2, 0.9); } continue; }
+      // side by side, walking together (or, without the minds, settled too): now and then, a few words
+      if (d < 70 && !n.bubble && !m.bubble && (n.moving === m.moving) && (n.moving || !City.on) && hash(Math.floor(Game.t / 1.5), a.length * 7 + b.length, 11) < (this.neighbors(a, b) ? 0.12 : 0.03)) {
+        const [l1, l2] = Chat.small(a, b, key);
+        if (l1) { Chat.say(n, l1); Chat.say(m, l2, 1.6); }
       }
     }
   },

@@ -68,8 +68,12 @@ const Weather = {
   // how hard it's raining, 0 to 1
   rain() {
     if (Dev.s.weather === 'rain') return 1; if (Dev.s.weather === 'dry') return 0;
-    const t = this.now(), e = WEATHER.ease; let r = 0;
-    for (const [a, b, k] of this.near()) if (t > a && t < b) r = Math.max(r, k * Math.min(1, (t - a) / e, (b - t) / e));
+    return this.rainAt(this.now());
+  },
+  // how hard it rains at a time (hours from day 0's midnight), whatever the dev settings say (the minds ask: City.check)
+  rainAt(t) {
+    const e = WEATHER.ease, d = Math.floor(t / 24); let r = 0;
+    for (const dd of [d - 1, d]) for (const [a0, b0, k] of this.spells(dd)) { const a = dd * 24 + a0, b = dd * 24 + b0; if (t > a && t < b) r = Math.max(r, k * Math.min(1, (t - a) / e, (b - t) / e)); }
     return r;
   },
   // how wet the ground is, 0 to 1: wet through while it rains, drying after

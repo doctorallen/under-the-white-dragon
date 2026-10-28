@@ -44,7 +44,7 @@ const TyrellMode = {
     who: (id) => Folk.who(id),
     place: (pid, id) => (!pid ? 'anywhere' : pid === RESIDENTS[id].homePlace ? 'home' : Census.places[pid] ? Census.places[pid].label : pid),
     walking: (id) => (City.state(id).gap ? ' (off screen)' : ''),
-    about(id, p) { const R = RESIDENTS[id]; return `${p.vars && p.vars.money !== undefined ? ` · ${Math.round(p.vars.money)} cr` : ''}${R.likes && Object.keys(R.likes).length ? ' · likes ' + Object.keys(R.likes).join(', ') : ''}`; },
+    about(id, p) { const R = RESIDENTS[id]; return `${p.vars && p.vars.money !== undefined ? ` · ${Math.round(p.vars.money)} cr` : ''}${R.likes && Object.keys(R.likes).length ? ' · likes ' + Object.keys(R.likes).join(', ') : ''}${Chat.about(id)}`; },
     selectable: (id) => !!RESIDENTS[id],
     buttons(id) { const st = City.state(id), T = TyrellMode; return `<button data-tmdo="follow" class="${T.follow ? 'go' : ''}">${T.follow ? 'Following' : 'Follow'}</button><button data-tmdo="street">Their street</button><button data-tmdo="go" ${st.level && !st.hidden ? '' : 'disabled'}>Go there</button>`; },
     bar: () => '<button data-tm="city" id="tmcity">City</button><span class="tmwhere" id="tmwhere"></span>',
