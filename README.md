@@ -62,7 +62,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/props.js` | Props: stalls, machines, doors, the bench and shelf |
 | `js/dragon.js` | The White Dragon's neon sign and the dragon drawn as tubes (also the icon) |
 | `js/items.js` | Salvage: what you carry |
-| `js/world.js` | The level builder and `World` |
+| `js/world.js` | The level builder and `World` (its shape a Tycho collision space) |
 | `js/levels.js` | What places share: deco by name, everyone's names, what people say, `cityLayers` |
 | `js/kit.js` | The architect's kit: shophouses, capsule towers, townhouses, temples, shrine gates, pagodas, glass towers, shanty stacks, slab blocks, theaters, bathhouses, arcades, shopfronts, trees, fifteen kinds of stall; and `district()`, the frame every place is built in |
 | `js/travel.js` | `Travel` (what's open and how you get there), great halls, locals' lines |
@@ -78,7 +78,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/game.js` | `Game`: state and rules |
 | `js/save.js` | localStorage save and load |
 | `js/input.js` | Keyboard and touch |
-| `js/player.js` | The runner: movement, ladders, Use; sparks |
+| `js/player.js` | The runner: movement (Tycho's platform mover), ladders, Use; sparks |
 | `js/actors.js` | People's routines, roles and talk |
 | `js/parts.js` | Parts, devices, stall stock and the notebook (`Parts`) |
 | `js/bench.js` | The bench: the repair, its tools and its drawing (`Bench`) |
@@ -107,6 +107,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `fonts/dragon.woff`, `tools/mkfont.py` | Dragon Pixel, the game's own pixel font, and the script that builds it from its glyphs |
 | `sw.js`, `manifest.webmanifest`, `icons/` | The service worker (network first), the app manifest and icons |
 | `test/check.sh` | Static checks |
+| `test/traces.js` | The runner's movement replayed against traces recorded before it moved onto Tycho (`test/traces.json`), bit for bit |
 | `test/smoke.js` | Headless play-through on phone and desktop |
 
 Plain JavaScript, no build. `python3 -m http.server` and open `localhost:8000`.
