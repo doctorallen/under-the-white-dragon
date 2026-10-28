@@ -265,9 +265,9 @@ const Bench = {
     // the screws, when the casing's on: heads, or the empty holes
     if (!b.open) b.screws.forEach((sc, i) => {
       const [x, y] = this.screwAt(i), r = this.rt[i];
-      if (sc.st === 'in' || (r && r.p > 0)) { R(x - 3, y - 3, 7, 7, '#2a2e34'); R(x - 2, y - 3, 5, 7, '#9aa0aa'); R(x - 3, y - 2, 7, 5, '#9aa0aa'); R(x - 2, y - 2, 2, 2, '#d8dce4'); const a = r ? r.p * (r.out ? 1 : -1) * 3 : 0; if (sc.strip) R(x - 1, y - 1, 3, 3, '#4a4e56'); else if ((Math.round(a * 2) & 1) === 0) { R(x - 2, y, 5, 1, '#3a3e46'); R(x, y - 2, 1, 5, '#3a3e46'); } else { R(x - 1, y - 1, 1, 1, '#3a3e46'); R(x + 1, y + 1, 1, 1, '#3a3e46'); R(x + 1, y - 1, 1, 1, '#3a3e46'); R(x - 1, y + 1, 1, 1, '#3a3e46'); R(x, y, 1, 1, '#3a3e46'); } }
+      if (sc.st === 'in' || (r && r.p > 0)) { R(x - 3, y - 3, 7, 7, '#2a2e34'); R(x - 2, y - 3, 5, 7, '#9aa0aa'); R(x - 3, y - 2, 7, 5, '#9aa0aa'); R(x - 2, y - 2, 2, 2, '#d8dce4'); if (sc.strip) R(x - 1, y - 1, 3, 3, '#4a4e56'); else for (const [dx, dy] of SLOT[slotStep(r)]) R(x + dx, y + dy, 1, 1, '#3a3e46'); }
       else { R(x - 2, y - 2, 5, 5, '#14161a'); R(x - 1, y - 1, 3, 3, '#040506'); }
-      if (r && (r.p > 0 || r.bind >= 0)) ring(g, x, y, 6, r.out ? r.p : 1 - r.p, r.bind >= 0 ? '#ff3a4a' : '#3af0e0', 0, r.bind >= 0 ? 'BINDING · EASE OFF' : '');
+      if (r && (r.p > 0 || r.bind >= 0)) ring(g, x, y, 6, r.p, r.bind >= 0 ? '#ff3a4a' : '#3af0e0', 0, r.bind >= 0 ? 'BINDING · EASE OFF' : '', r.out); // (it fills the way the screw turns)
     });
     // the tool in your hand
     const h = this.hold;
@@ -294,19 +294,29 @@ const Bench = {
   },
 };
 
+// a screw head's cross slot, in three steps round a quarter turn (on the
+// screen, y down, each step is 30 degrees clockwise)
+const SLOT = [
+  [[-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [0, -2], [0, -1], [0, 1], [0, 2]],
+  [[-2, -1], [-1, -1], [0, 0], [1, 1], [2, 1], [1, -2], [1, -1], [-1, 1], [-1, 2]],
+  [[-1, -2], [-1, -1], [0, 0], [1, 1], [1, 2], [2, -1], [1, -1], [-1, 1], [-2, 1]],
+];
+// which step a screw's slot is at: three turns from in to out, clockwise
+// driving it in (righty-tighty) and counterclockwise backing it out
+function slotStep(r) { if (!r) return 0; const deg = r.p * 3 * 360 * (r.out ? -1 : 1); return Math.floor((((deg % 90) + 90) % 90) / 30); }
 // a ring around a screw or joint: how far along it is (0..1), and past it,
 // how far into the red
 // how far along it is (0..1), and past it, how far into the red. Drawn on
 // the screen, not the bench, and big: a thumb covers the screw, so the ring
 // sits well outside it, with a word over it when it binds or burns
-function ring(g, x, y, r, f, col, over, word) { Bench.rings.push({ x, y, f, col, over, word }); }
+function ring(g, x, y, r, f, col, over, word, ccw) { Bench.rings.push({ x, y, f, col, over, word, ccw }); }
 function bigRings(out, B) {
   const dpr = window.devicePixelRatio || 1, R = 40 * dpr, t = performance.now();
   for (const q of B.rings) {
     const cx = B.offx + (q.x + 0.5) * B.k, cy = B.offy + (q.y + 0.5) * B.k, a0 = -Math.PI / 2;
     out.lineCap = 'round';
     out.lineWidth = 9 * dpr; out.strokeStyle = 'rgba(0,0,0,0.6)'; out.beginPath(); out.arc(cx, cy, R, 0, Math.PI * 2); out.stroke();
-    out.lineWidth = 6 * dpr; out.strokeStyle = q.col; out.beginPath(); out.arc(cx, cy, R, a0, a0 + Math.PI * 2 * Math.max(0.01, q.f)); out.stroke();
+    out.lineWidth = 6 * dpr; out.strokeStyle = q.col; out.beginPath(); out.arc(cx, cy, R, a0, a0 + (q.ccw ? -1 : 1) * Math.PI * 2 * Math.max(0.01, q.f), !!q.ccw); out.stroke();
     if (q.over > 0) { out.strokeStyle = '#ffffff'; out.lineWidth = 4 * dpr; out.beginPath(); out.arc(cx, cy, R + 9 * dpr, a0, a0 + Math.PI * 2 * Math.min(1, q.over)); out.stroke(); }
     if (q.word) {
       const blink = 0.8 + Math.sin(t / 70) * 0.2; out.font = `bold ${13 * dpr}px ui-monospace, monospace`; out.textAlign = 'center';
