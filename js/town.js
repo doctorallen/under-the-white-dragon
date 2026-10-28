@@ -26,7 +26,7 @@ const PXH = 1300; // pixels walked in a game hour (26 px a second, 50 seconds an
 // (a place on another street names it; `spots` are where people sit or stand
 // in there, by what they're doing)
 const TOWN_PLACE = {
-  noodles: { level: 'd_noodles', door: 424, inside: 340, spots: { eat: [144, 214, 284, 400, 450, 500, 550] } },
+  noodles: { level: 'd_noodles', door: 424, inside: 340, spots: { eat: [144, 214, 284, 400, 450, 500, 550], collect: [425, 590] } },
   grocery: { level: 'd_grocery', door: 216, inside: 114, spots: { shop: [175, 259, 335, 392, 424], browse: [175, 259, 335, 392, 424], pay: [470], work: [488], stock: [265] } },
   flats: { level: 'd_flats', door: 1041, inside: 86 },
   izakaya: { level: 'd_izakaya', street: 'd_neonrow', door: 355, inside: 140, spots: { drink: [454, 394], work: [380] }, depth: { work: { lift: 4 } } },
@@ -47,7 +47,7 @@ const SHELF = [175, 259, 335, 392, 424]; // the grocery's shelves and fridges
 // what each act is done at, when a place has no spot of its own for it
 const SPOT_ALIAS = { browse: 'shop', pay: 'shop', stock: 'work', drink: 'eat', host: 'home', visit: 'home', eat_home: 'home', temple: 'pray', bathe: 'loaf' };
 // what they're up to, in a word, for their poses: sit, work (hands busy) or stand
-const TOWN_POSE = { eat: 'sit', home: 'sit', visit: 'sit', host: 'sit', work: 'work', browse: 'work', stock: 'work', sweep: 'work', pay: 'stand', play: 'stand', sleep: 'stand', drink: 'sit', pachi: 'sit', watch: 'sit', pray: 'stand', eat_home: 'sit', school: 'sit', loaf: 'sit', play: 'stand', dance: 'stand', festival: 'stand', arcade: 'stand', bathe: 'sit', clinic: 'sit', shop: 'work', laundry: 'work', scavenge: 'work' };
+const TOWN_POSE = { eat: 'sit', home: 'sit', visit: 'sit', host: 'sit', work: 'work', browse: 'work', stock: 'work', sweep: 'work', pay: 'stand', play: 'stand', sleep: 'stand', drink: 'sit', pachi: 'sit', watch: 'sit', pray: 'stand', collect: 'stand', eat_home: 'sit', school: 'sit', loaf: 'sit', play: 'stand', dance: 'stand', festival: 'stand', arcade: 'stand', bathe: 'sit', clinic: 'sit', shop: 'work', laundry: 'work', scavenge: 'work' };
 
 // The block's own residents, written by hand. `plan`: [hour they set out,
 // where, what, extra]. `where` is home, visit:<id>, a room (noodles, grocery,
@@ -116,7 +116,7 @@ const TOWN_ORDER = Object.keys(RESIDENTS);
 // what anyone might say, by what they're doing, when you stop them
 const TOWN_GOING = {
   home: 'Home. My feet have opinions.', sleep: 'Bed.', shop: 'To Mo\'s, before I forget what for.', eat: 'Noodles. Lin\'s, where else?', work: 'Work. Don\'t make me late.',
-  visit: 'Visiting. Don\'t keep me.', drink: 'One drink at the Red Lantern.', pachi: 'Lucky Seven. Don\'t judge me.', watch: 'The pictures, at the Orpheum.', browse: 'The pet shop!', pray: 'To the shrine.', temple: 'To the temple.', school: 'School. Ugh.', play: 'Out.', sweep: 'Next stretch of street.', stock: 'Shift\'s starting.',
+  visit: 'Visiting. Don\'t keep me.', collect: 'To the White Dragon. Something of mine\'s fixed.', drink: 'One drink at the Red Lantern.', pachi: 'Lucky Seven. Don\'t judge me.', watch: 'The pictures, at the Orpheum.', browse: 'The pet shop!', pray: 'To the shrine.', temple: 'To the temple.', school: 'School. Ugh.', play: 'Out.', sweep: 'Next stretch of street.', stock: 'Shift\'s starting.',
 };
 // small talk: for any two neighbours, and for some, their own
 const TOWN_SMALL = [
@@ -215,6 +215,11 @@ const Town = {
     return a.y === BK.G ? [a, lo, hi, b] : [a, hi, lo, b];
   },
   inside(P, a, b) { return P.flat || P.id === 'd_flats' ? this.inFlats(a, b) : [a, b]; },
+  // where someone gets a ride from on a street, going from x: up where the
+  // cabs fly, the cab stand or either end of the street (a cab picks you up
+  // round the corner), whichever's nearest; below, the manhole, the subway
+  // or the lift, wherever it is
+  rank(sid, x) { const S = Census.streets[sid]; if (!['sky', 'high', 'street'].includes(S.band)) return S.transit; return [S.transit, 18, S.w - 18].reduce((q, t) => (Math.abs(t - x) < Math.abs(q - x) ? t : q)); },
   // a ride between bands of the city: a cab, a manhole, the subway, a lift
   ride(ba, bb) { const ids = STRATA.map((q) => q.id); return TOWN_RIDE + 0.1 * Math.abs(ids.indexOf(ba) - ids.indexOf(bb)); },
   // the way from one point to the next: legs, each in one level (or off
@@ -233,7 +238,7 @@ const Town = {
       const ba = S[sa].band, bb = S[sb].band, ia = S[sa].row, ib = S[sb].row;
       // on foot along the row of streets, or a ride if that's quicker (or the only way)
       const walk = ba === bb && ia >= 0 && ib >= 0 ? Math.abs(xa - townEnd(sa, ib > ia ? 'east' : 'west')) + TOWN_GAP * PXH * Math.abs(ib - ia) + Math.abs(townEnd(sb, ib > ia ? 'west' : 'east') - xb) : Infinity;
-      const ride = Math.abs(xa - S[sa].transit) + this.ride(ba, bb) * PXH + Math.abs(S[sb].transit - xb);
+      const ta = this.rank(sa, xa), tb = this.rank(sb, xb), ride = Math.abs(xa - ta) + this.ride(ba, bb) * PXH + Math.abs(tb - xb);
       if (walk <= ride) {
         // on foot: off the end of this street, past the ones between, on from the end of that one
         const dir = ib > ia ? 'east' : 'west', back = dir === 'east' ? 'west' : 'east';
@@ -242,9 +247,9 @@ const Town = {
         legs.push({ level: sb, pts: [{ x: townEnd(sb, back), y: gb }, { x: xb, y: gb }, ...last] });
       } else {
         // to the way out of the band, a ride, and from the way in at the other end
-        legs.push({ level: sa, pts: [...first, { x: xa, y: ga }, { x: S[sa].transit, y: ga }] });
+        legs.push({ level: sa, pts: [...first, { x: xa, y: ga }, { x: ta, y: ga }] });
         legs.push({ level: null, len: this.ride(ba, bb) * PXH });
-        legs.push({ level: sb, pts: [{ x: S[sb].transit, y: gb }, { x: xb, y: gb }, ...last] });
+        legs.push({ level: sb, pts: [{ x: tb, y: gb }, { x: xb, y: gb }, ...last] });
       }
     }
     if (B.kind === 'room') legs.push({ level: B.level, pts: this.inside(B, { x: B.inside, y: B.G }, b) });
@@ -309,6 +314,7 @@ const Town = {
     const other = (pred) => Actors.npcs.find((q) => q !== n && pred(q));
     if (st.act === 'pay') { Actors.say(n, ['Just these.', 'And a bag, please.', 'Put it on my tab?'][Math.floor(hash(id.length, Game.s.day, 3) * 3)]); const clerk = other((q) => q.def.town && RESIDENTS[q.def.town].job && RESIDENTS[q.def.town].job.place === 'd_grocery'); if (clerk) setTimeout(() => Actors.say(clerk, ['Fourteen.', 'Nine-fifty. Call it nine.', 'No tabs. Fine. Tab.'][Math.floor(hash(id.length, Game.s.day, 4) * 3)]), 1300); }
     if (st.act === 'eat' && st.place === 'd_noodles') { Actors.say(n, id === 'kai' ? 'Auntie Lin! I\'m starving.' : 'The usual, Lin.'); const lin = other((q) => q.def.name === 'Auntie Lin'); if (lin) setTimeout(() => Actors.say(lin, id === 'kai' ? 'Sit. Broth first.' : 'Sit.'), 1300); }
+    if (st.act === 'collect') { Actors.say(n, 'Lin! I hear it\'s fixed.'); const lin = other((q) => q.def.name === 'Auntie Lin'); if (lin) setTimeout(() => Actors.say(lin, 'Here. Good as new. Better.'), 1300); }
     if (st.act === 'drink' && st.place === 'd_izakaya') { Actors.say(n, 'The usual, Master.'); const m = other((q) => q.def.town === 'ueda'); if (m) setTimeout(() => Actors.say(m, 'One cup. I\'m counting.'), 1300); }
     if (st.act === 'visit') { const host = other((q) => q.def.town && this.state(q.def.town, Game.hour()).act !== 'sleep'); Actors.say(n, 'Only me.'); if (host) setTimeout(() => Actors.say(host, 'Come in, come in.'), 1200); }
   },

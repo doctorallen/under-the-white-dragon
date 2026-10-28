@@ -2,9 +2,12 @@
 // ---------------------------------------------------------------------------
 // The jobs that come to the White Dragon, the heat, and the morning after.
 // A job is a person, a broken thing and a choice: they turn up at the White
-// Dragon with it (Jobs.spawn puts them there), you take it to the bench,
-// fix it, and hand it back at the counter. The next morning (after you've
-// slept) you hear what your fix did. Their state is in Game.s.jobs; the thing
+// Dragon with it (Jobs.spawn puts them there), you take it to the bench, and
+// fix it. Once it's tested, it's collected: whoever's waiting at the counter
+// takes it a little after, and a resident comes by the White Dragon for it as
+// soon as they can (not in the night, not off their work), and Auntie Lin
+// hands it over; they pay then (Jobs.collections). The next morning (after
+// you've slept) you hear what your fix did. Their state is in Game.s.jobs; the thing
 // itself is on your bench in the basement (Game.s.bench) while you work on it.
 // Heat (Game.s.heat, 0 to 100) is how close the precinct is to your trapdoor:
 // illegal work on the bench, parts taken from where you shouldn't be, a
@@ -113,7 +116,7 @@ const Jobs = {
       return [];
     }
     const res = typeof TOWN_ORDER !== 'undefined' && TOWN_ORDER.find((k) => RESIDENTS[k].name === name); if (!res) return [];
-    const out = this.oddOf(res).map((j) => ({ kind: this.ready(j) ? 'handback' : 'jobwait', id: j }));
+    const out = this.oddOf(res).map((j) => ({ kind: this.ready(j) ? 'coming' : 'jobwait', id: j }));
     for (const j of this.oddToday()) if (j.split(':')[2] === res && !Game.s.jobs[j]) out.push({ kind: 'job', id: j });
     return out;
   },
@@ -127,6 +130,7 @@ const Jobs = {
       const notes = Game.s.notes.log.filter((e) => e.key.startsWith(a.id + ':')).map((e) => e.text.replace(/^[^:]*: /, ''));
       return `<div class="ask"><h3>${J.title}</h3><p class="sub">${J.waiting}</p>${this.needs(a.id) || '<p class="dim">It\'s on your bench in the basement.</p>'}</div>`;
     }
+    if (a.kind === 'coming') return `<div class="ask"><h3>${J.title}</h3><p class="sub">"It's fixed? I'll come by the White Dragon for it as soon as I can."</p><p class="dim">Lin will hand it over when they come in, and they'll pay you then: ${this.dev(a.id).tested.res === 'works' ? J.pay : Math.round(J.pay / 2)} cr.</p></div>`;
     if (a.kind === 'handback') {
       const t = b.tested, trace = this.traced(b);
       if (J.odd) return `<div class="ask"><h3>${J.title}</h3><p class="dim">${t.res === 'works' ? 'It works' : 'It half works'}. ${t.res === 'works' ? J.pay : Math.round(J.pay / 2)} cr.${Object.values(b.slots).some((s) => s.p && s.p.how !== 'pull' && s.p.g === 'scrap') ? ' There\'s scrap in it now: it might not last the night.' : ''}</p><div class="buttons"><button data-job="back:${a.id}" class="go">Hand it back</button></div></div>`;
@@ -150,17 +154,41 @@ const Jobs = {
   },
   // a Meridian part that came from somewhere it shouldn't: a serial someone can trace
   traced(b) { return Object.values(b.slots).some((s) => s.p && s.p.g === 'military' && (s.p.how === 'take' || s.p.how === 'trade')); },
-  handBack(id) {
+  // ---- collecting: what's tested goes back to whoever it belongs to. Someone
+  // waiting at the counter takes it a quarter of an hour after; a resident is
+  // sent for it (a Tyrell directive above their free time, below their work,
+  // and never arriving in the night: the 'collect' action's hours), and it's
+  // theirs once they've started collecting it at the bar. Not while it's open
+  // in front of you on the bench.
+  collections() {
+    const s = Game.s, now = City.on ? City.w.now : (s.day * 24 + s.time) * 60;
+    for (const id of Object.keys(s.jobs)) {
+      const c = s.jobs[id]; if (c.st !== 'bench') continue;
+      const b = this.dev(id), busy = Hud.open === 'bench' && s.bench === b;
+      if (!this.ready(id)) { if (c.calling) { c.calling = 0; if (c.res) City.direct(c.res, null); } continue; }
+      if (!c.calling) c.calling = now;
+      if (busy) continue;
+      if (JOBS[id] || !City.on) { if (now - c.calling >= (JOBS[id] ? 15 : 60)) this.handBack(id, true); continue; } // (at the counter already; or, with no minds about, an hour)
+      const p = City.w.get(c.res), d = p && p.directive;
+      if (d && d.do === 'collect' && d.done) { City.direct(c.res, null); this.handBack(id, true); }
+      else if (!d || d.do !== 'collect') City.direct(c.res, { do: 'collect', at: 'd_noodles', rank: 1.6, label: 'collect their ' + ODD[c.tpl].name });
+    }
+  },
+  handBack(id, collected) {
     const J = this.def(id), c = this.st(id), b = this.dev(id); if (!b || !b.tested) return;
     const t = b.tested, pay = J.pay ? (t.res === 'works' ? J.pay : Math.round(J.pay / 2)) : 0;
     if (!J.odd) Object.assign(c, { st: 'back', day: Game.s.day, res: t.res, loose: t.loose, scorch: b.scorch.length, traced: this.traced(b), parts: Object.fromEntries(Object.entries(b.slots).map(([k, s]) => [k, s.p && { g: s.p.g, how: s.p.how, st: s.p.st, gauge: s.p.gauge }])) });
     if (J.odd) City.did(t.res === 'works' ? 'fixed' : 'botched', c.res, ODD[c.tpl].name);
     if (J.odd) Object.assign(c, { st: 'done', back: Game.s.day, fitted: Object.values(b.slots).filter((s) => s.p && s.p.how !== 'pull').map((s) => ({ k: s.p.k, g: s.p.g })) });
-    if (pay) { Game.s.cr += pay; Game.toast(J.odd ? `"${J.thanks}" ${J.name} pays you ${pay} cr.` : `${J.name} pays you ${pay} cr.`, 'good'); }
-    else Game.toast(`${J.name} flexes the hand, slowly. "I owe you."`, 'good');
+    // (collected: they came to the White Dragon and Lin handed it over; if you're there, they say so)
+    const there = collected && World.L && World.L.id === 'd_noodles' && Actors.npcs.find((n) => n.def.name === J.name);
+    if (there) Actors.say(there, pay ? J.thanks || 'That\'s it working. Thank you.' : 'I owe you.');
+    if (pay) { Game.s.cr += pay; Game.toast(collected ? `${J.name} came by the White Dragon for ${J.title.replace(/^.*?'s /, 'the ')}. Lin took ${pay} cr for you.` : J.odd ? `"${J.thanks}" ${J.name} pays you ${pay} cr.` : `${J.name} pays you ${pay} cr.`, 'good'); }
+    else Game.toast(collected ? `${J.name} took ${J.title.replace(/^.*?'s /, 'the ')} from Lin, and left a message: "I owe you."` : `${J.name} flexes the hand, slowly. "I owe you."`, 'good');
     if (J.honest) this.heat(J.odd ? -3 : -10, J.odd ? null : 'An honest repair, seen to be done.');
     if (Game.s.bench === b) Bench.clear(); else delete Game.s.aside[id];
-    Hud.toggle(null); this.spawn(); Hud.refresh(); Save.write();
+    if (!collected) Hud.toggle(null); else if (Hud.open === 'jobs' || Hud.open === 'pack') Hud.panel(Hud.open);
+    this.spawn(); Hud.refresh(); Save.write();
   },
   // a customer's face, for their card (made once)
   faces: {},
@@ -192,7 +220,7 @@ const Jobs = {
     const h = Game.s.heat, place = (res) => { const st = Town.state(res, Game.hour()); return st.hidden ? 'asleep in the flats' : !st.level ? 'out, off the block' : st.moving ? 'on the move' : st.level === 'd_noodles' ? 'at the White Dragon' : st.level === 'd_grocery' ? 'at Mo\'s' : st.level === 'd_flats' ? 'in the flats' : st.level === 'd_dragon' ? 'on the street' : 'at ' + LEVELS[st.level].name; };
     let out = `<div class="heatbar">HEAT ${h}<i style="--h:${h}%"></i>${h >= 70 ? 'Expect a knock.' : h >= 40 ? 'The block is talking.' : ''}</div>`;
     const card = (id, chip, state, extra, cls) => `<div class="jobcard ${cls || ''}"><img class="face" src="${this.face(id)}" alt=""><div><h3>${this.def(id).title}<span class="chip">${chip}</span></h3><div class="state">${state}</div></div>${extra || ''}</div>`;
-    const doing = (id) => { const J = this.def(id), d = this.dev(id), on = Game.s.bench === d, ready = this.ready(id); return card(id, ready ? 'ready' : on ? 'on the bench' : 'set aside', ready ? `Tested: ${d.tested.res === 'works' ? 'it works' : 'it half works'}. Hand it back to ${J.name}${J.odd ? ' (' + place(J.res) + ')' : ' at the bar'}. ${J.pay ? (d.tested.res === 'works' ? J.pay : Math.round(J.pay / 2)) + ' cr.' : ''}` : (on ? 'On your bench in the basement.' : 'Waiting in the basement: set it on the bench.') + (J.pay ? ' Pays ' + J.pay + ' cr.' : '') + (J.illegal ? ' <span style="color:#ff8aa0">Illegal: heat while it\'s down there.</span>' : ''), ready ? '' : this.needs(id), ready ? 'ready' : ''); };
+    const doing = (id) => { const J = this.def(id), d = this.dev(id), on = Game.s.bench === d, ready = this.ready(id); return card(id, ready ? 'ready' : on ? 'on the bench' : 'set aside', ready ? `Tested: ${d.tested.res === 'works' ? 'it works' : 'it half works'}. ${J.odd ? `${J.name} will come by the White Dragon for it (${place(J.res)} now), and Lin will hand it over.` : `${J.name}'s at the counter and will take it shortly.`} ${J.pay ? 'Pays ' + (d.tested.res === 'works' ? J.pay : Math.round(J.pay / 2)) + ' cr on collection.' : ''}` : (on ? 'On your bench in the basement.' : 'Waiting in the basement: set it on the bench.') + (J.pay ? ' Pays ' + J.pay + ' cr.' : '') + (J.illegal ? ' <span style="color:#ff8aa0">Illegal: heat while it\'s down there.</span>' : ''), ready ? '' : this.needs(id), ready ? 'ready' : ''); };
     const busy = Object.keys(Game.s.jobs).filter((id) => Game.s.jobs[id].st === 'bench');
     if (busy.length) out += '<h3>In the basement</h3>' + busy.map(doing).join('');
     const asks = this.oddToday().filter((id) => !Game.s.jobs[id]), story = JOB_ORDER.filter((id) => this.st(id).st === 'offer');
@@ -205,7 +233,7 @@ const Jobs = {
   // the line at the top of the screen: what the job on the bench needs next
   objective() {
     const b = Game.s.bench, ready = Object.keys(Game.s.jobs).find((id) => Game.s.jobs[id].st === 'bench' && this.ready(id));
-    if (ready) { const J = this.def(ready); return `▸ Hand ${J.title.replace(/^.*?'s /, 'the ')} back to ${J.name}`; }
+    if (ready) { const J = this.def(ready); return `▸ ${J.name} will collect ${J.title.replace(/^.*?'s /, 'the ')} from Lin`; }
     if (!b) { const id = JOB_ORDER.find((k) => this.st(k).st === 'offer'); if (id) return `▸ ${JOBS[id].name} is waiting at the bar upstairs`; const waiting = Object.keys(Game.s.aside)[0]; if (waiting) return `▸ ${Game.s.aside[waiting].name} is waiting on your bench`; const ask = this.oddToday().find((j) => !Game.s.jobs[j]); return ask ? `▸ ${RESIDENTS[ask.split(':')[2]].name} has something broken` : Tips.objective(); }
     const need = Object.keys(DEVICE[b.dev].slots).filter((k) => b.probed[k] && b.slots[k].p && (b.slots[k].p.st !== 'ok' || (DEVICE[b.dev].slots[k].gauge && b.slots[k].p.gauge !== DEVICE[b.dev].slots[k].gauge))).map((k) => PART[DEVICE[b.dev].slots[k].kind].took);
     return need.length ? `▸ ${b.name} needs ${need.join(' and ')}` : `▸ ${b.name} is on your bench`;

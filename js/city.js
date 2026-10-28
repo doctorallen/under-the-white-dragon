@@ -102,6 +102,8 @@ const City = {
     A('visit', { rank: -1, at: 'tag:home', if: ['!ownhome'], who: ['is:visits'], relieves: { company: 0.4 } });
     A('host', { rank: -1, at: 'home', who: ['is:visits'], relieves: { company: 0.4 } }); // (the block's own visit each other: their days say when)
     A('pay', { at: 'tag:do:pay', minutes: 8, rank: -1, price: 8, fill: false });
+    // coming by the White Dragon for something you fixed (Jobs.collections sends them; never arriving in the night)
+    A('collect', { at: 'd_noodles', minutes: 12, rank: -1, hours: [7, 22.5], fill: false, label: 'picking something up from Lin' });
     // what deeds mean to the people they're done to
     w.deed('fixed', { feeling: 'helped', regard: 0.2, memory: 6, sentiment: 'fixed my things' });
     w.deed('botched', { feeling: 'wronged', regard: -0.25, memory: 6, sentiment: 'botched a repair' });
@@ -244,6 +246,7 @@ const City = {
     // (the dev clock), the block starts over at that hour, memories and all.
     if (t < this.w.esper.earliest() - 1e-6) this.make(t, null);
     else if (Math.abs(t - this.w.now) > 1e-6) this.w.advanceTo(t);
+    Jobs.collections(); // (what's fixed gets collected)
     if (this.reported.length) {
       const who = this.reported.map((r) => this.w.get(r.witness)).filter(Boolean).map((p) => p.name);
       const names = [...new Set(who)];
@@ -302,6 +305,8 @@ const City = {
     for (const q of this.said) if (q.t <= now && !q.done) { q.done = true; if (!q.n.hidden && Actors.npcs.includes(q.n)) { q.n.face = Math.sign(Player.x - q.n.x) || q.n.face; Actors.say(q.n, q.text); } }
     this.said = this.said.filter((q) => !q.done);
   },
+  // tell a resident to do something (a Tyrell directive), or null to release them
+  direct(id, d) { if (this.on && this.w.get(id)) this.w.direct(id, d); },
   // a deed done for (or to) a resident: 'fixed', 'botched'
   did(verb, res, what) { if (this.on && this.w.get(res)) this.w.did('player', verb, { for: res, what: what || '' }); },
   // something a resident has to say about you, now and then: what they saw, what they heard, what you fixed

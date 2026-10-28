@@ -135,6 +135,18 @@ async function run(B, url, vp, name, failures) {
     Jobs.handBack(a); return { n: ids.length, res, paid: Game.s.cr - c0, st: Game.s.jobs[a].st, bench: Game.s.bench };
   });
   if (odd.n < 1 || odd.res !== 'works' || odd.paid <= 0 || odd.st !== 'done' || odd.bench) fail('a resident\'s odd job did not play through ' + JSON.stringify(odd));
+  // and one they come to collect: fixed and tested, then left; its owner comes
+  // by the White Dragon for it when they can, and pays then
+  const coll = await E(() => {
+    const ids = Jobs.oddToday().filter((id) => !Game.s.jobs[id]); if (!ids.length) return { n: 0 };
+    const a = ids[0], t0 = Game.s.time, d0 = Game.s.day; Jobs.take(a); const B = Bench, D = B.D; B.b.open = true;
+    for (const k in D.slots) { const s = B.b.slots[k]; if (s.p.st !== 'ok') s.p = Parts.make(D.slots[k].kind, 'street'); B.b.probed[k] = 1; }
+    B.close(); B.b.screws.forEach((s) => (s.st = 'in')); B.test(); Hud.toggle(null); const c0 = Game.s.cr;
+    let h = 0; for (; h < 30 && Game.s.jobs[a].st === 'bench'; h += 0.5) { Game.pass(0.5); City.sync(); }
+    const out = { n: 1, st: Game.s.jobs[a].st, paid: Game.s.cr - c0, hours: h, at: Game.s.time };
+    Game.s.time = t0; Game.s.day = d0; City.sync(); return out;
+  });
+  if (coll.n && (coll.st !== 'done' || coll.paid <= 0)) fail('nobody came to collect a finished job ' + JSON.stringify(coll));
   // a tip: a resident's message in the morning puts a wreck in the city, and it
   // needs better tools than the hand kit (the morning after Ozzy's job may have brought it already)
   const tip = await E(() => {
