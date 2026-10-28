@@ -57,7 +57,7 @@ const FILES = [
   'js/flight.js',
   'js/map.js',
   'js/worldmap.js',
-  'js/dev.js',
+  'js/dev.js', 'js/tyrellmode.js',
   'js/gl.js',
   'js/render.js',
   'js/hud.js',

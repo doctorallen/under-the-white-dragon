@@ -206,6 +206,15 @@ async function run(B, url, vp, name, failures) {
     return { n: TOWN_ORDER.length, bad: [...new Set(bad)].slice(0, 8) };
   });
   if (city.n < 200 || city.bad.length) fail('the city\'s people ' + JSON.stringify(city));
+  // Tyrell mode: everyone drawn, someone's mind open, the clock run on and back
+  const tm = await E(() => {
+    Hud.toggle('tyrell'); const dots = TyrellMode.dots.length, t0 = Game.s.day * 24 + Game.s.time;
+    TyrellMode.step(30); TyrellMode.sel = TyrellMode.dots[0] && TyrellMode.dots[0].id; TyrellMode.side(true);
+    const mind = (document.getElementById('tmside') || {}).textContent || ''; TyrellMode.open('d_neonrow'); const street = TyrellMode.dots.length + TyrellMode.badges.length;
+    TyrellMode.step(-30); const back = Math.abs(Game.s.day * 24 + Game.s.time - t0) < 1e-6; TyrellMode.sel = null; Hud.toggle(null);
+    return { dots, mind: /Today/.test(mind), street, back };
+  });
+  if (tm.dots < 200 || !tm.mind || !tm.street || !tm.back) fail('Tyrell mode did not show the city ' + JSON.stringify(tm));
   // the machine out front, stripped: salvage and a scrap part
   const strip = await E(() => { const v = World.props.find((p) => p.kind === 'vending'); T_.walkTo(v.x); T_.hold(200); return { done: v.done, parts: Game.s.parts.filter((p) => p.how === 'strip' && p.g === 'scrap').length }; });
   if (!strip.done || !strip.parts) fail('stripping the vending machine gave no part ' + JSON.stringify(strip));

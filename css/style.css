@@ -289,6 +289,36 @@ body:has(#stick.on) #stickhint, body:has(#hud.flying) #stickhint { visibility: h
 #bubbles .bubble:not(.new) { opacity: 0.82; }
 #bubbles .bubble.new { z-index: 2; box-shadow: inset 0 0 0 2px #8a3a9a, inset 0 0 0 3px #f8f0ff; }
 /* the dev drawer's look into a resident's mind (Tyrell's Palantír) */
+/* Tyrell mode (dev): the minds on a map, a mind beside it */
+#panelBody:has(.tm) { padding: 0; overflow: hidden; }
+.tm { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.tmbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 10px; border-bottom: 1px solid #2a2238; }
+.tmbar button { padding: 4px 10px; min-height: 32px; }
+.tmbar select { font: inherit; color: #e8e0f0; background: #1a1424; border: 2px solid #3a3050; min-height: 32px; }
+.tmclock { color: #3af0e0; min-width: 120px; }
+.tmwhere { color: #b0a6c0; margin-left: 4px; }
+.tmbody { flex: 1; display: flex; min-height: 0; }
+.tmview { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; position: relative; touch-action: pan-y; }
+.tmview canvas { display: block; cursor: pointer; }
+.tmside { width: 340px; max-width: 46%; overflow-y: auto; padding: 4px 12px 12px; border-left: 1px solid #2a2238; font-size: 14px; }
+.tmside h3 { margin: 10px 0 4px; }
+.tmside p { margin: 4px 0; }
+.tmlegend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0; }
+.tmlegend i, .tmlist i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.tmneeds { display: grid; gap: 3px; margin: 6px 0; }
+.tmneeds div { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 6px; font-size: 12px; color: #b0a6c0; }
+.tmneeds i { height: 6px; background: #241c30; display: block; }
+.tmneeds b { height: 100%; display: block; }
+.tmwhy div { padding: 3px 6px; margin: 2px 0; background: #1a1424; font-size: 12px; line-height: 1.35; }
+.tmwhy div.pick { background: #12302e; box-shadow: inset 2px 0 0 #3af0e0; }
+.tmwhy div.no { opacity: 0.6; }
+.tmday div { font-size: 12px; padding: 1px 4px; }
+.tmday div.cur { background: #2a2038; color: #ffd040; }
+.tmday span { color: #8a809a; margin-right: 4px; }
+.tmlog div { font-size: 12px; color: #c8c0d8; padding: 1px 0; }
+.tmlist { display: flex; flex-wrap: wrap; gap: 4px; }
+.tmlist button { padding: 3px 8px; font-size: 13px; }
+@media (max-width: 760px) { .tmside { width: 46%; font-size: 13px; } .tmbar button { padding: 3px 7px; } }
 pre.mind { white-space: pre-wrap; font: 12px/1.35 monospace; color: #cfe; background: #0008; padding: 6px 8px; margin: 6px 0 0; max-height: 180px; overflow: auto; }
 pre.mind:empty { display: none; }
 

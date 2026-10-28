@@ -53,7 +53,7 @@ const Dev = {
       <h3>Time of day · ${Game.clock()}</h3><input type="range" min="0" max="23.99" step="0.25" value="${Game.hour()}" data-devrange="time">
       <h3>Give</h3><div class="buttons">${btn('cr', '+1000 cr')}${btn('salvage', '+10 of every salvage')}</div>
       <h3>The world</h3><div class="buttons">${btn('been', 'Been everywhere')}${btn('undo', 'Restore stripped machines')}</div>
-      ${City.on ? `<h3>The block's minds · Tyrell</h3><div class="buttons">${btn('back', 'Back an hour (time walk)')}${btn('fwd', 'On an hour')}</div><p class="dim">The block remembers back to ${this.when(City.w.esper.earliest())}. Tap someone to see what's on their mind:</p><div class="buttons">${TOWN_ORDER.map((id) => `<button data-devmind="${id}">${RESIDENTS[id].name}</button>`).join('')}</div><pre class="mind" id="devMind"></pre>` : ''}
+      ${City.on ? `<h3>The city's minds · Tyrell</h3><div class="buttons"><button data-devtyrell class="go">Tyrell mode</button>${btn('back', 'Back an hour (time walk)')}${btn('fwd', 'On an hour')}</div><p class="dim">Watch everyone on the map, see why they do what they do, and run the clock. The city remembers back to ${this.when(City.w.esper.earliest())}.</p>` : ''}
       <h3>Go to someone</h3>${this.peopleHtml()}
       <h3>Go to a place</h3><div class="goto">${this.goHtml()}</div>
       <p class="dim">Credits ${s.cr} · day ${s.day} · level ${World.L.id} at ${Math.round(Player.x)}, ${Math.round(Player.y)}</p>`;
@@ -69,7 +69,7 @@ const Dev = {
       undo: () => { for (const p of World.props) if (p.done) { p.done = false; delete s.done[p.id]; p.spr = null; Props.init(p); } },
     };
     body.querySelectorAll('button[data-devdo]').forEach((b) => (b.onclick = () => { act[b.dataset.devdo](); Game.toast('Dev: ' + b.textContent + '.'); Hud.refresh(); Save.write(); }));
-    body.querySelectorAll('button[data-devmind]').forEach((b) => (b.onclick = () => { const m = body.querySelector('#devMind'); if (m) m.textContent = City.inspect(b.dataset.devmind); }));
+    body.querySelectorAll('button[data-devtyrell]').forEach((b) => (b.onclick = () => Hud.toggle('tyrell')));
     body.querySelectorAll('button[data-devwx]').forEach((b) => (b.onclick = () => { this.s.weather = b.dataset.devwx; this.save(); Hud.panel('dev'); }));
     body.querySelectorAll('button[data-devres]').forEach((b) => (b.onclick = () => { this.s.res = b.dataset.devres; if (this.s.res === 'auto') View.q = 3; this.save(); View.resize(); Hud.panel('dev'); }));
     body.querySelectorAll('button[data-devgo]').forEach((b) => (b.onclick = () => { const [l, sp] = b.dataset.devgo.split(':'); Hud.toggle(null); Game.go(l, sp); }));

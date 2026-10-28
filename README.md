@@ -86,6 +86,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/town.js` | The city's people on screen: the block's own residents and their days, the routes between places, who's in your level now (`Town`, `RESIDENTS`) |
 | `js/census.js` | Every place in the city people live, work and spend time, read from the levels: streets, rooms, doors, spots, posts (`Census`) |
 | `js/folk.js` | The city's population: households made to fill the jobs and homes, with schools and hobbies (`Folk`) |
+| `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`) |
 | `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which runs their days, needs, hobbies, memories and gossip, and saves them (`City`) |
 | `vendor/tyrell/` | Tyrell, the minds engine (a git submodule; the game loads `dist/tyrell.js`) |
 | `js/day.js` | Day and night, and the weather (`Day`, `Weather`) |

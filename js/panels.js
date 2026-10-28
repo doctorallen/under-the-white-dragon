@@ -6,6 +6,7 @@
 // [title, html]; panelBind wires up the buttons after the panel is drawn.
 // ---------------------------------------------------------------------------
 const PANELS = {
+  tyrell() { return ['Tyrell mode', TyrellMode.html()]; },
   talk(s) {
     const n = Hud.who, name = n.def.name, line = n.def.town ? Town.talkLine(n) : n.def.lines[n.line % n.def.lines.length];
     let h = `<p class="sub">"${line}"</p>`;

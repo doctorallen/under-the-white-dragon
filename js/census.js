@@ -47,6 +47,8 @@ const POST_LIVES = { 'The Hermit': 1, 'platform squatter': 1, 'scavenger': 1 };
 // people with a name and no work: residents who keep to their spot for a few hours a day
 const POST_REGULAR = { 'Mrs Ueda': 'loaf', 'Esi': 'loaf' };
 const CROWD_TITLES = ['lives near here', 'commuter', 'passer-by', 'night worker'];
+// a named person's work, in a word, by its kind
+const POST_WORD = { trade: 'trader', plant: 'engineer', dock: 'dock hand', clinic: 'doctor', office: 'clerk', food: 'cook', watch: 'warden', garden: 'gardener', keeper: 'keeper', club: 'DJ', canteen: 'canteen cook', stall: 'stallholder', yard: 'picker', scavenge: 'scavenger', night: 'doorman' };
 // the staff each kind of door needs (people per shift) and what's done there
 const AMEN = {
   eatery: { staff: 1, act: 'eat', tags: ['food', 'social'] }, bar: { staff: 1, act: 'drink', tags: ['social', 'fun', 'adult'] }, club: { staff: 2, act: 'dance', tags: ['fun', 'adult'] },
@@ -105,11 +107,13 @@ const Census = {
         // a post: somewhere a job is done, by shifts
         const kind = def.role === 'vendor' || def.role === 'parts' ? 'trade' : POST_KIND[key] || 'stall';
         const inRoom = P[lid] && P[lid].kind === 'room';
-        const place = inRoom ? P[lid] : add({ id: 'post:' + lid + ':' + x, kind: 'spot', level: lid, street: lid, x, y: this.streets[lid].G, label: def.title ? def.title[0].toUpperCase() + def.title.slice(1) : def.name });
+        // (someone with a name of their own: their work in a word, and their stall or post)
+        const word = title || (def.stall && STALL_NAMES[def.stall] ? STALL_NAMES[def.stall].toLowerCase() : POST_WORD[kind] || 'stallholder');
+        const place = inRoom ? P[lid] : add({ id: 'post:' + lid + ':' + x, kind: 'spot', level: lid, street: lid, x, y: this.streets[lid].G, label: title ? title[0].toUpperCase() + title.slice(1) : def.name + '\'s ' + (def.stall || kind === 'stall' || kind === 'food' || kind === 'trade' ? 'stall' : 'post') });
         (place.spots.work = place.spots.work || []).push(pos); if (!place.tags.includes('do:work')) place.tags.push('do:work');
         // (half the food stalls keep night hours; the named engineers' plants run round the clock, the hands' by day)
         const shifts = kind === 'food' && hash(x, lid.length, 63) < 0.4 ? POST_SHIFTS.foodnight : kind === 'plant' && title ? POST_SHIFTS.hand : POST_SHIFTS[kind];
-        const post = { id: 'job:' + lid + ':' + x, place: place.id, kind, shifts, name: def.name, title: title || def.name, proper: !title, look: def.look, lines: def.lines, role: def.role, rate: def.rate, stock: def.stock, stall: def.stall, smoke: def.smoke, level: lid, x, lives: !!POST_LIVES[key], pos };
+        const post = { id: 'job:' + lid + ':' + x, place: place.id, kind, shifts, name: def.name, title: word, proper: !title, look: def.look, lines: def.lines, role: def.role, rate: def.rate, stock: def.stock, stall: def.stall, smoke: def.smoke, level: lid, x, lives: !!POST_LIVES[key], pos };
         if (place.kind === 'spot' && (STALL_FOOD.includes(def.stall) || kind === 'canteen')) place.tags.push('food');
         this.posts.push(post);
       }

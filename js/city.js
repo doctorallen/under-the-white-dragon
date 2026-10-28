@@ -65,7 +65,7 @@ const City = {
       start: now - 5 * 60, // (a save, if there is one, replaces all of this)
       modules: ['reverie', 'fellowship', 'wormtongue', 'cityspeak', 'mentat', 'ceres'],
       shell: { travel: (a, b) => this.travel(a, b) },
-      config: { logSize: 200, decisions: 4 },
+      config: { logSize: Dev.shown() ? 6000 : 200, decisions: Dev.shown() ? 12 : 4 }, // (Tyrell mode, in dev, reads more of what happened and why)
       moduleConfig: { fellowship: { forget: 6 } }, // (a face in the crowd is forgotten in a week: a city's too big to know everyone)
       esper: { every: 60, keep: 26 * 60, sparseAfter: 180, sparseEvery: 240 }, // (hourly for three hours back, every four hours to a day: a big city's snapshots are big)
     }));
@@ -81,7 +81,7 @@ const City = {
       for (const act in P.spots) { tags.push('do:' + act); if (CITY_FREE[act] && P.kind !== 'door') slots[act] = Math.max(1, P.spots[act].length); }
       if (P.act) tags.push('do:' + P.act);
       if (P.home) tags.push('home');
-      w.place({ id, tags, region: P.level || P.street, hours: P.hours && P.hours[0] !== P.hours[1] ? P.hours : undefined, slots });
+      w.place({ id, name: P.label + (P.kind === 'spot' && P.street ? ', ' + LEVELS[P.street].name : ''), tags, region: P.level || P.street, hours: P.hours && P.hours[0] !== P.hours[1] ? P.hours : undefined, slots });
     }
     // actions: what the days are made of, and what needs and hobbies choose
     const night = { name: 'night', input: 'hour', range: [0, 24], curve: [[0, 1], [6 / 24, 1], [8 / 24, 0.15], [20 / 24, 0.3], [22.5 / 24, 1], [1, 1]] };
@@ -221,8 +221,10 @@ const City = {
       const legs = Town.route(a, b), L = Town.length(legs), f = clamp((w.now - d.start) / Math.max(1e-6, d.end - d.start), 0, 1);
       const e = { act: d.action, h: hourAt(d.start), o: withId ? { with: withId } : {} };
       let dist = Math.max(0, f * L - (withId ? 16 : 0));
-      for (const leg of legs) {
-        if (leg.len) { if (dist < leg.len) return { level: null, moving: true, act: d.action, e, to: b }; dist -= leg.len; continue; }
+      for (let li = 0; li < legs.length; li++) {
+        const leg = legs[li];
+        // (off screen, between streets or riding between bands: where from and to, and how far, for Tyrell mode)
+        if (leg.len) { if (dist < leg.len) { const A = legs[li - 1], B = legs[li + 1]; return { level: null, moving: true, act: d.action, e, to: b, gap: A && B ? { from: A.level, x0: A.pts[A.pts.length - 1].x, to: B.level, x1: B.pts[0].x, f: dist / leg.len } : null }; } dist -= leg.len; continue; }
         for (let k = 1; k < leg.pts.length; k++) {
           const P = leg.pts[k - 1], Q = leg.pts[k], len = Math.hypot(Q.x - P.x, Q.y - P.y);
           if (dist < len) { const t = dist / len; return { level: leg.level, x: P.x + (Q.x - P.x) * t, y: P.y + (Q.y - P.y) * t, moving: true, dir: Math.sign(Q.x - P.x) || 1, act: d.action, e, to: b }; }

@@ -34,7 +34,7 @@ Each band down opens once you've been in the one above (`Travel.open`).
 - **Movement:** the stick sets the pace: a light push walks, a full push runs (Shift walks on a keyboard). Jump, drop through walkways, stairs, and ladders (climbed seen from behind).
 - **Salvage:** hold Use on a machine to strip it; what came out rises over it a line each. There's no limit to what you carry: once you have it, it's yours. The stalls' scrap bins buy it.
 - **The map:** paused, the whole level as one picture to drag and zoom, with you, the people who matter and the ways in and out marked.
-- **Dev settings** (pause menu, with `?dev`): stop the clock, teleport from the map, frame rate, the weather, resolution, run speed, time of day, give credits and salvage, been everywhere, restore stripped machines, the block's minds with time walk, and go to any place (by band, each street with its rooms) or to anyone.
+- **Dev settings** (pause menu, with `?dev`): stop the clock, teleport from the map, frame rate, the weather, resolution, run speed, time of day, give credits and salvage, been everywhere, restore stripped machines, Tyrell mode (everyone on the city's map or a street's picture, each mind open: what they're doing, their needs, today's routine, why they chose it, what they've done, who they know; the clock to play or walk back), and go to any place (by band, each street with its rooms) or to anyone.
 - **Menus** take the whole screen.
 
 ## Proposed (not built)
