@@ -116,7 +116,7 @@ LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', meters: -140, tier: 3, hub
     L.walk(2026, 2366, G - 80, 5); L.ladder(2030, G - 80, G); L.walk(2060, 2360, G - 142, 5); L.ladder(2340, G - 142, G - 80);
     L.dry.push([2020, G - 142, 2370, G]); L.spots.push([2200, G - 80], [2200, G - 142]);
     bLanterns(L, 2020, 2370, G - 160, ['#ff3a2a', '#ffb040']);
-    // the Mayor's hall and his lift
+    // the Mayor's hall and his elevator
     arena(L, 2400, 3260, G, 'hall');
     // inside the hall: gold screens painted with pines, a dais, red banners, lanterns
     L.paint(2420, G - 140, 3240, G, (P) => {

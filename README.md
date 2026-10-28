@@ -72,7 +72,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/d_works.js` | The Works and its districts |
 | `js/d_deep.js` | The Bowels and its districts |
 | `js/d_dragon.js` | The White Dragon: its street, the noodle bar and storeroom, and the basement under it |
-| `js/d_block.js` | The block's other interiors: Mo's grocery, the flats |
+| `js/d_block.js` | The block's other interiors: Mo's grocery, the apartments |
 | `js/things.js` | Props in play: looks, yields, prompts, uses |
 | `js/game.js` | `Game`: state and rules |
 | `js/save.js` | localStorage save and load |
