@@ -264,8 +264,8 @@ b { font-weight: 400; color: #fff; }
 .part .tbtns button { padding: 6px 14px; }
 /* the tutorial: a card under money and heat, a box beside the bench's tools,
    a line at the top of a panel, and the button to press pulsing */
-#guide { position: absolute; left: var(--pad); top: calc(max(8px, env(safe-area-inset-top)) + 66px); width: min(250px, 27vw); font-family: var(--px); font-size: 15px; line-height: 1.35; color: var(--ink); background: rgba(16, 12, 24, 0.86); clip-path: var(--cut); box-shadow: inset 3px 0 0 var(--teal); padding: 8px 12px 10px 14px; pointer-events: none; }
-#guide:empty { display: none; }
+#guide { position: fixed; z-index: 3; left: var(--pad); top: calc(max(8px, env(safe-area-inset-top)) + 66px); width: min(250px, 27vw); font-family: var(--px); font-size: 15px; line-height: 1.35; color: var(--ink); background: rgba(16, 12, 24, 0.86); clip-path: var(--cut); box-shadow: inset 3px 0 0 var(--teal); padding: 8px 12px 10px 14px; pointer-events: none; }
+#guide:empty, body:has(#hud.flying) #guide { display: none; }
 #guide h4, .tutbox h4, .tutline h4 { margin: 0 0 4px; font-size: 15px; font-weight: 400; color: var(--pink); letter-spacing: 0.08em; text-transform: uppercase; }
 #guide p, .tutbox p { margin: 0; }
 #guide button { pointer-events: auto; margin-top: 8px; padding: 4px 10px; }

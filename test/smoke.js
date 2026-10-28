@@ -124,6 +124,14 @@ async function run(B, url, vp, name, failures) {
     if (b) b.click(); Tutorial.tick(); return { talk, pulse, paid: Game.s.cr - cr, st: Jobs.st('lin').st, i: Tutorial.s.i, bench: !!Game.s.bench };
   });
   if (lin.talk !== 'talk' || !lin.pulse || lin.paid !== 50 || lin.st !== 'back' || lin.i !== 12 || lin.bench) fail('Lin\'s radio did not go back to her ' + JSON.stringify(lin));
+  // the card's buttons take a real click where they are on the screen (nothing
+  // lies over them): at the last step, Got it ends the tutorial
+  const saved = await E(() => { const i = Tutorial.s.i; Tutorial.s.i = TUT.length - 1; Hud.toggle(null); Hud.tick(); return i; });
+  const gotIt = await E(() => { const b = document.querySelector('#guide button[data-tut="end"]'); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  if (gotIt) await page.mouse.click(gotIt.x, gotIt.y);
+  const ended = await E(() => !Tutorial.active());
+  await E((i) => { Tutorial.s.i = i; }, saved);
+  if (!gotIt || !ended) fail('the tutorial\'s Got it button does not take a click ' + JSON.stringify({ gotIt, ended }));
   // a job: Ozzy's waiting at the bar; take it, fix it, hand it back, sleep on it
   const job = await E(() => {
     Hud.toggle(null); Bench.clear(); const oz = Actors.npcs.find((n) => n.def.name === 'Ozzy'); if (!oz) return { oz: false };
