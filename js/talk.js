@@ -26,6 +26,14 @@
 // their key (TALK_WORDS). Lin and the customers at the counter (Ozzy, Vey)
 // aren't residents: they join Tyrell's world the first time you talk to them
 // (TALK_STORY), each off in a place of their own, so they never meet the city.
+//
+// What you learn of someone (their work, what they like, who's at home, their
+// story) you keep, and once you know it you can ask after it: "How's the
+// sweeping?", their children by name, their hobby (the recall subjects and
+// answers, Voice's `recalls`, landing better than small talk; the words fill
+// {learned.<key>:<form>} through talkRemembered). Someone who knows you takes
+// everything better, and known well, offers what they'd offer nobody else
+// (the favor thread: a friend's price, a lead, a job). That's known.js.
 // ---------------------------------------------------------------------------
 
 // the ways of coming at someone, and how each lands (the listener as the
@@ -134,13 +142,25 @@ const TALK_WORDS = {
   'saw.start': (T, n, id) => { const b = City.w.reverie.beliefRecord(id, 'did:player:strip'), what = b && typeof b.v === 'string' ? b.v.replace(/^(a|an|the) /i, '') : 'machine'; return (TALK_SAW[id] || 'I saw you take the {what} apart. I\'m not blind.').replace('{what}', what); },
   'heard.start': (T, n, id) => { const b = City.w.reverie.beliefRecord(id, 'did:player:strip'), from = b && b.from && City.w.get(b.from); return `${from ? from.name : 'Someone'} says you've been stripping machines. Is that right?`; },
   'fixed.start': (T) => T.fixed ? (T.fixed.sour ? `That ${T.fixed.thing} you fixed for me died again. I'll think about it.` : `That ${T.fixed.thing} you fixed for me? Still going.`) : '',
-  'small.work': (T, n, id) => { const R = RESIDENTS[id]; if (!R.gen && R.say.work) return R.say.work; const j = R.job, at = j && Census.places[j.place], where = at ? (at.kind === 'door' ? at.label : LEVELS[at.street].name) : 'the city'; return j ? `${talkA(j.title)} at ${where}. ${R.say.work || ''}`.trim() : ''; },
-  'small.workmore': (T, n, id) => { const R = RESIDENTS[id], j = R.job, [a, b] = j ? j.shift : [9, 17], h = (x) => talkHour(x); return TALK_WORK[id] || `On at ${h(a)}, off at ${h(b)}. ${talkPick(['It pays. Mostly on time.', 'You meet people. You meet too many people.', 'Same as anywhere. Long.', 'The boss counts minutes. I count them back.'], id)}`; },
+  'small.work': (T, n, id) => { const R = RESIDENTS[id]; if (!R.gen && R.say.work) return R.say.work; const j = talkWork(id); if (j && j.duty) return R.say.sweep || j.title + '.'; return j ? `${talkA(j.title)} at ${talkWorkWhere(id)}. ${R.say.work || ''}`.trim() : ''; },
+  'small.workmore': (T, n, id) => { const R = RESIDENTS[id], j = talkWork(id), [a, b] = j && j.shift ? j.shift : [9, 17], h = (x) => talkHour(x); return TALK_WORK[id] || `On at ${h(a)}, off at ${h(b)}. ${talkPick(['It pays. Mostly on time.', 'You meet people. You meet too many people.', 'Same as anywhere. Long.', 'The boss counts minutes. I count them back.'], id)}`; },
   'small.likes': (T, n, id) => { const R = RESIDENTS[id], k = Object.keys(R.likes || {})[0]; return TALK_LIKES[k] || 'Sleep. Is sleep a hobby?'; },
   'small.home': (T, n, id) => talkHome(id),
   'small.next': (T, n, id) => talkNext(id),
   'small.news': (T, n, id) => { const pool = townNews().concat(Object.values(TOWN_SMALL)), p = pool[Math.floor(hash(Game.s.day, Town.idn(id), 41) * pool.length)]; return p.join(' '); },
   'small.about': (T, n, id) => TALK_ABOUT[id] || Folk.who(id),
+  // what you've asked after, once you know: their work, their fun, who's at home
+  'small.workagain': (T, n, id) => `${talkPick(TALK_AGAIN, id)} ${TALK_WORDS['small.workmore'](T, n, id)}`,
+  'small.likesagain': (T, n, id) => { const k = City.w.voice.learned(id).likes; return `${talkPick(TALK_AGAIN, id + 'l')} ${TALK_LIKES_AGAIN[k] || 'Not as often as I\'d like.'}`; },
+  'small.homeagain': (T, n, id) => talkHomeAgain(id),
+  // what they'd offer nobody else: a friend's price, a lead, a job
+  'favor.start': (T) => {
+    const f = T.favor; if (!f) return '';
+    if (f.kind === 'price') return `You've been decent to me. From now on, at ${f.at}, you pay what my family pays. Don't tell anyone.`;
+    if (f.kind === 'tip') return `I wouldn't tell just anyone. ${TIPS[f.tip].say}`;
+    return `I wouldn't ask just anyone, but you're not just anyone. My ${f.thing}'s given up on me. ${f.pay} cr, if you'll look at it.`;
+  },
+  'favor.what': (T) => (T.favor && T.favor.dev && TALK_WHAT[T.favor.dev]) || '"It just stopped. Like it had had enough."',
   'lin.word': () => {
     const w = City.w, talk = w.wormtongue.witnesses('player', 'strip').filter((q) => RESIDENTS[q]).length, h = Game.s.heat;
     const lines = [talk === 0 ? 'Mo\'s plums. Dara\'s knees. The usual.' : talk === 1 ? 'One of them\'s saying you strip machines. Not on my street.' : `${talk} of them are saying you strip machines. Not on my street.`];
@@ -184,6 +204,7 @@ const TALK_ABOUT = {
 };
 // the work, asked about, for some of the block's own
 const TALK_WORK = {
+  wen: 'Six till half past eight, and again at five. The street doesn\'t sweep itself. I\'ve checked.',
   dara: 'Forty drops a day. Stairs, mostly. The lifts are all broken or watched.', mo: 'Up at five for the delivery, and the delivery\'s never all there.',
   jun: 'Graveyard shift. People buy strange things at three in the morning. I don\'t ask.', rina: 'Nights on the ward. Burns, mostly, from the Works. And chrome that won\'t take.',
   teo: 'Room service for people who send it back. I eat what comes back.', ines: 'Parcels. Some tick. Some leak. You learn not to shake them.',
@@ -193,6 +214,84 @@ const talkA = (t) => (/^[aeiou]/i.test(t) ? 'An ' : 'A ') + t.toLowerCase();
 const talkHour = (h) => { h = ((h % 24) + 24) % 24; const hh = Math.floor(h), mm = Math.round((h - hh) * 60); return (hh % 12 || 12) + (mm ? ':' + String(mm).padStart(2, '0') : '') + (hh < 12 ? ' in the morning' : hh < 18 ? ' in the afternoon' : ' at night'); };
 const talkPick = (list, id) => list[Math.floor(hash(Town.idn(id), list.length, 43) * list.length)];
 const talkFirst = (name) => name.replace(/^(Mr|Mrs|Old|Master|Keeper|Mechanic|Nurse) /, '').split(' ')[0];
+const talkCap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+const talkAnd = (list) => (list.length < 2 ? list.join('') : list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1]);
+// someone's work, for the talk: their job, or a duty of the block's own
+// (Old Wen sweeps for the block association, and nobody hired him)
+const TALK_DUTY = { wen: { title: 'Sweeps for the block association', duty: true, boss: 'the block association' } };
+function talkWork(id) { const R = RESIDENTS[id]; return (R && R.job) || TALK_DUTY[id] || null; }
+// where it's done, in a word or two
+function talkWorkWhere(id) {
+  const j = talkWork(id), at = j && j.place && Census.places[j.place];
+  const w = !at ? (j && j.duty ? 'this street' : 'the city') : at.kind === 'door' ? at.label : at.kind === 'room' ? LEVELS[at.level].name : LEVELS[at.street].name;
+  return w.replace(/^The /, 'the ');
+}
+// their work, as your notebook has it
+function talkWorkNote(id) { const j = talkWork(id); return !j ? '' : j.duty ? j.title + '.' : `${talkA(j.title)} at ${talkWorkWhere(id)}.`; }
+// who's at home with them, by first name: the grown-ups and the children
+function talkHousehold(id) {
+  const R = RESIDENTS[id], hh = R && R.hh && Folk.households.find((h) => h.id === R.hh), others = hh ? hh.members.filter((m) => m !== id) : [];
+  return { kids: others.filter((m) => RESIDENTS[m].age === 'kid').map((m) => talkFirst(RESIDENTS[m].name)), big: others.filter((m) => RESIDENTS[m].age !== 'kid').map((m) => talkFirst(RESIDENTS[m].name)) };
+}
+// who's at home, as your notebook has it, and where
+function talkHomeNote(id) {
+  const R = RESIDENTS[id], H = talkHousehold(id), home = Census.places[R.homePlace];
+  const where = !home ? '' : home.apt ? 'in Apartment ' + home.apt + ', over the White Dragon' : home.street === 'd_dragon' ? 'on the White Dragon\'s street' : 'in ' + LEVELS[home.street].name.replace(/^The /, 'the ');
+  const kids = H.kids.length ? [(H.kids.length === 1 ? 'their child, ' : 'the kids, ') + talkAnd(H.kids)] : [];
+  const who = R.age === 'kid' ? (H.big.length ? 'With ' + talkAnd(H.big.concat(H.kids)) : 'With their mom') : H.big.length || kids.length ? 'With ' + talkAnd(H.big.concat(kids)) : 'Lives alone';
+  return who + (where ? ', ' + where : '') + '.';
+}
+// what you've learned of them, in the words a line asks for: Voice fills
+// {learned.<key>} and {learned.<key>:<form>} with this (talkRemembered)
+function talkRemembered(id, key, v, form) {
+  if (key === 'home') { const H = talkHousehold(id); return form === 'kids' ? talkAnd(H.kids) || 'the family' : talkAnd(H.big.concat(H.kids.length ? ['the kids'] : [])) || 'everyone'; }
+  if (key === 'likes') return form === 'place' ? TALK_LIKE_PLACE[v] || 'there' : TALK_LIKE_WORD[v] || String(v);
+  if (key === 'work') { const j = talkWork(id); return form === 'place' ? talkWorkWhere(id) : form === 'boss' ? (j && j.boss) || talkWorkWhere(id) : String(v).toLowerCase(); }
+  return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
+}
+// what's asked after, once you know: their work (the block's own by name,
+// everyone else by their work's kind), their fun, who's at home
+const TALK_ASK_WORK = {
+  wen: 'How\'s the sweeping?', mo: 'How\'s the shop?', jun: 'How\'s the graveyard shift?', ueda: 'How\'s the Red Lantern?', mina: 'How are the animals?', goro: 'Lucky Seven treating you right?', pip: 'What\'s showing tonight?',
+  vin: 'Busy at the Coil?', hana: 'How\'s the fox?', teo: 'How\'s the hotel kitchen?', ines: 'Any parcels tick today?', rina: 'How are the nights on the ward?', dara: 'How many drops today?',
+};
+const TALK_ASK_KIND = {
+  food: 'How\'s the stall?', eatery: 'How\'s the kitchen?', trade: 'How\'s trade?', plant: 'How\'s the plant?', dock: 'How are the docks?', clinic: 'How\'s the clinic?', hospital: 'How are things on the ward?', office: 'How\'s the office?',
+  watch: 'Quiet on the watch?', garden: 'How are the gardens?', keeper: 'How\'s the old place?', club: 'Busy at the club?', canteen: 'How\'s the canteen?', stall: 'How\'s the stall?', yard: 'Find anything good in the yard?',
+  scavenge: 'Find anything good?', night: 'Quiet on the door?', bar: 'Busy behind the bar?', pachinko: 'How\'s the floor?', arcade: 'How\'s the arcade?', shop: 'How\'s the shop?', temple: 'How\'s the temple?', theater: 'What\'s showing?',
+  bath: 'How\'s the bath house?', school: 'How\'s the class?', depot: 'How\'s the depot?', hotel: 'How\'s the hotel?', laundry: 'How\'s the laundry?',
+};
+const TALK_ASK_LIKES = {
+  drink: 'Been for a drink lately?', pachi: 'Win anything at pachinko?', watch: 'Seen anything good at the pictures?', dance: 'Been dancing lately?', arcade: 'Still holding the high score?', bathe: 'Been to the bath lately?',
+  loaf: 'Still watching the city go by?', festival: 'Any lantern nights coming?', pray: 'Been to the shrine lately?', play: 'Who won at drones and cops?', eat: 'Had Lin\'s noodles lately?',
+};
+// where each hobby's done, for "take me along to..."
+const TALK_LIKE_PLACE = { drink: 'the Red Lantern', pachi: 'Lucky Seven', watch: 'the Orpheum', dance: 'the Coil', arcade: 'the arcade', bathe: 'the bath', loaf: 'your bench', festival: 'the next lantern night', pray: 'the shrine', play: 'drones and cops', eat: 'Lin\'s' };
+// asked after: their hobby, lately
+const TALK_LIKES_AGAIN = {
+  drink: 'Last night. One drink. It brought friends.', pachi: 'Won forty. Lost sixty. I\'m up, in spirit.', watch: '"Rain on Glass." It\'s about rain. I cried anyway.', dance: 'Saturday. My feet are still talking to me about it.',
+  arcade: 'Still mine. Some kid from Kessler is coming for it.', bathe: 'Tuesday. Hot enough to forget my own name.', loaf: 'Every day. The city puts on a show if you sit still for it.', festival: 'Next month, they say. They always say next month.',
+  pray: 'This morning. I asked for the rain to stop. It didn\'t.', play: 'Me! I was the drone and nobody caught me!', eat: 'Last night. Lin gave me extra. Don\'t tell anyone.',
+};
+// how it starts, when you ask after something they told you
+const TALK_AGAIN = ['You remembered.', 'You remembered. Nobody remembers.', 'Ha. You were listening.', 'Fancy you asking.'];
+const talkAskWork = (id) => TALK_ASK_WORK[id] || TALK_ASK_KIND[(talkWork(id) || {}).kind] || `How's work at ${talkWorkWhere(id)}?`;
+function talkAskHome(id) {
+  const R = RESIDENTS[id], H = talkHousehold(id), all = H.big.concat(H.kids);
+  if (R.age === 'kid') return H.big.length ? `How's ${H.big[0]}?` : 'How\'s your mom?';
+  if (H.kids.length) return H.kids.length === 1 ? `How's ${H.kids[0]}?` : `How are ${talkAnd(H.kids)}?`;
+  if (all.length) return all.length === 1 ? `How's ${all[0]}?` : `How are ${talkAnd(all)}?`;
+  return R.age === 'senior' ? 'Still just you and the radio?' : 'Still just you at home?';
+}
+// asked after, at home
+function talkHomeAgain(id) {
+  const R = RESIDENTS[id], H = talkHousehold(id), pick = (k, list) => list[Math.floor(hash(Town.idn(id), k, 47) * list.length)];
+  const kid = ['lost a tooth', 'wants a drone', 'won\'t eat anything green', 'drew Lin a picture of Lin', 'is taller than me, nearly', 'asked where rain comes from. I said the Spires.'];
+  if (R.age === 'kid') return `${H.big[0] || 'Mom'}'s ${pick(1, ['tired. Always tired.', 'on nights again.', 'fine. She says to say thank you, for asking.'])}`;
+  if (H.kids.length) return `${talkPick(TALK_AGAIN, id + 'h')} ${H.kids[0]} ${pick(2, kid)}${H.kids[1] ? `, and ${H.kids[1]} ${pick(3, kid.filter((q) => q !== pick(2, kid)))}` : ''}.`;
+  if (H.big.length) return `${talkPick(TALK_AGAIN, id + 'h')} ${talkAnd(H.big)}${H.big.length > 1 ? ' are' : '\'s'} ${pick(4, ['well. Tired. Everyone\'s tired.', 'fine, thanks. Working too much. Like me.', 'good. We manage. Small place, big arguments.'])}`;
+  return R.age === 'senior' ? 'Me and the radio. It argues less than people.' : 'Just me. The shoes and I have an understanding.';
+}
 // who's at home with them
 function talkHome(id) {
   const R = RESIDENTS[id], hh = R.hh && Folk.households.find((h) => h.id === R.hh), others = hh ? hh.members.filter((m) => m !== id) : [];
@@ -230,6 +329,8 @@ const Talk = {
     w.cityspeak.addLines(TALK_LINES);
     // patience: more for the chatty, less at work or worn out; the three at the counter have time
     const L = (c, t) => Number(c.world.lang.value(t, c)) || 0;
+    // what you've learned of them, in the words a line asks for ({learned.<key>:<form>})
+    v.remembered = (c, key, val, form) => talkRemembered(c.person.id, key, val, form);
     v.patience = (c) => (c.person.def.tags.includes('story') ? 8 : Math.max(3, 5 + (L(c, 'trait.talkative') > 0.7 ? 2 : 0) - (c.world.lang.value('doing:work', c) ? 2 : 0) - (L(c, 'need.energy') > 0.75 ? 1 : 0)));
     w.on('talk:do', (d) => this.queue.push(d));
     // ---- reading the kept context, and changing it as the talk goes
@@ -243,6 +344,7 @@ const Talk = {
       if (what === 'take' || what === 'deal') { const j = J(c, 'job'); if (!j) return; out.job = j.id; if (what === 'take') { j.kind = 'jobwait'; j.took = true; out.pay = j.deal; } else out.pay = j.deal = j[o.at]; }
       if (what === 'back') { const j = J(c, 'handback'); if (!j) return; j.kind = 'done'; out.job = j.id; }
       if (what === 'tip') { if (!t.tip) return; out.tip = t.told = t.tip; t.tip = null; }
+      if (what === 'favor') { const f = t.favor; if (!f || f.given) return; f.given = true; out.kind = f.kind; if (f.tip) out.tip = f.tip; if (f.job) { out.job = f.job; out.pay = f.pay; } }
       if (what === 'pay') t.cr -= o.n;
       c.world.emit('talk:do', out);
     };
@@ -261,11 +363,15 @@ const Talk = {
     const calm = (c) => !strip('saw', 'saw')(c) && !strip('told', 'heard')(c);
     // ---- a job for the bench: pitched by them, or raised again by you
     const TAKE = { say: 'I\'ll take it.', job: 'take', then: [does('take')], to: 'took' };
-    const HAGGLE = { say: 'Make it {more}.', approach: 'haggle', if: [(c) => { const j = J(c, 'job'); return !!j && j.more > j.pay && j.deal === undefined; }], to: [{ landed: 'well', to: 'agree' }, { landed: 'even', to: 'split' }, { to: 'firm' }] };
+    const canHaggle = (c) => { const j = J(c, 'job'); return !!j && j.more > j.pay && j.deal === undefined; };
+    const HAGGLED = [{ landed: 'well', to: 'agree' }, { landed: 'even', to: 'split' }, { to: 'firm' }];
+    // (knowing where they work, you know what it pays: a haggle that recalls it lands better)
+    const HAGGLE_KNOWN = { say: 'Make it {more}. I know what {learned.work:boss} pays.', label: 'Make it {more}.', approach: 'haggle', recalls: 'work', if: [canHaggle], to: HAGGLED };
+    const HAGGLE = { say: 'Make it {more}.', approach: 'haggle', if: [canHaggle, '!learned:work'], to: HAGGLED };
     const NO = { say: 'Not this one.', to: 'no' };
     const jobBeats = (first) => ({
-      start: { line: first ? 'job.offer' : 'job.again', answers: [TAKE, { say: 'What\'s wrong with it?', approach: 'ask', to: 'what' }, HAGGLE, NO] },
-      what: { line: 'job.what', answers: [TAKE, HAGGLE, NO] },
+      start: { line: first ? 'job.offer' : 'job.again', answers: [TAKE, { say: 'What\'s wrong with it?', approach: 'ask', to: 'what' }, HAGGLE_KNOWN, HAGGLE, NO] },
+      what: { line: 'job.what', answers: [TAKE, HAGGLE_KNOWN, HAGGLE, NO] },
       agree: { line: 'job.agree', then: [does('deal', { at: 'more' })], answers: [TAKE, NO] },
       split: { line: 'job.split', then: [does('deal', { at: 'mid' })], answers: [TAKE, NO] },
       firm: { line: 'job.firm', then: ['warmth-=1'], answers: [TAKE, NO] },
@@ -327,8 +433,9 @@ const Talk = {
       cold: { text: 'So do promises.', then: ['regard-=0.03'], end: true } } });
     // ---- small talk, from their lives: work, fun, home, the day, the news
     const R = (c) => RESIDENTS[c.person.id];
-    v.thread({ id: 'work', if: [resident, (c) => !!R(c).job], reveals: 'work', label: (c) => (c.person.doing && c.person.doing.action === 'work' ? 'Busy?' : 'How\'s work?'), beats: {
-      start: { line: 'small.work', then: [learn('work', (c) => R(c).job.title)], answers: [
+    const work = (c) => !!talkWork(c.person.id);
+    v.thread({ id: 'work', if: [resident, work, '!learned:work'], reveals: 'work', label: (c) => (c.person.doing && c.person.doing.action === 'work' ? 'Busy?' : 'How\'s work?'), beats: {
+      start: { line: 'small.work', then: [learn('work', (c) => talkWork(c.person.id).title)], answers: [
         { say: 'What\'s that like?', approach: 'ask', to: 'like' },
         { say: 'Sounds hard.', approach: 'warm', to: 'warm' },
         { say: 'Ever think of robbing the place?', approach: 'joke', to: [{ landed: 'badly', to: 'shocked' }, { to: 'laugh' }] }] },
@@ -336,21 +443,58 @@ const Talk = {
       warm: { text: ['It is. Thanks for asking.', 'Somebody has to. Thanks.'], then: ['need.company-=0.05'], end: true },
       laugh: { text: ['Every day. Then I count the till.', 'Ha. Don\'t tempt me.'], end: true },
       shocked: { text: ['Don\'t even joke.', 'Not funny. People lose jobs for less.'], then: ['regard-=0.02'], end: true } } });
-    v.thread({ id: 'likes', if: [resident, (c) => Object.keys(R(c).likes || {}).length > 0], reveals: 'likes', label: 'What do you do for fun?', beats: {
+    v.thread({ id: 'likes', if: [resident, (c) => Object.keys(R(c).likes || {}).length > 0, '!learned:likes'], reveals: 'likes', label: 'What do you do for fun?', beats: {
       start: { line: 'small.likes', then: [learn('likes', (c) => Object.keys(R(c).likes)[0])], answers: [
         { say: 'Sounds good.', approach: 'warm' },
         { say: 'Take me along sometime.', approach: 'joke', warmth: 1, soft: true, to: [{ landed: 'badly', to: 'alone' }, { to: 'yes' }] },
         { say: 'Doesn\'t sound like much.', approach: 'straight', to: 'cold' }] },
       yes: { text: 'Maybe. If you\'re buying.', then: ['regard+=0.02'], end: true }, alone: { text: 'I go alone. That\'s the point.', end: true },
       cold: { text: 'It\'s mine. That\'s enough.', then: ['regard-=0.02'], end: true } } });
-    v.thread({ id: 'home', if: [resident, (c) => !!R(c).homePlace], reveals: 'home', label: 'Who\'s at home?', weight: 0.8, beats: {
+    v.thread({ id: 'home', if: [resident, (c) => !!R(c).homePlace, '!learned:home'], reveals: 'home', label: 'Who\'s at home?', weight: 0.8, beats: {
       start: { line: 'small.home', then: [learn('home', (c) => R(c).hh || 'alone')], answers: [
         { say: 'Sounds nice.', approach: 'warm' },
         { say: 'Sounds crowded.', approach: 'joke', to: [{ landed: 'badly', to: 'cold' }, { to: 'laugh' }] }] },
       laugh: { text: 'Ha. You have no idea.', end: true }, cold: { text: 'It\'s home.', end: true } } });
+    // ---- what they've told you, asked after (it lands better than small talk: Voice's recalls)
+    const others = (c) => { const H = talkHousehold(c.person.id); return H.big.length + H.kids.length > 0; };
+    const kids = (c) => talkHousehold(c.person.id).kids.length > 0;
+    v.thread({ id: 'work.again', if: [resident, work], recalls: 'work', approach: 'warm', weight: 1.1, label: (c) => talkAskWork(c.person.id), beats: {
+      start: { line: 'small.workagain', answers: [
+        { say: 'They don\'t pay you enough.', approach: 'warm', to: 'warm' },
+        { say: 'Ever think of robbing {learned.work:boss}?', recalls: 'work', approach: 'joke', to: [{ landed: 'badly', to: 'shocked' }, { to: 'laugh' }] },
+        { say: 'Sounds like the same as ever.', approach: 'straight' }] },
+      warm: { text: ['They don\'t. Thanks for noticing.', 'Nobody does. You\'re kind to say.'], then: ['need.company-=0.05'], end: true },
+      laugh: { text: ['Every day. Then I count the till.', 'Ha. You know me too well.'], end: true },
+      shocked: { text: ['Don\'t even joke.', 'Not funny. People lose jobs for less.'], then: ['regard-=0.02'], end: true } } });
+    v.thread({ id: 'likes.again', if: [resident], recalls: 'likes', approach: 'ask', weight: 1, label: (c) => TALK_ASK_LIKES[c.world.voice.learned(c.person.id, c.target).likes] || 'Still doing what you love?', beats: {
+      start: { line: 'small.likesagain', answers: [
+        { say: 'Take me along to {learned.likes:place} sometime.', recalls: 'likes', approach: 'joke', warmth: 1, soft: true, to: [{ landed: 'badly', to: 'alone' }, { to: 'yes' }] },
+        { say: 'Sounds good.', approach: 'warm' }] },
+      yes: { text: ['Maybe. If you\'re buying.', 'Any time. You know where.'], then: ['regard+=0.02'], end: true }, alone: { text: 'I go alone. That\'s the point.', end: true } } });
+    v.thread({ id: 'home.again', if: [resident, (c) => !!R(c).homePlace], recalls: 'home', approach: 'warm', weight: 0.9, label: (c) => talkAskHome(c.person.id), beats: {
+      start: { line: 'small.homeagain', answers: [
+        { say: 'Say hello to {learned.home:them} for me.', recalls: 'home', approach: 'warm', if: [others] },
+        { say: 'Bring {learned.home:kids} by the White Dragon. Lin feeds everyone.', recalls: 'home', approach: 'warm', if: [kids], to: 'lin' },
+        { say: 'Sounds about right.', approach: 'straight' }] },
+      lin: { text: 'She does. She fed me, once.', then: ['regard+=0.01'], end: true } } });
     v.thread({ id: 'next', if: [resident], label: 'What\'s after this?', weight: 0.7, beats: { start: { line: 'small.next', end: true } } });
     v.thread({ id: 'news', if: [(c) => resident(c) || c.person.id === 'ozzy'], label: 'Heard anything?', weight: 0.9, beats: {
-      start: { line: 'small.news', answers: [{ say: 'Sounds about right.', approach: 'straight' }, { say: 'This city.', approach: 'joke' }] } } });
+      start: { line: 'small.news', answers: [{ say: 'Sounds about right.', approach: 'straight' }, { say: 'This city.', approach: 'joke' }, { say: 'Tell {learned.home:them} I said hello.', recalls: 'home', approach: 'warm', if: [others] }] } } });
+    // ---- known well enough, what they'd offer nobody else, once: a friend's
+    // price at their stall or counter, a lead only they know of, or something
+    // of theirs that's broken (Known.favorFor; it's theirs to raise)
+    const favor = (k) => (c) => { const t = T(c); return !!(t && t.favor && t.favor.kind === k); };
+    const FAVOR_TAKE = { say: 'For you? Of course.', approach: 'warm', favor: true, if: [favor('job')], then: [does('favor', { took: true })], to: 'took' };
+    const FAVOR_NO = { say: 'Not this time.', if: [favor('job')], then: [does('favor', { took: false })], to: 'no' };
+    v.thread({ id: 'favor', theirs: true, cooldown: 1440, if: ['familiar>=' + KNOWN_AT.favor, (c) => !!(T(c) && T(c).favor && !T(c).favor.given), calm], label: 'A favor', beats: {
+      start: { line: 'favor.start', then: [(c) => { if (!favor('job')(c)) does('favor')(c); }], answers: [
+        FAVOR_TAKE, { say: 'What\'s wrong with it?', approach: 'ask', if: [favor('job')], to: 'what' }, FAVOR_NO,
+        { say: 'I owe you one.', approach: 'warm', if: [favor('tip')], to: 'owe' }, { say: 'Why tell me?', approach: 'ask', if: [favor('tip')], to: 'why' },
+        { say: 'That\'s good of you.', approach: 'warm', if: [favor('price')], to: 'good' }, { say: 'Family? I\'m touched.', approach: 'joke', if: [favor('price')], to: 'family' }] },
+      what: { line: 'favor.what', answers: [FAVOR_TAKE, FAVOR_NO] },
+      took: { text: 'I knew I could ask you.', end: true }, no: { text: 'Fair enough. The offer was only ever for you.', end: true },
+      owe: { text: 'You don\'t. Just don\'t say where you heard it.', end: true }, why: { text: 'Because you listen. Nobody listens.', then: ['regard+=0.02'], end: true },
+      good: { text: 'Good of you to come round. That\'s all.', end: true }, family: { text: 'Don\'t push it. Second cousin.', end: true } } });
     v.thread({ id: 'about', if: [(c) => !!TALK_ABOUT[c.person.id]], reveals: 'about', label: 'How long have you been around here?', beats: {
       start: { line: 'small.about', then: [learn('about', () => true)], answers: [{ say: 'Glad you stayed.', approach: 'warm' }, { say: 'Why stay?', approach: 'ask', to: 'why' }] },
       why: { text: ['Where else? Up is for people with money. Down is for people with less.', 'Lin\'s noodles. Don\'t laugh. It\'s true.'], end: true } } });
@@ -390,7 +534,8 @@ const Talk = {
       return { id: a.id, kind: a.kind, thing: J.title.replace(/^.*?'s /, ''), pay: J.pay || 0, more: hg.more, mid: hg.mid, res: d && d.tested ? d.tested.res : null };
     });
     const done = RESIDENTS[id] ? Object.keys(s.jobs).filter((k) => k.startsWith('odd:') && s.jobs[k].res === id && s.jobs[k].st === 'done') : [], last = done.length ? s.jobs[done[done.length - 1]] : null;
-    return { who: id, jobs, cr: s.cr, tip: RESIDENTS[id] ? Tips.dueFrom(id) : null, fixed: last ? { thing: ODD[last.tpl].name, sour: (s.flags['sour:' + id] || 0) > s.day } : null };
+    const fv = RESIDENTS[id] ? Known.favorFor(id) : null;
+    return { who: id, jobs, cr: s.cr, tip: RESIDENTS[id] ? Tips.dueFrom(id) : null, fixed: last ? { thing: ODD[last.tpl].name, sour: (s.flags['sour:' + id] || 0) > s.day } : null, favor: fv };
   },
   kept() { const t = City.on && City.w.s.game.talk; return t && t.who === this.id ? t : {}; },
   // ---- the talk, from the game's side ---------------------------------------
@@ -405,7 +550,7 @@ const Talk = {
     this.n = n; this.id = id; this.view = v; this.how = null;
     n.face = Math.sign(Player.x - n.x) || n.face;
     this.flush();
-    this.log = []; this.shown = 0; this.lastCard = ''; this.record(v, n);
+    this.log = []; this.shown = 0; this.lastCard = ''; this.recall = false; this.record(v, n);
     this.frame(n);
     Hud.toggle('talk', n);
     return true;
@@ -416,6 +561,7 @@ const Talk = {
     if (!this.view) return;
     const opt = this.view.answers.find((a) => a.i === i);
     this.how = opt && (opt.kind === 'answer' || opt.kind === 'thread') ? opt.approach || null : null; // (how what you said came at them, for the panel)
+    this.recall = !!(opt && opt.recalls); // (and whether it recalled something they'd told you)
     const v = City.w.voice.answer(i); this.view = v;
     this.flush();
     if (v && !v.ended) this.record(v, this.n);
@@ -428,7 +574,7 @@ const Talk = {
     Hud.panel('talk');
   },
   // the panel closed (walked off): the talk's over, without a goodbye
-  close() { if (this.typer) this.typer.stop(); if (this.view && City.on && City.w.voice.current()) City.w.voice.end(); this.n = this.id = this.view = null; this.log = []; this.shown = 0; },
+  close() { if (this.typer) this.typer.stop(); if (this.view && City.on && City.w.voice.current()) City.w.voice.end(); this.n = this.id = this.view = null; this.log = []; this.shown = 0; Known.dirty(); },
   // what the talk did to the game, carried out now it's done
   flush() {
     const q = this.queue; this.queue = [];
@@ -439,8 +585,16 @@ const Talk = {
       if (d.what === 'tip') Tips.tell(d.tip);
       if (d.what === 'heat') Jobs.heat(d.n, `${R} ${d.why}.`);
       if (d.what === 'pay') { Game.pay({ cr: d.n }); Game.toast(`You pay ${R} ${d.n} cr.`); }
+      if (d.what === 'favor') {
+        const f = { kind: d.kind, day: Game.s.day }; if (d.tip) f.tip = d.tip; if (d.job) { f.job = d.job; f.took = !!d.took; }
+        Known.favors()[d.who] = f;
+        if (d.kind === 'tip') Tips.tell(d.tip);
+        if (d.kind === 'job' && d.took) Jobs.take(d.job, d.pay);
+        if (d.kind === 'price') Game.toast(`${R} will give you a friend's price from now on.`, 'good');
+      }
     }
     if (q.length) { Hud.refresh(); Save.write(); }
+    Known.dirty(); // (what you know of them may have changed)
   },
   // ---- the words -------------------------------------------------------------
   greeting(n) { const id = this.idOf(n); if (n.def.town) return Town.talkLine(n, true); if (id === 'lin') return n.def.lines[(n.line || 0) % n.def.lines.length]; const J = JOBS[id]; return J && J.lines ? J.lines[0] : '...'; },
@@ -465,7 +619,7 @@ const Talk = {
     const T = this.kept(), you = v.lines.find((q) => q.who === 'you');
     for (const l of v.lines.filter((q) => q.who !== 'note').concat(v.lines.filter((q) => q.who === 'note'))) { // (what you learned, after what they said)
       const w = this.words(l, n); if (!w || (Array.isArray(w) && !w.length)) continue;
-      if (l.who === 'you') this.log.push({ who: 'you', text: Array.isArray(w) ? w.join(' ') : w, how: l === you ? this.how : null, landed: l === you && this.how ? v.landed : null });
+      if (l.who === 'you') this.log.push({ who: 'you', text: Array.isArray(w) ? w.join(' ') : w, how: l === you ? this.how : null, recall: l === you && this.recall, landed: l === you && (this.how || this.recall) ? v.landed : null });
       else if (l.who === 'note' || l.who === 'aside') this.log.push({ who: l.who, text: Array.isArray(w) ? w.join(' ') : w });
       else for (const q of Array.isArray(w) ? w : [w]) this.log.push({ who: 'them', text: q });
     }
@@ -477,10 +631,11 @@ const Talk = {
   frame(n) { if (innerWidth < TALK_NARROW) return; Game.cam.x = (Player.x + n.x) / 2 + View.w * 0.27; },
   // their face, for the head of the talk: the figure from the front, the
   // head and shoulders (made once a look)
-  portrait(n) {
-    if (!n.def.look) return '';
-    const k = JSON.stringify(n.def.look) + n.i; if (this.faces.has(k)) return this.faces.get(k);
-    const look = Object.assign({}, n.def.look, { pose: 'stand', seed: 20 + n.i, view: 'front' }); delete look.umbrella; delete look.umbrellaGlow;
+  portrait(n) { return this.face(n.def.look, n.i); },
+  face(look0, i) {
+    if (!look0) return '';
+    const k = JSON.stringify(look0) + i; if (this.faces.has(k)) return this.faces.get(k);
+    const look = Object.assign({}, look0, { pose: 'stand', seed: 20 + i, view: 'front' }); delete look.umbrella; delete look.umbrellaGlow;
     const sp = person(look), c = sp.c, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
     let x0 = c.width, x1 = 0, y0 = c.height, y1 = 0;
     for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
@@ -501,14 +656,14 @@ const Talk = {
     const line = (e) => {
       if (e.who === 'them') return `<p class="tk-line them sub"><b>${first}</b>${e.text}</p>`;
       if (e.who === 'you') {
-        const how = e.how ? `<i class="${e.landed === 'well' || e.landed === 'badly' ? e.landed : ''}">${TALK_HOW[e.how] || e.how}${e.landed === 'well' ? ' · it lands' : e.landed === 'badly' ? ' · it falls flat' : ''}</i>` : '';
+        const how = e.how || e.recall ? `<i class="${e.landed === 'well' || e.landed === 'badly' ? e.landed : ''}">${[e.recall ? '✎ remembered' : '', e.how ? TALK_HOW[e.how] || e.how : ''].filter(Boolean).join(' · ')}${e.landed === 'well' ? ' · it lands' : e.landed === 'badly' ? ' · it falls flat' : ''}</i>` : '';
         return `<p class="tk-line you"><b>You</b>${e.text}${how}</p>`;
       }
       if (e.who === 'note') return `<p class="tk-note note">${e.text}</p>`;
       if (e.who === 'aside') return `<p class="tk-aside dim">${e.text}</p>`;
       return `<div class="tk-card">${e.html}</div>`;
     };
-    const face = this.portrait(n), sub = [n.def.title, this.stand()].filter(Boolean).join(' · ');
+    const f = Known.fam(this.id), face = this.portrait(n), sub = [n.def.title, f >= KNOWN_AT.bands[0] ? Known.band(f) : '', this.stand()].filter(Boolean).join(' · ');
     let h = `<div class="tk"><div class="tk-head">${face ? `<img class="tk-face" src="${face}" alt="">` : ''}<div class="tk-who"><b>${n.def.name}</b>${sub ? `<small>${sub}</small>` : ''}</div><button data-act="resume" class="tk-x quiet" aria-label="Close">✕</button></div>`;
     h += `<div class="talk tk-log">${this.log.map(line).join('')}</div><div class="tk-say">`;
     const pick = v.answers.filter((a) => a.kind === 'answer' || a.kind === 'thread'), rest = v.answers.filter((a) => a.kind === 'drop' || a.kind === 'bye');
@@ -535,9 +690,10 @@ const Talk = {
   // an answer, as a button: a job's take and hand-back are the main ones
   button(a, v, T, F) {
     const def = a.kind === 'answer' && v.thread ? City.w.voice.threads.get(v.thread.id).beats[v.thread.beat].answers[+a.id.slice(1)] : null;
-    const j = def && def.job ? talkJob(T, def.job === 'take' ? 'job' : 'handback') : null;
-    const text = this.fill(a.kind === 'thread' ? a.label : a.label || a.say, F);
-    return `<button data-say="${a.i}"${j ? ` data-job="${def.job}:${j.id}" class="go"` : ''}${a.ok ? '' : ' disabled'}>${text}${a.approach ? ` <small class="how-${a.approach}">${TALK_HOW[a.approach] || a.approach}</small>` : ''}</button>`;
+    const j = def && def.job ? talkJob(T, def.job === 'take' ? 'job' : 'handback') : null, main = j || (def && def.favor);
+    const text = this.fill(a.kind === 'thread' ? a.label : a.label || a.say, F), mark = a.recalls ? '✎ ' : '';
+    const how = a.approach ? ` <small class="how-${a.approach}">${mark}${TALK_HOW[a.approach] || a.approach}</small>` : mark ? ' <small class="how-recall">✎ remembered</small>' : '';
+    return `<button data-say="${a.i}"${j ? ` data-job="${def.job}:${j.id}"` : ''}${main ? ' class="go"' : ''}${a.ok ? '' : ' disabled'}>${text}${how}</button>`;
   },
   // the job the talk is about, as a card: the offer (what it pays, what it'd
   // mean), the hand-back (how it tested), what it's waiting on, when they'll come
@@ -548,6 +704,7 @@ const Talk = {
       const J = Jobs.def(j.id), pay = j.deal || j.pay, aside = Game.s.bench && !j.took ? 'It\'ll wait in the basement, set aside, till your bench is free.' : '';
       return `<div class="ask"><h3>${J.title}${pay ? ' · ' + pay + ' cr' : ' · a favor'}</h3>${J.illegal ? '<p class="dim">Illegal work: while it\'s on your bench, it\'s heat.</p>' : ''}${aside ? `<p class="dim">${aside}</p>` : ''}</div>`;
     }
+    if (th === 'favor' && T.favor && T.favor.kind === 'job') return `<div class="ask"><h3>${RESIDENTS[T.who].name}'s ${T.favor.thing} · ${T.favor.pay} cr</h3><p class="dim">A favor: they'd bring it to nobody else.</p></div>`;
     if (th === 'back') {
       const j = talkJob(T, 'handback', 'given'), b = j && Jobs.dev(j.id); if (!b || !b.tested) return '';
       const J = Jobs.def(j.id), t = b.tested, trace = Jobs.traced(b), pay = J.pay ? (t.res === 'works' ? J.pay : Math.round(J.pay / 2)) : 0;

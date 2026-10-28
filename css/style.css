@@ -417,3 +417,44 @@ body:has(#panel.talking:not([hidden])) #pads, body:has(#panel.talking:not([hidde
   #panel.talking { background: rgba(4, 3, 8, 0.72); }
   #panel.talking header, #panel.talking #panelBody { width: 100%; }
 }
+
+/* ---- the notebook's People page (known.js): a card each, their face, what
+   you remember of them, how well you know each other and how they stand with
+   you, what they've done for you, and the work you've done for them ---- */
+.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 8px; align-items: start; }
+.pcard { --r: var(--line); display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px 12px; padding: 10px 12px 12px 14px; background: var(--card); clip-path: var(--cut); box-shadow: inset 3px 0 0 var(--r); }
+.pcard.well { --r: var(--teal); }
+.pcard .face { width: 56px; height: 56px; image-rendering: pixelated; background: #0e0a14; clip-path: var(--cut-s); box-shadow: inset 0 -3px 0 var(--r); display: block; }
+.pc-who { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pc-who h3 { margin: 0 !important; font-size: 20px !important; color: #fff !important; letter-spacing: 0.04em !important; display: flex !important; flex-wrap: wrap; align-items: baseline; gap: 0 10px !important; }
+.pc-who h3::after { display: none !important; }
+.pc-who h3 small { color: #9a8eae; font-size: 15px; letter-spacing: 0; text-transform: none; }
+.pc-know { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.pc-know .chip { font-size: 15px; padding: 1px 8px; background: rgba(58, 240, 224, 0.1); color: var(--teal); clip-path: var(--cut-s); }
+.pc-know .chip.st { background: rgba(255, 138, 200, 0.1); color: #ff8ac8; }
+.pc-meter { display: flex; align-items: center; gap: 8px; }
+.pc-meter i { flex: 0 0 90px; height: 6px; background: #150f1f; clip-path: var(--cut-s); position: relative; }
+.pc-meter i::after { content: ''; position: absolute; inset: 0; width: var(--f); background: linear-gradient(90deg, #2a8a84, var(--teal)); }
+.pc-meter small { color: #9a8eae; font-size: 15px; }
+.pc-notes, .pc-none, .pc-flags, .pc-jobs { grid-column: 1 / -1; }
+.pc-notes { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; margin: 0; padding: 6px 10px; background: #150f1f; clip-path: var(--cut-s); }
+.pc-notes dt { color: var(--pink); white-space: nowrap; }
+.pc-notes dt::before { content: '✎ '; color: var(--teal); }
+.pc-notes dd { margin: 0; color: var(--ink2); }
+.pc-none { margin: 0; }
+.pc-flags p { margin: 0; }
+.pc-flags .good { color: var(--green); }
+.pc-flags .warn { color: #ff8aa0; }
+.pc-jobs { margin-top: 0; }
+.pcard .need2.fine { opacity: 0.8; } .pcard .need2.fine .have { color: var(--ink2); }
+.pc-need { margin: -2px 0 2px 18px; }
+.pc-need > summary { cursor: pointer; list-style: none; color: var(--sodium); padding: 2px 0; }
+.pc-need > summary::-webkit-details-marker { display: none; }
+.pc-need > summary::before { content: '▸ '; }
+.pc-need[open] > summary::before { content: '▾ '; }
+.pc-need .needs { margin-top: 4px; }
+/* their trade, when they know you: a better price */
+p.deal { margin: -2px 0 8px; color: var(--sodium); }
+.tbtns button s { opacity: 0.55; }
+.answers button small { white-space: nowrap; }
+.answers button small.how-recall { color: var(--teal); }

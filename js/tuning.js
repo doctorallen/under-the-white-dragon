@@ -19,4 +19,16 @@ const T = {
   stick: { radius: 46, keys: 0.66, walk: 0.5, sprint: 1.6 },
   day: { length: 1200, start: 20.5 }, // seconds in a day; the clock starts at 20:30
   light: { lamp: 70 }, // the runner's work lamp
+  // knowing people (known.js): how familiar someone is with you is Voice's,
+  // half a point a talk and a point a thing learned about them
+  known: {
+    land: 0.2, landMax: 1, // in a talk, everything you say lands this much better a point, up to the most (Voice's familiarLand)
+    recall: 1, // asking after something they told you lands this much better (Voice's recallLand)
+    report: 0.1, reportMax: 0.6, // a witness who knows you is this much less likely to report you a point, up to the most (Wormtongue's familiarReport)
+    haggle: 0.05, haggleMax: 0.25, // on a job's pay they'll go a quarter more, and this much more a point, up to the most
+    price: 0.025, priceMax: 0.12, // at their stall or counter, this much better for you a point (what they pay, what you pay), up to the most
+    friend: 0.1, // a friend's price, on top of that
+    favor: 4, // known this well, they offer what they'd offer nobody else (a friend's price, a lead, a job)
+    bands: [1, 2.5, 4], // how well you know each other: a face you know, an acquaintance, you know each other, well
+  },
 };

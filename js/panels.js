@@ -26,15 +26,15 @@ const PANELS = {
   // a parts stall: what they sell, by grade
   partshop(s) {
     const n = Hud.who, stock = PART_STOCK[n.def.stock];
-    let h = `<p class="sub">"${n.def.lines[n.line % n.def.lines.length]}"</p>${talkBtn(n)}<div class="parts">`;
-    h += stockHtml(n.def.stock, s);
+    let h = `<p class="sub">"${n.def.lines[n.line % n.def.lines.length]}"</p>${Known.deal(n, true)}${talkBtn(n)}<div class="parts">`;
+    h += stockHtml(n.def.stock, s, n);
     const jn = Parts.junk().length, sv = bag.total(s.pack, SALVAGE_ORDER); if (jn || sv) h += `<div class="part tool" style="--r:#8a8a90"><b>The scrap bin</b><small>${[jn ? jn + ' dead or burnt part' + (jn > 1 ? 's' : '') + ' off your shelf' : '', sv ? sv + ' bits of salvage' : ''].filter(Boolean).join(' and ')}: good for nothing but the metal.</small><div class="tbtns"><button data-selljunk>Sell for ${Parts.junkValue()} cr</button></div></div>`;
     const t = Tips.forSale(n.def.stock);
     if (t) { const T = TOOLS[t], can = Tips.tier() === t - 1; h += `<div class="part tool" style="--r:#ffd040"><b>${T.name} · tools</b><small>${T.note}${can ? '' : ' (After the ' + TOOLS[t - 1].name.toLowerCase() + ': one thing at a time.)'}</small><div class="tbtns"><button data-buytool="${t}" ${can && s.cr >= T.cr ? '' : 'disabled'}>${T.cr} cr</button></div></div>`; }
     return [n.def.name + '\'s parts', h + '</div>'];
   },
   // the grocery's till: whoever's on shift sells you things
-  grocer(s) { const n = Hud.who; return [n.def.name + ' · Mo\'s Grocery', `<p class="sub">"${Town.talkLine(n)}"</p>${talkBtn(n)}<p class="dim">Behind the counter, with the batteries and the fuses:</p><div class="parts">` + stockHtml('mo', s) + '</div>']; },
+  grocer(s) { const n = Hud.who; return [n.def.name + ' · Mo\'s Grocery', `<p class="sub">"${Town.talkLine(n)}"</p>${Known.deal(n, true)}${talkBtn(n)}<p class="dim">Behind the counter, with the batteries and the fuses:</p><div class="parts">` + stockHtml('mo', s, n) + '</div>']; },
   // what's waiting in the basement, set aside: pick one to put on the bench
   benchpick(s) {
     const ids = Object.keys(s.aside);
@@ -49,6 +49,9 @@ const PANELS = {
     const known = Object.keys(n.known);
     h += known.length ? known.map((d) => `<p><b>${DEVICE[d].name}</b> <span class="dim">(${DEVICE[d].kind.toLowerCase()})</span>: ${Parts.build(d).join(', ')}.</p>`).join('') : '<p class="dim">Nothing yet. Open things up and probe them, and the notebook learns how they\'re built.</p>';
     if (n.log.length) h += n.log.map((e) => `<p class="sub">Day ${e.day}. ${e.text}</p>`).join('');
+    // the people you know are in the notebook too (a page of their own: known.js)
+    const folk = Known.people().length;
+    h += `<div class="buttons"><button data-people="1">People you know${folk ? ' · ' + folk : ''}</button></div>`;
     return ['The shelf', h];
   },
   travel() { return ['The city', WorldMap.html(false)]; },
@@ -56,9 +59,9 @@ const PANELS = {
 };
 // a word with whoever's behind the counter, from their trade (talk.js)
 function talkBtn(n) { return n && Talk.can(n) ? '<div class="buttons"><button data-talk="1">Talk</button></div>' : ''; }
-// a stall's parts, by grade, each with a buy button
-function stockHtml(key, s) {
-  return PART_STOCK[key].map(([k, g, cr, gauge, note], i) => `<div class="part" style="--r:${GRADE[g].col}"><img class="picon" src="${Parts.icon(k, g)}" alt=""><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr} cr</button></div></div>`).join('');
+// a stall's parts, by grade, each with a buy button (cheaper from someone who knows you: known.js)
+function stockHtml(key, s, n) {
+  return PART_STOCK[key].map(([k, g, cr0, gauge, note], i) => { const cr = Known.price(n, cr0); return `<div class="part" style="--r:${GRADE[g].col}"><img class="picon" src="${Parts.icon(k, g)}" alt=""><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr < cr0 ? `<s>${cr0}</s> ` : ''}${cr} cr</button></div></div>`; }).join('');
 }
 // what you carry: the parts on your shelf at home (out in the city it helps
 // to know), and the salvage in your pockets
@@ -76,7 +79,8 @@ function panelBind(body, which) {
   Tycho.ui.bind(body, {
     selljunk: () => { Parts.sellJunk(); re(); },
     buytool: (t) => { if (Tips.buy(+t)) re(); },
-    buypart: (i) => { const [k, g, cr, gauge] = PART_STOCK[Hud.open === 'grocer' ? 'mo' : n.def.stock][+i]; if (!Game.pay({ cr })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); },
+    buypart: (i) => { const [k, g, cr0, gauge] = PART_STOCK[Hud.open === 'grocer' ? 'mo' : n.def.stock][+i]; if (!Game.pay({ cr: Known.price(n, cr0) })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); },
+    people: () => { Hud.tab = 'people'; Hud.toggle('pack'); }, // (the notebook's People page)
     benchload: (id) => Bench.load(id),
     'job:not([data-say])': (c) => { Jobs.act(c); if (!c.startsWith('back')) re(); },
     say: (i) => Talk.answer(+i), // (what you say, in a talk: talk.js)

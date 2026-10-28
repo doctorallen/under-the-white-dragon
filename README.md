@@ -34,7 +34,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | Drop through a walkway | Down + jump | Stick down + Jump |
 | Jump | Space / K | Jump |
 | Use (hold to strip) | E | The button names the action: Trade, Talk, Strip, Climb… |
-| Jobs and pockets | I | Jobs |
+| Jobs, pockets and the people you know | I | Jobs |
 | A cab home | | Cab |
 | The map (drag, zoom) | M | Pause, then Map |
 | Dev settings | | Pause, then Dev settings |
@@ -47,6 +47,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 - **Its people:** the block's residents live their days (homes, jobs, friends, errands) whether you're watching or not, and remember what you do in front of them; everyone else has a name of their own.
 - **Between them** (`chat.js`): residents somewhere together strike up a word now and then, watched or not: small talk on what's going round (and on your doings, once they're out), a word at the till, the bar or a neighbor's door. How it lands is down to their natures, moods and how they stand, so friendships grow, now and then talk turns into an argument, and a grudge keeps two apart till it fades or they make it up. Whoever's about sees a row, and thinks less of whoever started it.
 - **Talk** (`talk.js`): stop someone and you talk. They raise what's theirs first (what they saw you strip, a job for the bench, the thing you fixed, a lead), then you ask after their work, their fun, who's at home, what's going round. How you say it (straight, warm, a joke, a question, haggling, a lie, money) lands well or badly by who they are and how things stand, and moves their regard; a witness you talk round, or pay off, keeps quiet.
+- **Knowing people** (`known.js`): what someone tells you about themselves you keep, and it counts. The next time you can ask after it ("How's the sweeping?", their children by name, their hobby), and that lands better than small talk (the answers marked ✎). Someone who knows you takes everything better, is slower to report you, goes higher on a job's pay and gives you a better price at their stall; known well, they offer what they'd offer nobody else, once: a friend's price, a lead only they know of, or a job they'd bring only to you. Doors say who lives behind them only once you know them. Your notebook's People page (the People tab, or People you know on the shelf) has everyone you've talked to: their face, what you remember, how well you know each other and how they stand with you, and the work you've done for them, open and done.
 - **Weather:** rain comes and goes through the day, and the streets shine only while they're wet.
 
 ## Files
@@ -92,7 +93,8 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`, on Tycho's inspector) |
 | `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which runs their days, needs, hobbies, memories and gossip, and saves them (`City`) |
 | `js/chat.js` | What passes between residents, on Tyrell's Bree: small talk, the till and the counter, arguments, grudges and making up, and their words over their heads; greetings in passing, and what witnesses say when you strip a machine (`Chat`, `TOWN_SMALL`, `TOWN_PAIR`, `TOWN_NEWS`, `CHAT_REACT`) |
-| `js/talk.js` | Conversations, on Tyrell's Voice: the ways of coming at someone, the subjects (a job pitched and haggled, the hand-back, a lead, a witness having it out with you, small talk from their lives) and their words (`Talk`) |
+| `js/talk.js` | Conversations, on Tyrell's Voice: the ways of coming at someone, the subjects (a job pitched and haggled, the hand-back, a lead, a witness having it out with you, small talk from their lives, what they've told you asked after, a favor) and their words (`Talk`) |
+| `js/known.js` | Knowing people: the notebook's People page, better prices and pay from people who know you, the favors they'd do nobody else, and names on doors (`Known`) |
 | `vendor/tycho/` | Tycho, the engine, with Tyrell, the minds engine, inside it (a git submodule; the game loads the built scripts in `dist/`) |
 | `js/day.js` | Day and night, and the weather (`Day`, `Weather`) |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |

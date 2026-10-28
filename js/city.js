@@ -100,7 +100,10 @@ const City = {
       config: { logSize: Dev.shown() ? 6000 : 200, decisions: Dev.shown() ? 12 : 4 }, // (Tyrell mode, in dev, reads more of what happened and why)
       moduleConfig: {
         fellowship: { forget: 6 }, // (a face in the crowd is forgotten in a week: a city's too big to know everyone)
-        voice: { theirs: 1, choices: 4, onWell: ['regard+=0.02'], onBadly: ['regard-=0.02'] }, // (talk.js: what's theirs to raise, they always raise; four answers at most)
+        // (talk.js: what's theirs to raise, they always raise; four answers at most; and someone who knows you
+        // takes what you say better, asking after what they told you best of all: known.js, T.known)
+        voice: { theirs: 1, choices: 4, onWell: ['regard+=0.02'], onBadly: ['regard-=0.02'], familiarLand: T.known.land, familiarLandMax: T.known.landMax, recallLand: T.known.recall },
+        wormtongue: { familiarReport: T.known.report, familiarReportMax: T.known.reportMax }, // (a witness who knows you is slower to report you)
         bree: CITY_BREE, // (chat.js: what passes between residents)
       },
       esper: { every: 60, keep: 26 * 60, sparseAfter: 180, sparseEvery: 240 }, // (hourly for three hours back, every four hours to a day: a big city's snapshots are big)

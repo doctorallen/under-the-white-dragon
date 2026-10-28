@@ -9,7 +9,9 @@
 // front door leads out onto the street; the block's residents shop, work the
 // till and eat when their days say, talk among themselves over dinner (Bree),
 // and talk when stopped; a witness has it out
-// with you over a machine you stripped (deny it, own up, pay them off); the vending machine
+// with you over a machine you stripped (deny it, own up, pay them off); what
+// you learn of someone counts (asked after, it lands better; their door names
+// them; the notebook's People page; a better price); the vending machine
 // out front gives a scrap part; the old game (enemies, guns, gear, cases) is
 // gone; the help and the pack talk
 // about the basement; a cab flies from the stand to the Overpass Market, where Ana
@@ -240,6 +242,27 @@ async function run(B, url, vp, name, failures) {
     return { out, saved: !!(saved && saved.bonds['okonkwo>player'] && saved.bonds['okonkwo>player'].seen.saw !== undefined) };
   });
   if (wit.out.some((o) => !o.ok) || !wit.saved) fail('a witness did not have it out with you ' + JSON.stringify(wit));
+  // knowing people (known.js): ask Old Wen about his work and you'll remember
+  // it; asked after the next time ("How's the sweeping?"), it lands better than
+  // small talk; his door names him once you know him; your notebook's People
+  // page has him, his work and how well you know each other; and someone who
+  // knows you gives a better price at their counter
+  const known = await E(() => {
+    Hud.toggle(null); const w = City.w, R = RESIDENTS.wen, n = { def: { name: R.name, town: 'wen', look: R.look, lines: [] }, x: Player.x, y: Player.y, face: 1, i: 120 + TOWN_ORDER.indexOf('wen') };
+    const door = { kind: 'door', place: R.homePlace }, knew = Known.people().some((a) => a.who === 'wen'), before = Census.doorText(door);
+    Talk.open(n);
+    for (let k = 0; k < 8 && Talk.view && !Talk.view.ended && w.voice.learned('wen').work === undefined; k++) { const v = Talk.view, a = v.answers.find((q) => q.id === 'work') || v.answers.find((q) => q.kind === 'drop') || v.answers.find((q) => q.kind === 'answer' && q.ok) || v.answers.find((q) => q.kind === 'thread'); if (!a) break; Talk.answer(a.i); }
+    const learned = w.voice.learned('wen').work, note = Talk.log.some((e) => e.who === 'note' && /Old Wen, sweeps/.test(e.text));
+    Hud.toggle(null); Game.pass(1); T_.run({}, 3);
+    Talk.open(n); let again = null;
+    for (let k = 0; k < 6 && Talk.view && !Talk.view.ended && !again; k++) { const v = Talk.view, a = v.answers.find((q) => q.id === 'work.again'); if (a) { Talk.answer(a.i); again = { label: a.label, recalls: a.recalls, landed: Talk.view && Talk.view.landed }; break; } const b = v.answers.find((q) => q.kind === 'drop') || v.answers.find((q) => q.kind === 'answer' && q.ok); if (!b) break; Talk.answer(b.i); }
+    Hud.toggle(null);
+    const after = Census.doorText(door);
+    Hud.tab = 'people'; Hud.toggle('pack'); const page = $('panelBody').textContent; Hud.toggle(null); Hud.tab = 'jobs';
+    const mo = { def: { name: 'Mo', town: 'mo', lines: [''] } };
+    return { learned, note, again, named: !knew && !before.includes('Old Wen') && after.includes('Old Wen'), knew, before, after, page: /Old Wen/.test(page) && /Sweeps for the block association/.test(page) && /you know each other|an acquaintance/.test(page), price: Known.price(mo, 100), fam: w.voice.familiarity('mo') };
+  });
+  if (!known.learned || !known.note || !known.again || known.again.label !== 'How\'s the sweeping?' || known.again.recalls !== 'work' || known.again.landed !== 'well' || !(known.named || known.knew) || !known.page || !(known.price < 100 || !known.fam)) fail('what you learn of people did not count ' + JSON.stringify(known));
   // the city: everyone a resident, with a name of their own and a home, every
   // child at a school, and nobody in the server farm but the people who work there
   const city = await E(() => {
