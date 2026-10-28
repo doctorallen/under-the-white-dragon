@@ -5,11 +5,13 @@
 // ---------------------------------------------------------------------------
 const Dev = {
   // only for testing: ?dev in the address, or once it's been opened that way
-  shown() { return /[?&]dev\b/.test(location.search) || !!(this.s && this.s.shown); },
-  s: { freeze: false, fps: false, teleport: false, speed: 1, res: 'auto' },
+  // (Tycho's dev flags keep them)
+  flags: new Tycho.dev.Flags('downlevel.dev', { freeze: false, fps: false, teleport: false, speed: 1, res: 'auto' }),
+  get s() { return this.flags.s; },
+  shown() { return this.flags.shown(); },
   fps: 0, fa: 0, fn: 0,
-  load() { try { Object.assign(this.s, JSON.parse(localStorage.getItem('downlevel.dev') || '{}')); } catch (e) { /* storage unavailable */ } if (/[?&]dev\b/.test(location.search) && !this.s.shown) { this.s.shown = true; this.save(); } },
-  save() { try { localStorage.setItem('downlevel.dev', JSON.stringify(this.s)); } catch (e) { /* storage unavailable */ } },
+  load() { this.flags.load(); },
+  save() { this.flags.save(); },
   // a Tyrell time (game minutes) as day and clock
   when(t) { const h = (t / 60) % 24; return 'day ' + Math.floor(t / 1440) + ' ' + String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0'); },
   frame(dt) { this.fa += dt; this.fn++; if (this.fa >= 0.5) { this.fps = Math.round(this.fn / this.fa); this.fa = 0; this.fn = 0; } },
