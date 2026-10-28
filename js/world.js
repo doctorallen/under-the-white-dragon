@@ -5,7 +5,9 @@
 // the place for play: solid boxes, one-way surfaces (walkways and stairs,
 // stood on from above, jumped up through), ladders, props, lights, doors,
 // people. World holds the level being played and answers the
-// questions physics and play ask of it.
+// questions physics and play ask of it, through the level's space (Tycho's
+// collision, vendor/tycho/docs/world.md: its solids, the props that block
+// until they're done, its sides, its walkways and stairs, its ladders).
 // ---------------------------------------------------------------------------
 const LEVELS = {};
 // what a door with homes behind it says
@@ -57,10 +59,13 @@ function newLevel(id, name, w, h) {
 }
 
 const World = {
-  L: null, far: null, layers: [], props: [], shared: {},
+  L: null, space: null, far: null, layers: [], props: [], shared: {},
   load(id) {
     if (!LEVELS[id].built) LEVELS[id].built = LEVELS[id].make();
     const L = (this.L = LEVELS[id].built);
+    // what's solid here and what holds you up (physics and play ask it)
+    if (!L.space) L.space = new Tycho.collide.Space().boxes(L.solids).boxes(() => World.props, (p) => (p.block && !p.done ? p.block : null)).bounds(0, L.w).ways(L.ways).ladders(L.ladders);
+    this.space = L.space;
     Paint.reset(L);
     // the far layer: painted once, moved at a fraction of the camera's speed
     this.far = null;
@@ -82,22 +87,11 @@ const World = {
     this.props = this.props.filter((p) => !p.dyn);
     for (const t of Tips.props(L.id)) { const p = Object.assign(t, { y: L.ground || Object.values(L.spawns)[0][1], dyn: true, done: !!Game.s.done[t.id] }); Props.init(p); this.props.push(p); }
   },
-  // does the box (x0..x1, y0..y1) overlap anything solid?
-  hits(x0, y0, x1, y1) {
-    for (const r of this.L.solids) if (x1 > r.x0 && x0 < r.x1 && y1 > r.y0 && y0 < r.y1) return r;
-    for (const p of this.props) if (p.block && !p.done) { const r = p.block; if (x1 > r.x0 && x0 < r.x1 && y1 > r.y0 && y0 < r.y1) return r; }
-    if (x0 < 0 || x1 > this.L.w) return { x0: x0 < 0 ? -100 : this.L.w, y0: -1e4, x1: x0 < 0 ? 0 : this.L.w + 100, y1: 1e4 };
-    return null;
-  },
+  // does the box (x0..x1, y0..y1) overlap anything solid? (the solid, or the
+  // side of the world past either end)
+  hits(x0, y0, x1, y1) { return this.space.hits(x0, y0, x1, y1); },
   // the height of a one-way surface under x, if there's one between y0 and y1
-  way(x, y0, y1) {
-    let best = null;
-    for (const w of this.L.ways) {
-      if (x < w.x0 || x > w.x1) continue;
-      const y = w.y0 + (w.y1 - w.y0) * ((x - w.x0) / Math.max(1, w.x1 - w.x0));
-      if (y >= y0 && y <= y1 && (best === null || y < best)) best = y;
-    }
-    return best;
-  },
-  ladderAt(x, y0, y1) { for (const l of this.L.ladders) if (Math.abs(x - l.x) < 6 && y1 > l.y0 && y0 < l.y1) return l; return null; },
+  way(x, y0, y1) { return this.space.way(x, y0, y1); },
+  // a ladder within 6 px of x over y0..y1
+  ladderAt(x, y0, y1) { return this.space.ladderAt(x, y0, y1); },
 };
