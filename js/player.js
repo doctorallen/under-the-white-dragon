@@ -8,7 +8,10 @@
 // ---------------------------------------------------------------------------
 // the runner, in the work clothes they live in: a knit cap, a canvas work
 // jacket over a work shirt, old slacks, worn boots
-const RUNNER = { skin: '#c88a5a', hair: 'cap', capCol: '#2a3a4a', hairCol: '#1a1416', coat: 'jacket', top: '#4a4632', collar: true, shirt: '#8a8a84', legs: '#26262c', boots: '#161214', acc: '#ff8a20', trim: false, belt: '#2a1e14' };
+// the runner: a tinker in safety-orange coveralls, sleeves rolled, a chrome
+// forearm with blue-lit seams, cropped silver hair with blue goggles pushed up,
+// a navy satchel of parts, a navy glove on the flesh hand, knee pads, a tool belt
+const RUNNER = { skin: '#c8a080', hair: 'undercut', hairCol: '#c8c0b0', top: '#e0701e', legs: '#d0661a', sleeves: true, cyArm: true, acc: '#4a9aff', goggles: '#4aa8ff', gogglesUp: true, satchel: '#24365a', gloves: '#22304e', kneePad: '#24304a', toolbelt: '#2a2420', boots: '#1a1412', belt: '#1a1414', trim: false };
 const POSE_HANDS = {
   stand: { fx: 23.5, fy: 38 }, breathe: { fx: 23.5, fy: 37.5 },
   jump: { fx: 26, fy: 32, bx: 14, by: 30 }, fall: { fx: 26, fy: 30, bx: 14, by: 26 }, cut: { fx: 28, fy: 33, bx: 22, by: 34 },
