@@ -2,14 +2,18 @@
 // ---------------------------------------------------------------------------
 // The painted city. A level is a list of painting operations in world
 // coordinates; the world is painted lazily in chunks (T.chunk px square),
-// each chunk running only the operations that touch it. Every area is laid in
-// short horizontal strokes of close tones (strokeRow), each stroke one tone
-// read at its middle, and every block is lit side-on: a lit lip on top, the
-// west face lit, soot under, the east face shaded, grime running down.
+// each chunk running only the operations that touch it, each from its own
+// seed, so chunks meet without seams. The painting is flat: each surface one
+// tone from its value, a crisp lit top edge and a shaded bottom, panel lines
+// and drips, no noise and no brushwork (PAINT_FLAT; false brings back the
+// old way, short strokes of close tones and beveled lips).
 //
-// A chunk is a color canvas (transparent where the far layer shows through)
-// and a glow canvas (what lights itself). Strokes depend only on the place
-// and each operation's own seed, so chunks meet without seams.
+// The pixel buffer (Pix: put, tint, area, block), its strokes and blocks, and
+// the chunk cache (Paint) are Tycho's painter (Tycho.paint, which grew from
+// this file); the city's own materials and painters (windows, signs, pipes,
+// railings, laundry, slabs, water...) are here, on top of it. A chunk is a
+// color canvas (transparent where the far layer shows through) and a glow
+// canvas (what lights itself).
 // ---------------------------------------------------------------------------
 const R = (anchors, n = 9, deep = 0.55, high = 0.3) => rampOf(anchors, n, deep, high);
 const MAT = {
@@ -35,79 +39,12 @@ const MAT = {
 };
 const col3 = (h) => (typeof h === 'string' ? rgb(h) : h);
 
-// A pixel buffer over a piece of the world: (ox, oy) is its top left.
-class Pix {
-  constructor(w, h, ox = 0, oy = 0) {
-    this.w = w; this.h = h; this.ox = ox; this.oy = oy; this.n = 1; this.glowed = false;
-    this.c = new Uint8ClampedArray(w * h * 4); this.g = new Uint8ClampedArray(w * h * 4);
-    this.mid = new Int16Array(w + 16); this.jit = new Float32Array(w + 16);
-  }
-  put(x, y, col, glow = 0) {
-    x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy;
-    if (x < 0 || y < 0 || x >= this.w || y >= this.h || !col) return;
-    const o = (y * this.w + x) * 4; this.c[o] = col[0]; this.c[o + 1] = col[1]; this.c[o + 2] = col[2]; this.c[o + 3] = 255;
-    if (glow) { this.g[o] = col[0] * glow; this.g[o + 1] = col[1] * glow; this.g[o + 2] = col[2] * glow; this.g[o + 3] = 255; this.glowed = true; }
-    else this.g[o] = this.g[o + 1] = this.g[o + 2] = this.g[o + 3] = 0;
-  }
-  // mix what's there toward a color (haze, steam)
-  tint(x, y, col, k) { x = Math.floor(x) - this.ox; y = Math.floor(y) - this.oy; if (x < 0 || y < 0 || x >= this.w || y >= this.h) return; const o = (y * this.w + x) * 4; if (!this.c[o + 3]) return; this.c[o] = lerp(this.c[o], col[0], k); this.c[o + 1] = lerp(this.c[o + 1], col[1], k); this.c[o + 2] = lerp(this.c[o + 2], col[2], k); }
-  // a painted area: inside(x, y) says what's in it, v(x, y) its value (0..1).
-  // Flat (PAINT_FLAT): each pixel its own tone, no brushwork; otherwise read at
-  // each stroke's middle with a little jitter, so the area reads as brushwork
-  area(ax0, ay0, ax1, ay1, ramp, v, o = {}) {
-    const seed = o.seed === undefined ? this.n * 13 + 5 : o.seed; this.n++;
-    ax0 = Math.floor(ax0); ay0 = Math.floor(ay0); ax1 = Math.ceil(ax1); ay1 = Math.ceil(ay1);
-    const x0 = Math.max(this.ox, ax0), y0 = Math.max(this.oy, ay0), x1 = Math.min(this.ox + this.w - 1, ax1), y1 = Math.min(this.oy + this.h - 1, ay1);
-    if (x1 < x0 || y1 < y0) return;
-    const inside = o.inside || null, J = PAINT_FLAT ? 0 : o.jit === undefined ? 0.45 : o.jit, n = x1 - x0 + 1, glow = o.glow || 0, fog = o.fog || 0, fogc = o.fogc || [20, 16, 30];
-    for (let y = y0; y <= y1; y++) {
-      strokeRow(this.mid, this.jit, x0, n, y, seed);
-      for (let i = 0; i < n; i++) {
-        const x = x0 + i; if (inside && !inside(x, y)) continue;
-        const m = x0 + this.mid[i], vx = v(x, y), vm = PAINT_FLAT ? vx : m >= ax0 && m <= ax1 && (!inside || inside(m, y)) ? v(m, y) : vx;
-        let c = tone(ramp, clamp(vm * 0.6 + vx * 0.4, 0, 1), this.jit[i] * J);
-        if (fog) c = mixRgb(c, fogc, fog);
-        this.put(x, y, c, glow);
-      }
-    }
-  }
-  block(x0, y0, x1, y1, ramp, o = {}) { this.area(x0, y0, x1, y1, ramp, blockV(x0, y0, x1, y1, o), o); }
-  // does a world box touch this buffer?
-  sees(x0, y0, x1, y1) { return x1 >= this.ox && y1 >= this.oy && x0 < this.ox + this.w && y0 < this.oy + this.h; }
-  canvases() {
-    const [c, g] = canvasOf(this.w, this.h); g.putImageData(new ImageData(this.c, this.w, this.h), 0, 0);
-    let e = null; if (this.glowed) { const [ec, eg] = canvasOf(this.w, this.h); eg.putImageData(new ImageData(this.g, this.w, this.h), 0, 0); e = ec; }
-    return { c, e };
-  }
-}
 // The city's painting is flat, like its people: one tone a surface, a crisp
 // lit edge on top and a shaded one under, no noise and no brushwork.
 const PAINT_FLAT = true;
-// side-on lighting for a block
-function blockV(x0, y0, x1, y1, o = {}) {
-  const base = o.base === undefined ? 0.5 : o.base, s = o.seed || 3, grain = o.grain === undefined ? 0.06 : o.grain, lip = o.lip === undefined ? 1 : o.lip;
-  if (PAINT_FLAT) return (x, y) => {
-    let v = base;
-    const top = y - y0, bot = y1 - y, l = x - x0, r = x1 - x;
-    if (lip && top < 1) v = 0.9; if (bot < 1) v -= 0.3; if (l < 1) v += 0.1; if (r < 1) v -= 0.12;
-    if (o.drips) { const d = hash(x, 0, s + 5); if (d > 1 - o.drips && top < 3 + (d - 1 + o.drips) / o.drips * (o.dripLen || 40)) v -= 0.12; }
-    if (o.bands) { if ((y - y0) % o.bands === 0) v -= 0.16; }
-    if (o.panels) { const px = (x - x0) % o.panels[0], py = (y - y0) % o.panels[1]; if (px === 0 || py === 0) v -= 0.16; }
-    return v;
-  };
-  return (x, y) => {
-    let v = base + (noise(x / 40, y / 16, s) - 0.5) * 0.14 + (noise(x / 4, y / 30, s + 1) - 0.5) * grain;
-    const top = y - y0, bot = y1 - y, l = x - x0, r = x1 - x;
-    if (lip) { if (top < 1) v = 0.98; else if (top < 2) v = Math.max(v, 0.8); else if (top < 4) v += 0.1 * lip; }
-    if (bot < 1) v -= 0.36; else if (bot < 3) v -= 0.16;
-    if (l < 2) v += 0.12; if (r < 2) v -= 0.14;
-    if (o.inward) v -= Math.min(o.inward, Math.min(top, bot, l, r) * 0.006);
-    if (o.drips) { const d = hash(x, 0, s + 5); if (d > 1 - o.drips && top < 3 + (d - 1 + o.drips) / o.drips * (o.dripLen || 40)) v -= 0.14; }
-    if (o.bands) { if ((y - y0) % o.bands === 0) v -= 0.18; else if ((y - y0) % o.bands === 1) v += 0.08; }
-    if (o.panels) { const px = (x - x0) % o.panels[0], py = (y - y0) % o.panels[1]; if (px === 0 || py === 0) v -= 0.2; else if (px === 1 || py === 1) v += 0.07; }
-    return v;
-  };
-}
+// A pixel buffer over a piece of the world, (ox, oy) its top left, painting
+// the city's way (Tycho.paint.Pix)
+class Pix extends Tycho.paint.Pix { constructor(w, h, ox = 0, oy = 0) { super(w, h, ox, oy, { flat: PAINT_FLAT }); } }
 
 // ---- decals: what the city puts on its walls --------------------------------
 // windows in a grid: lit ones warm, cool or pink, some with blinds or a figure
@@ -220,28 +157,10 @@ function stairsPaint(P, x0, y0, x1, y1, ramp) {
 function water(P, x0, x1, y, depth, ramp) { P.area(x0, y, x1, y + depth, ramp, (x, yy) => 0.25 + (noise(x / 20, yy / 2, 61) - 0.5) * 0.2 + ((yy - y) < 1 ? 0.3 : 0)); }
 
 // ---- the chunk cache ----------------------------------------------------------
-const Paint = {
-  chunks: new Map(), level: null, queue: [],
-  reset(level) { this.chunks.clear(); this.level = level; },
-  key: (cx, cy) => cx + ',' + cy,
-  has(cx, cy) { return this.chunks.has(this.key(cx, cy)); },
-  get(cx, cy) { const k = this.key(cx, cy); let c = this.chunks.get(k); if (!c) { c = paintChunk(this.level, cx, cy); this.chunks.set(k, c); } return c; },
-  // paint one chunk not yet painted near (x, y), if there is one: a frame's
-  // spare work, so walking into new ground doesn't stall
-  ahead(x, y) {
-    const CS = T.chunk, L = this.level, cx0 = Math.floor(x / CS), cy0 = Math.floor(y / CS);
-    let best = null, bd = 1e9;
-    for (let cy = cy0 - 2; cy <= cy0 + 2; cy++) for (let cx = cx0 - 3; cx <= cx0 + 3; cx++) {
-      if (cx < 0 || cy < 0 || cx * CS >= L.w || cy * CS >= L.h || this.has(cx, cy)) continue;
-      const d = Math.abs(cx - cx0) + Math.abs(cy - cy0); if (d < bd) { bd = d; best = [cx, cy]; }
-    }
-    if (best) this.get(best[0], best[1]);
-    return !!best;
-  },
-};
-function paintChunk(L, cx, cy) {
-  const CS = T.chunk, P = new Pix(CS, CS, cx * CS, cy * CS);
-  for (const op of L.ops) if (P.sees(op.x0, op.y0, op.x1, op.y1)) { P.n = op.seed; op.fn(P); }
-  const { c, e } = P.canvases();
-  return { c, e, x: cx * CS, y: cy * CS };
-}
+// Paint.reset(level) for a new level, Paint.get(cx, cy) for a painted chunk
+// ({ c, e, x, y }), and Paint.ahead(x, y) for a frame's spare work: the
+// nearest chunk not yet painted near (x, y), so walking into new ground
+// doesn't stall (Tycho.paint.Painter).
+const Paint = new Tycho.paint.Painter({ size: T.chunk, flat: PAINT_FLAT });
+// a chunk painted afresh, outside the cache (Tyrell mode's pictures)
+function paintChunk(L, cx, cy) { return Tycho.paint.chunk(L.ops, cx, cy, T.chunk, { flat: PAINT_FLAT }); }
