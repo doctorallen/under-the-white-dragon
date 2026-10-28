@@ -590,7 +590,7 @@ function bPark(L, x0, x1, G, o = {}) {
   });
   if (o.pond) L.wet.push({ y: G - 2, x0: x0 + (x1 - x0) * 0.4, x1: x0 + (x1 - x0) * 0.4 + 80, depth: 10, k: 0.6 });
   for (let x = x0 + 60; x < x1 - 30; x += 150) L.lamp(x, G, 46, '#ffe8c0', 0.8);
-  for (let x = x0 + 100; x < x1 - 40; x += 160) { L.prop('deco', x, G, { art: () => bench(), id: 'pk' + x }); L.hangout(x, G, 'park', 2); }
+  for (let x = x0 + 100; x < x1 - 40; x += 160) kBench(L, x, G, 'pk' + x, { kind: 'park' });
   if (o.play !== false) L.hangout(Math.round((x0 + x1) / 2) + 30, G, 'play', 4);
   if (o.critters !== false) L.critter('cat', x0, x1, G, 1);
 }
@@ -709,7 +709,9 @@ function kStallAt(L, x, G, kind, o = {}) {
   L.light(x, G - 26, 56, lc, 0.8, 1, kind === 'yakitori' || kind === 'skewers' ? { mode: 'fire', seed: x } : null);
   if (kind === 'yakitori' || kind === 'skewers') L.vents.push({ x: x - 4, y: G - 26, kind: 'smoke' });
   if (kind === 'ramen' || kind === 'dumpling' || kind === 'tea') L.vents.push({ x: x - 12, y: G - 22, kind: 'steam' });
-  if (STALL_FOOD.includes(kind)) L.hangout(x + 18, G, 'food', 2); else if (kind !== 'robot') L.hangout(x + 18, G, 'market', 1);
+  // a food stall's two stools in front, its customers on them facing the cook
+  if (STALL_FOOD.includes(kind)) { for (const sx of [x + 12, x + 24]) L.prop('deco', sx, G, { art: () => stool(), id: L.id + ':stool:' + sx, front: true, seat: 'back', seatW: 5 }); L.hangout(x + 18, G, 'food', 2); }
+  else if (kind !== 'robot') L.hangout(x + 18, G, 'market', 1);
   if (o.npc !== false) {
     const n = o.npc || {}, looks = { ramen: { apron: '#e8e0d0', hair: 'cap', capCol: '#e8e0d0' }, fish: { apron: '#2a4a6a', hair: 'cap' }, med: { top: '#e0e8e8', hair: 'short' }, organs: { top: '#2a2a2a', apron: '#8a2a2a', hair: 'bald' }, robot: null }[kind];
     if (looks !== null) L.npc(Object.assign({ name: n.name || STALL_NAMES[kind] || 'Stallholder', look: Object.assign({ skin: SKINS[(x >> 4) % 6], hair: 'cap', capCol: '#2a3a5a', top: '#4a4a3a', apron: '#3a2a1a', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, looks || {}, n.look || {}), x, y: G, sched: [[0, 24, x, 'work']], lines: n.lines || STALL_LINES[kind] || ['Buy something or move along.'], behind: true, stall: kind }, n.role ? { role: n.role, rate: n.rate || 1 } : {}));
@@ -774,11 +776,17 @@ function addDistrict(id, name, tier, depth, mapX, blurb, label, make) {
 function bTorii(L, x0, x1, G, h = 70, o = {}) { L.paint(x0 - 8, G - h - 10, x1 + 8, G, (P) => kTorii(P, x0, x1, G, h, o)); }
 function bToro(L, x, G) { L.paint(x - 8, G - 36, x + 8, G, (P) => kToro(P, x, G)); L.light(x, G - 22, 30, [1, 0.7, 0.35], 0.6, 1, { mode: 'fire', seed: x }); }
 function bTree(L, x, G, kind, o = {}) { const h = o.h || 60; L.paint(x - 40, G - h - 20, x + 40, G + 2, (P) => kTree(P, x, G, kind, Object.assign({ h }, o))); }
+// a bench in the street: whoever sits on it faces us; somewhere to sit a
+// while (o.kind: the hangout, 'bench' or 'park'; o.hangout false for none)
+function kBench(L, x, G, id, o = {}) {
+  L.prop('deco', x, G, { art: () => bench(), id, seat: 'front', seatW: 13 });
+  if (o.hangout !== false) L.hangout(x, G, o.kind || 'bench', 2);
+}
 // a counter, x0 to x1, its front a prop drawn over whoever works behind it
 // (and stools along it, in front, drawn over that: o.stools, their xs)
 function bCounter(L, x0, x1, G, o = {}) {
   const w = x1 - x0, id = L.id + 'ctr' + x0;
   L.prop('deco', x0 + Math.floor(w / 2), G, { art: () => counterFront(Object.assign({ w }, o)), id, front: true });
-  for (const x of o.stools || []) L.prop('deco', x, G, { art: () => stool(), id: id + 's' + x, front: true });
+  for (const x of o.stools || []) L.prop('deco', x, G, { art: () => stool(), id: id + 's' + x, front: true, seat: 'back', seatW: 4 });
 }
 function bLanterns(L, x0, x1, y, cols, o = {}) { L.paint(x0, y - 2, x1, y + 16, (P) => kLanterns(P, x0, x1, y, cols, o)); for (let x = x0 + 30; x < x1; x += 70) L.light(x, y + 8, 40, [1, 0.5, 0.3], 0.45); }

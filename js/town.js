@@ -27,18 +27,20 @@ const PXH = 1300; // pixels walked in a game hour (26 px a second, 50 seconds an
 // in there, by what they're doing)
 const TOWN_PLACE = {
   noodles: { level: 'd_noodles', door: 424, inside: 340, spots: { eat: [144, 214, 284, 400, 450, 500, 550], collect: [425, 590] } },
-  grocery: { level: 'd_grocery', door: 216, inside: 114, spots: { shop: [175, 259, 335, 392, 424], browse: [175, 259, 335, 392, 424], pay: [470], work: [488], stock: [265] } },
+  grocery: { level: 'd_grocery', door: 216, inside: 114, spots: { shop: [175, 259, 335, 392, 424], browse: [175, 259, 335, 392, 424], pay: [470], work: [488], stock: [265] }, view: { shop: 'back', browse: 'back', stock: 'back' } },
   apartments: { level: 'd_apartments', door: 1041, inside: 86 },
   izakaya: { level: 'd_izakaya', street: 'd_neonrow', door: 355, inside: 140, spots: { drink: [454, 394], work: [380] }, depth: { work: { lift: 4 } } },
-  menagerie: { level: 'd_menagerie', street: 'd_neonrow', door: 652, inside: 290, spots: { browse: [120, 160, 350, 410], work: [214] }, depth: { work: { lift: 4 } } },
-  pachinko: { level: 'd_pachinko', street: 'd_neonrow', door: 1050, inside: 320, spots: { pachi: [104, 200, 448, 520], work: [260] } },
+  menagerie: { level: 'd_menagerie', street: 'd_neonrow', door: 652, inside: 290, spots: { browse: [120, 160, 350, 410], work: [214] }, depth: { work: { lift: 4 } }, view: { browse: 'back' } },
+  pachinko: { level: 'd_pachinko', street: 'd_neonrow', door: 1050, inside: 320, spots: { pachi: [104, 200, 448, 520], work: [260] }, view: { pachi: 'back' } },
   cinema: { level: 'd_cinema', street: 'd_neonrow', door: 1365, inside: 110, spots: { watch: [450, 510, 550, 590], work: [210] }, depth: { work: { lift: 4 }, watch: { back: true, lift: 2 } } },
   coil: { level: 'd_coil', street: 'd_neonrow', door: 2065, inside: 120, spots: { work: [600] }, depth: { work: { lift: 4 } } },
-  shrine: { level: 'd_shrine', street: 'd_neonrow', door: 2600, inside: 370, spots: { pray: [200, 240], work: [326] } },
+  shrine: { level: 'd_shrine', street: 'd_neonrow', door: 2600, inside: 370, spots: { pray: [200, 240], work: [326] }, view: { pray: 'back' } },
 };
 // (`depth`: where in the room someone doing that is: behind the counter,
 // lifted onto its step, or in the seats seen from behind; drawn behind the
-// counter or the row of seats in front of them)
+// counter or the row of seats in front of them. `view`: which way someone
+// doing that faces, when it isn't side-on: 'back' to a shelf or a shrine on
+// the back wall. Sitting, the seat decides: see Town.seatAt)
 const TOWN_GAP = 0.3; // game hours to cross a street between two you can see someone on (off screen)
 const TOWN_RIDE = 0.25; // game hours in a cab, down a manhole, on the subway or in an elevator, and a tenth more a band
 // a street's ends, out to the next street
@@ -205,7 +207,14 @@ const Town = {
     // (in the open, a step to one side or the other, so nobody stands in anybody)
     const x = P.kind === 'spot' && !(R.job && R.job.pos === pos) ? pos.x + Math.round((hash(idn, 4, 9) - 0.5) * 8) : pos.x;
     const dp = (P.depth && P.depth[act]) || (pos.behind || pos.back ? { lift: pos.lift || 0, back: pos.back } : null);
-    return { place: pid, level: P.level, x, y: pos.y, hidden: act === 'sleep', depth: dp, face: pos.face };
+    return { place: pid, level: P.level, x, y: pos.y, hidden: act === 'sleep', depth: dp, face: pos.face, view: pos.view || (P.view && P.view[act]) };
+  },
+  // the seat at x in this level, if there's one (a prop with `seat`: the way
+  // its sitter faces, and `seatW`, how far either side of it counts as on it)
+  seatAt(x) {
+    const L = World.L; if (!L) return null;
+    if (this.seatsOf !== L) { this.seatsOf = L; this.seats = World.props.filter((p) => p.seat); }
+    return this.seats.find((p) => Math.abs(p.x - x) <= p.seatW) || null;
   },
   idn(id) { let n = 7; for (let i = 0; i < id.length; i++) n = (n * 31 + id.charCodeAt(i)) % 100003; return n; },
   // inside the apartments: across a floor, or by the stairs between floors
@@ -276,7 +285,7 @@ const Town = {
         d -= len;
       }
     }
-    return { level: b.hidden ? b.level || null : b.level, x: b.x, y: b.y, moving: false, act: e.act, e, apt: b.apt, hidden: b.hidden, depth: b.depth, place: b.place };
+    return { level: b.hidden ? b.level || null : b.level, x: b.x, y: b.y, moving: false, act: e.act, e, apt: b.apt, hidden: b.hidden, depth: b.depth, view: b.view, place: b.place };
   },
   // ---- the people here, now: in the level you're in, moved to where they are
   sync() {
@@ -300,7 +309,12 @@ const Town = {
       else if (st.act === 'pay') n.face = 1;
       else if (st.face) n.face = st.face;
       n.x = st.x; n.y = st.y; n.moving = st.moving; n.act = st.moving ? 'walk' : TOWN_POSE[st.act] || 'stand'; n.townState = st;
-      const dp = !st.moving && st.depth; n.behind = !!dp; n.lift = (dp && dp.lift) || 0; n.view = dp && dp.back ? 'back' : undefined;
+      const dp = !st.moving && st.depth; n.behind = !!dp; n.lift = (dp && dp.lift) || 0;
+      // which way they face: the seat they're on (a stool at a counter, their
+      // back to us; a bench, facing us), or what they're doing there
+      const seat = !st.moving && !dp && TOWN_POSE[st.act] === 'sit' ? this.seatAt(st.x) : null;
+      n.view = dp && dp.back ? 'back' : seat ? seat.seat : (!st.moving && st.view) || undefined;
+      if (seat) { n.y = seat.y; if (seat.seatW <= 5) n.x = seat.x; } // (on a stool, square on it)
       // on shift at a post with a trade (a stall that buys, a parts dealer), they trade
       const onShift = !st.moving && R.job && R.job.role && st.place === R.job.place && WORK_ACTS.includes(st.act);
       n.def.role = onShift ? R.job.role : undefined; n.def.rate = onShift ? R.job.rate : undefined; n.def.stock = onShift ? R.job.stock : undefined;

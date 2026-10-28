@@ -59,7 +59,9 @@ const AMEN = {
 };
 const AMEN_DAY = ['office', 'school', 'depot'], AMEN_ROUND = ['hospital', 'hotel'];
 // what each hangout is for
-const HANGOUT_ACT = { park: 'loaf', play: 'play', temple: 'pray', food: 'eat', market: 'shop', festival: 'festival' };
+const HANGOUT_ACT = { park: 'loaf', bench: 'loaf', play: 'play', temple: 'pray', food: 'eat', market: 'shop', festival: 'festival' };
+// which way people face there, standing (sitting, the seat says: Town.seatAt)
+const HANGOUT_VIEW = { temple: 'back', market: 'back' };
 
 const Census = {
   streets: {}, places: {}, posts: [], homes: [], taken: false,
@@ -82,7 +84,7 @@ const Census = {
       const rid = p.to[0], R = this.built(rid), out = R.props.find((q) => q.kind === 'door' && q.out);
       if (!out) continue;
       const tp = Object.values(TOWN_PLACE).find((t) => t.level === rid) || {};
-      const room = add({ id: rid, kind: 'room', level: rid, street: sid, x: p.x, y: this.streets[sid].G, inside: out.x, G: out.y, label: LEVELS[rid].name, hours: p.hours, depth: tp.depth });
+      const room = add({ id: rid, kind: 'room', level: rid, street: sid, x: p.x, y: this.streets[sid].G, inside: out.x, G: out.y, label: LEVELS[rid].name, hours: p.hours, depth: tp.depth, view: tp.view });
       for (const act in tp.spots || {}) room.spots[act] = tp.spots[act].map((x) => ({ x, y: out.y - (TOWN_POSE[act] === 'sit' && !(tp.depth && tp.depth[act] && tp.depth[act].back) ? 2 : 0) }));
     }
     // ---- the people the levels were built with: posts, spots, or gone
@@ -140,7 +142,7 @@ const Census = {
       }
       for (const g of L.hangouts) {
         const act = HANGOUT_ACT[g.kind] || 'loaf', s = this.spotAt(sid, g.x, g.y, act, g.kind);
-        for (let k = 0; k < g.n; k++) s.spots[act].push({ x: g.x + (k - (g.n - 1) / 2) * (act === 'play' ? 22 : 12), y: g.y, face: k % 2 ? -1 : 1 }); // (children need room to run about)
+        for (let k = 0; k < g.n; k++) s.spots[act].push({ x: g.x + (k - (g.n - 1) / 2) * (act === 'play' ? 22 : 12), y: g.y, face: k % 2 ? -1 : 1, view: HANGOUT_VIEW[g.kind] }); // (children need room to run about)
       }
     }
     // somewhere to play on every street with homes on it, if its builder gave none
@@ -193,7 +195,7 @@ const Census = {
   },
 };
 const ACT_TAG = { eat: 'food', drink: 'social', dance: 'fun', pachi: 'fun', watch: 'fun', arcade: 'fun', festival: 'fun', loaf: 'outdoors', play: 'play', pray: 'faith', clinic: 'clinic', shop: 'shop', bathe: 'fun' };
-const SPOT_LABEL = { park: 'A park bench', play: 'Somewhere to play', temple: 'The temple steps', food: 'A stall counter', market: 'A stall', festival: 'The festival', loaf: 'A corner', clinic: 'The clinic line', eat: 'Somewhere to eat', pray: 'Somewhere to pray' };
+const SPOT_LABEL = { park: 'A park bench', bench: 'A bench', play: 'Somewhere to play', temple: 'The temple steps', food: 'A stall counter', market: 'A stall', festival: 'The festival', loaf: 'A corner', clinic: 'The clinic line', eat: 'Somewhere to eat', pray: 'Somewhere to pray' };
 const AMEN_TITLE = { eatery: 'cook', bar: 'bartender', club: 'door and bar', pachinko: 'floor hand', arcade: 'arcade hand', shop: 'shopkeeper', clinic: 'clinic nurse', temple: 'temple keeper', office: 'office worker', theater: 'usher', bath: 'bath attendant', school: 'teacher', hospital: 'nurse', depot: 'depot hand', hotel: 'hotel hand', laundry: 'laundry hand' };
 const AMEN_LOOK = {
   eatery: 'Steam, a counter, somebody eating with their head down. They don\'t serve tinkers in work clothes.', bar: 'Low light and a long counter. Nothing in there\'s broken that you could fix.', club: 'The bass comes through the door before you open it.',

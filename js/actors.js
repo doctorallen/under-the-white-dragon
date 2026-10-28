@@ -76,7 +76,7 @@ const Actors = {
   built: 0, budget() { if (this.built < 3) { this.built++; return true; } return false; },
   art(n, pose, left) {
     // (an umbrella only goes up while it's raining)
-    const dry = n.def.look && n.def.look.umbrella && Weather.rain() < 0.08, k = pose + (left ? 'L' : 'R') + (dry ? 'd' : '') + (n.view === 'back' ? 'b' : ''); let s = n.art.get(k); // (from behind: an audience)
+    const dry = n.def.look && n.def.look.umbrella && Weather.rain() < 0.08, k = pose + (left ? 'L' : 'R') + (dry ? 'd' : '') + (n.view ? n.view[0] : ''); let s = n.art.get(k); // (from behind: an audience)
     if (!s) { if (!n.lookKey) n.lookKey = JSON.stringify(n.def.look) + (n.def.smoke ? 's' : ''); s = this.shared.get(n.lookKey + k); if (s) n.art.set(k, s); }
     if (!s && n.lastArt && !this.budget()) return n.lastArt;
     if (s) return (n.lastArt = s);

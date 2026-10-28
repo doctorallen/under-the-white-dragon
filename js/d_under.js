@@ -217,7 +217,7 @@ addDistrict('d_boilers', 'Boiler House Nine', 2, -105, 520, 'The district heatin
     L.lamp(1560, G, 70, '#ffd8a0', 0.9); unLamp(L, 1690, G - 100, [1, 0.8, 0.55], 0.9, { r: 110 }); unLamp(L, 1450, G - 110, [1, 0.8, 0.55], 0.7);
     L.prop('junk', 1480, G, { label: 'coal scuttle' }); L.prop('wreck', 1800, G, { label: 'dead cleaning drone' });
     // the stokers' corner: a bench, a kettle, a vending machine
-    L.prop('deco', 1880, G, { art: () => bench(), id: 'unbench' }); L.prop('vending', 1920, G, { look: { col: '#ffd040', body: '#5a4a1a' }, label: 'vending machine' }); L.light(1920, G - 14, 34, [1, 0.85, 0.3], 0.6);
+    kBench(L, 1880, G, 'unbench'); L.prop('vending', 1920, G, { look: { col: '#ffd040', body: '#5a4a1a' }, label: 'vending machine' }); L.light(1920, G - 14, 34, [1, 0.85, 0.3], 0.6);
     // the control room up a stair: old green screens, a big window on the hall
     const CX0 = 1990, CX1 = 2280, CF = G - 96;
     L.paint(CX0, CF - 90, CX1, G, (P) => {

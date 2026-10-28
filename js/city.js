@@ -238,7 +238,7 @@ const City = {
   },
   at(id, place, act, start) {
     const b = Town.spot(id, place, act, start, undefined, this.seat(id, place, act, start)), e = { act, h: (((start / 60) % 24) + 24) % 24, o: {} };
-    return { level: b.level, x: b.x, y: b.y, moving: false, act, e, apt: b.apt, hidden: b.hidden, depth: b.depth, face: b.face, place };
+    return { level: b.level, x: b.x, y: b.y, moving: false, act, e, apt: b.apt, hidden: b.hidden, depth: b.depth, face: b.face, view: b.view, place };
   },
   // ---- every frame (from Town.sync): keep up with the game's clock --------
   sync() {

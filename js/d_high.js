@@ -216,7 +216,7 @@ addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza
     // the plaza: a fountain, a hologram over it, benches, the chrome ring
     hiFountain(L, 1000, G);
     L.ad(960, G - 160, 80, 60, 'koi', ['#3af0e0', '#ffffff']);
-    for (const x of [900, 1100]) L.prop('deco', x, G, { art: () => bench(), id: 'gb' + x });
+    for (const x of [900, 1100]) kBench(L, x, G, 'gb' + x);
     hiSculpture(L, 1230, G);
     bTree(L, 1320, G, 'street', { h: 60 }); bTree(L, 880, G, 'street', { h: 56 });
     // a black glass tower with a sky-garden halfway up
@@ -236,7 +236,7 @@ addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza
     // the plaza's far end: a sunken garden and the monorail stop
     bPark(L, 2280, 2560, G, { trees: ['pine', 'sakura'], pond: true, seed: 361 });
     L.paint(2580, G - 70, 2700, G, (P) => { P.block(2580, G - 70, 2700, G - 64, KMAT.whitepanel, { base: 0.6 }); for (const x of [2590, 2690]) P.block(x, G - 64, x + 4, G, KMAT.whitepanel, { base: 0.5, lip: 0 }); });
-    L.sign(2600, G - 84, 7, '#e8e8ff', { r: 60 }); L.prop('deco', 2640, G, { art: () => bench(), id: 'gmb' });
+    L.sign(2600, G - 84, 7, '#e8e8ff', { r: 60 }); kBench(L, 2640, G, 'gmb');
     L.prop('vending', 1300, G, { look: { col: '#9af0ff', body: '#c8d0d8' }, label: 'vending machine' });
     // Meridian's security
     // spots: spot 6 is the sky-garden (a case photo is taken there)
@@ -277,7 +277,7 @@ addDistrict('d_skybridge', 'The Skybridge', 1, 140, 760, 'A deck slung between t
       L.paint(1150, G - 80, 1400, G, (P) => { glassWall(P, 1150, G - 70, 1400, G - 4, { ramp: MAT.glass, mw: 16, mh: 22 }); P.block(1146, G - 80, 1404, G - 70, KMAT.whitepanel, { base: 0.6 }); });
       for (const x of [1180, 1260, 1340]) bTree(L, x, G - 2, 'bamboo', { h: 60 });
       L.sign(1230, G - 94, 7, '#9af0ff', { r: 60 }); L.light(1275, G - 40, 100, [0.7, 0.95, 1], 0.6);
-      L.prop('deco', 1440, G, { art: () => bench(), id: 'sbb1' }); L.prop('vending', 1480, G, { look: { col: '#ff4ab0', body: '#5a2a4a' }, label: 'vending machine' });
+      kBench(L, 1440, G, 'sbb1'); L.prop('vending', 1480, G, { look: { col: '#ff4ab0', body: '#5a2a4a' }, label: 'vending machine' });
       // a run of kiosks: noodles, parts, a pawn window
       bShophouse(L, 1540, 1660, G, { floors: 2, fh: 30, wall: KMAT.corrBlue, shops: [['ramen', '#ff3a2a']], roof: 'tin', balcony: false, seed: 431 });
       bShophouse(L, 1660, 1760, G, { floors: 2, fh: 30, wall: MAT.rust, shops: [['pawn', '#3af0e0']], roof: 'shack', balcony: false, seed: 432 });
@@ -332,7 +332,7 @@ addDistrict('d_gardens', 'Arcology Gardens', 1, 110, 660, 'The arcology\'s terra
     bPagoda(L, 2060, G - 30, { tiers: 3, w: 50, th: 26 });
     bTree(L, 2150, G - 30, 'sakura', { h: 70 }); bToro(L, 2210, G - 30);
     L.paint(2240, G - 90, 2370, G - 30, (P) => { P.block(2246, G - 76, 2364, G - 30, KMAT.darkwood, { base: 0.3 }); for (const x of [2246, 2300, 2360]) P.block(x, G - 76, x + 4, G - 30, KMAT.lacquer, { base: 0.5, lip: 0 }); kRoof(P, 2240, 2370, G - 76, 14, KMAT.kawara, { over: 10, inset: 20, curve: 4 }); });
-    L.light(2300, G - 50, 70, [1, 0.7, 0.4], 0.6); L.prop('deco', 2300, G - 30, { art: () => bench(), id: 'gpb' });
+    L.light(2300, G - 50, 70, [1, 0.7, 0.4], 0.6); kBench(L, 2300, G - 30, 'gpb', { hangout: false });
     L.spots.push([1900, G - 30], [2100, G - 30], [2300, G - 30]);
     L.stairs(2380, G - 30, 2420, G, KMAT.stone);
     bPark(L, 2420, 2600, G, { trees: ['pine', 'bamboo'], seed: 521 });

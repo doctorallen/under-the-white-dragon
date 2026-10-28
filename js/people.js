@@ -6,6 +6,7 @@ const rp = (h, n = 6) => { const c = col3(h); return rampOf([mixRgb(c, [6, 4, 10
 const SKINS = ['#e8b48a', '#c88a5a', '#8a5a3a', '#5a3a26', '#f0c8a8', '#b07850'];
 function person(o = {}) {
   if (o.view === 'back') return personBack(o);
+  if (o.view === 'front') return personFront(o);
   // a canvas 40 x 50, the feet at the bottom middle; heights in units of a
   // 33 px adult, so `tall` scales the whole figure from the feet
   const S = Spr.figure(44, 52, o.seed || 1); S.ax = 20; S.ay = 51;
@@ -198,5 +199,114 @@ function personBack(o = {}) {
   if (o.hat === 'fedora') { const hc = rp(o.hatCol || '#3a3028', 6); S.cap(cx, head - 3.6, cx, head - 3.4, 3.2, 2, hc); for (let x = -6; x <= 6; x++) S.px(cx + x, head - 2 + (Math.abs(x) > 4 ? 0.6 : 0), hc[1]); }
   if (o.goggles) { for (let x = -4; x <= 4; x++) S.px(cx + x, head - 0.4, '#1a1a20'); }
   if (o.port && acc) S.px(cx, head + 2.4, acc, true);
+  const out = S.done(); out.actor = true; return out;
+}
+// The same person facing us: sitting on a bench (the body down by a thigh's
+// length, the thighs coming toward us and the shins hanging, knees a little
+// apart, hands on the knees or round a cup or a bowl), or standing. The
+// coat's front with its opening and buttons, a shirt in the V, both arms; the
+// face (two eyes, brows, a nose, a mouth) with the hair round it: what falls
+// behind the head (long hair, a bob, a hood, a bun) drawn first, the fringe
+// and what's worn on top after.
+function personFront(o = {}) {
+  const S = Spr.figure(44, 52, (o.seed || 1) + 13); S.ax = 20; S.ay = 51;
+  const F = 51, u = o.tall || 1, Y = (h) => F - h * u, cx = 20, wd = o.wide || 0, pose = o.pose || 'stand';
+  const sk = rp(o.skin || SKINS[0], 6), top = rp(o.top || '#3a3a48', 7), legs = rp(o.legs || '#2a2a34', 6), boots = rp(o.boots || '#18161c', 5);
+  const hair = rp(o.hairCol || '#1a1414', 6), chrome = MAT.chrome, acc = o.acc ? col3(o.acc) : null, dark = (r) => r.map((c) => mixRgb(c, [8, 6, 12], 0.3));
+  const sit = pose === 'sit', dn = sit ? 7 * u : 0, bob = pose === 'breathe' ? -0.75 : 0;
+  const head = Y(29.5) + dn + bob, sh = Y(24) + dn + bob, waist = Y(16) + dn + bob, hip = Y(14) + dn, ank = Y(1.6);
+  const w0 = 4.4 + wd, hs = o.hair || 'short', long = o.coat === 'long', open = long || o.coat === 'jacket';
+  // behind it all: long hair down the back, a bob, a hood, a bun over the crown
+  if (hs === 'long') S.shape([[cx - 4.2, head - 1], [cx + 4.2, head - 1], [cx + 4.6, sh + 5], [cx - 4.6, sh + 5]], hair, { down: 0.2 });
+  if (hs === 'bob') S.cap(cx, head - 0.6, cx, head + 2, 4.4, 4.2, hair);
+  if (hs === 'hood') S.cap(cx, head - 0.4, cx, head + 1.8, 5, 4.8, top);
+  if (hs === 'bun') { S.cap(cx, head - 5, cx, head - 5, 2.2, 2.2, hair); S.px(cx + 1.6, head - 6.4, '#d83a3a'); S.px(cx + 2.2, head - 6.8, '#d83a3a'); }
+  if (o.pack) { const pk = rp(o.pack, 6); S.box(cx - w0 - 1.2, sh + 1, cx - w0 + 0.6, waist, pk, { lo: 1, hi: 4 }); S.box(cx + w0 - 0.6, sh + 1, cx + w0 + 1.2, waist, pk, { lo: 1, hi: 4 }); }
+  S.part();
+  // the legs: standing, side by side; sitting, the shins hanging from the
+  // knees to boots that point at us (the thighs come over the hem, below)
+  const LR = o.cyLegs ? chrome : legs, kneeY = hip + 2.2;
+  for (const sd of [-1, 1]) {
+    const Rl = sd < 0 ? LR : dark(LR), ax = cx + sd * (sit ? 3 : 2), ay = ank;
+    if (sit) S.cap(cx + sd * 2.9, kneeY, ax, ay, 1.8, 1.5, dark(Rl));
+    else { S.cap(cx + sd * 1.9, hip, cx + sd * 2.1, Y(7.2), 2.3 + wd * 0.3, 1.9, Rl); S.cap(cx + sd * 2.1, Y(7.2), ax, ay, 1.8, 1.5, Rl); }
+    if (o.cyLegs && acc && !sit) S.px(cx + sd * 2.1, Y(7.2), acc, true);
+    S.part(); S.cap(ax - 0.4, ay + 0.2, ax + 0.4, ay + 0.2, 1.8, 1.5, sd < 0 ? boots : dark(boots)); S.px(ax, ay - 0.4, boots[3]);
+  }
+  S.part();
+  // the body: a coat or jacket's front, the shirt in its V, a belt; a long
+  // coat falls open over the legs (over the lap, sitting)
+  const hem = long ? (sit ? hip + 3 : Y(5.5)) : hip + 0.8;
+  S.shape([[cx - w0 + 0.4, sh - 0.6], [cx + w0 - 0.4, sh - 0.6], [cx + w0 + 0.4, sh + 2], [cx + w0 - 0.4, waist], [cx + w0 + (long ? 1 : 0), hem], [cx - w0 - (long ? 1 : 0), hem], [cx - w0 + 0.4, waist], [cx - w0 - 0.4, sh + 2]], top, { down: 0.3, folds: long });
+  const inner = o.shirt ? rp(o.shirt, 5) : dark(top);
+  if (open) {
+    for (let y = Math.round(sh); y < Math.round(sh + 4); y++) { const k = (y - sh) * 0.45; for (let x = Math.round(cx - 1.4 + k); x <= Math.round(cx + 1.4 - k); x++) if (S.get(x, y)) S.px(x, y, inner[2]); }
+    for (let y = Math.round(sh + 4); y < Math.round(hem); y++) if (S.get(cx, y)) S.px(cx, y, top[0]);
+    if (long) for (let y = Math.round(hip + 1); y < Math.round(hem); y++) { S.px(cx - 0.5, y, top[0]); S.px(cx + 0.5, y, legs[1]); }
+    for (let y = Math.round(sh + 5); y < Math.round(hip); y += 3) S.px(cx + 1, y, top[5]);
+  } else if (!o.vest && !o.apron && !o.armor) for (let y = Math.round(sh + 1); y < Math.round(sh + 4); y++) S.px(cx, y, top[1]);
+  if (o.vest) { const vr = rp(o.vest, 6); S.shape([[cx - 2.6, sh + 1.5], [cx + 2.6, sh + 1.5], [cx + 2.4, waist + 0.5], [cx - 2.4, waist + 0.5]], vr, { down: 0.2 }); }
+  if (o.apron) S.shape([[cx - 3.2, sh + 3], [cx + 3.2, sh + 3], [cx + 3.6, sit ? hip + 2.6 : Y(5)], [cx - 3.6, sit ? hip + 2.6 : Y(5)]], rp(o.apron, 6), { down: 0.25 });
+  if (o.armor) S.cap(cx - 2.4, sh + 2.5, cx + 2.4, sh + 2.5, 3.4, 3.4, rp(o.armor, 7));
+  if (o.pack) for (const sd of [-1, 1]) for (let y = Math.round(sh); y < Math.round(waist); y++) S.px(cx + sd * (w0 - 1.6), y, rp('#5a4a3a', 5)[1]);
+  if (!long || !open) for (let x = Math.round(cx - w0); x <= Math.round(cx + w0); x++) if (S.get(x, Math.round(hip))) S.px(x, hip, rp(o.belt || '#141216')[1]);
+  if (!o.apron && S.get(cx, Math.round(hip))) S.px(cx, hip, '#b8a070');
+  if (acc && o.trim !== false) for (let y = Math.round(sh + 1); y < Math.round(hem); y += 2) { S.px(cx - w0 + 0.6, y, acc, true); S.px(cx + w0 - 0.6, y, acc, true); }
+  if (o.collar) for (const sd of [-1, 1]) S.cap(cx + sd * 2, sh - 0.8, cx + sd * 1, sh + 1.2, 1.4, 1, top, { bias: 0.12 });
+  S.part();
+  // sitting: the lap, each thigh coming toward us over the hem (a long coat
+  // over it, open between), lit along the top, the knee at the end
+  if (sit) {
+    for (const sd of [-1, 1]) {
+      const R = long ? top : LR, x0 = cx + sd * 0.6, x1 = cx + sd * 4.4;
+      S.cap(cx + sd * 2.2, hip + 0.4, cx + sd * 2.6, kneeY - 0.4, 2.3 + wd * 0.3, 2.1, sd < 0 ? R : dark(R));
+      for (let x = Math.round(Math.min(x0, x1)); x <= Math.round(Math.max(x0, x1)); x++) if (S.get(x, Math.round(hip - 1.2))) S.px(x, hip - 1.2, R[5]);
+      if (o.cyLegs && acc) S.px(cx + sd * 2.6, kneeY, acc, true);
+    }
+    if (long) for (let y = Math.round(hip - 1); y <= Math.round(kneeY + 1); y++) S.px(cx, y, LR[1]);
+    S.part();
+  }
+  // the arms: sitting, the hands on the knees, or round a cup or a bowl held
+  // at the chest; standing, hanging
+  const held = o.bowl || o.cup || o.phone, arm = (sd) => {
+    const cyb = o.cyArm === 'both' || (o.cyArm && sd > 0), R = cyb ? chrome : sd < 0 ? top : dark(top), shx = cx + sd * (w0 - 0.6);
+    const hx = held ? cx + sd * 1.6 : sit ? cx + sd * 3 : cx + sd * (w0 + 0.6), hy = held ? waist - 1.5 : sit ? hip - 0.6 : hip + 0.5;
+    const ex = cx + sd * (w0 + (held ? 0.8 : 0.9)), ey = held ? waist + 0.5 : (sh + hy) / 2 + 0.5;
+    S.cap(shx, sh + 1, ex, ey, 1.9 + wd * 0.2, 1.6, R); S.cap(ex, ey, hx, hy, 1.6, 1.3, R);
+    S.part(); S.cap(hx, hy, hx, hy + 0.3, 1.3, 1.2, cyb ? chrome : sk);
+    if (cyb && acc) S.px(ex, ey, acc, true);
+  };
+  arm(-1); S.part(); arm(1); S.part();
+  if (o.bowl) { S.cap(cx - 2.4, waist - 2, cx + 2.4, waist - 2, 1.6, 1.4, ['#5a1a0e', '#a83a1e', '#e06a3a', '#ffa070']); S.px(cx - 0.5, waist - 5, '#d8d8e0'); S.px(cx + 0.5, waist - 7, '#b8b8c0'); }
+  else if (o.cup) { const cc = rp(o.cup === true ? '#e8e0d0' : o.cup, 4); S.box(cx - 1, waist - 4, cx + 1, waist - 1.5, cc, { lo: 1, hi: 3 }); S.px(cx, waist - 6, '#b8b8c0'); }
+  else if (o.phone) { S.px(cx, waist - 2, col3(o.phone), true); S.px(cx + 1, waist - 2, col3(o.phone), true); }
+  S.part();
+  // the head: the neck, the skull, the ears, and the face
+  S.cap(cx, sh, cx, head + 3, 1.5, 1.4, sk);
+  S.cap(cx, head - 0.6, cx, head + 0.8, 3.7, 3.3, sk);
+  // the face itself flat, lit from in front: only its edges shade
+  for (let y = Math.round(head - 1.6); y <= Math.round(head + 2.4); y++) for (let x = Math.round(cx - 2.4); x <= Math.round(cx + 2.4); x++) if (S.get(x, y)) S.px(x, y, sk[3]);
+  S.px(cx - 3.8, head + 0.6, sk[2]); S.px(cx + 3.8, head + 0.6, sk[1]);
+  const eyeY = head + 0.2;
+  if (!o.shades && hs !== 'helmet') { S.px(cx - 1.6, eyeY, '#0c080a'); S.px(cx + 1.6, eyeY, '#0c080a'); S.px(cx - 1.6, eyeY - 1.2, hair[1]); S.px(cx + 1.6, eyeY - 1.2, hair[1]); }
+  S.px(cx, head + 1.4, sk[1]); S.px(cx, head + 2.6, mixRgb(sk[1], [120, 40, 40], 0.25));
+  if (o.eye) { S.px(cx + 1.6, eyeY, col3(o.eye), true); S.px(cx + 2.6, eyeY, chrome[2]); }
+  if (o.mask) for (let x = -2; x <= 2; x++) for (let y = 1; y < 3; y++) S.px(cx + x, head + y + 0.6, rp(o.mask, 4)[y]);
+  if (o.port && acc) S.px(cx + 3.6, head + 1.8, acc, true);
+  // the hair over the brow, and what's worn on the head
+  S.part(false);
+  const crown = (r = 3.9) => S.cap(cx, head - 2.4, cx, head - 2.2, r, 2.6, hair, { mask: (x, y) => y <= head - 1.3 });
+  if (hs === 'short' || hs === 'undercut') { crown(); if (hs === 'short') { S.px(cx - 3.6, head - 0.6, hair[1]); S.px(cx + 3.6, head - 0.6, hair[2]); } }
+  if (hs === 'bob' || hs === 'long' || hs === 'bun') { crown(4.1); for (let x = -3; x <= 1; x++) S.px(cx + x, head - 1.3, hair[x < 0 ? 2 : 3]); }
+  if (hs === 'mohawk') for (let y = 0; y < 7; y++) for (let x = -1; x <= 1; x++) S.px(cx + x, head - 3 - y, mixRgb(hair[4], [255, 255, 255], y > 5 ? 0.45 : 0), !!o.hairGlow && y > 5);
+  if (hs === 'hood') S.cap(cx, head - 2.6, cx, head - 2.2, 4.4, 2.4, top, { mask: (x, y) => y <= head - 1.4 });
+  if (hs === 'cap') { const cc = rp(o.capCol || '#3a2a2a'); S.cap(cx, head - 2.6, cx, head - 2.4, 3.9, 2.4, cc, { mask: (x, y) => y <= head - 1.6 }); for (let x = -4; x <= 4; x++) S.px(cx + x, head - 1.4, cc[Math.abs(x) > 3 ? 0 : 1]); }
+  if (hs === 'helmet') { const ar = rp(o.armor || '#c8ccd4', 7), vz = col3(o.visor || '#ff3040'); S.cap(cx, head - 1, cx, head, 4.4, 4.1, ar); for (let x = -3; x <= 3; x++) { S.px(cx + x, head - 0.2, mixRgb(vz, [255, 255, 255], x === 0 ? 0.5 : 0), true); S.px(cx + x, head + 0.6, mixRgb(vz, [0, 0, 0], 0.45), true); } }
+  if (hs === 'bald') { S.px(cx - 1, head - 3.2, sk[5]); S.px(cx, head - 3.4, sk[4]); }
+  if (['short', 'undercut', 'bob', 'long', 'bun'].includes(hs) && !o.hat) { S.px(cx - 1, head - 4.2, hair[5]); S.px(cx, head - 4.4, hair[4]); }
+  if (o.hat === 'fedora') { const hc = rp(o.hatCol || '#3a3028', 6); S.cap(cx, head - 3.6, cx, head - 3.2, 3.2, 2, hc); for (let x = -6; x <= 6; x++) S.px(cx + x, head - 2 + (Math.abs(x) > 4 ? 0.6 : 0), hc[Math.abs(x) > 4 ? 1 : 2]); for (let x = -3; x <= 3; x++) S.px(cx + x, head - 2.9, hc[0]); }
+  if (o.hat === 'circlet') { const hc = col3(o.hatCol || '#e8e8ff'); for (let x = -3; x <= 3; x++) S.px(cx + x, head - 2.2, hc); S.px(cx, head - 2.4, '#3af0e0', true); }
+  if (o.goggles) { const gc = col3(o.goggles), up = o.shades || o.mask, gy = up ? head - 3 : eyeY; for (let x = -4; x <= 4; x++) S.px(cx + x, gy, '#1a1a20'); for (const gx of [-1.6, 1.6]) S.px(cx + gx, gy, gc, true); }
+  if (o.shades) { const vc = col3(o.shades); for (let x = -3; x <= 3; x++) S.px(cx + x, eyeY, mixRgb(vc, [255, 255, 255], x === 1 ? 0.6 : 0.05), true); }
   const out = S.done(); out.actor = true; return out;
 }

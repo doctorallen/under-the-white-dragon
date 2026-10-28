@@ -178,7 +178,7 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', meters: -260, tier: 4, hub:
       L.sign(640, G - 118, 7, '#ffd040', { r: 60 }); L.light(700, G - 40, 110, [1, 0.8, 0.55], 0.9);
       L.vents.push({ x: 650, y: G - 40, kind: 'steam' }, { x: 760, y: G - 40, kind: 'steam' });
       L.npc({ name: 'Cookie', look: { skin: SKINS[2], hair: 'bald', top: '#e8e0d0', apron: '#8a3a2a', legs: '#2a2a2a', wide: 1, hands: { fx: 26, fy: 38 } }, x: 700, y: G, sched: [[0, 24, 700, 'work']], lines: ['Eat something, tinker. You look like a pump that\'s run dry.', 'Twelve-hour shifts. I feed them all.'], behind: true });
-      for (const x of [560, 840]) L.prop('deco', x, G, { art: () => bench(), id: 'wkcb' + x });
+      for (const x of [560, 840]) kBench(L, x, G, 'wkcb' + x);
       // the conveyor floor: belts at two heights, crates riding, a crane over it
       L.paint(900, 40, 2300, G, (P) => {
         wkConveyor(P, 920, 1400, G - 30, { G }); wkConveyor(P, 1460, 2280, G - 30, { G });

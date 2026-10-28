@@ -86,7 +86,7 @@ LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', meters: -140, tier: 3, hub
     // the platform the old line still stops at
     L.paint(0, G - 120, 230, G, (P) => { otTiles(P, 0, G - 120, 230, G, 31); P.block(0, G - 126, 230, G - 120, MAT.steelD, { base: 0.5 }); P.block(120, G - 100, 200, G - 70, MAT.steelD, { base: 0.4 }); for (let i = 0; i < 6; i++) { kH(P, 126, 196, G - 92 + i * 4, ['#d83a2a', '#3a8ad8', '#e8b030', '#3aa86a', '#8a3ad8', '#e8e8e8'][i]); kFill(P, 130 + i * 11, G - 94 + i * 4, 133 + i * 11, G - 89 + i * 4, '#f0f0f0'); } });
     L.sign(12, G - 112, 7, '#ffd040', { r: 50, seed: 3 }); L.tube(40, G - 118, 30, '#e8ffe8', 0.6); L.tube(160, G - 118, 30, '#e8ffe8', 0.5);
-    L.prop('deco', 190, G, { art: () => bench(), id: 'otb1' });
+    kBench(L, 190, G, 'otb1');
     // the old street: townhouses, lanterns
     bMachiya(L, 236, 318, G, { seed: 1, noren: '#1a2a4a' });
     bMachiya(L, 318, 410, G, { seed: 2, noren: '#6a1a1a', doorLeft: true });
@@ -256,7 +256,7 @@ addDistrict('d_line', 'Old Line Four', 3, -155, 760, 'An abandoned subway line: 
     });
     for (const x of [180, 400, 620, 840]) L.sign(x, CE + 6, 6, '#ffd040', { r: 50, seed: x });
     for (let x = 30; x < 960; x += 110) L.tube(x, CE + 4, 26, '#e8ffe8', hash(x, 1, 6) < 0.3 ? 0.2 : 0.55);
-    for (const x of [260, 500, 740]) L.prop('deco', x, G, { art: () => bench(), id: 'otlb' + x });
+    for (const x of [260, 500, 740]) kBench(L, x, G, 'otlb' + x);
     kStallAt(L, 900, G, 'ramen', { npc: { name: 'Kiosk cook', lines: ['The kiosk\'s been here longer than the trains have been gone.', 'Noodles. Hot. That\'s the menu.'] } });
     // the tunnel: a dark mouth, rails, a dead carriage pushed in
     L.paint(960, CE, 1520, G, (P) => {
