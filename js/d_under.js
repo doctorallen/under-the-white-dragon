@@ -243,7 +243,7 @@ addDistrict('d_boilers', 'Boiler House Nine', 2, -105, 520, 'The district heatin
     for (const [x, y] of [[180, G - 80], [1350, G - 80], [1700, G - 120], [2400, G - 70]]) unLamp(L, x, y, [1, 0.8, 0.55], 0.8);
     L.prop('ac', 2300, G, { label: 'feed pump' });
     // pipes in front, close to the eye
-    for (const x of [480, 1240, 2010]) L.prop('deco', x, G, { art: () => unFrontPipe(170, x), id: 'unfp' + x, front: 1 });
+    for (const x of [480, 1240, 2010]) L.prop('deco', x, G, { art: () => unFrontPipe(170, x), id: 'unfp' + x, front: 1, fore: true });
     L.spots.push([400, G], [800, G], [1200, G], [1500, G], [1880, G], [2400, G], [2550, G]);
     L.critter('rat', 200, W - 100, G, 2);
   },
@@ -329,7 +329,7 @@ addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under t
     for (const x of [2450, 2475, 2500, 2525, 2550]) L.prop('rack', x, G, { label: 'switchgear cabinet' });
     L.prop('ac', 1360, G, { label: 'cooling fan' }); L.prop('junk', 2100, G, { label: 'burnt-out switchgear' });
     for (const x of [200, 700, 1250, 2000, 2440]) L.tube(x, G - 150, 26, '#e8f4ff', 0.8);
-    for (const x of [680, 1900]) L.prop('deco', x, G, { art: () => unFrontPipe(200, x), id: 'unfp' + x, front: 1 });
+    for (const x of [680, 1900]) L.prop('deco', x, G, { art: () => unFrontPipe(200, x), id: 'unfp' + x, front: 1, fore: true });
     L.spots.push([200, G], [450, G], [700, G], [950, G], [1200, G], [1550, G], [1950, G], [2260, G], [2500, G]);
     L.critter('rat', 200, W - 100, G, 2);
   },

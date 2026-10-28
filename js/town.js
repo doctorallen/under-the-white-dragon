@@ -26,13 +26,16 @@ const TOWN_PLACE = {
   noodles: { level: 'd_noodles', door: 424, inside: 340 },
   grocery: { level: 'd_grocery', door: 216, inside: 114 },
   flats: { level: 'd_flats', door: 1041, inside: 86 },
-  izakaya: { level: 'd_izakaya', street: 'd_neonrow', door: 355, inside: 140, spots: { drink: [450, 390], work: [380] } },
-  menagerie: { level: 'd_menagerie', street: 'd_neonrow', door: 652, inside: 290, spots: { browse: [120, 160, 350, 410], work: [214] } },
+  izakaya: { level: 'd_izakaya', street: 'd_neonrow', door: 355, inside: 140, spots: { drink: [454, 394], work: [380] }, depth: { work: { lift: 4 } } },
+  menagerie: { level: 'd_menagerie', street: 'd_neonrow', door: 652, inside: 290, spots: { browse: [120, 160, 350, 410], work: [214] }, depth: { work: { lift: 4 } } },
   pachinko: { level: 'd_pachinko', street: 'd_neonrow', door: 1050, inside: 320, spots: { pachi: [104, 200, 448, 520], work: [260] } },
-  cinema: { level: 'd_cinema', street: 'd_neonrow', door: 1365, inside: 110, spots: { watch: [440, 500, 540, 584], work: [210] } },
-  coil: { level: 'd_coil', street: 'd_neonrow', door: 2065, inside: 120, spots: { work: [600] } },
+  cinema: { level: 'd_cinema', street: 'd_neonrow', door: 1365, inside: 110, spots: { watch: [450, 510, 550, 590], work: [210] }, depth: { work: { lift: 4 }, watch: { back: true, lift: 2 } } },
+  coil: { level: 'd_coil', street: 'd_neonrow', door: 2065, inside: 120, spots: { work: [600] }, depth: { work: { lift: 4 } } },
   shrine: { level: 'd_shrine', street: 'd_neonrow', door: 2600, inside: 370, spots: { pray: [200, 240], work: [326] } },
 };
+// (`depth`: where in the room someone doing that is: behind the counter,
+// lifted onto its step, or in the seats seen from behind; drawn behind the
+// counter or the row of seats in front of them)
 const TOWN_GAP = 0.3; // game hours to cross a street between two you can see someone on (off screen)
 // a street's ends, out to the next street or the rest of the city
 function townEnd(street, side) { const L = LEVELS[street].built || (LEVELS[street].built = LEVELS[street].make()); return side === 'west' ? 18 : L.w - 18; }
@@ -231,11 +234,14 @@ const Town = {
       else if (st.act === 'work' && here === 'd_grocery') n.face = -1;
       else if (st.act === 'pay') n.face = 1;
       n.x = st.x; n.y = st.y; n.moving = st.moving; n.act = st.moving ? 'walk' : TOWN_POSE[st.act] || 'stand'; n.townState = st;
+      const dp = !st.moving && this.depthOf(here, st.act); n.behind = !!dp; n.lift = (dp && dp.lift) || 0; n.view = dp && dp.back ? 'back' : undefined;
       // something said on getting there
       if (!st.moving && this.lastAct[id] !== st.act + st.e.h) { this.lastAct[id] = st.act + st.e.h; this.arrived(n, id, st); }
       if (st.moving) this.lastAct[id] = null;
     }
   },
+  // behind a counter or in the seats, by what they're doing where (TOWN_PLACE's depth)
+  depthOf(level, act) { for (const k in TOWN_PLACE) { const P = TOWN_PLACE[k]; if (P.level === level && P.depth) return P.depth[act] || null; } return null; },
   // on arriving: the till, the counter, a neighbour's door
   arrived(n, id, st) {
     const other = (pred) => Actors.npcs.find((q) => q !== n && pred(q));

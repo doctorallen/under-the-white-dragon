@@ -747,4 +747,11 @@ function addDistrict(id, name, tier, depth, mapX, blurb, label, make) {
 function bTorii(L, x0, x1, G, h = 70, o = {}) { L.paint(x0 - 8, G - h - 10, x1 + 8, G, (P) => kTorii(P, x0, x1, G, h, o)); }
 function bToro(L, x, G) { L.paint(x - 8, G - 36, x + 8, G, (P) => kToro(P, x, G)); L.light(x, G - 22, 30, [1, 0.7, 0.35], 0.6, 1, { mode: 'fire', seed: x }); }
 function bTree(L, x, G, kind, o = {}) { const h = o.h || 60; L.paint(x - 40, G - h - 20, x + 40, G + 2, (P) => kTree(P, x, G, kind, Object.assign({ h }, o))); }
+// a counter, x0 to x1, its front a prop drawn over whoever works behind it
+// (and stools along it, in front, drawn over that: o.stools, their xs)
+function bCounter(L, x0, x1, G, o = {}) {
+  const w = x1 - x0, id = L.id + 'ctr' + x0;
+  L.prop('deco', x0 + Math.floor(w / 2), G, { art: () => counterFront(Object.assign({ w }, o)), id, front: true });
+  for (const x of o.stools || []) L.prop('deco', x, G, { art: () => stool(), id: id + 's' + x, front: true });
+}
 function bLanterns(L, x0, x1, y, cols, o = {}) { L.paint(x0, y - 2, x1, y + 16, (P) => kLanterns(P, x0, x1, y, cols, o)); for (let x = x0 + 30; x < x1; x += 70) L.light(x, y + 8, 40, [1, 0.5, 0.3], 0.45); }

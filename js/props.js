@@ -103,6 +103,33 @@ function stall(o = {}) {
 }
 function acUnit() { const S = new Spr(14, 10, 45); S.ax = 7; S.ay = 9; S.box(0, 0, 13, 9, rp('#7a7a72'), { lo: 0, hi: 5 }); S.ell(5, 5, 3, 3, ['#1a1a1a', '#3a3a3a', '#5a5a5a']); for (let y = 2; y < 8; y += 2) for (let x = 9; x < 13; x++) S.px(x, y, '#2a2a28'); return S.done(); }
 function stool() { const S = new Spr(8, 9, 46); S.ax = 4; S.ay = 8; S.ell(4, 1.5, 3.5, 1.2, rp('#c83a3a')); S.limb(4, 2, 4, 8, 1, MAT.chrome); S.limb(1, 8, 7, 8, 1, MAT.chrome); return S.done(); }
+// a counter from the front, people's scale (a bar's top at about a person's
+// waist): an overhanging top, the front in panels, a kick at the floor. Its
+// prop has `front`, so the staff stand behind it and the diners in front
+function counterFront(o = {}) {
+  const w = o.w || 120, h = o.h || 22, top = o.top || KMAT.darkwood, body = o.body || KMAT.lacquer, S = new Spr(w, h, 449); S.ax = Math.floor(w / 2); S.ay = h - 1;
+  S.box(0, 0, w - 1, 3, top, { lo: 2, hi: 8 });
+  S.box(3, 4, w - 4, h - 1, body, { lo: 1, hi: 6 });
+  for (let x = 3; x < w - 3; x++) { S.px(x, 4, top[0]); S.px(x, h - 3, body[1]); S.px(x, h - 2, body[0]); } // the shadow under the top, the kick
+  const pw = o.panel || 30; for (let x = 3 + pw; x < w - 8; x += pw) for (let y = 6; y < h - 4; y++) { S.px(x, y, body[1]); S.px(x + 1, y, body[5]); }
+  if (o.trim) for (let x = 3; x < w - 3; x++) S.px(x, 6, o.trim, !!o.glow);
+  return S.done();
+}
+// a row of cinema seats seen from behind, 20 px a seat: the audience sits
+// behind it (`front` on its prop), heads and shoulders over the backs
+function seatRow(o = {}) {
+  const n = o.n || 12, W = n * 20 + 4, H = 16, S = new Spr(W, H, 451); S.ax = Math.floor(W / 2); S.ay = H - 1;
+  const v = rp(o.col || '#8a1a2a', 7), st = rp('#2a2a30', 5);
+  for (let k = 0; k <= n; k++) { const x = k * 20; S.box(x, 7, x + 3, H - 1, st, { lo: 0, hi: 4 }); S.box(x, 6, x + 3, 7, st, { lo: 1, hi: 4 }); } // the arms and their posts
+  for (let k = 0; k < n; k++) {
+    const x = k * 20 + 4;
+    S.box(x + 2, 0, x + 13, 2, v, { lo: 1, hi: 6 }); S.box(x, 2, x + 15, 11, v, { lo: 1, hi: 5 });
+    S.box(x + 3, 4, x + 12, 9, v, { lo: 0, hi: 3 }); // the back's panel
+    S.box(x + 2, 12, x + 13, H - 1, st, { lo: 0, hi: 2 }); // the seat's underside, in shadow
+  }
+  if (o.lamps) for (const x of [1, W - 3]) S.px(x, H - 3, '#ffb040', true); // the aisle lights at each end
+  return S.done();
+}
 function crate(o = {}) { const w = o.w || 12, h = o.h || 10, S = new Spr(w, h, 47); S.ax = w / 2; S.ay = h - 1; S.box(0, 0, w - 1, h - 1, rp(o.col || '#4a5a3a'), { lo: 0, hi: 5 }); for (let x = 0; x < w; x++) S.px(x, 2, rp(o.col || '#4a5a3a')[0]); if (o.label) for (let x = 2; x < 6; x++) S.px(x, 5, col3(o.label)); return S.done(); }
 function barrelFire() {
   const S = new Spr(12, 22, 48); S.ax = 6; S.ay = 21; S.ell(6, 15, 5.5, 6.5, MAT.rust, { mask: (x, y) => y > 9 }); S.box(1, 9, 11, 21, MAT.rust, { lo: 0, hi: 6 });

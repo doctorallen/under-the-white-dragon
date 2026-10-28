@@ -91,10 +91,9 @@ LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2,
       kFill(P, 36, G - 30, 124, G - 26, '#2a1610');
       // the tables along the wall: dark wood, a bowl and chopsticks on each
       for (const x of [150, 220, 290]) { P.block(x, G - 18, x + 26, G - 15, KMAT.darkwood, { base: 0.6 }); kFill(P, x + 11, G - 15, x + 15, G, '#1a0e0a'); kFill(P, x + 9, G - 21, x + 17, G - 18, '#e8e0d0'); kFill(P, x + 10, G - 22, x + 16, G - 21, '#c84a2a'); }
-      // the counter, the pots behind it
-      P.block(372, G - 30, 610, G - 26, KMAT.darkwood, { base: 0.62 }); P.block(378, G - 26, 604, G, KMAT.lacquer, { base: 0.38, panels: [34, 26] });
-      for (const x of [400, 430]) { P.block(x, G - 44, x + 22, G - 30, MAT.steel, { base: 0.5 }); }
-      for (const x of [470, 520, 560]) kFill(P, x, G - 33, x + 8, G - 30, '#e8e0d0');
+      // the pots behind the counter (the counter's a prop: bCounter), bowls on it
+      for (const x of [400, 430]) { P.block(x, G - 38, x + 22, G - 22, MAT.steel, { base: 0.5 }); }
+      for (const x of [470, 520, 560]) kFill(P, x, G - 25, x + 8, G - 22, '#e8e0d0');
       for (let x = 24; x < WN.PART; x++) P.put(x, G - 2, [30, 14, 10]);
       // the partition and its curtain through to the back
       P.block(WN.PART, C + 6, WN.BACK, G - 40, MAT.concreteD, { base: 0.4 }); kNoren(P, WN.PART - 2, WN.BACK + 2, G - 40, 26, '#2a2a3a');
@@ -111,10 +110,11 @@ LEVELS.d_noodles = { name: 'The White Dragon', tier: 1, hidden: true, metres: 2,
     // the dining room's light: lanterns, the pots' steam, the window's neon
     bLanterns(L, 140, 600, C + 10, ['#ff3a3a', '#ffb040'], { step: 26 });
     L.light(480, G - 50, 130, [1, 0.62, 0.38], 0.9); L.light(220, G - 40, 110, [1, 0.6, 0.38], 0.7); L.light(80, G - 60, 60, [0.8, 0.4, 0.9], 0.5);
-    for (const x of [411, 441]) L.vents.push({ x, y: G - 46, kind: 'steam' });
+    for (const x of [411, 441]) L.vents.push({ x, y: G - 40, kind: 'steam' });
     for (const x of [163, 233, 303]) L.vents.push({ x, y: G - 23, kind: 'steam' });
-    for (const x of [400, 450, 500, 550]) L.prop('deco', x, G, { art: () => stool(), id: 'wnstool' + x });
-    L.npc({ name: 'Auntie Lin', role: 'noodles', look: { skin: SKINS[0], hair: 'bun', hairCol: '#c8c8c8', top: '#e8e0d0', apron: '#8a1a24', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 470, y: G - 2, face: 1, sched: [[0, 24, 470, 'work']], behind: true, lines: ['Eat first. Then fix things.', 'The cellar is yours as long as the rent comes and nobody lifts that rug.', 'Nobody asks what you do down there. Nobody asks me what\'s in the broth either.'] });
+    // the counter: Lin behind it, on the step, the diners on stools in front
+    bCounter(L, 372, 610, G, { top: KMAT.darkwood, body: KMAT.lacquer, panel: 34, stools: [400, 450, 500, 550] });
+    L.npc({ name: 'Auntie Lin', role: 'noodles', look: { skin: SKINS[0], hair: 'bun', hairCol: '#c8c8c8', top: '#e8e0d0', apron: '#8a1a24', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, x: 470, y: G, face: 1, sched: [[0, 24, 470, 'work']], behind: true, lift: 4, lines: ['Eat first. Then fix things.', 'The cellar is yours as long as the rent comes and nobody lifts that rug.', 'Nobody asks what you do down there. Nobody asks me what\'s in the broth either.'] });
     // people eating: at the tables and at the counter, chopsticks up
     // a regular who's always on the same stool of an evening; the rest of the
     // diners are the block's residents, in at their own times (town.js)

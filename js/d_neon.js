@@ -40,18 +40,18 @@ nrRoom('d_izakaya', 'The Red Lantern', 560, 140, 'noren', [0.44, 0.32, 0.28], (L
     for (let x = 250; x < 500; x += 10) { kFill(P, x, C + 14, x + 7, C + 36, '#e8e0cc'); for (let y = C + 17; y < C + 34; y += 3) kH(P, x + 2, x + 5, y, '#1a1410'); }
     // sake: a wall of bottles behind the counter, shelf on shelf
     for (let k = 0; k < 3; k++) { const y = C + 52 + k * 14; kFill(P, 250, y, 500, y + 2, '#5a3a20'); bkShelf(P, 252, 498, y, 1, 600 + k); }
-    // the counter and its stools, the low tables by the door
-    P.block(240, G - 28, 510, G - 24, KMAT.darkwood, { base: 0.62 }); P.block(246, G - 24, 504, G, KMAT.lacquer, { base: 0.36, panels: [36, 24] });
-    for (const x of [270, 330, 390, 450]) { kFill(P, x, G - 12, x + 8, G - 10, '#c83a2a'); kFill(P, x + 3, G - 10, x + 5, G, '#5a5a60'); }
+    // the low tables by the door (the counter and its stools are props: bCounter)
     for (const x of [44, 190]) { P.block(x, G - 10, x + 34, G - 7, KMAT.darkwood, { base: 0.6 }); kFill(P, x + 4, G - 7, x + 7, G, '#1a0e0a'); kFill(P, x + 27, G - 7, x + 30, G, '#1a0e0a'); kFill(P, x + 12, G - 13, x + 20, G - 10, '#e8e0d0'); }
     // a paper window by the door, lit from the street
     kLattice(P, 70, C + 30, 120, G - 40, KMAT.darkwood, { lit: '#ffb070' });
   });
   bLanterns(L, 40, 520, C + 10, ['#ff3a2a', '#ff6a3a'], { step: 30 });
+  // the counter: the master behind it, the regulars on stools in front
+  bCounter(L, 240, 510, G, { top: KMAT.darkwood, body: KMAT.lacquer, panel: 36, stools: [274, 334, 394, 454] });
   L.light(370, G - 50, 140, [1, 0.5, 0.3], 0.9); L.light(110, G - 40, 90, [1, 0.6, 0.35], 0.6);
-  L.prop('register', 488, G, { label: 'the till' }); L.prop('karaoke', 520, G, { label: 'the karaoke machine' }); L.prop('dryer', 36, G, { label: 'the hand dryer by the toilet' });
-  nrPerson(L, 'Salaryman', 270, G, 'sit', { skin: SKINS[1], hair: 'short', top: '#2a2a3a', coat: 'jacket', legs: '#1a1a24' }, ['One more. Then home. Then one more.', 'My boss is a chip in a tower. I report to a chip.'], { hours: [18, 2] });
-  nrPerson(L, 'Office girl', 330, G, 'sit', { skin: SKINS[0], hair: 'bob', hairCol: '#1a1414', top: '#c8c0b0', legs: '#2a2a34' }, ['Don\'t make me sing. Last time I sang, the machine died.', 'He\'s been saying one more for an hour.'], { face: -1 }, { hours: [18, 2] });
+  L.prop('register', 488, G, { label: 'the till', lift: 22, front: true }); L.prop('karaoke', 520, G, { label: 'the karaoke machine' }); L.prop('dryer', 36, G, { label: 'the hand dryer by the toilet' });
+  nrPerson(L, 'Salaryman', 274, G, 'sit', { skin: SKINS[1], hair: 'short', top: '#2a2a3a', coat: 'jacket', legs: '#1a1a24' }, ['One more. Then home. Then one more.', 'My boss is a chip in a tower. I report to a chip.'], { hours: [18, 2] });
+  nrPerson(L, 'Office girl', 334, G, 'sit', { skin: SKINS[0], hair: 'bob', hairCol: '#1a1414', top: '#c8c0b0', legs: '#2a2a34' }, ['Don\'t make me sing. Last time I sang, the machine died.', 'He\'s been saying one more for an hour.'], { face: -1 }, { hours: [18, 2] });
   nrPerson(L, 'Old drunk', 61, G, 'sit', { skin: SKINS[4], hair: 'bald', top: '#5a4a3a', legs: '#2a2420' }, ['The Row was all paper lanterns when I was young. Now it\'s plastic lanterns.', 'I sang here in \'61. They still talk about it. Badly.'], { hours: [18, 2] });
 });
 
@@ -70,12 +70,11 @@ nrRoom('d_menagerie', 'The Menagerie', 520, 290, 'glass', [0.4, 0.5, 0.5], (L, G
     }
     // the fish tanks along the right wall, lit from inside
     for (const x0 of [310, 370, 430]) { kFill(P, x0, C + 30, x0 + 52, G - 32, '#0a1420'); for (let y = C + 32; y < G - 34; y++) for (let x = x0 + 2; x < x0 + 50; x++) P.put(x, y, mixRgb([60, 160, 220], [20, 60, 120], (y - C - 30) / 56), 0.35); for (let k = 0; k < 6; k++) { const fx = x0 + 6 + Math.floor(hash(k, x0, 78) * 38), fy = C + 40 + Math.floor(hash(k, x0, 79) * 36), c = [[255, 140, 40], [255, 220, 60], [255, 90, 160]][k % 3]; for (let i = 0; i < 4; i++) P.put(fx + i, fy, c, 0.5); P.put(fx + 4, fy - 1, c, 0.5); P.put(fx + 4, fy + 1, c, 0.5); } kFill(P, x0 - 2, G - 32, x0 + 54, G, '#2a3a3a'); }
-    // the counter
-    P.block(196, G - 26, 248, G - 22, KMAT.darkwood, { base: 0.6 }); P.block(200, G - 22, 244, G, MAT.steelD, { base: 0.4 });
   });
+  bCounter(L, 192, 252, G, { top: KMAT.darkwood, body: MAT.steelD, panel: 30 });
   L.critter('owl', 230, 230, C + 40, 1); L.critter('cat', 40, 300, G, 2); L.critter('dog', 60, 290, G, 1);
   L.light(380, G - 60, 120, [0.4, 0.8, 1], 0.7); L.light(120, C + 30, 140, [0.8, 1, 0.95], 0.5);
-  L.prop('register', 222, G, { label: 'the till', lift: 26 });
+  L.prop('register', 236, G, { label: 'the till', lift: 22, front: true });
 });
 
 // ---- Lucky Seven: a pachinko hall. Rows of machines down both sides of the
@@ -109,19 +108,24 @@ nrRoom('d_cinema', 'The Orpheum', 680, 110, 'glass', [0.42, 0.34, 0.36], (L, G, 
     for (let y = C; y < G; y++) for (let x = 24; x < 330; x++) P.put(x, y, ((x >> 2) + (y >> 2)) % 5 === 0 ? [120, 30, 40] : [90, 20, 30]);
     kFill(P, 24, G - 26, 330, G - 24, '#c8a040');
     for (const [x, c] of [[150, '#3a5ac8'], [200, '#c83a5a'], [250, '#e8a030']]) { P.block(x - 2, C + 18, x + 30, C + 64, KMAT.gold, { base: 0.5 }); P.area(x, C + 20, x + 28, C + 62, rp(c, 6), (xx, yy) => 0.4 + ((xx + yy) % 11 < 2 ? 0.2 : 0)); for (const [a, b] of GLYPHS[x % GLYPHS.length]) P.put(x + 12 + a, C + 26 + b, [255, 255, 255], 0.5); }
-    // the popcorn counter
-    P.block(170, G - 26, 280, G - 22, KMAT.gold, { base: 0.6 }); P.block(174, G - 22, 276, G, KMAT.lacquer, { base: 0.4 }); kFill(P, 240, G - 44, 262, G - 26, '#c8c0a0'); for (let k = 0; k < 18; k++) P.put(242 + Math.floor(hash(k, 1, 81) * 18), G - 42 + Math.floor(hash(k, 2, 81) * 10), [255, 240, 200]);
+    // the popcorn machine on the counter (the counter's a prop: bCounter)
+    kFill(P, 240, G - 40, 262, G - 22, '#c8c0a0'); kFill(P, 241, G - 39, 261, G - 26, '#e8e0c0'); for (let k = 0; k < 18; k++) P.put(242 + Math.floor(hash(k, 1, 81) * 18), G - 37 + Math.floor(hash(k, 2, 81) * 10), [255, 240, 200]); kFill(P, 238, G - 42, 264, G - 40, '#c83a2a');
     // the partition and its curtain, then the screen room, dark, seats in rows
     P.block(330, C, 342, G - 44, KMAT.darkwood, { base: 0.4 }); kFill(P, 330, G - 44, 342, G, '#6a1a24');
     kFill(P, 342, C, 656, G, '#0a0608');
     kFill(P, 380, C + 12, 640, C + 70, '#e8ecf0');
-    for (let r = 0; r < 3; r++) for (let x = 350 + r * 6; x < 650; x += 14) { const y = G - 6 - r * 12; kFill(P, x, y - 8, x + 10, y, '#4a1a20'); kFill(P, x + 1, y - 10, x + 9, y - 8, '#6a2a30'); }
+    // the rows behind the front one (a prop: seatRow), stepping down toward
+    // the screen, the same size, each a little darker
+    for (let r = 2; r >= 1; r--) { const top = G - 16 - r * 8, dk = 1 - r * 0.22; for (let x = 362 + r * 10; x + 16 < 650; x += 20) { kFill(P, x + 2, top, x + 14, top + 2, [150 * dk, 36 * dk, 50 * dk]); kFill(P, x, top + 2, x + 16, top + 14, [120 * dk, 26 * dk, 40 * dk]); kFill(P, x + 3, top + 5, x + 13, top + 12, [90 * dk, 18 * dk, 30 * dk]); } }
   });
   L.ad(382, C + 14, 256, 54, 'cycle', ['#c8d8ff', '#ffd8a0']);
   L.light(510, C + 50, 200, [0.75, 0.82, 1], 0.7); L.light(200, G - 50, 140, [1, 0.7, 0.45], 0.8);
   L.prop('ticket', 60, G, { label: 'the ticket machine' }); L.prop('arcadecab', 300, G, { label: 'an arcade cabinet', col: '#ff4ab0', body: '#3a1a3a' }); L.prop('arcadecab', 140, G, { label: 'an arcade cabinet', col: '#3af0e0', body: '#1a2a4a' });
-  L.prop('register', 196, G, { label: 'the popcorn till', lift: 26 }); L.prop('coffee', 222, G, { label: 'the coffee machine', lift: 26 });
-  for (const [x, skin] of [[420, SKINS[1]], [470, SKINS[3]], [560, SKINS[0]], [604, SKINS[4]]]) nrPerson(L, 'Watching', x, G, 'sit', { skin, hair: 'short', top: '#1a1a24', legs: '#1a1a1a' }, ['Shh.', 'This is the good bit.'], { hours: [18, 0.5] });
+  bCounter(L, 168, 282, G, { top: KMAT.gold, body: KMAT.lacquer, panel: 38, trim: '#ffd060' });
+  L.prop('register', 196, G, { label: 'the popcorn till', lift: 22, front: true }); L.prop('coffee', 228, G, { label: 'the coffee machine', lift: 22, front: true });
+  // the front row of seats, the audience in it seen from behind (seat k's middle is 370 + 20k)
+  L.prop('deco', 502, G, { art: () => seatRow({ n: 14, lamps: true }), id: 'orpheumseats', front: true });
+  for (const [x, skin, hair] of [[430, SKINS[1], 'short'], [470, SKINS[3], 'bob'], [570, SKINS[0], 'bun'], [610, SKINS[4], 'short']]) nrPerson(L, 'Watching', x, G, 'sit', { skin, hair, hairCol: '#1a1414', top: '#1a1a24', legs: '#1a1a1a' }, ['Shh.', 'This is the good bit.'], { hours: [18, 0.5], y: G, view: 'back', behind: true, lift: 2 });
 });
 
 // ---- the Coil: black glass, a dance floor lit from under, the DJ on a riser,
@@ -136,11 +140,11 @@ nrRoom('d_coil', 'The Coil', 720, 120, 'steel', [0.34, 0.2, 0.36], (L, G, C) => 
     // the dance floor: tiles lit from under
     for (let x = 160; x < 300; x++) for (let y = G - 3; y < G; y++) P.put(x, y, [[255, 74, 176], [58, 240, 224], [255, 208, 64]][((x - 160) / 14 | 0) % 3], 0.8);
     // the bar along the back right, bottles lit from below
-    P.block(500, G - 28, 680, G - 24, MAT.chrome, { base: 0.6 }); P.block(504, G - 24, 676, G, KMAT.blackglass, { base: 0.35 });
     for (let k = 0; k < 2; k++) { const y = C + 60 + k * 16; kFill(P, 510, y, 670, y + 2, '#3a3a48'); bkShelf(P, 512, 668, y, 1, 700 + k); }
   });
+  bCounter(L, 500, 680, G, { top: MAT.chrome, body: KMAT.blackglass, panel: 45, trim: '#ff4ab0', glow: true });
   L.light(230, G - 20, 120, [1, 0.35, 0.8], 0.9); L.light(360, G - 50, 80, [0.3, 0.9, 1], 0.8); L.light(590, G - 50, 120, [1, 0.6, 0.85], 0.6);
-  L.prop('jukebox', 460, G, { label: 'the old jukebox' }); L.prop('register', 650, G, { label: 'the bar\'s till' }); L.prop('dryer', 40, G, { label: 'the hand dryer' });
+  L.prop('jukebox', 460, G, { label: 'the old jukebox' }); L.prop('register', 650, G, { label: 'the bar\'s till', lift: 22, front: true }); L.prop('dryer', 40, G, { label: 'the hand dryer' });
   nrPerson(L, 'DJ Halcyon', 360, G - 22, 'work', { skin: SKINS[3], hair: 'mohawk', hairCol: '#3af0e0', hairGlow: true, top: '#1a1a1e', legs: '#1a1a24' }, ['This one\'s for the ones still awake.', 'The jukebox? A relic. I keep it for luck.'], { y: G - 22, hours: [22, 4] });
   const dancers = [['Dancer', 180, SKINS[0], '#ff4ab0'], ['Dancer', 220, SKINS[2], '#3af0e0'], ['Dancer', 260, SKINS[4], '#ffd040'], ['Clubber', 290, SKINS[1], '#9a6aff']];
   for (const [name, x, skin, acc] of dancers) L.npc({ name, look: { skin, hair: hash(x, 2, 4) < 0.5 ? 'bob' : 'undercut', hairCol: acc, top: '#1a1a24', legs: '#1a1a1e', acc }, x, y: G, sched: [[0, 4, x, 'wander'], [4, 22, x, 'away'], [22, 24, x, 'wander']], lines: ['Can\'t hear you!', 'This track!'] });

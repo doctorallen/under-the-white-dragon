@@ -150,9 +150,11 @@ function personBack(o = {}) {
   const sk = rp(o.skin || SKINS[0], 6), top = rp(o.top || '#3a3a48', 7), legs = rp(o.legs || '#2a2a34', 6), boots = rp(o.boots || '#18161c', 5);
   const hair = rp(o.hairCol || '#1a1414', 6), chrome = MAT.chrome, acc = o.acc ? col3(o.acc) : null, dark = (r) => r.map((c) => mixRgb(c, [8, 6, 12], 0.3));
   const climb = /^climb/.test(pose), side = pose === 'climb1' ? 1 : -1; // (the side whose foot is up a rung; its hand is down)
-  const head = Y(29.5), sh = Y(24), waist = Y(16), hip = Y(14), knee = Y(7.2), ank = Y(1.6);
+  // sitting (in a cinema seat, say): the body lower by a thigh's length, the legs out of sight in front
+  const sit = pose === 'sit', dn = sit ? 7 * u : 0;
+  const head = Y(29.5) + dn, sh = Y(24) + dn, waist = Y(16) + dn, hip = Y(14) + dn, knee = Y(7.2), ank = Y(1.6);
   // the legs, from the hips to the heels
-  for (const sd of [-1, 1]) {
+  if (!sit) for (const sd of [-1, 1]) {
     const up = climb && sd === side ? 3.5 : 0, R = o.cyLegs ? chrome : legs, hx = cx + sd * 1.9, kx = cx + sd * 2.1, ky = knee - up * 0.8, ax = cx + sd * 2, ay = ank - up;
     S.cap(hx, hip, kx, ky, 2.3 + wd * 0.3, 1.9, sd < 0 ? R : dark(R)); S.cap(kx, ky, ax, ay, 1.8, 1.4, sd < 0 ? R : dark(R));
     S.part(); S.cap(ax - 1, ay + 0.3, ax + 1, ay + 0.3, 1.6, 1.3, boots);

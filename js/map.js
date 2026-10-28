@@ -42,6 +42,16 @@ const MapView = {
   fit() { const cv = this.cv, L = World.L; this.s = Math.min(cv.width / L.w, cv.height / L.h) * 0.96; this.ox = (cv.width - L.w * this.s) / 2; this.oy = (cv.height - L.h * this.s) / 2; },
   // zoom about a point on screen (css px)
   zoom(k, sx, sy) { const dpr = window.devicePixelRatio || 1, x = sx * dpr, y = sy * dpr, s0 = this.s; this.s = clamp(this.s * k, 0.1, 8 * dpr); this.ox = x - (x - this.ox) * (this.s / s0); this.oy = y - (y - this.oy) * (this.s / s0); this.draw(); },
+  // what a mark says: a door says where it goes (and if it's shut now), a
+  // way out of the city what it is
+  label(p) {
+    if (p.kind === 'door' || p.kind === 'trapdoor') {
+      const to = p.to && LEVELS[p.to[0]], name = to ? to.name : p.label || 'Door';
+      return (p.out ? 'Out to ' + name : p.kind === 'trapdoor' ? (p.up ? 'Up to ' : 'Down to ') + name : name) + (p.hours && !Props.openNow(p.hours) ? ' (shut)' : '');
+    }
+    if (p.kind === 'transit') return { spinner: 'Cab stand', subway: 'Subway', hatch: 'Ladder up', manhole: 'Manhole' }[p.mode] || 'Lift cage';
+    return { bed: 'Cot', workbench: 'Bench', shelf: 'Parts shelf' }[p.kind] || 'Lead';
+  },
   draw() {
     const cv = this.cv; if (!cv || !document.body.contains(cv)) return;
     const g = cv.getContext('2d'), s = this.s, dpr = window.devicePixelRatio || 1, P = (x, y) => [this.ox + x * s, this.oy + y * s];
@@ -49,18 +59,21 @@ const MapView = {
     g.imageSmoothingEnabled = s < 1; g.drawImage(this.img, this.ox, this.oy, this.img.width * s, this.img.height * s);
     g.fillStyle = 'rgba(6,5,10,0.25)'; g.fillRect(this.ox, this.oy, this.img.width * s, this.img.height * s);
     // dots first, then their names, most important first, skipping any that would overlap
-    const marks = [], mark = (x, y, text, col, dot, pri) => marks.push({ x, y, text, col, dot, pri });
-    const PLACES = { bed: 'Cot', workbench: 'Bench', shelf: 'Parts shelf', trapdoor: 'Trapdoor', door: 'Door', transit: 'Cab stand', dronewreck: 'Lead', substation: 'Lead', autodoc: 'Lead' };
-    for (const p of World.props) if (PLACES[p.kind] && !(p.done && TIP_YIELD[p.kind])) mark(p.x, p.y - 20, PLACES[p.kind], '#3af0e0', 2.5, 2);
+    const marks = [], mark = (x, y, text, col, dot, pri, right) => marks.push({ x, y, text, col, dot, pri, right });
+    const PLACES = { bed: 1, workbench: 1, shelf: 1, trapdoor: 1, door: 1, transit: 1, dronewreck: 1, substation: 1, autodoc: 1 };
+    for (const p of World.props) if (PLACES[p.kind] && !(p.done && TIP_YIELD[p.kind])) mark(p.x, p.y - 20, this.label(p), '#3af0e0', 2.5, 2);
+    // where the street goes on, at its ends
+    const L = World.L, nb = Travel.neighbours(L.id);
+    for (const side of ['west', 'east']) if (nb[side] && LEVELS[nb[side]] && L.spawns[side]) mark(side === 'west' ? 6 : L.w - 6 - 120, L.spawns[side][1] - 20,(side === 'west' ? '< ' : '') + LEVELS[nb[side]].name + (side === 'east' ? ' >' : ''), '#3af0e0', 2.5, 2);
     for (const n of Actors.npcs) if (!n.hidden) { const named = n.def.role || !n.def.title || !/^(lives near here|commuter|passer-by|night worker)$/.test(n.def.title); mark(n.x, n.y - 20, named ? n.def.name : '', n.def.role ? '#ffb040' : '#a69cb6', n.def.role ? 3 : 2, n.def.role ? 3 : 1); }
     mark(Player.x, Player.y - 16, 'You', '#ffd040', 4 + Math.sin(performance.now() / 200) * 1.5, 9);
     for (const m of marks) { const [a, b] = P(m.x, m.y); g.fillStyle = m.col; g.beginPath(); g.arc(a, b, m.dot * dpr, 0, Math.PI * 2); g.fill(); }
     g.font = `${11 * dpr}px ui-monospace, monospace`;
     const taken = [];
     for (const m of marks.filter((q) => q.text).sort((p, q) => q.pri - p.pri)) {
-      const [a, b] = P(m.x, m.y), w = g.measureText(m.text).width + 8 * dpr, h = 14 * dpr, r = [a + 5 * dpr, b - 15 * dpr, w, h];
+      const [a, b] = P(m.x, m.y), w = g.measureText(m.text).width + 8 * dpr, h = 14 * dpr, r = [m.right ? a - 5 * dpr - w : a + 5 * dpr, b - 15 * dpr, w, h];
       if (taken.some((t) => r[0] < t[0] + t[2] && r[0] + r[2] > t[0] && r[1] < t[1] + t[3] && r[1] + r[3] > t[1])) continue;
-      taken.push(r); g.fillStyle = 'rgba(8,6,12,0.8)'; g.fillRect(...r); g.fillStyle = m.col; g.fillText(m.text, a + 9 * dpr, b - 4 * dpr);
+      taken.push(r); g.fillStyle = 'rgba(8,6,12,0.8)'; g.fillRect(...r); g.fillStyle = m.col; g.fillText(m.text, r[0] + 4 * dpr, b - 4 * dpr);
     }
   },
 };

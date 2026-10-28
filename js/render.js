@@ -116,14 +116,20 @@ function render() {
     if (s.e) gg.drawImage(s.e, sx, sy);
     return [sx, sy];
   };
-  for (const n of Actors.npcs) if (!n.hidden) {
+  // people, in two depths: those behind a counter or in a row of seats
+  // (n.behind, lifted onto the step behind it by n.lift), then the fronts of
+  // counters, stalls and seat rows over them (props with `front`), then
+  // everyone else; foreground things (`fore`) go over all of it, the runner too
+  const people = (behind) => { for (const n of Actors.npcs) if (!n.hidden && !!n.behind === behind) {
     // standing still, everyone breathes; vendors work their hands
     const br = (Game.t * 0.7 + n.i * 0.37) % 1 < 0.5, pose = n.moving ? 'walk' + (Math.floor((n.walked || 0) / 4.6) % 6) : n.act === 'sit' ? 'sit' : n.act === 'work' && (Game.t * 1.6 + n.i) % 1 < 0.5 ? 'work' : br ? 'breathe' : 'stand';
-    actor(Actors.art(n, pose, n.face < 0), n.x, n.y, false, n);
+    actor(Actors.art(n, pose, n.face < 0), n.x, n.y - (n.lift || 0), false, n);
     if (n.def.smoke) { const on = (Game.t * 0.4 + n.i) % 1 < 0.3; gg.fillStyle = on ? '#ffb040' : '#a83a10'; gg.fillRect(Math.round(n.x + n.face * 6 - cx), Math.round(n.y - 24 - cy), 1, 1); }
-  }
-  for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } }
+  } };
+  const fronts = (fore) => { for (const p of World.props) if (p.front && !!p.fore === fore) { if (!p.frontSpr || p.frontDone !== p.done) { p.frontSpr = lowerPart(Props.sprite(p), p.front === true ? 0 : p.front); p.frontDone = p.done; } const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; if (V.tmp.width < s.w || V.tmp.height < s.h) { V.tmp.width = Math.max(V.tmp.width, s.w); V.tmp.height = Math.max(V.tmp.height, s.h); } t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } } };
+  people(true); fronts(false); people(false);
   actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1, false, Player);
+  fronts(true);
   // sparks: all glow
   Life.drawGlints(gg, cx, cy);
   for (const p of Game.particles) { gg.fillStyle = css(p.c); gg.fillRect(Math.round(p.x - cx), Math.round(p.y - cy), 1, 1); }
