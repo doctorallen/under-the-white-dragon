@@ -62,9 +62,10 @@ const Actors = {
       const e = this.entry(n), act = e[3];
       let tx = act === 'away' && n.out !== null && n.out !== undefined ? n.out : e[2];
       if (act === 'wander') { n.wt -= dt; if (n.wt <= 0) { n.wt = 3 + hash(n.i, Game.frame, 2) * 5; n.tx = e[2] + (hash(n.i, Game.frame, 3) - 0.5) * 120; if (n.lane) n.tx = clamp(n.tx, n.lane[0], n.lane[1]); } tx = n.tx; }
-      const d = tx - n.x;
-      if (Math.abs(d) > 2 && !n.bubble) { n.x += Math.sign(d) * Math.min(Math.abs(d), 26 * dt); n.face = Math.sign(d); n.moving = true; n.walked = (n.walked || 0) + 26 * dt; if (n.hidden) n.hidden = false; }
-      else { n.moving = false; if (act === 'away') n.hidden = true; else n.hidden = false; if (Math.abs(Player.x - n.x) < 40 && Math.abs(Player.y - n.y) < 20 && act !== 'work' && act !== 'sit') n.face = Math.sign(Player.x - n.x) || n.face; else if (act === 'stand' && !n.def.face && hash(n.i, Math.floor(Game.t * 0.25), 3) < 0.35) n.face = hash(n.i, Math.floor(Game.t * 0.25), 4) < 0.5 ? -1 : 1; }
+      const d = tx - n.x, there = Math.abs(d) <= 2;
+      if (!there && !n.bubble) { n.x += Math.sign(d) * Math.min(Math.abs(d), 26 * dt); n.face = Math.sign(d); n.moving = true; n.walked = (n.walked || 0) + 26 * dt; if (n.hidden) n.hidden = false; }
+      // (stopped to talk on the way out, they're still here: gone only once they're at the door)
+      else { n.moving = false; if (there) n.hidden = act === 'away'; if (Math.abs(Player.x - n.x) < 40 && Math.abs(Player.y - n.y) < 20 && act !== 'work' && act !== 'sit') n.face = Math.sign(Player.x - n.x) || n.face; else if (act === 'stand' && !n.def.face && hash(n.i, Math.floor(Game.t * 0.25), 3) < 0.35) n.face = hash(n.i, Math.floor(Game.t * 0.25), 4) < 0.5 ? -1 : 1; }
       n.act = act;
     }
   },
