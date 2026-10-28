@@ -92,6 +92,8 @@ nrRoom('d_pachinko', 'Lucky Seven Pachinko', 640, 320, 'glass', [0.5, 0.42, 0.5]
   });
   for (const x of [80, 104, 200, 448, 520]) L.prop('pachinko', x, G, { label: 'a pachinko machine' });
   for (const x of [128, 152, 176, 224, 472, 496, 544]) L.prop('deco', x, G, { art: () => pachinko(), id: 'nrpk' + x });
+  // a stool at every machine: players sit square to it, their backs to the aisle
+  for (const x of [80, 104, 128, 152, 176, 200, 224, 448, 472, 496, 520, 544]) L.prop('deco', x, G, { art: () => stool(), id: 'nrps' + x, front: true, seat: 'back', seatW: 4 });
   L.prop('atm', 380, G, { label: 'the cash machine' }); L.prop('dryer', 600, G, { label: 'the hand dryer' });
   L.light(320, C + 30, 200, [1, 0.6, 0.9], 0.8); L.light(120, G - 40, 120, [1, 0.8, 0.5], 0.6); L.light(500, G - 40, 120, [1, 0.8, 0.5], 0.6);
   for (const x of [128, 176, 472, 544]) L.vents.push({ x, y: G - 30, kind: 'steam' });

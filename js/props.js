@@ -102,7 +102,8 @@ function stall(o = {}) {
   return S.done();
 }
 function acUnit() { const S = new Spr(14, 10, 45); S.ax = 7; S.ay = 9; S.box(0, 0, 13, 9, rp('#7a7a72'), { lo: 0, hi: 5 }); S.ell(5, 5, 3, 3, ['#1a1a1a', '#3a3a3a', '#5a5a5a']); for (let y = 2; y < 8; y += 2) for (let x = 9; x < 13; x++) S.px(x, y, '#2a2a28'); return S.done(); }
-function stool() { const S = new Spr(8, 9, 46); S.ax = 4; S.ay = 8; S.ell(4, 1.5, 3.5, 1.2, rp('#c83a3a')); S.limb(4, 2, 4, 8, 1, MAT.chrome); S.limb(1, 8, 7, 8, 1, MAT.chrome); return S.done(); }
+// a bar stool: the seat at a sitter's hips (11 px up), a footrest ring, a foot
+function stool() { const S = new Spr(10, 13, 46); S.ax = 5; S.ay = 12; S.ell(5, 1.5, 4, 1.3, rp('#c83a3a')); S.limb(5, 2, 5, 12, 1, MAT.chrome); S.limb(2, 8, 8, 8, 0.7, MAT.chrome); S.limb(1, 12, 9, 12, 1, MAT.chrome); return S.done(); }
 // a counter from the front, people's scale (a bar's top at about a person's
 // waist): an overhanging top, the front in panels, a kick at the floor. Its
 // prop has `front`, so the staff stand behind it and the diners in front
@@ -310,7 +311,17 @@ function desk(o = {}) {
   return S.done();
 }
 // a bench
-function bench() { const S = new Spr(30, 10, 411); S.ax = 15; S.ay = 9; panel(S, 0, 3, 29, 5, MAT.steel, { a: 0.7, b: 0.5 }); for (const x of [3, 26]) S.limb(x, 5, x, 9, 1, MAT.steelD); panel(S, 0, 0, 29, 1, MAT.steelD); return S.done(); }
+// a chair side-on, at a table: the seat at a sitter's hip, the back on the
+// side away from the table (o.back: -1 left, 1 right)
+function chair(o = {}) {
+  const S = new Spr(12, 28, 48 + (o.back > 0 ? 1 : 0)); S.ax = 6; S.ay = 27; const wd = rp(o.col || '#6a4a2a', 5), bx = o.back > 0 ? 9 : 1;
+  for (const x of [2, 9]) S.limb(x, 14, x, 27, 0.8, wd);
+  S.limb(bx, 1, bx, 13, 0.9, wd); S.limb(bx, 2, bx + (o.back > 0 ? -1 : 1), 2, 0.8, wd);
+  panel(S, 1, 12, 10, 13, wd, { a: 0.7, b: 0.5 });
+  return S.done();
+}
+// a bench: its backrest on two posts, the seat 9 px up (a sitter's hips), legs
+function bench() { const S = new Spr(30, 16, 411); S.ax = 15; S.ay = 15; for (const x of [3, 26]) S.limb(x, 2, x, 15, 1, MAT.steelD); panel(S, 0, 0, 29, 2, MAT.steelD); panel(S, 0, 6, 29, 8, MAT.steel, { a: 0.7, b: 0.5 }); return S.done(); }
 
 // ---- the ways about, and what cases leave lying around ------------------------
 // a subway platform's door and sign

@@ -183,6 +183,7 @@ LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', meters: -400, mapX: 500, 
     for (const x of [253, 783, 1403, 1983]) L.light(x, G - 60, 70, [0.75, 0.55, 1], 0.45);
     // the Hermit's camp by the elevator
     dpCamp(L, 560, G, 1);
+    L.prop('deco', 621, G, { art: () => crate({ w: 12, h: 15, col: '#7a6a48' }), id: 'hermitcrate', seat: 'side', seatW: 5 }); // (what he sits on)
     L.npc(dpHermit('The Hermit', 620, G, ['Nobody comes down here on purpose.', 'Listen. The hum. That\'s the Root, thinking.', 'The girl with the drawings went past me. She was humming along.']));
     // a chasm of cables, a walkway over it
     L.paint(860, 54, 1320, G, (P) => { dpBundle(P, 960, 54, G, 34, DPMAT.cable, DP_VIOLET, 11); dpBundle(P, 1200, 54, G, 26, DPMAT.cableG, DP_GREEN, 12); dpCurtain(P, 1000, 1170, 54, 120, DP_GREEN, 13); });

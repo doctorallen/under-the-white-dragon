@@ -314,7 +314,8 @@ const Town = {
       // back to us; a bench, facing us), or what they're doing there
       const seat = !st.moving && !dp && TOWN_POSE[st.act] === 'sit' ? this.seatAt(st.x) : null;
       n.view = dp && dp.back ? 'back' : seat ? seat.seat : (!st.moving && st.view) || undefined;
-      if (seat) { n.y = seat.y; if (seat.seatW <= 5) n.x = seat.x; } // (on a stool, square on it)
+      if (seat && seat.seat === 'side') n.view = undefined; // (a chair side-on: sat on as before)
+      else if (seat) { n.y = seat.y; if (seat.seatW <= 5) n.x = seat.x; } // (on a stool, square on it)
       // on shift at a post with a trade (a stall that buys, a parts dealer), they trade
       const onShift = !st.moving && R.job && R.job.role && st.place === R.job.place && WORK_ACTS.includes(st.act);
       n.def.role = onShift ? R.job.role : undefined; n.def.rate = onShift ? R.job.rate : undefined; n.def.stock = onShift ? R.job.stock : undefined;

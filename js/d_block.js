@@ -136,6 +136,8 @@ bkRoom('d_apartments', 'Wan Fat Mansions', 540, (L, G) => {
   });
   L.walk(24, APT_STAIRS.x0, F1, 5, MAT.concreteD, { rail: false }); L.walk(APT_STAIRS.x1, 516, F1, 5, MAT.concreteD, { rail: false }); L.stairs(APT_STAIRS.x0, G, APT_STAIRS.x1, F1);
   for (const k in APARTMENTS) { const F = APARTMENTS[k]; L.prop('deco', F.bed, F.y, { art: () => bed(), id: 'flatbed' + k }); L.light(F.table, F.y - 50, 60, [1, 0.8, 0.55], 0.55); }
+  // a chair either side of each table, their backs to the walls (Town.spot sits people at the table ± 12)
+  for (const k in APARTMENTS) { const F = APARTMENTS[k]; for (const sd of [-1, 1]) L.prop('deco', F.table + sd * 12, F.y, { art: () => chair({ back: sd }), id: 'aptch' + k + sd, seat: 'side', seatW: 4 }); }
   for (const k of ['C', 'D']) L.prop('deco', APARTMENTS[k].bed + (k === 'C' ? 36 : -36), APARTMENTS[k].y, { art: () => bed(), id: 'flatbed2' + k }); // (a second bed: two live there)
   L.ad(APARTMENTS.C.table + 14, BK.F1 - 40, 18, 12, 'cycle', ['#3af0e0', '#ff4ab0']);
   L.light(60, G - 50, 50, [0.9, 0.9, 1], 0.4); L.light(140, F1 - 40, 50, [0.9, 0.9, 1], 0.4);
