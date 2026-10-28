@@ -19,6 +19,7 @@ const FILES = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
+  'vendor/tycho/dist/tycho.js',
   'vendor/tycho/dist/tyrell.js',
   'js/util.js',
   'js/tuning.js',

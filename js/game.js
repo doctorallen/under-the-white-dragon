@@ -7,7 +7,7 @@
 // minds are kept with it (Game.s.city, city.js).
 // ---------------------------------------------------------------------------
 const Game = {
-  frame: 0, t: 0, acc: 0, last: 0, paused: false, fade: 0, fadeTo: null,
+  frame: 0, t: 0, paused: false, fade: 0, fadeTo: null,
   s: null, cam: { x: 0, y: 0 }, toasts: [], gains: [], particles: [],
   fresh() {
     return {
