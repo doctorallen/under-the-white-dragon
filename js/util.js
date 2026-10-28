@@ -18,30 +18,8 @@ const { hash, noise, smooth, Rng } = Tycho.seed;
 const { rgb, mixRgb, lum, css, SOOT, WARM, rampOf, tone } = Tycho.color;
 const $ = (id) => document.getElementById(id);
 
-// ---- strokes ---------------------------------------------------------------
-// Everything is painted in short horizontal strokes of one tone each. A row
-// is cut into 8 px cells (each row set off by its own phase), each cell into
-// one to three strokes at hashed places; for every pixel, `mid` is its
-// stroke's middle (where its tone is read) and `jit` the stroke's jitter.
-// It depends only on the place, so anything painted twice matches itself.
-function strokeRow(mid, jit, x0, n, y, seed) {
-  const C = 8, ph = Math.floor(hash(y, 7, seed) * C);
-  let c = Math.floor((x0 + ph) / C), cs = c * C - ph, i = 0;
-  while (i < n) {
-    const h = hash(c, y, seed + 1), h2 = hash(c, y, seed + 2), h3 = hash(c, y, seed + 3);
-    let a = C, b = C;
-    if (h > 0.3) { if (h < 0.7) a = 2 + ((h2 * (C - 3)) | 0); else { a = 2 + ((h2 * 3) | 0); b = Math.min(C - 2, a + 2 + ((h3 * 3) | 0)); } }
-    const ja = h2 + h3 - 1, jb = hash(c, y, seed + 4) + h3 - 1, jc = hash(c, y, seed + 5) + h - 1;
-    const ma = cs + ((a - 1) >> 1), mb = cs + ((a + b - 1) >> 1), mc = cs + ((b + C - 1) >> 1);
-    for (let k = 0; k < C; k++) {
-      if (cs + k < x0) continue;
-      if (i >= n) break;
-      if (k < a) { mid[i] = ma - x0; jit[i] = ja; } else if (k < b) { mid[i] = mb - x0; jit[i] = jb; } else { mid[i] = mc - x0; jit[i] = jc; }
-      i++;
-    }
-    c++; cs += C;
-  }
-}
-
-// ---- a small canvas helper ----------------------------------------------------
-function canvasOf(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; return [c, g]; }
+// ---- canvases --------------------------------------------------------------
+// A canvas and its context with smoothing off (Tycho's sprite part). The
+// painting's strokes (strokeRow) are Tycho's too, inside its pixel buffer
+// (paint.js).
+const canvasOf = (w, h) => Tycho.sprite.canvas(w, h);
