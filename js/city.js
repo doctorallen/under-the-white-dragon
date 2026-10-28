@@ -1,6 +1,6 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// The city's minds: Tyrell (vendor/tyrell, a git submodule; dist/tyrell.js is
+// The city's minds: Tyrell (in vendor/tycho, a git submodule; dist/tyrell.js is
 // loaded before everything else) runs every resident. This file is the White
 // Dragon's shell for it.
 //

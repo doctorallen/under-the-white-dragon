@@ -19,7 +19,7 @@ There's no fighting: the danger is heat. The game grew out of Downlevel, a detec
 
 ## Running it
 
-The residents' minds come from Tyrell, a separate engine pulled in as a git submodule. After cloning, `git submodule update --init` (or clone with `--recurse-submodules`), then serve the folder: `python3 -m http.server 8000`.
+The engine, Tycho, and the residents' minds, Tyrell, which lives inside it, come in as a git submodule. After cloning, `git submodule update --init` (or clone with `--recurse-submodules`), then serve the folder: `python3 -m http.server 8000`.
 
 ## Install
 
@@ -89,7 +89,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/folk.js` | The city's population: households made to fill the jobs and homes, with schools and hobbies (`Folk`) |
 | `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`) |
 | `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which runs their days, needs, hobbies, memories and gossip, and saves them (`City`) |
-| `vendor/tyrell/` | Tyrell, the minds engine (a git submodule; the game loads `dist/tyrell.js`) |
+| `vendor/tycho/` | Tycho, the engine, with Tyrell, the minds engine, inside it (a git submodule; the game loads the built scripts in `dist/`) |
 | `js/day.js` | Day and night, and the weather (`Day`, `Weather`) |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
 | `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |

@@ -15,39 +15,17 @@
 // cab flies home for free; every level loads and draws, and
 // nobody in them is only a part ("Commuter") or shares a name; a
 // reload brings it all back.
-// Screenshots go to test/out. Chrome comes from $CHROME (puppeteer-core), or,
-// where that isn't installed, playwright's Chromium.
-const http = require('http'), fs = require('fs'), path = require('path');
+// Screenshots go to test/out. It runs on Tycho's test kit: Playwright's
+// Chromium, or puppeteer-core with the Chrome in $CHROME (as CI does).
+const fs = require('fs'), path = require('path');
+const tk = require('../vendor/tycho/dist/testkit.cjs');
 const ROOT = path.join(__dirname, '..'), OUT = path.join(__dirname, 'out');
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
-const PHONE = { width: 844, height: 390, deviceScaleFactor: 3, isMobile: true, hasTouch: true };
-const DESKTOP = { width: 1280, height: 800, deviceScaleFactor: 1 };
+const PHONE = tk.PHONE_WIDE, DESKTOP = tk.DESKTOP;
 
-function serve() {
-  return new Promise((ok) => {
-    const s = http.createServer((req, res) => {
-      if (req.url === '/favicon.ico') { res.writeHead(204); res.end(); return; }
-      // the deploy writes version.json; here it's a local build
-      if (req.url.startsWith('/version.json')) { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"build": "local"}'); return; }
-      const p = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]).replace(/\/$/, '/index.html'));
-      if (!p.startsWith(ROOT) || !fs.existsSync(p)) { res.writeHead(404); res.end(); return; }
-      res.writeHead(200, { 'content-type': TYPES[path.extname(p)] || 'application/octet-stream' }); fs.createReadStream(p).pipe(res);
-    });
-    s.listen(0, () => ok(s));
-  });
-}
-async function browser() {
-  try {
-    const pp = require('puppeteer-core');
-    const b = await pp.launch({ executablePath: process.env.CHROME, headless: true, args: ['--no-sandbox'] });
-    return { b, page: async (vp) => { const p = await b.newPage(); await p.setViewport(vp); return p; } };
-  } catch (e) {
-    if (process.env.CHROME) throw e;
-    const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), '/opt/node22/lib/node_modules'] }));
-    const b = await chromium.launch();
-    return { b, page: async (vp) => b.newPage({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.deviceScaleFactor, isMobile: !!vp.isMobile, hasTouch: !!vp.hasTouch }) };
-  }
-}
+// the game over http, as GitHub Pages serves it (version.json answers a local build)
+const serve = () => tk.serve(ROOT);
+// WebGL2 in software, so the phone run finishes frames on the GPU path
+async function browser() { const kit = await tk.launch({ gl: true }); return { b: kit, page: (vp) => kit.page(vp) }; }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // helpers put into the page: step the game with the controls set
 const HELPERS = `
@@ -61,9 +39,7 @@ true`;
 
 async function run(B, url, vp, name, failures) {
   const fail = (m) => failures.push(name + ': ' + m);
-  const page = await B.page(vp), errors = [];
-  page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  const page = await B.page(vp), errors = tk.errorsOf(page);
   await page.goto(url); await sleep(800);
   await page.evaluate(() => Save.wipe()); await page.reload();
   for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.Downlevel)); i++) await sleep(200);
@@ -282,7 +258,7 @@ async function run(B, url, vp, name, failures) {
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
-  const server = await serve(), url = `http://localhost:${server.address().port}/index.html`;
+  const server = await serve(), url = server.url + 'index.html';
   let B; const failures = [];
   try { B = await browser(); } catch (e) { console.log('::error title=smoke::no browser: ' + String(e.stack || e).replace(/\n/g, ' ')); throw e; }
   try {
