@@ -78,6 +78,7 @@ const Hud = {
   tiles(o, btn) { const ks = SALVAGE_ORDER.filter((k) => o === null || o[k]); return ks.length ? '<div class="tiles">' + ks.map((k) => `<div class="tile" style="--r:${SALVAGE[k].col[1]}"><img src="${this.icon(k)}" alt=""><b>${SALVAGE[k].name}</b>${o ? `<span class="n">× ${o[k]}</span>` : ''}${btn ? btn(k) : ''}</div>`).join('') + '</div>' : '<p class="dim">No salvage. Hold Use on a machine to strip it.</p>'; },
   panel(which) {
     const s = Game.s, body = $('panelBody'), title = $('panelTitle'); let h = '';
+    const talking = which === 'talk' && Talk.showing(this.who); $('panel').classList.toggle('talking', talking); if (!talking) $('panel').classList.remove('typing');
     if (which === 'pack') {
       // your jobs, and what's in your pockets
       const tab = this.tab === 'items' ? 'items' : 'jobs';
@@ -126,6 +127,7 @@ const Hud = {
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     panelBind(body, which);
     Tutorial.decorate(body, which);
+    if (talking) Talk.after(body); // (what's not been said yet, said)
     if (which === 'map') MapView.attach();
     if (which === 'tyrell') TyrellMode.attach();
     if (which === 'dev') Dev.bind(body);

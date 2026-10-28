@@ -30,6 +30,8 @@
 
 // the ways of coming at someone, and how each lands (the listener as the
 // person, you as the target): above 0 well, below badly
+// narrower than this (CSS px), the talk takes the whole screen
+const TALK_NARROW = 700;
 const TALK_HOW = { straight: 'straight', warm: 'warm', joke: 'joke', ask: 'ask', haggle: 'haggle', bluff: 'lie', bribe: 'bribe' };
 const TALK_HARD = ['sal', 'goro', 'vin', 'vey']; // (warmth and jokes go down badly)
 const talkHard = (c) => TALK_HARD.includes(c.person.id);
@@ -212,6 +214,11 @@ function talkNext(id) {
 
 const Talk = {
   n: null, id: null, view: null, queue: [], how: null,
+  // the conversation so far, as it's shown (a thread, oldest first: their
+  // lines, yours, what you learned, a job's card), how much of it has been
+  // said aloud, and the typer that says the rest (Tycho's: their words come
+  // out at a talking pace, yours at once; a tap on the thread hurries it)
+  log: [], shown: 0, lastCard: '', typer: null, faces: new Map(),
   // ---- the definitions: once per world (from City.make) -------------------
   declare(w) {
     const v = w.voice;
@@ -398,6 +405,8 @@ const Talk = {
     this.n = n; this.id = id; this.view = v; this.how = null;
     n.face = Math.sign(Player.x - n.x) || n.face;
     this.flush();
+    this.log = []; this.shown = 0; this.lastCard = ''; this.record(v, n);
+    this.frame(n);
     Hud.toggle('talk', n);
     return true;
   },
@@ -409,6 +418,7 @@ const Talk = {
     this.how = opt && (opt.kind === 'answer' || opt.kind === 'thread') ? opt.approach || null : null; // (how what you said came at them, for the panel)
     const v = City.w.voice.answer(i); this.view = v;
     this.flush();
+    if (v && !v.ended) this.record(v, this.n);
     if (!v || v.ended) {
       const n = this.n, bye = v && v.lines.filter((l) => l.who === 'them').pop();
       Hud.toggle(null);
@@ -418,7 +428,7 @@ const Talk = {
     Hud.panel('talk');
   },
   // the panel closed (walked off): the talk's over, without a goodbye
-  close() { if (this.view && City.on && City.w.voice.current()) City.w.voice.end(); this.n = this.id = this.view = null; },
+  close() { if (this.typer) this.typer.stop(); if (this.view && City.on && City.w.voice.current()) City.w.voice.end(); this.n = this.id = this.view = null; this.log = []; this.shown = 0; },
   // what the talk did to the game, carried out now it's done
   flush() {
     const q = this.queue; this.queue = [];
@@ -448,29 +458,86 @@ const Talk = {
   },
   quote(s) { return /"/.test(s) ? s : `"${s}"`; },
   // ---- the panel -----------------------------------------------------------
-  panel(n) {
-    const v = this.view, F = this.fills(n), T = this.kept();
-    let h = '<div class="talk">';
+  // what was just said, added to the thread: their lines (each its own
+  // bubble), yours with how it came at them and how it landed, what you
+  // learned, and a job's card when it's new or changed
+  record(v, n) {
+    const T = this.kept(), you = v.lines.find((q) => q.who === 'you');
     for (const l of v.lines.filter((q) => q.who !== 'note').concat(v.lines.filter((q) => q.who === 'note'))) { // (what you learned, after what they said)
       const w = this.words(l, n); if (!w || (Array.isArray(w) && !w.length)) continue;
-      if (l.who === 'you') h += `<p class="you">${this.quote(w)}${this.how && v.landed !== 'even' && l === v.lines.find((q) => q.who === 'you') ? ` <i class="${v.landed}">${v.landed === 'well' ? '· it lands' : '· it falls flat'}</i>` : ''}</p>`;
-      else if (l.who === 'note') h += `<p class="note">${w}</p>`;
-      else if (l.who === 'aside') h += `<p class="dim">${w}</p>`;
-      else h += (Array.isArray(w) ? w : [w]).map((q) => `<p class="sub">${this.quote(q)}</p>`).join('');
+      if (l.who === 'you') this.log.push({ who: 'you', text: Array.isArray(w) ? w.join(' ') : w, how: l === you ? this.how : null, landed: l === you && this.how ? v.landed : null });
+      else if (l.who === 'note' || l.who === 'aside') this.log.push({ who: l.who, text: Array.isArray(w) ? w.join(' ') : w });
+      else for (const q of Array.isArray(w) ? w : [w]) this.log.push({ who: 'them', text: q });
     }
-    h += '</div>' + this.card(v, T);
+    const card = this.card(v, T);
+    if (card && card !== this.lastCard) this.log.push({ who: 'card', html: card });
+    this.lastCard = card;
+  },
+  // the two of you framed in the open part of the screen, left of the talk
+  frame(n) { if (innerWidth < TALK_NARROW) return; Game.cam.x = (Player.x + n.x) / 2 + View.w * 0.27; },
+  // their face, for the head of the talk: the figure from the front, the
+  // head and shoulders (made once a look)
+  portrait(n) {
+    if (!n.def.look) return '';
+    const k = JSON.stringify(n.def.look) + n.i; if (this.faces.has(k)) return this.faces.get(k);
+    const look = Object.assign({}, n.def.look, { pose: 'stand', seed: 20 + n.i, view: 'front' }); delete look.umbrella; delete look.umbrellaGlow;
+    const sp = person(look), c = sp.c, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let x0 = c.width, x1 = 0, y0 = c.height, y1 = 0;
+    for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    const size = Math.max(16, Math.round((y1 - y0 + 1) * 0.55)), sx = Math.round((x0 + x1 + 1) / 2 - size / 2), sy = y0 - 1;
+    const [out, g] = canvasOf(size, size); g.imageSmoothingEnabled = false;
+    g.drawImage(c, sx, sy, size, size, 0, 0, size, size);
+    if (sp.e) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.5; g.drawImage(sp.e, sx, sy, size, size, 0, 0, size, size); }
+    const url = out.toDataURL(); this.faces.set(k, url); return url;
+  },
+  // how they stand with you, in a word or two (nothing for most)
+  stand() {
+    const fs = City.on && City.w.fellowship; if (!fs || !this.id) return '';
+    const r = fs.regard(this.id, 'player');
+    return r >= 0.35 ? 'a friend' : r >= 0.15 ? 'likes you' : r <= -0.1 ? 'wary of you' : '';
+  },
+  panel(n) {
+    const v = this.view, F = this.fills(n), T = this.kept(), first = talkFirst(n.def.name);
+    const line = (e) => {
+      if (e.who === 'them') return `<p class="tk-line them sub"><b>${first}</b>${e.text}</p>`;
+      if (e.who === 'you') {
+        const how = e.how ? `<i class="${e.landed === 'well' || e.landed === 'badly' ? e.landed : ''}">${TALK_HOW[e.how] || e.how}${e.landed === 'well' ? ' · it lands' : e.landed === 'badly' ? ' · it falls flat' : ''}</i>` : '';
+        return `<p class="tk-line you"><b>You</b>${e.text}${how}</p>`;
+      }
+      if (e.who === 'note') return `<p class="tk-note note">${e.text}</p>`;
+      if (e.who === 'aside') return `<p class="tk-aside dim">${e.text}</p>`;
+      return `<div class="tk-card">${e.html}</div>`;
+    };
+    const face = this.portrait(n), sub = [n.def.title, this.stand()].filter(Boolean).join(' · ');
+    let h = `<div class="tk"><div class="tk-head">${face ? `<img class="tk-face" src="${face}" alt="">` : ''}<div class="tk-who"><b>${n.def.name}</b>${sub ? `<small>${sub}</small>` : ''}</div><button data-act="resume" class="tk-x quiet" aria-label="Close">✕</button></div>`;
+    h += `<div class="talk tk-log">${this.log.map(line).join('')}</div><div class="tk-say">`;
     const pick = v.answers.filter((a) => a.kind === 'answer' || a.kind === 'thread'), rest = v.answers.filter((a) => a.kind === 'drop' || a.kind === 'bye');
     if (pick.length) h += '<div class="buttons answers">' + pick.map((a) => this.button(a, v, T, F)).join('') + '</div>';
     const role = n.def.role ? NPC_ROLE[n.def.role] : null;
-    h += `<div class="buttons">${role ? `<button data-role="1">${role.verb}</button>` : ''}${rest.map((a) => `<button data-say="${a.i}" class="quiet">${a.kind === 'drop' ? 'Let it lie' : 'Goodbye'}</button>`).join('')}</div>`;
+    h += `<div class="buttons tk-foot">${role ? `<button data-role="1">${role.verb}</button>` : ''}${rest.map((a) => `<button data-say="${a.i}" class="quiet">${a.kind === 'drop' ? 'Let it lie' : 'Goodbye'}</button>`).join('')}</div></div></div>`;
     return [n.def.title ? `${n.def.name} · ${n.def.title}` : n.def.name, h];
+  },
+  // once the panel's drawn: what hasn't been said yet is said, their words at
+  // a talking pace and yours at once, the answers waiting till it's done
+  after(body) {
+    const log = body.querySelector('.tk-log'), win = $('panel'); if (!log) return;
+    const els = [...log.children].slice(this.shown), n = this.log.length;
+    log.scrollTop = log.scrollHeight;
+    if (!this.typer) this.typer = new Tycho.ui.Typer();
+    if (!els.length) { win.classList.remove('typing'); return; }
+    win.classList.add('typing');
+    this.typer.type(els, (el) => el.classList.contains('them') || el.classList.contains('tk-aside'), {
+      show: (el) => { const r = el.getBoundingClientRect(), b = log.getBoundingClientRect(); if (r.bottom > b.bottom) log.scrollTop += r.bottom - b.bottom; },
+      done: () => { this.shown = Math.max(this.shown, n); win.classList.remove('typing'); log.scrollTop = log.scrollHeight; },
+    });
+    log.onclick = () => this.typer.finish();
   },
   // an answer, as a button: a job's take and hand-back are the main ones
   button(a, v, T, F) {
     const def = a.kind === 'answer' && v.thread ? City.w.voice.threads.get(v.thread.id).beats[v.thread.beat].answers[+a.id.slice(1)] : null;
     const j = def && def.job ? talkJob(T, def.job === 'take' ? 'job' : 'handback') : null;
     const text = this.fill(a.kind === 'thread' ? a.label : a.label || a.say, F);
-    return `<button data-say="${a.i}"${j ? ` data-job="${def.job}:${j.id}" class="go"` : ''}${a.ok ? '' : ' disabled'}>${text}${a.approach ? ` <small>${TALK_HOW[a.approach] || a.approach}</small>` : ''}</button>`;
+    return `<button data-say="${a.i}"${j ? ` data-job="${def.job}:${j.id}" class="go"` : ''}${a.ok ? '' : ' disabled'}>${text}${a.approach ? ` <small class="how-${a.approach}">${TALK_HOW[a.approach] || a.approach}</small>` : ''}</button>`;
   },
   // the job the talk is about, as a card: the offer (what it pays, what it'd
   // mean), the hand-back (how it tested), what it's waiting on, when they'll come
