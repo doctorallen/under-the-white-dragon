@@ -48,7 +48,7 @@ const FILES = [
   'js/actors.js',
   'js/parts.js',
   'js/bench.js',
-  'js/jobs.js', 'js/tips.js',
+  'js/jobs.js', 'js/tips.js', 'js/tutorial.js',
   'js/town.js',
   'js/census.js', 'js/folk.js', 'js/city.js',
   'js/life.js',

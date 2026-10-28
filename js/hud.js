@@ -14,6 +14,7 @@ const Hud = {
     // the job line opens your jobs
     $('obj').onclick = () => { this.tab = 'jobs'; this.toggle('pack'); };
     $('panelClose').onclick = () => this.toggle(null);
+    Tutorial.init();
     this.refresh();
   },
   set(id, v, prop = 'textContent') { if (this.last[id] !== v) { this.last[id] = v; $(id)[prop] = v; } },
@@ -22,7 +23,9 @@ const Hud = {
     const s = Game.s;
     this.set('clock', Game.clock() + ' · day ' + s.day + (Dev.s.fps ? ' · ' + Dev.fps + ' fps' : ''));
     this.set('place', World.L.name);
-    this.set('obj', Jobs.objective());
+    Tutorial.tick();
+    this.set('obj', Tutorial.active() ? '' : Jobs.objective());
+    this.set('guide', Game.paused ? '' : Tutorial.card(), 'innerHTML');
     const tg = Player.target;
     const edge = !tg && !Game.paused ? Travel.edgeAhead() : null;
     this.set('prompt', tg && !Game.paused ? (Player.hold ? tg.pr.text + '…' : tg.pr.text) : edge ? (edge.dir === 'west' ? '← On foot to ' : 'On foot to ') + LEVELS[edge.to].name + (edge.dir === 'east' ? ' →' : '') : '');
@@ -113,17 +116,18 @@ const Hud = {
     const crEl = $('panelCr'); crEl.hidden = !['vendor', 'cab', 'pack', 'partshop', 'grocer'].includes(which); crEl.textContent = s.cr + ' cr';
     // the buttons
     const act = { resume: () => this.toggle(null), sleep: () => { const h0 = Game.hour(); Game.pass(h0 < 8 ? 8 - h0 : 32 - h0); const fresh = Game.s.morning !== Game.s.day; Game.s.morning = Game.s.day; const news = fresh ? Jobs.morning() : (Jobs.news = []); /* (one morning a day: a nap before eight doesn't bring another) */ Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
-      sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
+      sellAll: () => { const rate = (this.who && this.who.def.rate) || 1; let cr = 0; for (const k of SALVAGE_ORDER) { cr += Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate); s.pack[k] = 0; } s.cr += cr; s.flags.sold = 1; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => this.toggle('dev'),
       cab: () => { const fare = Flight.cabFare(); if (['d_dragon', 'd_noodles', 'd_cellar'].includes(World.L.id) || (fare && !Game.pay({ cr: fare }))) return; Flight.start('d_dragon', 'enter', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };
     body.querySelectorAll('button[data-act]').forEach((b) => (b.onclick = () => act[b.dataset.act](b)));
     panelBind(body, which);
+    Tutorial.decorate(body, which);
     if (which === 'map') MapView.attach();
     if (which === 'tyrell') TyrellMode.attach();
     if (which === 'dev') Dev.bind(body);
     body.querySelectorAll('button[data-tab]').forEach((b) => (b.onclick = () => { this.tab = b.dataset.tab; this.panel('pack'); }));
-    body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = (this.who && this.who.def.rate) || 1, n = s.pack[k] || 0; s.cr += Math.round(n * SALVAGE[k].price * rate); s.pack[k] = 0; this.refresh(); }));
+    body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = (this.who && this.who.def.rate) || 1, n = s.pack[k] || 0; s.cr += Math.round(n * SALVAGE[k].price * rate); s.pack[k] = 0; s.flags.sold = 1; this.refresh(); }));
   },
 };

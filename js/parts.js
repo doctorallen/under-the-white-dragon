@@ -101,7 +101,7 @@ const Parts = {
   junk() { return Game.s.parts.filter((p) => p.st === 'dead' || p.st === 'burnt'); },
   // (and the salvage you've stripped: wire, alloy, glass, coolant, chips)
   junkValue() { return this.junk().reduce((a, p) => a + (p.st === 'dead' ? 3 : 1) + (p.g === 'clinic' || p.g === 'military' ? 4 : 0), 0) + SALVAGE_ORDER.reduce((a, k) => a + (Game.s.pack[k] || 0) * SALVAGE[k].price, 0); },
-  sellJunk() { const v = this.junkValue(); if (!v) return; Game.s.parts = Game.s.parts.filter((p) => p.st !== 'dead' && p.st !== 'burnt'); for (const k of SALVAGE_ORDER) Game.s.pack[k] = 0; Game.s.cr += v; Game.toast(`You tip it all into the scrap bin: ${v} cr.`, 'good'); Hud.refresh(); Save.write(); },
+  sellJunk() { const v = this.junkValue(); if (!v) return; Game.s.parts = Game.s.parts.filter((p) => p.st !== 'dead' && p.st !== 'burnt'); for (const k of SALVAGE_ORDER) Game.s.pack[k] = 0; Game.s.cr += v; Game.s.flags.sold = 1; Game.toast(`You tip it all into the scrap bin: ${v} cr.`, 'good'); Hud.refresh(); Save.write(); },
   name(p) { return GRADE[p.g].name + ' ' + PART[p.k].name.toLowerCase(); },
   // where it's from: "bought at the Overpass Market"
   from(p) { const L = LEVELS[p.from]; return (HOW[p.how] || 'found') + (p.how === 'pull' ? ' from ' + (p.out || 'a job') : L ? (p.how === 'trade' ? ' at ' : ' in ') + L.name : ''); },

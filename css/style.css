@@ -262,6 +262,21 @@ b { font-weight: 400; color: #fff; }
 .heatbar i::after { content: ''; position: absolute; inset: 0; width: var(--h); background: linear-gradient(90deg, var(--sodium), #ff4a6a); }
 .part img.picon { width: 60px; height: 36px; image-rendering: pixelated; margin-bottom: 2px; }
 .part .tbtns button { padding: 6px 14px; }
+/* the tutorial: a card under money and heat, a box beside the bench's tools,
+   a line at the top of a panel, and the button to press pulsing */
+#guide { position: absolute; left: var(--pad); top: calc(max(8px, env(safe-area-inset-top)) + 66px); width: min(250px, 27vw); font-family: var(--px); font-size: 15px; line-height: 1.35; color: var(--ink); background: rgba(16, 12, 24, 0.86); clip-path: var(--cut); box-shadow: inset 3px 0 0 var(--teal); padding: 8px 12px 10px 14px; pointer-events: none; }
+#guide:empty { display: none; }
+#guide h4, .tutbox h4, .tutline h4 { margin: 0 0 4px; font-size: 15px; font-weight: 400; color: var(--pink); letter-spacing: 0.08em; text-transform: uppercase; }
+#guide p, .tutbox p { margin: 0; }
+#guide button { pointer-events: auto; margin-top: 8px; padding: 4px 10px; }
+#guide .tutdone { color: var(--green); margin-bottom: 4px; }
+#toasts { width: min(420px, 44vw); }
+.tutbox, .tutline { background: #0e2226; clip-path: var(--cut-s); box-shadow: inset 3px 0 0 var(--teal); padding: 6px 10px 8px 12px; color: var(--ink); }
+.tutline { margin: 0 0 10px; }
+.tutbox h4 { text-transform: none; letter-spacing: 0; }
+.tutbox:empty, #benchmsg:empty { display: none; }
+.tut { animation: tutpulse 0.9s steps(2) infinite; }
+@keyframes tutpulse { 50% { box-shadow: inset 0 0 0 3px var(--teal); filter: brightness(1.4); } }
 /* the shelf, counted: a card a kind, a row a grade, a chip a state */
 .stocks { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 6px; }
 .stock { --r: var(--edge); display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 6px 10px; align-content: start; align-items: center; padding: 8px 12px 10px 14px; background: var(--card); clip-path: var(--cut); box-shadow: inset 3px 0 0 var(--r); }

@@ -17,7 +17,7 @@ const PANELS = {
     return [n.def.title ? `${name} · ${n.def.title}` : name, h];
   },
   // a new game: how things stand
-  intro(s) { return ['Under the White Dragon', '<p class="sub">The basement is yours: a bench, a parts shelf and a cot, under a trapdoor in Auntie Lin\'s storeroom. Nobody upstairs knows what you do down here. People who need something fixed and can\'t ask a licensed shop know to ask at the bar.</p><p class="sub">Someone\'s already waiting up there. Climb the ladder, talk to them, and bring the job down to your bench.</p><p class="dim">Move with the stick or the arrow keys. Use (E) works the bench, the ladder, doors and people.</p><div class="buttons"><button data-act="resume" class="go">Get up</button></div>']; },
+  intro(s) { return ['Under the White Dragon', '<p class="sub">The basement is yours: a bench, a parts shelf and a cot, under a trapdoor in Auntie Lin\'s storeroom. Nobody upstairs knows what you do down here. People who need something fixed and can\'t ask a licensed shop know to ask at the bar.</p><p class="sub">Your first job\'s already on the bench: Lin\'s kitchen radio, gone to static, and the part it needs is on your shelf. The card at the top left walks you through it.</p><p class="dim">Move with the stick or the arrow keys. Use (E) works the bench, the ladder, doors and people.</p><div class="buttons"><button data-act="resume" class="go">Get up</button></div>']; },
   // the morning after: what your fixes did overnight
   morning(s) { return ['Morning · day ' + s.day, Jobs.news.map((l) => `<p class="sub">${l}</p>`).join('') + '<div class="buttons"><button data-act="resume" class="go">Get up</button></div>']; },
   // a parts stall: what they sell, by grade

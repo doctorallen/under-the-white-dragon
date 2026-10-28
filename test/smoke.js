@@ -2,7 +2,7 @@
 // The game played headlessly in Chrome, sideways on a phone and on a desktop:
 // it boots without an error in the basement under the White Dragon (the
 // desktop run without WebGL2, so the 2D path is played too); the bench and the
-// shelf answer Use, and the basement isn't on the city map; a nav unit is opened, probed, fixed and powered up on the bench;
+// shelf answer Use, and the basement isn't on the city map; the tutorial walks Lin's radio through the bench, and it goes back to her;
 // the ladder leads up through the trapdoor into the noodle bar's storeroom,
 // where people eat; Ozzy's job is taken, fixed, handed back and slept on; the
 // front door leads out onto the street; the block's residents shop, work the
@@ -87,32 +87,43 @@ async function run(B, url, vp, name, failures) {
     return { bench, shelf, hidden: !WorldMap.places().some((p) => p.id === 'd_cellar') && !Travel.open('d_cellar') };
   });
   if (room.bench !== 'workbench' || room.shelf !== 'shelf' || !room.hidden) fail('the basement is not set up ' + JSON.stringify(room));
-  // the bench: open a nav unit with a dead cell, find it, swap it, test it
+  // a new game opens on the tutorial: Lin's radio on the bench, the coil it needs on the shelf, the card up
+  const tut0 = await E(() => { Tutorial.tick(); return { i: Tutorial.s && Tutorial.s.i, job: Game.s.bench && Game.s.bench.job, coil: Parts.have('aerial').some((p) => p.st === 'ok'), card: !!Tutorial.card() }; });
+  if (tut0.i !== 0 || tut0.job !== 'lin' || !tut0.coil || !tut0.card) fail('a new game does not open on the tutorial ' + JSON.stringify(tut0));
+  // the bench, as the tutorial walks it: screws out (easing off whenever one
+  // binds), casing off, probe, melt the burnt coil free, swap it, solder it,
+  // close up, screws home, power up; the card moves on a step at each
   const fix = await E(() => {
-    const B = Bench, hold = (x, y, n, fn) => { B.press(x, y); for (let k = 0; k < n; k++) { B.step(1 / 60); if (fn) fn(); } B.release(); };
-    Bench.put('navunit', { name: 'A nav unit', parts: { cell: ['street', 'dead'] } });
-    Parts.give(Parts.make('cell', 'street'), true);
-    T_.walkTo(World.props.find((p) => p.kind === 'workbench').x); T_.tap('useHit'); const open = Hud.open;
-    // screws out, easing off whenever one binds
-    B.b.screws.forEach((_, i) => { const [x, y] = B.screwAt(i); for (let t = 0; t < 4 && B.b.screws[i].st === 'in'; t++) hold(x, y, 120, () => { if (B.rt[i] && B.rt[i].bind > 0.1) B.release(); }); });
-    B.tool = 'hands'; B.lift(); B.tool = 'probe'; for (const k in B.D.slots) { const S = B.D.slots[k]; B.press(B.ox + S.x + 4, B.oy + S.y + 4); B.release(); }
-    const learned = Parts.knows('navunit');
-    B.tool = 'iron'; for (const [x, y] of B.joints('cell')) hold(x, y, 60);
-    B.tool = 'hands'; const S = B.D.slots.cell; B.press(B.ox + S.x + 8, B.oy + S.y + 4); B.release();
-    B.fit(Parts.have('cell').find((p) => p.st === 'ok').id); for (const [x, y] of B.joints('cell')) hold(x, y, 60);
-    B.close(); B.b.screws.forEach((_, i) => { const [x, y] = B.screwAt(i); for (let t = 0; t < 4 && B.b.screws[i].st !== 'in'; t++) hold(x, y, 120, () => { if (B.rt[i] && B.rt[i].bind > 0.1) B.release(); }); });
-    B.test(); B.draw();
-    return { open, learned, res: B.b.tested && B.b.tested.res, loose: B.loose(), scorch: B.b.scorch.length };
+    const B = Bench, hold = (x, y, n, fn) => { B.press(x, y); for (let k = 0; k < n; k++) { B.step(1 / 60); if (fn) fn(); } B.release(); }, steps = [], at = () => { Tutorial.tick(); steps.push(Tutorial.s.i); };
+    const screws = (want) => B.b.screws.forEach((_, i) => { const [x, y] = B.screwAt(i); for (let t = 0; t < 4 && (B.b.screws[i].st === 'in') !== want; t++) hold(x, y, 120, () => { if (B.rt[i] && B.rt[i].bind > 0.1) B.release(); }); });
+    T_.walkTo(World.props.find((p) => p.kind === 'workbench').x); T_.tap('useHit'); const open = Hud.open; at();
+    const marked = !!Tutorial.mark(); screws(false); at();
+    B.tool = 'hands'; B.lift(); at();
+    B.tool = 'probe'; for (const k in B.D.slots) { const S = B.D.slots[k]; B.press(B.ox + S.x + 4, B.oy + S.y + 4); B.release(); } at();
+    B.tool = 'iron'; for (const [x, y] of B.joints('aerial')) hold(x, y, 60); at();
+    B.tool = 'hands'; const S = B.D.slots.aerial; B.press(B.ox + S.x + 8, B.oy + S.y + 4); B.release(); at();
+    const pick = Parts.choices('aerial', B.b.name).find((c) => c.st === 'ok'); B.fit(pick.id); at();
+    for (const [x, y] of B.joints('aerial')) hold(x, y, 60); at();
+    B.close(); at(); screws(true); at();
+    B.test(); B.draw(); at();
+    return { open, marked, steps, learned: Parts.knows('radio'), res: B.b.tested && B.b.tested.res, loose: B.loose(), scorch: B.b.scorch.length };
   });
   await shot('bench');
-  if (fix.open !== 'bench' || !fix.learned || fix.res !== 'works' || fix.loose || fix.scorch) fail('the bench repair did not work ' + JSON.stringify(fix));
+  if (fix.open !== 'bench' || !fix.marked || fix.steps.join() !== '1,2,3,4,5,6,7,8,9,10,11' || !fix.learned || fix.res !== 'works' || fix.loose || fix.scorch) fail('the tutorial\'s bench repair did not work ' + JSON.stringify(fix));
   // up the ladder, through the trapdoor, into the storeroom: Lin at the bar, the sign out front
   const up = await E(() => {
-    Hud.toggle(null); Bench.clear(); T_.walkTo(World.props.find((p) => p.kind === 'trapdoor').x); const pr = Player.target && Player.target.p && Player.target.p.kind; T_.tap('useHit'); T_.run({}, 90);
+    Hud.toggle(null); T_.walkTo(World.props.find((p) => p.kind === 'trapdoor').x); const pr = Player.target && Player.target.p && Player.target.p.kind; T_.tap('useHit'); T_.run({}, 90);
     return { pr, level: Game.s.level, x: Math.round(Player.x), rug: !!World.props.find((p) => p.kind === 'trapdoor'), diners: Actors.npcs.filter((n) => n.act === 'sit').length, lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
   });
   if (up.pr !== 'trapdoor' || up.level !== 'd_noodles' || Math.abs(up.x - 846) > 30 || !up.rug || up.diners < 2 || !up.lin) fail('the ladder did not lead up to the storeroom of the noodle bar ' + JSON.stringify(up));
   await shot('storeroom');
+  // the radio goes back to Lin at the counter, by hand: she pays, and the tutorial moves on to Ozzy
+  const lin = await E(() => {
+    Hud.toggle(null); const n = Actors.npcs.find((q) => q.def.name === 'Auntie Lin'); if (!n) return {};
+    Actors.talk(n); const talk = Hud.open; Tutorial.tick(); Hud.panel('talk'); const b = document.querySelector('button[data-job="back:lin"]'), pulse = !!(b && b.classList.contains('tut')), cr = Game.s.cr;
+    if (b) b.click(); Tutorial.tick(); return { talk, pulse, paid: Game.s.cr - cr, st: Jobs.st('lin').st, i: Tutorial.s.i, bench: !!Game.s.bench };
+  });
+  if (lin.talk !== 'talk' || !lin.pulse || lin.paid !== 50 || lin.st !== 'back' || lin.i !== 12 || lin.bench) fail('Lin\'s radio did not go back to her ' + JSON.stringify(lin));
   // a job: Ozzy's waiting at the bar; take it, fix it, hand it back, sleep on it
   const job = await E(() => {
     Hud.toggle(null); Bench.clear(); const oz = Actors.npcs.find((n) => n.def.name === 'Ozzy'); if (!oz) return { oz: false };

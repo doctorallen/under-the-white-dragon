@@ -186,7 +186,7 @@ const Bench = {
   // ---- the panel ----
   html() {
     const t = Object.keys(BENCH_TOOLS).map((k) => `<button data-tool="${k}" class="${this.tool === k ? 'on' : ''}">${BENCH_TOOLS[k]}</button>`).join('') + `<button data-lens class="${this.lens ? 'on' : ''}">Lens</button>`;
-    return `<div class="benchwrap"><canvas id="benchcv"></canvas><div class="benchside"><div class="tools">${t}</div><p id="benchmsg" class="sub"></p><div id="benchtray"></div><div class="buttons" id="benchacts"></div></div></div>`;
+    return `<div class="benchwrap"><canvas id="benchcv"></canvas><div class="benchside"><div class="tools">${t}</div><p id="benchmsg" class="sub"></p><div id="benchguide"></div><div id="benchtray"></div><div class="buttons" id="benchacts"></div></div></div>`;
   },
   // the side: tools, what's been said, the shelf for an empty mount, and the
   // big actions; redrawn alone so the canvas keeps its size
@@ -194,15 +194,16 @@ const Bench = {
     const side = document.querySelector('.benchside'); if (!side || !this.b) return; const b = this.b;
     side.querySelectorAll('button[data-tool]').forEach((x) => x.classList.toggle('on', x.dataset.tool === this.tool));
     const lens = side.querySelector('button[data-lens]'); if (lens) lens.classList.toggle('on', this.lens);
-    $('benchmsg').textContent = this.msg || this.hint();
+    $('benchmsg').textContent = this.msg || (Tutorial.active() ? '' : this.hint());
     let tray = '';
     if (b.open && this.sel && !b.slots[this.sel].p) {
       const S = this.D.slots[this.sel], have = Parts.choices(S.kind, b.name);
       tray = `<h3>Fit ${PART[S.kind].took}</h3>` + (have.length ? have.map((c) => `<button class="part" data-fit="${c.id}" style="--r:${GRADE[c.g].col}"><b>${GRADE[c.g].name} ${PART[S.kind].name.toLowerCase()}${c.gauge ? ' · ' + c.gauge + ' gauge' : ''}</b><small><em class="st ${c.st}">${PART_STATE[c.st]} ×${c.n}</em></small></button>`).join('') : `<p class="dim">You've nothing that fits on the shelf.</p>`);
     }
-    $('benchtray').innerHTML = tray;
+    $('benchtray').innerHTML = tray; $('benchguide').innerHTML = Tutorial.benchHtml();
     const inn = b.screws.filter((s) => s.st === 'in').length;
     $('benchacts').innerHTML = (b.open ? '<button data-bench="close">Close it up</button>' : (inn ? '' : '<button data-bench="lift">Lift the casing</button>') + '<button data-bench="test" class="go">Power it up</button>') + '<button data-bench="aside" class="quiet">Set it aside</button><button data-bench="done" class="quiet">Leave it</button>';
+    Tutorial.decorate(side, 'bench');
     side.querySelectorAll('button[data-fit]').forEach((x) => (x.onclick = () => this.fit(+x.dataset.fit)));
     side.querySelectorAll('button[data-bench]').forEach((x) => (x.onclick = () => { const a = x.dataset.bench; if (a === 'close') this.close(); if (a === 'lift') this.lift(); if (a === 'test') this.test(); if (a === 'aside') this.aside(); if (a === 'done') { Save.write(); Hud.toggle(null); } }));
   },
@@ -283,6 +284,7 @@ const Bench = {
     const out = cv.getContext('2d'); out.imageSmoothingEnabled = false; out.fillStyle = '#05070a'; out.fillRect(0, 0, cv.width, cv.height);
     out.drawImage(this.c, this.offx, this.offy, BW * this.k, BH * this.k);
     bigRings(out, this);
+    const m = Tutorial.mark(); if (m) tutMark(out, this, m);
   },
   // the cutting mat under the lamp (made once)
   matCanvas() {

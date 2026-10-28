@@ -52,7 +52,7 @@ const Props = {
       const got = [];
       for (const [item, a, b] of YIELDS[p.kind]) { const n = a + Math.floor(hash(p.x, p.y, item.length + Game.s.day) * (b - a + 1)); if (n <= 0) continue; if (item === 'cr') { Game.s.cr += n; got.push({ n, name: 'cr', kind: 'cr' }); } else { const took = Game.give(item, n); if (took) got.push({ n: took, name: SALVAGE[item].name.toLowerCase() }); } }
       for (const part of Parts.strip(p)) got.push({ n: 1, name: PART[part.k].name.toLowerCase(), tag: [GRADE[part.g].name.toLowerCase(), part.gauge, part.st === 'worn' ? 'worn' : ''].filter(Boolean).join(', '), icon: Parts.icon(part.k, part.g) });
-      this.finish(p); Fx.sparks(p.x, p.y - 8, 10);
+      this.finish(p); Fx.sparks(p.x, p.y - 8, 10); Game.s.flags.stripped = 1;
       if (got.length) Game.gain(p.x, p.y - 28, got); else Game.toast('Nothing worth taking.');
       if (OWNED[p.kind]) { const seen = City.witnesses(p).length > 0; Jobs.heat(OWNED[p.kind] + (seen ? 4 : 0), seen ? 'Somebody saw you do it.' : 'That was somebody\'s.'); City.strip(p); }
       return;
