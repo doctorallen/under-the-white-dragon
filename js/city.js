@@ -49,17 +49,23 @@ const CITY_FREE = {
   clinic: { relieves: { energy: 0.05 }, minutes: 60, base: 0.012, cooldown: 4 * 1440, adult: true },
 };
 const City = {
-  w: null, on: false, here: null, pts: new Map(), lv: new Map(), seats: new Map(), reported: [], remarked: {},
+  // (the glue every game with people on Tyrell has is Tycho's bridge,
+  // Tycho.minds: the clock, the save, seats, presence, travel times,
+  // witnesses, reports; docs/minds.md in vendor/tycho)
+  w: null, on: false, here: null, reports: null, remarked: {},
+  pts: Tycho.minds.travelTimes((a, b) => Math.max(0.5, (Town.length(Town.route(City.anchor(a), City.anchor(b))) / PXH) * 60)),
+  lv: new Tycho.minds.Presence(() => City.w, (p) => City.regions(p)),
+  seats: new Tycho.minds.Seats(() => City.w),
+  clock: Tycho.minds.clock({ world: () => (City.on ? City.w : null), minutes: () => City.minutes(), remake: (t) => City.make(t, null) }),
   // ---- making the world: once, after the save is read --------------------
   init() {
     if (typeof Tyrell === 'undefined' || !Town.plans) return; // the engine isn't there: the old clock-only town
-    const saved = Game.s.city && Game.s.city.s && Game.s.city.pop === CITY.pop ? Game.s.city : null;
-    this.make(this.minutes(), saved);
+    this.make(this.minutes(), Game.s.city);
   },
   // the world, from a save, or new: a new one starts a few hours early and
   // runs them, so everyone is somewhere sensible, mid-errand, when you first look
   make(now, saved) {
-    this.here = null; this.pts.clear(); this.lv.clear(); this.seats.clear(); this.reported = [];
+    this.here = null; this.pts.clear(); this.lv.clear(); this.seats.clear();
     const w = (this.w = Tyrell.create({
       seed: 'white-dragon',
       start: now - 5 * 60, // (a save, if there is one, replaces all of this)
@@ -111,7 +117,7 @@ const City = {
     w.deed('fixed', { feeling: 'helped', regard: 0.2, memory: 6, sentiment: 'fixed my things' });
     w.deed('botched', { feeling: 'wronged', regard: -0.25, memory: 6, sentiment: 'botched a repair' });
     w.wormtongue.crime({ kind: 'strip', severity: 0.6, heat: CITY.reportHeat });
-    w.on('report', (r) => { if (r.actor === 'player') this.reported.push(r); });
+    this.reports = Tycho.minds.collect(w, 'report', (r) => r.actor === 'player');
     Talk.declare(w); // (conversations: talk.js)
     // the people
     for (let i = 0; i < TOWN_ORDER.length; i++) {
@@ -126,13 +132,12 @@ const City = {
       if (!w.kept('income:' + id) && R.age !== 'kid') { w.ceres.income(id, R.job ? 140 : 60, 7); w.keep('income:' + id, true); }
       else if (!w.kept('income:' + id)) { w.ceres.income(id, 20, 7); w.keep('income:' + id, true); }
     }
-    let loaded = false;
-    if (saved) { try { w.load(saved); loaded = true; } catch (e) { /* an unreadable city: start it over */ } }
-    if (!loaded) w.advanceTo(now);
+    // (a save of another city, or one that can't be read, starts it over)
+    Tycho.minds.restore(w, saved, { accept: (sv) => sv.pop === CITY.pop, now });
     this.on = true;
   },
   // Tyrell's clock: game minutes since day 0
-  minutes() { return (Game.s.day * 24 + Game.s.time) * 60; },
+  minutes() { return Tycho.minds.minutes(Game.s.day, Game.s.time); },
   // ---- a resident's day as a Tyrell routine -------------------------------
   routineOf(id) {
     const R = RESIDENTS[id], H = (h) => ((h % 24) + 24) % 24;
@@ -179,42 +184,25 @@ const City = {
   },
   // the walk between two places, in game minutes, at the residents' pace
   // (the same route Town draws them along, so on screen and off agree)
-  travel(a, b) {
-    if (a === b) return 0;
-    let row = this.pts.get(a); if (!row) this.pts.set(a, (row = new Map()));
-    let m = row.get(b);
-    if (m === undefined) { m = Math.max(0.5, (Town.length(Town.route(this.anchor(a), this.anchor(b))) / PXH) * 60); row.set(b, m); }
-    return m;
-  },
-  // could someone be in this level now? (worked out once per thing they do)
-  mayBeIn(id, level) {
-    if (!this.on) return true;
-    const p = this.w.get(id); if (!p || p.status !== 'active') return false;
-    const d = p.doing, key = d ? d.kind + d.start + '|' + d.to + '|' + d.place : 'idle|' + p.place;
-    let c = this.lv.get(id);
-    if (!c || c.key !== key) {
-      let set;
-      if (d && d.kind === 'travel') set = Town.levels(Town.route(this.anchor(d.from || p.place || RESIDENTS[id].homePlace), this.anchor(d.to)));
-      else { const P = Census.places[p.place]; set = new Set(P && P.level ? [P.level] : []); }
-      c = { key, set }; this.lv.set(id, c);
-    }
-    return c.set.has(level);
+  travel(a, b) { return this.pts(a, b); },
+  // could someone be in this level now? (worked out once per thing they do:
+  // the levels a walk passes through, or the level of where they are)
+  mayBeIn(id, level) { return !this.on || this.lv.may(id, level); },
+  regions(p) {
+    const d = p.doing;
+    if (d && d.kind === 'travel') return Town.levels(Town.route(this.anchor(d.from || p.place || RESIDENTS[p.id].homePlace), this.anchor(d.to)));
+    const P = Census.places[p.place]; return P && P.level ? [P.level] : [];
   },
   // a seat for someone at a place, kept while they're doing that there: the
   // first free one from the one they'd pick, so nobody sits in anybody
   seat(id, pid, act, start) {
     const P = Census.places[pid], list = P && (P.spots[act] || P.spots[SPOT_ALIAS[act]]);
     if (!list || list.length < 2 || P.kind === 'door') return undefined;
-    const k = pid + '|' + act; let m = this.seats.get(k); if (!m) this.seats.set(k, (m = new Map()));
-    const mine = m.get(id); if (mine && mine.start === start) return mine.i;
-    for (const [q, v] of m) { const p = this.w.get(q); if (!p || p.place !== pid || !p.doing || p.doing.kind === 'travel' || p.doing.action !== act) m.delete(q); }
-    const used = new Set([...m.values()].map((v) => v.i)), first = Math.floor(hash(Town.idn(id), act.length, 9) * list.length);
-    let i = first; for (let t = 0; t < list.length; t++) { const j = (first + t) % list.length; if (!used.has(j)) { i = j; break; } }
-    m.set(id, { i, start }); return i;
+    return this.seats.take(id, pid, act, start, list.length, Math.floor(hash(Town.idn(id), act.length, 9) * list.length));
   },
   // ---- where someone is now: Town.state's shape, from Tyrell ------------
   state(id) {
-    const w = this.w, p = w.get(id), hourAt = (t) => (((t / 60) % 24) + 24) % 24;
+    const w = this.w, p = w.get(id), hourAt = Tycho.minds.hourOf;
     const none = { level: null, act: 'home', e: { act: 'home', h: 0, o: {} } };
     if (!p || p.status !== 'active') return none;
     const d = p.doing;
@@ -222,7 +210,7 @@ const City = {
       const route = w.mind.routineAt(p), withId = route && route.entry[3] && route.entry[3].with;
       const from = d.from || p.place || RESIDENTS[id].homePlace;
       const a = Town.spot(id, from, p.last || 'home', d.start), b = Town.spot(id, d.to, d.action, d.end, undefined, this.seat(id, d.to, d.action, d.end));
-      const legs = Town.route(a, b), L = Town.length(legs), f = clamp((w.now - d.start) / Math.max(1e-6, d.end - d.start), 0, 1);
+      const legs = Town.route(a, b), L = Town.length(legs), f = Tycho.minds.progress(d, w.now);
       const e = { act: d.action, h: hourAt(d.start), o: withId ? { with: withId } : {} };
       let dist = Math.max(0, f * L - (withId ? 16 : 0));
       for (let li = 0; li < legs.length; li++) {
@@ -241,23 +229,21 @@ const City = {
     return this.at(id, p.place || RESIDENTS[id].homePlace, act, d ? d.start : w.now);
   },
   at(id, place, act, start) {
-    const b = Town.spot(id, place, act, start, undefined, this.seat(id, place, act, start)), e = { act, h: (((start / 60) % 24) + 24) % 24, o: {} };
+    const b = Town.spot(id, place, act, start, undefined, this.seat(id, place, act, start)), e = { act, h: Tycho.minds.hourOf(start), o: {} };
     return { level: b.level, x: b.x, y: b.y, moving: false, act, e, apt: b.apt, hidden: b.hidden, depth: b.depth, face: b.face, view: b.view, place };
   },
   // ---- every frame (from Town.sync): keep up with the game's clock --------
   sync() {
     if (!this.on) return;
-    const t = this.minutes();
     // back as well as forward: Esper rewinds. Further back than it remembers
     // (the dev clock), the block starts over at that hour, memories and all.
-    if (t < this.w.esper.earliest() - 1e-6) this.make(t, null);
-    else if (Math.abs(t - this.w.now) > 1e-6) this.w.advanceTo(t);
+    this.clock.sync();
     Jobs.collections(); // (what's fixed gets collected)
-    if (this.reported.length) {
-      const who = this.reported.map((r) => this.w.get(r.witness)).filter(Boolean).map((p) => p.name);
+    const reported = this.reports.take();
+    if (reported.length) {
+      const who = reported.map((r) => this.w.get(r.witness)).filter(Boolean).map((p) => p.name);
       const names = [...new Set(who)];
-      Jobs.heat(CITY.reportHeat * this.reported.length, (names.length === 1 ? names[0] + ' told someone' : names.length + ' people told someone') + ' what they saw you do.');
-      this.reported = [];
+      Jobs.heat(CITY.reportHeat * reported.length, (names.length === 1 ? names[0] + ' told someone' : names.length + ' people told someone') + ' what they saw you do.');
     }
   },
   // ---- the player's doings, as the residents see them ---------------------
@@ -265,8 +251,7 @@ const City = {
   // who sees something done at a prop: in a room, everyone in it; on the
   // street, whoever's within shouting distance on the same floor
   witnesses(p) {
-    const room = LEVELS[World.L.id].hidden, near = (n) => room || (Math.abs(n.x - p.x) < 180 && Math.abs(n.y - p.y) < 40);
-    return Actors.npcs.filter((n) => !n.hidden && near(n)).sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x));
+    return Tycho.minds.witnesses(p, Actors.npcs, { room: !!LEVELS[World.L.id].hidden, reach: [180, 40], can: (n) => !n.hidden });
   },
   strip(p) {
     const saw = this.witnesses(p);
@@ -336,7 +321,7 @@ const City = {
     else if (heard.length > 1) news.push(`Word's going round the block: ${heard.length} of your neighbors have heard you've been stripping machines.`);
   },
   // ---- saving: the minds go in the save, as they are ----------------------
-  stash() { if (this.on) Game.s.city = { tyrell: 'world', v: this.w.s.v, pop: CITY.pop, s: this.w.s }; },
+  stash() { if (this.on) Game.s.city = Tycho.minds.stash(this.w, { pop: CITY.pop }); },
   // ---- for the dev drawer and the console --------------------------------
   inspect(name) { if (!this.on) return 'Tyrell is off'; const id = TOWN_ORDER.find((k) => k === name || RESIDENTS[k].name === name) || name; return this.w.describe(id); },
 };
