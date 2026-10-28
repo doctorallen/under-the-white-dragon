@@ -9,7 +9,9 @@
 // stall, selling salvage, and home to fix it. Each step is done when the game
 // says it is (TUT[i].done), so doing things early or out of order just moves
 // it on, and Skip ends it. Where you are in it is Game.s.tut ({ i, off }); a
-// save from before there was a tutorial has none, and never sees it.
+// save from before there was a tutorial has none, and never sees it. The
+// step machine is Tycho's guide (Tycho.guide.Guide); what it says and shows
+// is this file's.
 // The card sits under money and heat; on the bench it's beside the tools,
 // with the tool to take and the place to touch marked; in a panel (talking,
 // a stall) it's a line at the top, and the button to press pulses.
@@ -21,7 +23,7 @@ const tutDev = (id) => Jobs.dev(id);
 const tutSlot = (id, k) => { const d = tutDev(id); return d && d.slots[k]; };
 const tutMine = (k) => Parts.have(k).some((p) => p.st === 'ok' && p.how !== 'pull');
 const tutHome = () => ['d_cellar', 'd_noodles', 'd_dragon'].includes(Game.s.level);
-const tutSalvage = () => SALVAGE_ORDER.reduce((a, k) => a + (Game.s.pack[k] || 0), 0);
+const tutSalvage = () => bag.total(Game.s.pack, SALVAGE_ORDER);
 // where on the bench to touch: a screw, a joint (a point), or a part (a box)
 const tutPt = ([x, y]) => ({ x: x - 1, y: y - 1, w: 3, h: 3, pt: true });
 const tutBox = (k) => { const S = Bench.D.slots[k]; return { x: Bench.ox + S.x, y: Bench.oy + S.y, w: S.w, h: S.h }; };
@@ -78,34 +80,34 @@ const TUT = [
 
 const Tutorial = {
   flash: null, sure: false,
-  get s() { return Game.s && Game.s.tut; },
-  active() { const t = this.s; return !!t && !t.off && t.i < TUT.length; },
-  get step() { return TUT[this.s.i]; },
+  G: new Tycho.guide.Guide({ steps: TUT, state: () => Game.s && Game.s.tut }),
+  get s() { return this.G.s; },
+  active() { return this.G.active(); },
+  get step() { return this.G.step; },
   // a new game: Lin's radio on the bench, and the coil it needs on the shelf
   begin() {
-    const s = Game.s; s.tut = { i: 0 }; s.jobs.lin = { st: 'bench', since: s.day };
+    const s = Game.s; s.tut = Tycho.guide.fresh(); s.jobs.lin = { st: 'bench', since: s.day };
     Bench.put('radio', { job: 'lin', name: JOBS.lin.title, parts: JOBS.lin.parts });
     Parts.give(Parts.make('aerial', 'street', { how: 'gift', from: 'd_cellar' }), true);
   },
   init() {
     $('guide').addEventListener('click', (e) => {
       const b = e.target.closest('button[data-tut]'); if (!b || !this.active()) return;
-      if (b.dataset.tut === 'end') { this.s.i = TUT.length; Save.write(); return; }
+      if (b.dataset.tut === 'end') { this.G.finish(); Save.write(); return; }
       if (!this.sure) { this.sure = true; setTimeout(() => (this.sure = false), 3000); return; }
-      this.s.off = true; this.sure = false; Save.write();
+      this.G.skip(); this.sure = false; Save.write();
     });
   },
   // every frame: move on past whatever's done (more than one, if you're ahead)
   tick() {
-    if (!this.active()) return;
-    let moved = false;
-    while (this.active() && !this.step.end && this.step.done()) { this.flash = { t: performance.now(), name: this.step.name }; this.s.i++; moved = true; }
-    if (!moved) return;
+    const passed = this.G.tick();
+    if (!passed.length) return;
+    this.flash = { t: performance.now(), name: passed[passed.length - 1].name };
     Save.write();
     if (Hud.open === 'bench') Bench.side(); else if (TUT_PANELS.includes(Hud.open)) Hud.panel(Hud.open);
   },
-  text() { const st = this.step, t = typeof st.text === 'function' ? st.text() : st.text; return st.bench && Hud.open !== 'bench' ? t + ' (At the bench, press Use.)' : t; },
-  head() { const st = this.step, all = TUT.filter((q) => q.ch === st.ch); return `${TUT_CH[st.ch]}${all.length > 1 ? ' · ' + (all.indexOf(st) + 1) + '/' + all.length : ''}`; },
+  text() { const st = this.step, t = this.G.read('text'); return st.bench && Hud.open !== 'bench' ? t + ' (At the bench, press Use.)' : t; },
+  head() { const { ch, at, of } = this.G.place(); return `${TUT_CH[ch]}${of > 1 ? ' · ' + at + '/' + of : ''}`; },
   // the card in the corner
   card() {
     if (!this.active()) return '';
@@ -118,7 +120,7 @@ const Tutorial = {
   decorate(el, which) {
     if (!el) return; el.querySelectorAll('.tut').forEach((b) => b.classList.remove('tut')); // (what the last step pointed at)
     if (!this.active()) return;
-    const st = this.step, sel = typeof st.pulse === 'function' ? st.pulse() : st.pulse;
+    const st = this.step, sel = this.G.read('pulse');
     if (sel) el.querySelectorAll(sel).forEach((b) => b.classList.add('tut'));
     if (which === 'bench') { if (st.tool && Bench.tool !== st.tool) { const b = el.querySelector(`button[data-tool="${st.tool}"]`); if (b) b.classList.add('tut'); } return; }
     if (st.panel && st.panel.includes(which)) el.insertAdjacentHTML('afterbegin', `<div class="tutline"><h4>${this.head()}</h4>${this.text()}</div>`);

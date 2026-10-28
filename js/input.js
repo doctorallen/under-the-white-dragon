@@ -4,58 +4,45 @@
 // drops through a walkway), Space/K jump, E use (hold to strip), I your jobs
 // and pockets, M the map, Esc pauses. Touch: the left half of the screen is
 // a stick wherever the thumb lands; the buttons on the right jump and use.
+// The controls are Tycho's (Tycho.input.Controls); this keeps the names the
+// game reads, refreshed each step by apply(): the axes (ax, ay), what's held
+// (jump, use) and the presses waiting (jumpHit, useHit, read once by take).
 // ---------------------------------------------------------------------------
 const Input = {
-  ax: 0, ay: 0, jump: false, use: false, jumpHit: false, useHit: false,
-  keys: new Set(), stick: null, touch: false, bot: null,
+  ax: 0, ay: 0, jump: false, use: false, touch: false,
+  C: new Tycho.input.Controls({
+    keys: { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', Space: 'jump', KeyK: 'jump', KeyE: 'use', KeyF: 'use', ShiftLeft: 'slow', ShiftRight: 'slow' },
+    axes: { left: 'left', right: 'right', up: 'up', down: 'down', slow: { action: 'slow', x: 0.4 } },
+    presses: ['jump', 'use'],
+    stick: { radius: 34, deadAxes: [0.2, 0.45], retake: true, onChange: (s) => Input.drawStick(s) },
+    bot: { x: 'ax', y: 'ay' },
+  }),
+  // a test can drive the controls: { ax, ay, jump, use }
+  get bot() { return this.C.bot; },
+  set bot(b) { this.C.bot = b; },
+  get jumpHit() { return this.C.presses.jump || false; },
+  set jumpHit(v) { this.C.presses.jump = v; },
+  get useHit() { return this.C.presses.use || false; },
+  set useHit(v) { this.C.presses.use = v; },
   init() {
-    const map = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', Space: 'j', KeyK: 'j', KeyE: 'e', KeyF: 'e', ShiftLeft: 'slow', ShiftRight: 'slow' };
+    this.C.listen({ stick: $('stickzone'), buttons: { jump: $('bJump'), use: $('bUse') }, heldClass: 'down', onTouch: () => { this.touch = true; document.body.classList.add('touch'); } });
     addEventListener('keydown', (e) => {
-      if (e.repeat) { if (map[e.code]) e.preventDefault(); return; }
-      const k = map[e.code];
-      if (k) { this.keys.add(k); if (k === 'j') this.jumpHit = true; if (k === 'e') this.useHit = true; e.preventDefault(); }
+      if (e.repeat) return;
       if (e.code === 'KeyI' || e.code === 'Tab') { Hud.toggle('pack'); e.preventDefault(); }
       if (e.code === 'KeyM') Hud.toggle('map');
       if (e.code === 'Escape') Hud.toggle(Hud.open ? Hud.open : 'pause');
-      this.fromKeys();
     });
-    addEventListener('keyup', (e) => { const k = map[e.code]; if (k) { this.keys.delete(k); this.fromKeys(); } });
-    addEventListener('blur', () => { this.keys.clear(); this.fromKeys(); });
-    // the stick
-    const pad = $('stickzone'), base = $('stick'), knob = $('knob');
-    pad.addEventListener('pointerdown', (e) => {
-      this.touch = true; document.body.classList.add('touch');
-      this.stick = { id: e.pointerId, x: e.clientX, y: e.clientY };
-      pad.setPointerCapture(e.pointerId);
-      base.style.left = e.clientX + 'px'; base.style.top = e.clientY + 'px'; base.classList.add('on');
-      knob.style.transform = 'translate(-50%,-50%)';
-      e.preventDefault();
-    });
-    pad.addEventListener('pointermove', (e) => {
-      if (!this.stick || e.pointerId !== this.stick.id) return;
-      const R = 34, dx = clamp(e.clientX - this.stick.x, -R, R), dy = clamp(e.clientY - this.stick.y, -R, R);
-      this.ax = Math.abs(dx) > R * 0.2 ? dx / R : 0; this.ay = Math.abs(dy) > R * 0.45 ? dy / R : 0;
-      knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-    });
-    const up = (e) => { if (!this.stick || e.pointerId !== this.stick.id) return; this.stick = null; this.ax = 0; this.ay = 0; base.classList.remove('on'); };
-    pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
-    // the buttons
-    const hold = (el, on, off) => {
-      el.addEventListener('pointerdown', (e) => { this.touch = true; document.body.classList.add('touch'); el.setPointerCapture(e.pointerId); el.classList.add('down'); on(); e.preventDefault(); });
-      const end = () => { if (!el.classList.contains('down')) return; el.classList.remove('down'); off(); };
-      el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
-    };
-    hold($('bJump'), () => { this.jump = true; this.jumpHit = true; }, () => { this.jump = false; });
-    hold($('bUse'), () => { this.use = true; this.useHit = true; }, () => { this.use = false; });
   },
-  fromKeys() {
-    const k = this.keys;
-    if (!this.stick) { this.ax = ((k.has('r') ? 1 : 0) - (k.has('l') ? 1 : 0)) * (k.has('slow') ? 0.4 : 1); this.ay = (k.has('d') ? 1 : 0) - (k.has('u') ? 1 : 0); }
-    this.jump = k.has('j') || $('bJump').classList.contains('down');
-    this.use = k.has('e') || $('bUse').classList.contains('down');
+  // the stick where the thumb landed, the knob as far as it's pushed
+  drawStick(s) {
+    const base = $('stick'), knob = $('knob');
+    if (!s) { base.classList.remove('on'); return; }
+    if (s.x === s.x0 && s.y === s.y0) { base.style.left = s.bx + 'px'; base.style.top = s.by + 'px'; base.classList.add('on'); knob.style.transform = 'translate(-50%,-50%)'; return; }
+    const R = 34, dx = clamp(s.x - s.bx, -R, R), dy = clamp(s.y - s.by, -R, R);
+    knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
   },
   // edges are read once per step
   take(name) { const v = this[name]; this[name] = false; return v; },
-  // a test can drive the controls: { ax, ay, jump, use }
-  apply() { if (!this.bot) return; const b = this.bot; this.ax = b.ax || 0; this.ay = b.ay || 0; this.jump = !!b.jump; this.use = !!b.use; },
+  // each step: the axes, and what's held
+  apply() { const C = this.C; C.update(); this.ax = C.move.x; this.ay = C.move.y; this.jump = C.held('jump'); this.use = C.held('use'); },
 };

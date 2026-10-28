@@ -17,6 +17,10 @@ const { hash, noise, smooth, Rng } = Tycho.seed;
 // light, evenly spaced in lightness, read at a value by `tone`.
 const { rgb, mixRgb, lum, css, SOOT, WARM, rampOf, tone } = Tycho.color;
 const $ = (id) => document.getElementById(id);
+// What you carry is counted on Tycho's items: bags of counts by kind (the
+// salvage in your pockets), things of their own (parts, with an id each) and
+// counted views grouped a level at a time (the shelf).
+const { bag, things, group } = Tycho.items;
 
 // ---- canvases --------------------------------------------------------------
 // A canvas and its context with smoothing off (Tycho's sprite part). The
