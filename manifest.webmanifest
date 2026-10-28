@@ -8,6 +8,9 @@
   "orientation": "landscape",
   "background_color": "#08060c",
   "theme_color": "#08060c",
+  "related_applications": [
+    { "platform": "webapp", "url": "https://doctorallen.github.io/under-the-white-dragon/manifest.webmanifest" }
+  ],
   "icons": [
     {
       "src": "icons/icon-192.png",
