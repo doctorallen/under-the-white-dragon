@@ -1,13 +1,16 @@
 'use strict';
 // ---------------------------------------------------------------------------
-// The panels: talking to people (and the work they bring), a new game, the
-// morning after, a parts stall, the grocery's till, the bench and what's
-// waiting for it, the shelf, the city map, and what you carry. Each returns
-// [title, html]; panelBind wires up the buttons after the panel is drawn.
+// The panels: talking to people (a conversation: talk.js; without the minds,
+// their line and the work they bring), a new game, the morning after, a parts
+// stall, the grocery's till, the bench and what's waiting for it, the shelf,
+// the city map, and what you carry. Each returns [title, html]; panelBind
+// wires up the buttons after the panel is drawn.
 // ---------------------------------------------------------------------------
 const PANELS = {
   tyrell() { return ['Tyrell mode', TyrellMode.html()]; },
   talk(s) {
+    if (Talk.showing(Hud.who)) return Talk.panel(Hud.who); // (a conversation: talk.js)
+    // without the minds: their line, the work, their trade
     const n = Hud.who, name = n.def.name, line = n.def.town ? Town.talkLine(n) : n.def.lines[n.line % n.def.lines.length];
     let h = `<p class="sub">"${line}"</p>`;
     // jobs for the bench: an offer, a wait, a hand-back
@@ -23,7 +26,7 @@ const PANELS = {
   // a parts stall: what they sell, by grade
   partshop(s) {
     const n = Hud.who, stock = PART_STOCK[n.def.stock];
-    let h = `<p class="sub">"${n.def.lines[n.line % n.def.lines.length]}"</p><div class="parts">`;
+    let h = `<p class="sub">"${n.def.lines[n.line % n.def.lines.length]}"</p>${talkBtn(n)}<div class="parts">`;
     h += stockHtml(n.def.stock, s);
     const jn = Parts.junk().length, sv = SALVAGE_ORDER.reduce((a, k) => a + (s.pack[k] || 0), 0); if (jn || sv) h += `<div class="part tool" style="--r:#8a8a90"><b>The scrap bin</b><small>${[jn ? jn + ' dead or burnt part' + (jn > 1 ? 's' : '') + ' off your shelf' : '', sv ? sv + ' bits of salvage' : ''].filter(Boolean).join(' and ')}: good for nothing but the metal.</small><div class="tbtns"><button data-selljunk>Sell for ${Parts.junkValue()} cr</button></div></div>`;
     const t = Tips.forSale(n.def.stock);
@@ -31,7 +34,7 @@ const PANELS = {
     return [n.def.name + '\'s parts', h + '</div>'];
   },
   // the grocery's till: whoever's on shift sells you things
-  grocer(s) { const n = Hud.who; return [n.def.name + ' · Mo\'s Grocery', `<p class="sub">"${Town.talkLine(n)}"</p><p class="dim">Behind the counter, with the batteries and the fuses:</p><div class="parts">` + stockHtml('mo', s) + '</div>']; },
+  grocer(s) { const n = Hud.who; return [n.def.name + ' · Mo\'s Grocery', `<p class="sub">"${Town.talkLine(n)}"</p>${talkBtn(n)}<p class="dim">Behind the counter, with the batteries and the fuses:</p><div class="parts">` + stockHtml('mo', s) + '</div>']; },
   // what's waiting in the basement, set aside: pick one to put on the bench
   benchpick(s) {
     const ids = Object.keys(s.aside);
@@ -51,6 +54,8 @@ const PANELS = {
   travel() { return ['The city', WorldMap.html(false)]; },
   citymap() { return ['The city', WorldMap.html(true)]; },
 };
+// a word with whoever's behind the counter, from their trade (talk.js)
+function talkBtn(n) { return n && Talk.can(n) ? '<div class="buttons"><button data-talk="1">Talk</button></div>' : ''; }
 // a stall's parts, by grade, each with a buy button
 function stockHtml(key, s) {
   return PART_STOCK[key].map(([k, g, cr, gauge, note], i) => `<div class="part" style="--r:${GRADE[g].col}"><img class="picon" src="${Parts.icon(k, g)}" alt=""><b>${GRADE[g].name} ${PART[k].name.toLowerCase()}${gauge ? ' · ' + gauge + ' gauge' : ''}</b><small>${note || GRADE[g].note}</small><div class="tbtns"><button data-buypart="${i}" ${s.cr >= cr ? '' : 'disabled'}>${cr} cr</button></div></div>`).join('');
@@ -71,7 +76,9 @@ function panelBind(body, which) {
   body.querySelectorAll('button[data-buytool]').forEach((b) => (b.onclick = () => { if (Tips.buy(+b.dataset.buytool)) re(); }));
   body.querySelectorAll('button[data-buypart]').forEach((b) => (b.onclick = () => { const [k, g, cr, gauge] = PART_STOCK[Hud.open === 'grocer' ? 'mo' : n.def.stock][+b.dataset.buypart]; if (!Game.pay({ cr })) return; Parts.give(Parts.make(k, g, { how: 'trade', gauge })); re(); }));
   body.querySelectorAll('button[data-benchload]').forEach((b) => (b.onclick = () => Bench.load(b.dataset.benchload)));
-  body.querySelectorAll('button[data-job]').forEach((b) => (b.onclick = () => { const c = b.dataset.job; Jobs.act(c); if (!c.startsWith('back')) re(); }));
+  body.querySelectorAll('button[data-job]:not([data-say])').forEach((b) => (b.onclick = () => { const c = b.dataset.job; Jobs.act(c); if (!c.startsWith('back')) re(); }));
+  body.querySelectorAll('button[data-say]').forEach((b) => (b.onclick = () => Talk.answer(+b.dataset.say))); // (what you say, in a talk: talk.js)
+  body.querySelectorAll('button[data-talk]').forEach((b) => (b.onclick = () => Talk.open(n)));
   body.querySelectorAll('button[data-role]').forEach((b) => (b.onclick = () => { Hud.toggle(null); NPC_ROLE[n.def.role].use(n); }));
   if (which === 'bench') Bench.attach();
   if (which === 'travel' || which === 'citymap') WorldMap.attach();

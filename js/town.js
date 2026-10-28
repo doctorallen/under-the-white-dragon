@@ -358,16 +358,16 @@ const Town = {
     return (!A.gen && !B.gen) || A.hh === B.hh || st(A) === st(B) || !!(A.job && B.job && A.job.place === B.job.place);
   },
   // when you stop someone: where they're going, or what they're at
-  talkLine(n) {
+  talkLine(n, plain) {
     const id = n.def.town, R = RESIDENTS[id], st = n.townState || this.state(id, Game.hour());
-    const remark = City.remark(id); if (remark) return remark; // (something they saw, heard or remember of you)
+    const remark = !plain && City.remark(id); if (remark) return remark; // (something they saw, heard or remember of you; in a talk, they raise it themselves: talk.js)
     if (st.moving) return (st.e.act === 'browse' || st.e.act === 'pay' ? R.say.shop : R.say[st.e.act]) || TOWN_GOING[st.e.act] || 'Busy. Sorry.';
     return (st.act === 'browse' || st.act === 'pay' ? R.say.shop : R.say[st.act]) || Folk.who(id);
   },
   talk(n) {
     City.did('talked', n.def.town); // (they know your face now)
-    // something broken to ask you about, or something of theirs you've fixed: the talk panel
-    if (Jobs.actionsFor(n.def.name).length) { n.face = Math.sign(Player.x - n.x) || n.face; Hud.toggle('talk', n); return; }
+    // something broken to ask you about, or something of theirs you've fixed: a talk (talk.js)
+    if (Jobs.actionsFor(n.def.name).length) { n.face = Math.sign(Player.x - n.x) || n.face; if (!Talk.open(n)) Hud.toggle('talk', n); return; }
     const id = n.def.town, R = RESIDENTS[id], st = n.townState || this.state(id, Game.hour());
     const line = this.talkLine(n);
     // the clerk at the till sells you things
@@ -375,7 +375,11 @@ const Town = {
     n.face = Math.sign(Player.x - n.x) || n.face;
     // on shift at a stall that buys or a parts counter: they trade
     if (n.def.role && NPC_ROLE[n.def.role]) { NPC_ROLE[n.def.role].use(n); return; }
-    if (Tips.talk(n)) return; // (something they've heard of, for you)
+    // anyone else: a talk, where they tell you what they've heard of (a lead), have it
+    // out about what they saw you do, and you ask after their lives (talk.js);
+    // without the minds, a lead or a line in passing, as before
+    if (Talk.open(n)) return;
+    if (Tips.talk(n)) return;
     Actors.say(n, line);
   },
 };

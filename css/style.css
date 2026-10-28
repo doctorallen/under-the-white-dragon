@@ -371,3 +371,15 @@ button[data-devwho] small { color: #a69cb6; }
 details.folk { margin: 2px 0; }
 details.folk > summary { cursor: pointer; padding: 4px 0; color: #b0a6c0; letter-spacing: 0.04em; }
 details.folk > .buttons { margin: 4px 0 8px; }
+
+/* talk (talk.js): what was said, then the answers, one to a line, each with
+   how it comes at them; a job's take and hand-back the main button */
+.talk { margin: 0 0 10px; }
+.talk p { margin: 0 0 6px; }
+.talk p.you { color: #9a8eae; }
+.talk p.you i { font-style: normal; color: var(--green); } .talk p.you i.badly { color: #ff8aa0; }
+.talk p.note { color: var(--teal); }
+.buttons.answers { flex-direction: column; align-items: stretch; gap: 6px; margin-top: 8px; }
+.answers button { text-align: left; display: flex; align-items: baseline; gap: 10px; }
+.answers button small { margin-left: auto; font-size: 15px; color: #9a8eae; text-transform: lowercase; }
+.answers button.go small { color: #0b3a3a; }

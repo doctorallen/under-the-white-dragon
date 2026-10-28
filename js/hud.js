@@ -64,6 +64,7 @@ const Hud = {
     if (this.open) this.panel(this.open);
   },
   toggle(which, who) {
+    if (this.open === 'talk' && (which !== 'talk' || (who && who !== this.who))) Talk.close(); // (a talk ends with its panel)
     if (!which || (this.open === which && !who)) { this.open = null; this.who = null; $('panel').hidden = true; Game.paused = false; return; }
     this.open = which; this.who = who || this.who; Game.paused = true; $('panel').hidden = false; this.panel(which);
   },
@@ -92,7 +93,7 @@ const Hud = {
     } else if (which === 'vendor') {
       const n = this.who, rate = (n && n.def.rate) || 1, worth = SALVAGE_ORDER.reduce((a, k) => a + Math.round((s.pack[k] || 0) * SALVAGE[k].price * rate), 0);
       title.textContent = n ? n.def.name : 'Vendor';
-      h += `<p class="sub">${n ? n.def.lines[0] : ''}</p><div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${s.pack[k] || 0}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
+      h += `<p class="sub">${n ? n.def.lines[0] : ''}</p>${talkBtn(n)}<div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${s.pack[k] || 0}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
       h += `<div class="buttons"><button data-act="sellAll" ${worth ? '' : 'disabled'}>Sell everything for ${worth} cr</button></div>`;
     } else if (PANELS[which]) {
       const [t, html] = PANELS[which](s); title.textContent = t; h += html;

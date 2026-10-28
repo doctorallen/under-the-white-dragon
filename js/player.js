@@ -114,7 +114,7 @@ const Player = {
       const dx = Math.abs(n.x - this.x); if (dx > 20 || Math.abs(n.y - this.y) > 14) continue;
       // (someone with a job for you comes first; passers-by don't get in the way of a machine you're at)
       const job = Jobs.actionsFor(n.def.name).length > 0, dn = dx + (job ? -30 : n.def.role ? 0 : 14);
-      if (dn < bd) { bd = dn; best = { n, pr: { verb: n.def.role ? NPC_ROLE[n.def.role].verb : 'Talk', text: n.def.role ? NPC_ROLE[n.def.role].prompt(n) : 'Talk to ' + n.def.name, tap: true } }; }
+      if (dn < bd) { bd = dn; const role = n.def.role && !(NPC_ROLE[n.def.role].talks && Talk.can(n)) ? NPC_ROLE[n.def.role] : null; best = { n, pr: { verb: role ? role.verb : 'Talk', text: role ? role.prompt(n) : 'Talk to ' + n.def.name, tap: true } }; }
     }
     this.target = best;
     const useHit = Input.take('useHit');
