@@ -32,8 +32,15 @@ const Dev = {
     }).join('');
   },
   // Go to someone: where each resident is now, and what they're doing
+  // grouped by where they live (the block's own first), each with what they
+  // do and where they are now; a box to find someone by name
   peopleHtml() {
-    return '<div class="buttons">' + TOWN_ORDER.map((id) => { const st = Town.state(id, Game.hour()), at = st.level ? LEVELS[st.level].name : st.moving ? 'between streets' : 'away'; return `<button data-devwho="${id}" ${st.level ? '' : 'disabled'}><b>${RESIDENTS[id].name}</b> <small>${at}${st.act ? ' · ' + st.act : ''}</small></button>`; }).join('') + '</div>';
+    const C = Census.places, groups = {};
+    for (const id of TOWN_ORDER) { const R = RESIDENTS[id], k = !R.gen ? 'block' : C[R.homePlace] ? C[R.homePlace].street : 'block'; (groups[k] = groups[k] || []).push(id); }
+    const who = (id) => { const R = RESIDENTS[id]; return R.age === 'kid' ? 'kid' : R.job ? R.job.title : R.age === 'senior' ? 'retired' : 'at home'; };
+    const btn = (id) => { const st = Town.state(id, Game.hour()), at = st.level ? LEVELS[st.level].name : st.moving ? 'between streets' : st.hidden ? 'indoors' : 'away'; return `<button data-devwho="${id}" data-name="${RESIDENTS[id].name.toLowerCase()}" ${st.level && !st.hidden ? '' : 'disabled'}><b>${RESIDENTS[id].name}</b> <small>${who(id)} · ${at}${st.act ? ' · ' + st.act : ''}</small></button>`; };
+    const order = ['block'].concat(STRATA.flatMap((S) => Object.keys(Census.streets).filter((k) => Census.streets[k].band === S.id)));
+    return `<input class="devfind" data-devfind type="search" placeholder="Find someone by name" autocomplete="off">` + order.filter((k) => groups[k]).map((k) => `<details class="folk"${k === 'block' ? ' open' : ''}><summary>${k === 'block' ? 'The block' : 'Live in ' + LEVELS[k].name} · ${groups[k].length}</summary><div class="buttons">${groups[k].map(btn).join('')}</div></details>`).join('');
   },
   html() {
     const s = Game.s, tog = (k, name, note) => `<label class="tog"><input type="checkbox" data-dev="${k}" ${this.s[k] ? 'checked' : ''}><span><b>${name}</b><small>${note}</small></span></label>`;
@@ -67,6 +74,8 @@ const Dev = {
     body.querySelectorAll('button[data-devres]').forEach((b) => (b.onclick = () => { this.s.res = b.dataset.devres; if (this.s.res === 'auto') View.q = 3; this.save(); View.resize(); Hud.panel('dev'); }));
     body.querySelectorAll('button[data-devgo]').forEach((b) => (b.onclick = () => { const [l, sp] = b.dataset.devgo.split(':'); Hud.toggle(null); Game.go(l, sp); }));
     // to someone: into their level, beside them
+    const find = body.querySelector('input[data-devfind]');
+    if (find) find.oninput = () => { const q = find.value.trim().toLowerCase(); body.querySelectorAll('button[data-devwho]').forEach((b) => (b.hidden = !!q && !b.dataset.name.includes(q))); body.querySelectorAll('details.folk').forEach((d) => { const any = [...d.querySelectorAll('button[data-devwho]')].some((b) => !b.hidden); d.hidden = !any; if (q) d.open = any; }); };
     body.querySelectorAll('button[data-devwho]').forEach((b) => (b.onclick = () => { const st = Town.state(b.dataset.devwho, Game.hour()); if (!st.level) return; Hud.toggle(null); this.landAt = { level: st.level, x: st.x + 14, y: st.y }; Game.go(st.level, Object.keys((LEVELS[st.level].built || (LEVELS[st.level].built = LEVELS[st.level].make())).spawns)[0]); }));
   },
 };

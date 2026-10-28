@@ -8,7 +8,7 @@
 // noodle carts, the Menagerie (a pet shop of synth animals), and at the far
 // end the Coil, the club everybody owes.
 addDistrict('d_neonrow', 'Neon Row', 1, 60, 380, 'The nightlife strip: bars, pachinko, noodle carts, the Menagerie pet shop and the Coil.', 'Nightlife strip', () => district({
-  id: 'd_neonrow', name: 'Neon Row', tier: 1, W: 2900, crowd: 12, amb: [0.2, 0.16, 0.26],
+  id: 'd_neonrow', name: 'Neon Row', tier: 1, W: 2900, amb: [0.2, 0.16, 0.26],
   local: { name: 'Local', lines: LOCAL_LINES.neon, look: { hair: 'undercut', hairCol: '#ff4ab0', top: '#2a2a3a', coat: 'jacket' } },
   build(L, G) {
     // the way in: a corp tower's base by the pad, then the Row's own gate
@@ -156,7 +156,7 @@ function hiDrop(L, W, G, H) {
 // front doors, a capsule tower, shops at the foot of the flats, a courtyard
 // with a playground, a little shrine the residents keep.
 addDistrict('d_kessler', 'Kessler Blocks', 1, 50, 230, 'A housing estate up high: slab blocks, a capsule tower, a courtyard, washing on every line.', 'Housing estate', () => district({
-  id: 'd_kessler', name: 'Kessler Blocks', tier: 1, W: 2600, crowd: 9, amb: [0.19, 0.18, 0.24],
+  id: 'd_kessler', name: 'Kessler Blocks', tier: 1, W: 2600, amb: [0.19, 0.18, 0.24],
   local: { name: 'Resident', lines: LOCAL_LINES.blocks, look: { hair: 'bun', hairCol: '#8a8a8a', top: '#5a3a3a', coat: 'long' } },
   build(L, G) {
     // block 14: a long slab, galleries of doors, the lift shaft at its end
@@ -187,9 +187,9 @@ addDistrict('d_kessler', 'Kessler Blocks', 1, 50, 230, 'A housing estate up high
     L.prop('ac', 1960, G - 90, { label: 'air conditioner' });
     for (const x of [1720, 1840, 1960]) L.prop('deco', x, G - 90, { art: DECO.door({ col: '#3a4a5a', light: x % 2 ? '#ffd8a0' : '#9af0ff' }), id: 'k9d' + x });
     // the end: a laundrette and a pawn shop, a stack of shacks on an old block
-    bShophouse(L, 2080, 2200, G, { floors: 3, wall: MAT.concrete, shops: [['glass', '#9af0ff']], roof: 'shack', seed: 251 });
+    bShophouse(L, 2080, 2200, G, { floors: 3, wall: MAT.concrete, shops: [['glass', '#9af0ff', { kind: 'school', label: 'Kessler Primary', staff: 2, hours: [7, 17] }]], roof: 'shack', seed: 251 });
     bStack(L, 2210, 2420, G, { levels: 4, shop: 'pawn', shopCol: '#ffb040', blade: '#ff4ab0', seed: 261 });
-    bShophouse(L, 2430, 2600, G, { floors: 5, wall: KMAT.pink, shops: [['tea', '#ffd040'], ['shutter', '#3af0e0']], roof: 'tank', seed: 271 });
+    bShophouse(L, 2430, 2600, G, { floors: 5, wall: KMAT.pink, shops: [['tea', '#ffd040'], ['glass', '#3af0e0', { kind: 'laundry', label: 'Suds Laundromat', hours: [6, 24] }]], roof: 'tank', seed: 271 });
     kStallAt(L, 2150, G, 'fruit', { col: '#2a8a4a' });
     L.prop('car', 2340, G, { look: { col: '#2a3a4a', under: '#3af0e0' }, label: 'parked car' }); L.prop('junk', 600, G, { label: 'junk pile' });
     L.spots.push([300, G], [700, G], [1050, G], [1280, G], [1500, G], [1900, G], [2140, G], [2500, G]);
@@ -201,7 +201,7 @@ addDistrict('d_kessler', 'Kessler Blocks', 1, 50, 230, 'A housing estate up high
 // towers of every shape, a fountain, a ring of chrome, boutiques under a
 // canopy, a sky-garden, and security everywhere.
 addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza: glass towers, a fountain and a hologram, boutiques, and guards who look straight through you.', 'Corporate plaza', () => district({
-  id: 'd_glasshouse', name: 'Glasshouse Plaza', tier: 1, W: 2700, crowd: 8, layerDy: 30, floor: KMAT.whitepanel, amb: [0.22, 0.24, 0.3],
+  id: 'd_glasshouse', name: 'Glasshouse Plaza', tier: 1, W: 2700, layerDy: 30, floor: KMAT.whitepanel, amb: [0.22, 0.24, 0.3],
   local: { name: 'Office worker', lines: LOCAL_LINES.plaza, look: { hair: 'short', top: '#1a1a24', coat: 'long', collar: true, legs: '#1a1a24' } },
   build(L, G) {
     // the floor of the plaza: pale stone with lit seams
@@ -228,7 +228,7 @@ addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza
     // the security post and a corp lobby
     L.paint(1600, G - 40, 1680, G, (P) => { P.block(1600, G - 40, 1680, G, KMAT.whitepanel, { base: 0.5 }); kFill(P, 1606, G - 34, 1674, G - 16, '#3a8aff', 0.3); for (let x = 1610; x < 1670; x += 10) kFill(P, x, G - 30, x + 7, G - 22, '#0a1a2a', 0); });
     L.light(1640, G - 24, 50, [0.4, 0.6, 1], 0.7); L.prop('rack', 1690, G, { label: 'security rack' });
-    bGlass(L, 1720, 1960, G, { h: 340, crown: 'ring', glass: MAT.glass, edge: '#3af0e0', logo: '#3af0e0', fins: 16, seed: 331 });
+    bGlass(L, 1720, 1960, G, { h: 340, crown: 'ring', glass: MAT.glass, edge: '#3af0e0', logo: '#3af0e0', fins: 16, seed: 331, work: 'hotel', name: 'The Glasshouse Hotel', staff: 3 });
     // a white tower of bands and a narrow gold one
     bGlass(L, 1990, 2150, G, { h: 300, crown: 'step', glass: MAT.glassC, panel: 22, edge: '#e8e8ff', seed: 341 });
     bGlass(L, 2170, 2260, G, { h: 420, crown: 'slant', glass: R(['#1a1408', '#3a2a10', '#6a5020', '#e8c070']), edge: '#ffd040', lit: 0.2, seed: 351 });
@@ -250,7 +250,7 @@ addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza
 // maintenance gantries, the drop on every side, and the wind.
 addDistrict('d_skybridge', 'The Skybridge', 1, 140, 760, 'A deck slung between two megatowers: tea houses and kiosks along it, and a long way down.', 'Bridge between towers', () => {
   const L = district({
-    id: 'd_skybridge', name: 'The Skybridge', tier: 1, W: 2500, H: 520, crowd: 7, layerDy: -120, floor: MAT.steelD, wet: false, amb: [0.2, 0.22, 0.3],
+    id: 'd_skybridge', name: 'The Skybridge', tier: 1, W: 2500, H: 520, layerDy: -120, floor: MAT.steelD, wet: false, amb: [0.2, 0.22, 0.3],
     local: { name: 'Bridge warden', lines: ['Hold the rail in the wind. People don\'t, every year.', 'Twelve hundred metres of deck and they still charge rent on it.', 'You can see the sun from here, two mornings a year.'], look: { hair: 'cap', capCol: '#e8b030', top: '#4a4a3a', coat: 'long' } },
     build(L, G) {
       hiDrop(L, 2500, G, 520);
@@ -298,7 +298,7 @@ addDistrict('d_skybridge', 'The Skybridge', 1, 140, 760, 'A deck slung between t
 // trees, pines and bamboo, a pond with a red bridge, a tea house, a pavilion,
 // greenhouses, a temple, gardeners. Quiet; the quietest place up high.
 addDistrict('d_gardens', 'Arcology Gardens', 1, 110, 660, 'The arcology\'s terraced garden under glass: cherry trees, a pond, a tea house, greenhouses, a temple.', 'Gardens', () => district({
-  id: 'd_gardens', name: 'Arcology Gardens', tier: 1, W: 2600, crowd: 6, layerDy: 80, floor: R(['#1a1410', '#2e2418', '#4a3c2a', '#8a7a5a']), amb: [0.3, 0.32, 0.32], rain: 0,
+  id: 'd_gardens', name: 'Arcology Gardens', tier: 1, W: 2600, layerDy: 80, floor: R(['#1a1410', '#2e2418', '#4a3c2a', '#8a7a5a']), amb: [0.3, 0.32, 0.32], rain: 0,
   local: { name: 'Gardener', lines: ['Every tree in here costs more than your rent.', 'The cherries bloom on a timer. They\'re never wrong.', 'Mind the moss. It\'s older than me.'], look: { hair: 'cap', capCol: '#3a5a2a', top: '#3a5a3a', apron: '#4a3a2a', legs: '#2a2a2a' } },
   build(L, G) {
     // the glass roof of the arcology over all of it: ribs and panes
@@ -364,7 +364,7 @@ function hiCloudLayers(L) {
 // it all Halden's penthouse.
 LEVELS.spires = { name: 'The Spires', depth: '+300 m', metres: 300, mapX: 520, tier: 6, hub: true, label: 'Above the clouds', blurb: 'Above the clouds: penthouse towers, a sky lounge, and Halden at the top of it all.', make: () => {
   const L = district({
-    id: 'spires', name: 'The Spires', tier: 6, W: 3400, crowd: 5, crowdTo: 2300, layerDy: 0, floor: KMAT.whitepanel, wet: false, rain: 0, amb: [0.26, 0.26, 0.34],
+    id: 'spires', name: 'The Spires', tier: 6, W: 3400, layerDy: 0, floor: KMAT.whitepanel, wet: false, rain: 0, amb: [0.26, 0.26, 0.34],
     build(L, G) {
       L.spawns.pad = [140, G]; hiCloudLayers(L);
       // the pad: lit markings, a beacon

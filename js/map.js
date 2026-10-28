@@ -46,7 +46,7 @@ const MapView = {
   // way out of the city what it is
   label(p) {
     if (p.kind === 'door' || p.kind === 'trapdoor') {
-      const to = p.to && LEVELS[p.to[0]], name = to ? to.name : p.label || 'Door';
+      const to = p.to && LEVELS[p.to[0]], name = to ? to.name : p.place ? Census.mapLabel(p) : p.label || 'Door';
       return (p.out ? 'Out to ' + name : p.kind === 'trapdoor' ? (p.up ? 'Up to ' : 'Down to ') + name : name) + (p.hours && !Props.openNow(p.hours) ? ' (shut)' : '');
     }
     if (p.kind === 'transit') return { spinner: 'Cab stand', subway: 'Subway', hatch: 'Ladder up', manhole: 'Manhole' }[p.mode] || 'Lift cage';

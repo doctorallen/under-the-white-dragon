@@ -8,10 +8,12 @@
 // questions physics and play ask of it.
 // ---------------------------------------------------------------------------
 const LEVELS = {};
+// what a door with homes behind it says
+const HOME_LABEL = { capsule: 'Capsule homes', flat: 'Flats', house: 'A house', shack: 'Shacks', penthouse: 'Penthouses', squat: 'Somebody\'s corner' };
 
 function newLevel(id, name, w, h) {
   const L = {
-    id, name, w, h, ops: [], solids: [], ways: [], ladders: [], props: [], lights: [], npcs: [], wet: [], spawns: {},
+    id, name, w, h, homes: [], amens: [], hangouts: [], ops: [], solids: [], ways: [], ladders: [], props: [], lights: [], npcs: [], wet: [], spawns: {},
     rain: 0, dry: [], flicks: [], ads: [], critters: [], trash: [], vents: [], drips: [], traffic: [], holos: [], train: null, layers: [], layerDy: 0, ambient: [0.2, 0.18, 0.26], far: null, music: null,
     paint(x0, y0, x1, y1, fn) { this.ops.push({ x0, y0, x1, y1, fn, seed: this.ops.length * 31 + 7 }); },
     block(x0, y0, x1, y1, ramp, o = {}) { this.paint(x0, y0, x1, y1, (P) => P.block(x0, y0, x1, y1, ramp, o)); },
@@ -42,6 +44,14 @@ function newLevel(id, name, w, h) {
     lamp(x, y, h, colr = '#ffe0b0', k = 1) { this.paint(x, y - h, x + 10, y, (P) => lampPaint(P, x, y, h, colr)); this.light(x + 7, y - h + 8, h * 1.7, colr, k, 1.2); },
     prop(kind, x, y, o = {}) { const p = Object.assign({ id: this.id + ':' + kind + ':' + Math.round(x) + ':' + Math.round(y), kind, x, y }, o); this.props.push(p); return p; },
     npc(def) { personName(this, def); this.npcs.push(def); return def; }, // (everyone gets a name: levels.js)
+    // where the city's people live and go (census.js reads these): a door
+    // with homes behind it (o.n households of a kind: capsule, flat, house,
+    // shack, penthouse), a door to somewhere they work or go (a school, a
+    // bath, offices: kind), and a spot in the open where they spend time
+    // (a park bench, a stall's counter, a temple's steps: kind, n people)
+    home(x, y, kind, n, label) { const p = this.prop('door', x, y, { label: label || HOME_LABEL[kind] || 'Homes', home: kind }); this.homes.push({ x, y, kind, n: Math.max(1, n | 0), door: p }); return p; },
+    amenity(x, y, kind, label, o = {}) { const p = this.prop('door', x, y, { label, amenity: kind, hours: o.hours }); this.amens.push(Object.assign({ x, y, kind, label, door: p }, o)); return p; },
+    hangout(x, y, kind, n = 1, o = {}) { this.hangouts.push(Object.assign({ x, y, kind, n }, o)); },
   };
   return L;
 }

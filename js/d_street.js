@@ -153,7 +153,7 @@ function stWait(L, x0, x1, G, o = {}) {
 
 // ---- Overpass Market: a market under the highway decks ------------------------
 addDistrict('d_overpass', 'Overpass Market', 2, -40, 300, 'A market packed under the highway decks: dozens of stalls, a mechanic, a salvage buyer.', 'Market under the decks', () => district({
-  id: 'd_overpass', name: 'Overpass Market', tier: 2, W: 2700, crowd: 14, amb: [0.17, 0.15, 0.2], layerDy: 0,
+  id: 'd_overpass', name: 'Overpass Market', tier: 2, W: 2700, amb: [0.17, 0.15, 0.2], layerDy: 0,
   local: { name: 'Porter', lines: ['The deck shakes every time a freight hauler goes over. You get used to it.', 'Everything up there sells down here, a week later, cheaper.', 'Vance runs the stalls past the third pier. Pay him or pack up.'], look: { hair: 'cap', capCol: '#5a4a1a', top: '#4a3a2a', coat: 'jacket' } },
   build(L, G) {
     const DY = G - 128, piers = [185, 615, 1045, 1475, 1905, 2335];
@@ -185,7 +185,7 @@ addDistrict('d_overpass', 'Overpass Market', 2, -40, 300, 'A market packed under
     kStallAt(L, 1550, G, 'flowers'); kStallAt(L, 1620, G, 'herbs'); kStallAt(L, 1690, G, 'parts', { col: '#5a2a5a' }); kStallAt(L, 1760, G, 'robot', { col: '#ffd040' }); kStallAt(L, 1835, G, 'med');
     L.prop('vending', 1880, G, { look: { col: '#ffd040', body: '#5a4a1a' }, label: 'vending machine' }); L.light(1880, G - 14, 30, [1, 0.85, 0.3], 0.6);
     // bay 5: a pawnshop under a stair up to a hung gantry, crates
-    bShophouse(L, 1970, 2100, G, { floors: 1, wall: MAT.brickD, shops: [['pawn', '#ffb040']], roof: 'flat', balcony: false, seed: 202 });
+    bShophouse(L, 1970, 2100, G, { floors: 1, wall: MAT.brickD, shops: [['pawn', '#ffb040', { kind: 'depot', label: 'Overpass Couriers', staff: 2 }]], roof: 'flat', balcony: false, seed: 202 });
     L.stairs(2110, G, 2190, G - 70); L.walk(2110, 2330, G - 70, 4, MAT.steelD); L.paint(2110, DY + 24, 2330, G - 70, (P) => { for (const x of [2140, 2240, 2320]) for (let y = DY + 22; y < G - 70; y++) P.put(x, y, tone(MAT.steel, 0.4)); });
     L.prop('ac', 2210, G - 70, { label: 'air conditioner' });
     for (const [x, c] of [[2160, '#3a4a5a'], [2176, '#5a4a2a'], [2168, '#4a5a3a']]) L.prop('deco', x, x === 2168 ? G - 10 : G, { art: DECO.crate({ col: c, w: 14, h: 10 }), id: 'ovcr' + x });
@@ -200,7 +200,7 @@ addDistrict('d_overpass', 'Overpass Market', 2, -40, 300, 'A market packed under
 
 // ---- Canal Docks: quays on piles, cranes, containers, boats on black water ------
 addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: cranes, container stacks, a fish market, Warehouse Seven and the harbour light.', 'Docks', () => district({
-  id: 'd_docks', name: 'Canal Docks', tier: 2, W: 2800, crowd: 6, amb: [0.15, 0.17, 0.22], layerDy: 30, wet: false,
+  id: 'd_docks', name: 'Canal Docks', tier: 2, W: 2800, amb: [0.15, 0.17, 0.22], layerDy: 30, wet: false,
   local: { name: 'Dock worker', lines: LOCAL_LINES.docks, look: { hair: 'cap', capCol: '#c8a020', top: '#d86a20', coat: 'jacket', legs: '#2a2a3a' } },
   build(L, G) {
     const H = L.h, waters = [[560, 760], [1290, 1520], [2210, 2500]];
@@ -251,7 +251,7 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     L.prop('ac', 1620, G - 96, { label: 'air conditioner' });
     // the harbourmaster's office and the dockers' canteen
     bShophouse(L, 1980, 2090, G, { floors: 2, wall: KMAT.concreteL, shops: [['izakaya', '#ff8a3a']], roof: 'tank', seed: 301 });
-    bShophouse(L, 2090, 2200, G, { floors: 3, wall: KMAT.corrBlue, shops: [['glass', '#3af0e0']], roof: 'flat', balcony: false, seed: 302 });
+    bShophouse(L, 2090, 2200, G, { floors: 3, wall: KMAT.corrBlue, shops: [['glass', '#3af0e0', { kind: 'depot', label: 'The canal parcel depot', staff: 3 }]], roof: 'flat', balcony: false, seed: 302 });
     L.npc({ name: 'Harbourmaster Ilse', look: { skin: SKINS[0], hair: 'short', hairCol: '#c8c8c8', top: '#2a3a5a', coat: 'long', legs: '#1a2030' }, x: 2150, y: G, face: -1, sched: [[0, 24, 2150, 'stand']], lines: ['Nothing\'s floated in this canal since I was born. Plenty\'s sunk.', 'Manifests say machine parts. Manifests lie.', 'The light out there\'s been burning eighty years. Longer than me.'] });
     // the third water and the harbour beacon on its pier
     L.paint(2210, G - 160, 2500, G + 20, (P) => { stBeacon(P, 2440, G, 120); for (const bx of [2260, 2330]) { P.area(bx - 4, G + 2, bx + 4, G + 12, KMAT.lacquer, (xx, y) => 0.6 - (y - G) / 20, { inside: (xx, y) => Math.abs(xx - bx) < 4 - (y - G - 2) * 0.2 }); P.put(bx, G + 1, [60, 255, 120], 1); } });
@@ -268,7 +268,7 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
 
 // ---- The Scrapyard: mountains of scrap, a magnet crane, the compactor --------------
 addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap behind a chain-link fence: a magnet crane, the compactor, stacked wrecks, fires and dogs.', 'Scrapyard', () => district({
-  id: 'd_scrapyard', name: 'The Scrapyard', tier: 2, W: 2500, crowd: 3, amb: [0.26, 0.21, 0.22], floor: MAT.asphalt, layerDy: 20,
+  id: 'd_scrapyard', name: 'The Scrapyard', tier: 2, W: 2500, amb: [0.26, 0.21, 0.22], floor: MAT.asphalt, layerDy: 20,
   local: { name: 'Picker', lines: LOCAL_LINES.scrap, look: { hair: 'hood', top: '#4a3a2a', coat: 'long', legs: '#2a2420', mask: '#3a3a3a' } },
   build(L, G) {
     // the mountains behind: rust, steel, plastic, painted in tiers
@@ -326,7 +326,7 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
 
 // ---- Chop Shop Alley: illegal chrome, chopped cars, the Gutter King ---------------
 addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of illegal chrome clinics and chop garages. The Gutter King\'s hall stands at the end, and nobody goes in.', 'Chop shops', () => district({
-  id: 'd_chopshop', name: 'Chop Shop Alley', tier: 2, W: 2300, crowd: 5, amb: [0.15, 0.13, 0.18], floor: MAT.asphalt, layerDy: 0,
+  id: 'd_chopshop', name: 'Chop Shop Alley', tier: 2, W: 2300, amb: [0.15, 0.13, 0.18], floor: MAT.asphalt, layerDy: 0,
   local: { name: 'Lookout', lines: ['You\'re in the wrong alley, tinker.', 'Nobody here\'s got chrome. Nobody here\'s got anything. Walk on.', 'The King hears everything. Even this.'], look: { hair: 'mohawk', hairCol: '#3af0e0', hairGlow: true, top: '#1a1a1e', coat: 'jacket', cyArm: true, acc: '#3af0e0' } },
   build(L, G) {
     // the alley's walls close overhead: bridges, pipes, cables, a strip of sky
@@ -377,12 +377,12 @@ addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of ill
 
 // ---- Clinic Row: legal medicine, mostly ---------------------------------------
 addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics: pharmacies, a dentist, a vet, an optician, the Mercy hospital, street medics and a blood bank.', 'Clinics', () => district({
-  id: 'd_clinicrow', name: 'Clinic Row', tier: 2, W: 2500, crowd: 8, amb: [0.18, 0.2, 0.24], layerDy: 0,
+  id: 'd_clinicrow', name: 'Clinic Row', tier: 2, W: 2500, amb: [0.18, 0.2, 0.24], layerDy: 0,
   local: { name: 'Patient', lines: ['Six hours in the queue. Six. For a cough.', 'The hospital takes your blood as payment. Half a litre a visit.', 'Doctor Reyes is the only one on the Row who doesn\'t sell to the gangs.'], look: { hair: 'bob', hairCol: '#3a2a20', top: '#c8c0b0', coat: 'long', mask: '#d8e8e8' } },
   build(L, G) {
     // the head of the street: a pharmacy and an optician, flats above
     bShophouse(L, 190, 320, G, { floors: 4, wall: KMAT.cream, shops: [['pharmacy', '#3aff80']], roof: 'tank', blade: '#3aff80', seed: 501 });
-    bShophouse(L, 320, 440, G, { floors: 3, wall: KMAT.mint, shops: [['glass', '#9af0ff']], roof: 'garden', seed: 502 });
+    bShophouse(L, 320, 440, G, { floors: 3, wall: KMAT.mint, shops: [['glass', '#9af0ff', { kind: 'school', label: 'St Agnes School', staff: 2, hours: [7, 17] }]], roof: 'garden', seed: 502 });
     L.paint(330, G - 66, 430, G - 44, (P) => { kFill(P, 340, G - 64, 420, G - 46, '#06101a'); for (const cx of [362, 398]) for (let a = 0; a < Math.PI * 2; a += 0.05) P.put(Math.round(cx + Math.cos(a) * 9), Math.round(G - 55 + Math.sin(a) * 6), [154, 240, 255], 1); for (let x = 371; x < 389; x++) P.put(x, G - 57 - Math.round(Math.sin((x - 371) / 18 * Math.PI) * 2), [154, 240, 255], 1); });
     L.light(380, G - 55, 50, [0.6, 0.95, 1], 0.7, 1, { mode: 'sign', seed: 11 });
     kStallAt(L, 470, G, 'herbs', { npc: { name: 'Herbalist Mo', lines: ['Roots for the lungs. The air down here eats them.', 'Doctors charge you for a name. I charge you for a cure.'] } });
@@ -413,7 +413,7 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     L.prop('cabinet', 1700, G - 82, { label: 'parts cabinet' }); L.light(1700, G - 112, 30, [0.8, 0.95, 1], 0.5);
     kStallAt(L, 1290, G, 'med', { npc: { name: 'Street medic', lines: ['Patches, painkillers, stitches. No chrome. I\'m legal.', 'Bleeding? Sit. Pay after.'] } });
     kStallAt(L, 1360, G, 'med', { npc: false });
-    bShophouse(L, 1400, 1540, G, { floors: 4, wall: KMAT.pink, shops: [['clinic', '#ff3a4a']], roof: 'tank', blade: '#ff3a4a', bladeLeft: true, seed: 505 }); stWait(L, 1400, 1540, G);
+    bShophouse(L, 1400, 1540, G, { floors: 4, wall: KMAT.pink, shops: [['clinic', '#ff3a4a', { kind: 'hospital', label: 'The Mercy', staff: 2 }]], roof: 'tank', blade: '#ff3a4a', bladeLeft: true, seed: 505 }); stWait(L, 1400, 1540, G);
     L.paint(1410, G - 40, 1530, G - 4, (P) => { for (let k = 0; k < 5; k++) { const bx = 1418 + k * 22; P.area(bx, G - 30, bx + 10, G - 12, rp('#c81a2a', 6), (x, y) => 0.6 - (y - G + 30) / 30, { glow: 0.3 }); kV(P, bx + 5, G - 36, G - 30, '#c8c8c8'); } });
     // a lane of smaller practices with a gallery over them
     bShophouse(L, 1560, 1680, G, { floors: 3, wall: KMAT.teal, shops: [['clinic', '#3af0e0']], roof: 'flat', balcony: false, seed: 506, gh: 44 }); stWait(L, 1560, 1680, G, { gh: 44 });

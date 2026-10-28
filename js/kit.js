@@ -302,8 +302,21 @@ function kShop(L, x0, x1, G, kind, col, o = {}) {
   // signs and lights
   if (o.sign !== false && kind !== 'shutter') L.sign(Math.round(mid - (o.signN || 5) * 2 - 1), G - h - 11, o.signN || 5, col || '#ffd040', { r: 50, seed });
   if (kind === 'pharmacy' || kind === 'clinic' || kind === 'dental' || kind === 'vet') { const cc = kind === 'pharmacy' ? '#3aff80' : kind === 'clinic' ? '#ff3a4a' : '#e8f4ff'; L.paint(x1 - 14, G - h - 22, x1 - 2, G - h - 8, (P) => { kFill(P, x1 - 14, G - h - 22, x1 - 2, G - h - 8, '#0a0e10'); kCross(P, x1 - 8, G - h - 15, 4, cc); }); L.light(x1 - 8, G - h - 15, 50, cc, 0.7); }
+  if (o.amen) L.amenity(mid, G, o.amen.kind, o.amen.label, o.amen); // (a school, a laundromat, a depot: what this front really is)
+  else if (kind !== 'shutter' && o.door !== false && SHOP_AMEN[kind]) L.amenity(mid, G, SHOP_AMEN[kind][0], shopName(L, kind, seed), { shop: kind, hours: SHOP_AMEN[kind][1] });
   if (kind !== 'shutter') L.light(mid, G - h / 2, Math.max(50, w * 0.8), kind === 'clinic' || kind === 'dental' || kind === 'vet' ? [0.7, 0.85, 0.95] : c.map((q) => Math.min(1, q / 255 * 0.7 + 0.3)), kind === 'bar' || kind === 'club' ? 0.6 : 0.75);
 }
+
+// what a shopfront is behind its door, and its hours: somewhere to eat, to
+// drink, to play, to shop, to be seen to (census.js staffs them)
+const SHOP_AMEN = {
+  bakery: ['eatery', [6, 20]], food: ['eatery', [8, 23]], ramen: ['eatery', [11, 3]], noren: ['eatery', [11, 23]], tea: ['eatery', [8, 21]], izakaya: ['bar', [17, 2]], bar: ['bar', [18, 3]],
+  club: ['club', [21, 5]], pachinko: ['pachinko', [10, 1]], arcade: ['arcade', [12, 2]],
+  boutique: ['shop', [10, 21]], counter: ['shop', [8, 22]], glass: ['shop', [9, 21]], half: ['shop', [9, 20]], pawn: ['shop', [10, 22]], flowers: ['shop', [8, 20]], junkshop: ['shop', [9, 21]], pharmacy: ['shop', [0, 24]],
+  clinic: ['clinic', [0, 24]], dental: ['clinic', [8, 19]], vet: ['clinic', [9, 19]], temple: ['temple', [5, 22]],
+};
+const SHOP_WORD = { bakery: 'bakery', food: 'diner', ramen: 'ramen bar', noren: 'eating house', tea: 'tea house', izakaya: 'izakaya', bar: 'bar', club: 'club', pachinko: 'pachinko', arcade: 'arcade', boutique: 'boutique', counter: 'corner shop', glass: 'electronics', half: 'repair shop', pawn: 'pawnshop', flowers: 'florist', junkshop: 'junk shop', pharmacy: 'pharmacy', clinic: 'clinic', dental: 'dentist', vet: 'vet', temple: 'temple' };
+function shopName(L, kind, seed) { const n = NAME_LAST[Math.floor(hash(seed, L.id.length, 61) * NAME_LAST.length)]; return n + '\'s ' + SHOP_WORD[kind]; }
 
 // ---- buildings ------------------------------------------------------------------
 // Scale: an adult is 33 px, about 19 px to the metre, so a door is 40 px high
@@ -345,9 +358,10 @@ function bShophouse(L, x0, x1, G, o = {}) {
   });
   // the shops along the bottom
   const shops = o.shops || [[r.pick(['glass', 'counter', 'noren', 'pawn', 'tea']), r.pick(['#ff4ab0', '#3af0e0', '#ffd040', '#ff8a3a'])]];
-  const sw = w / shops.length; shops.forEach(([kind, col], i) => kShop(L, Math.round(x0 + i * sw), Math.round(x0 + (i + 1) * sw), G, kind, col, { h: gh, seed: seed + i, signN: Math.max(3, Math.min(7, Math.round(sw / 10))) }));
+  const sw = w / shops.length; shops.forEach(([kind, col, amen], i) => kShop(L, Math.round(x0 + i * sw), Math.round(x0 + (i + 1) * sw), G, kind, col, { h: gh, seed: seed + i, signN: Math.max(3, Math.min(7, Math.round(sw / 10))), amen }));
   if (o.awning) L.paint(x0, G - gh - 2, x1, G - gh + 12, (P) => kAwning(P, x0 + 2, x1 - 2, G - gh + 1, o.awning, { stripe: o.stripe }));
   if (o.blade) L.sign(o.bladeLeft ? x0 - 9 : x1 + 2, top + 12, Math.min(9, Math.round(fl * fh / 8)), o.blade, { vert: true, r: 70, seed });
+  if (o.homes !== false) L.home(x1 - 6, G, 'flat', fl); // (a stair door at the side, up to the flats)
   return { top, x0, x1 };
 }
 // A capsule tower: two concrete cores with boxes plugged into them, each a
@@ -376,6 +390,7 @@ function bCapsules(L, x0, x1, G, o = {}) {
   });
   L.light(cores[0], G - 20, 60, [1, 0.85, 0.6], 0.6);
   if (o.sign) L.sign(x1 - 20, top + 30, 8, o.sign, { vert: true, r: 70, seed });
+  { let k = 0, n = 0; for (const cx of cores) for (let y = top + 6; y < G - 100; y += 50) for (const side of [-1, 1]) { k++; if (hash(k, y, seed) >= 0.12) n++; } L.home(cores[0], G, 'capsule', n); } // (one a capsule)
   return { top };
 }
 // A machiya: a narrow wooden townhouse, two floors: a lattice front, a
@@ -399,6 +414,7 @@ function bMachiya(L, x0, x1, G, o = {}) {
   });
   if (o.lantern !== false) L.paint(x0, g1, x0 + 14, g1 + 16, (P) => kLantern(P, x0 + 8, g1 + 4, o.lantern || '#ff5030', { r: 3, h: 7 }));
   L.light(o.doorLeft ? x0 + 20 : x1 - 20, G - 20, 56, [1, 0.65, 0.35], 0.75);
+  if (o.homes !== false) L.home(o.doorLeft ? x0 + 20 : x1 - 20, G, 'house', 1);
   if (o.lantern !== false) L.light(x0 + 8, g1 + 8, 30, [1, 0.45, 0.25], 0.6, 1, { mode: 'fire', seed: x0 });
 }
 // A temple hall on a stone base: red pillars, lattice doors, a great curved
@@ -423,6 +439,7 @@ function bTemple(L, x0, x1, G, o = {}) {
   });
   for (let x = x0 + 20; x < x1 - 10; x += 50) { L.paint(x - 4, ey + 6, x + 4, ey + 20, (P) => kLantern(P, x, ey + 10, '#ff3a2a', { r: 3, h: 7 })); L.light(x, ey + 14, 40, [1, 0.4, 0.2], 0.6, 1, { mode: 'fire', seed: x }); }
   L.light((x0 + x1) / 2, wall - 20, w * 0.6, [1, 0.62, 0.3], 0.7);
+  L.hangout(Math.round((x0 + x1) / 2), G, 'temple', 3);
   return { ey, wall };
 }
 // A pagoda: storeys of roofs getting smaller, a spire with rings on top
@@ -469,6 +486,8 @@ function bGlass(L, x0, x1, G, o = {}) {
   });
   L.light((x0 + x1) / 2, G - 26, w * 0.7, [0.75, 0.85, 1], 0.55);
   if (o.logo) L.sign(Math.round((x0 + x1) / 2) - 13, G - 76, 6, o.logo, { r: 70, seed });
+  if (o.homes) L.home(Math.round((x0 + x1) / 2), G, 'penthouse', o.homes);
+  else if (o.door !== false) L.amenity(Math.round((x0 + x1) / 2), G, o.work || 'office', o.name || (NAME_LAST[Math.floor(hash(seed, 3, 62) * NAME_LAST.length)] + ' ' + ['Tower', 'House', 'Plaza', 'Building'][Math.floor(hash(seed, 4, 62) * 4)]), { staff: o.staff || 1, hours: [8, 19] });
   return { top };
 }
 // A stack of shacks: an old two-floor block with whatever people could find
@@ -499,6 +518,7 @@ function bStack(L, x0, x1, G, o = {}) {
   kShop(L, x0, x1, G, o.shop || 'junkshop', o.shopCol || '#ffb040', { h: KS.gh, seed });
   for (const b of boxes) if (hash(b.x, b.y, 6) < 0.3) L.light(b.x + 3, b.y + 3, 30, [1, 0.85, 0.6], 0.4);
   if (o.blade) L.sign(x0 - 8, base - 70, 7, o.blade, { vert: true, r: 60, seed });
+  L.home(x1 - 10, G, 'shack', Math.max(2, boxes.length));
   return { top: y };
 }
 // A slab block (danchi): floors of front doors along open galleries, a stair
@@ -517,6 +537,7 @@ function bDanchi(L, x0, x1, G, o = {}) {
     const num = String(o.number || 7), nx = x1 - 26; for (let i = 0; i < num.length; i++) for (const [a, b] of GLYPHS[(num.charCodeAt(i) * 3) % GLYPHS.length]) kFill(P, nx + i * 14 + a * 4, top + 12 + b * 4, nx + i * 14 + a * 4 + 4, top + 16 + b * 4, '#d8c8a0');
   });
   for (let f = 1; f < fl; f++) if (hash(f, 1, seed) < 0.6) L.tube(x0 + 30 + Math.round(hash(f, 2, seed) * (w - 60)), G - f * fh - 44, 12, '#e8f4e8', 0.45);
+  L.home(x0 + 13, G, 'flat', fl * Math.max(2, Math.floor((w - 30) / 46))); // (in by the stair tower)
   return { top };
 }
 // A theatre: a marquee of chasing bulbs, posters in lit frames, a tall sign
@@ -539,6 +560,7 @@ function bTheater(L, x0, x1, G, o = {}) {
   });
   L.sign(x0 + 6, top + 60, 10, o.col || '#ffd040', { vert: true, r: 80, seed });
   L.light(mid, G - 56, w, c.map((q) => q / 255), 0.9); L.light(mid, G - 20, 60, [1, 0.8, 0.55], 0.7);
+  if (o.door !== false) L.amenity(mid, G, 'theater', o.name || 'The picture house', { hours: [12, 1], staff: 2 });
 }
 // A bathhouse: a wooden house with a curtain marked for the bath, a chimney
 function bBath(L, x0, x1, G, o = {}) {
@@ -554,6 +576,7 @@ function bBath(L, x0, x1, G, o = {}) {
   });
   L.vents.push({ x: cx + 7, y: G - 214, kind: 'steam' });
   L.light(x0 + w * 0.6, G - 20, 70, [1, 0.75, 0.45], 0.8);
+  L.amenity(Math.round(x0 + w * 0.42 + (x1 - 14 - x0 - w * 0.42) / 2), G, 'bath', o.name || 'The bathhouse', { hours: [14, 2], staff: 2 });
 }
 // A park: grass, a path, trees of a kind, a lamp or two, benches, a pond
 function bPark(L, x0, x1, G, o = {}) {
@@ -567,7 +590,8 @@ function bPark(L, x0, x1, G, o = {}) {
   });
   if (o.pond) L.wet.push({ y: G - 2, x0: x0 + (x1 - x0) * 0.4, x1: x0 + (x1 - x0) * 0.4 + 80, depth: 10, k: 0.6 });
   for (let x = x0 + 60; x < x1 - 30; x += 150) L.lamp(x, G, 46, '#ffe8c0', 0.8);
-  for (let x = x0 + 100; x < x1 - 40; x += 160) L.prop('deco', x, G, { art: () => bench(), id: 'pk' + x });
+  for (let x = x0 + 100; x < x1 - 40; x += 160) { L.prop('deco', x, G, { art: () => bench(), id: 'pk' + x }); L.hangout(x, G, 'park', 2); }
+  if (o.play !== false) L.hangout(Math.round((x0 + x1) / 2) + 30, G, 'play', 4);
   if (o.critters !== false) L.critter('cat', x0, x1, G, 1);
 }
 // A pachinko hall or arcade: a whole front of bulbs and screens
@@ -685,11 +709,13 @@ function kStallAt(L, x, G, kind, o = {}) {
   L.light(x, G - 26, 56, lc, 0.8, 1, kind === 'yakitori' || kind === 'skewers' ? { mode: 'fire', seed: x } : null);
   if (kind === 'yakitori' || kind === 'skewers') L.vents.push({ x: x - 4, y: G - 26, kind: 'smoke' });
   if (kind === 'ramen' || kind === 'dumpling' || kind === 'tea') L.vents.push({ x: x - 12, y: G - 22, kind: 'steam' });
+  if (STALL_FOOD.includes(kind)) L.hangout(x + 18, G, 'food', 2); else if (kind !== 'robot') L.hangout(x + 18, G, 'market', 1);
   if (o.npc !== false) {
     const n = o.npc || {}, looks = { ramen: { apron: '#e8e0d0', hair: 'cap', capCol: '#e8e0d0' }, fish: { apron: '#2a4a6a', hair: 'cap' }, med: { top: '#e0e8e8', hair: 'short' }, organs: { top: '#2a2a2a', apron: '#8a2a2a', hair: 'bald' }, robot: null }[kind];
-    if (looks !== null) L.npc(Object.assign({ name: n.name || STALL_NAMES[kind] || 'Stallholder', look: Object.assign({ skin: SKINS[(x >> 4) % 6], hair: 'cap', capCol: '#2a3a5a', top: '#4a4a3a', apron: '#3a2a1a', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, looks || {}, n.look || {}), x, y: G, sched: [[0, 24, x, 'work']], lines: n.lines || STALL_LINES[kind] || ['Buy something or move along.'], behind: true }, n.role ? { role: n.role, rate: n.rate || 1 } : {}));
+    if (looks !== null) L.npc(Object.assign({ name: n.name || STALL_NAMES[kind] || 'Stallholder', look: Object.assign({ skin: SKINS[(x >> 4) % 6], hair: 'cap', capCol: '#2a3a5a', top: '#4a4a3a', apron: '#3a2a1a', legs: '#2a2a2a', hands: { fx: 26, fy: 38 } }, looks || {}, n.look || {}), x, y: G, sched: [[0, 24, x, 'work']], lines: n.lines || STALL_LINES[kind] || ['Buy something or move along.'], behind: true, stall: kind }, n.role ? { role: n.role, rate: n.rate || 1 } : {}));
   }
 }
+const STALL_FOOD = ['ramen', 'yakitori', 'dumpling', 'tea', 'skewers'];
 const STALL_NAMES = { ramen: 'Ramen cook', yakitori: 'Grill man', dumpling: 'Dumpling auntie', fish: 'Fishmonger', fruit: 'Fruit seller', tea: 'Tea seller', flowers: 'Flower seller', parts: 'Parts dealer', med: 'Street medic', herbs: 'Herbalist', organs: 'Cold-box man', masks: 'Mask maker', books: 'Book seller', skewers: 'Skewer kid' };
 const STALL_LINES = {
   ramen: ['Shoyu or miso? Don\'t say synth broth, I\'ll throw you out.', 'Sit. Eat. The rain can wait.'], yakitori: ['Chicken. Real chicken. Don\'t ask from where.', 'Smoke\'s free. Skewers are not.'],
@@ -705,11 +731,13 @@ const STALL_LINES = {
 // The frame every hand-built place shares: the ground, what's behind (the
 // city's layers, or for places under the street a back wall and a ceiling),
 // the way in at the west end (a spinner pad, a subway platform, a lift cage,
-// a manhole ladder), passers-by, light and weather. o.build(L, G) places the
+// a manhole ladder), light and weather. o.build(L, G) places the
 // rest by hand. Spots (places to stand: L.spots) the place gives are kept;
 // if it gives fewer than ten, the ground is shared out.
 //   o: { id, name, tier, W, H, G, sky, layerDy, floor, transit, amb, rain,
-//        crowd, crowdFrom, crowdTo, local: { name, lines, look }, build }
+//        local: { name, lines, look }, build }
+// (Nobody's put down to wander: the people in a place are the city's
+// residents, there for their own reasons: census.js, folk.js.)
 function district(o) {
   const W = o.W, H = o.H || 430, G = o.G || 386, L = newLevel(o.id, o.name, W, H);
   L.ground = G; L.spots = []; L.tier = o.tier;
@@ -728,8 +756,7 @@ function district(o) {
   L.spawns.west = L.spawns.west || [26, G]; L.spawns.east = L.spawns.east || [W - 26, G];
   // the spots: the ones the place gave, then the ground shared out
   for (let x = 300; L.spots.length < 10 && x < W - 150; x += Math.max(140, Math.floor((W - 450) / 10))) if (!L.spots.some((s) => Math.abs(s[0] - x) < 60 && s[1] === G)) L.spots.push([x, G]);
-  // people passing, light, weather
-  if (o.crowd) crowd(L, o.crowd, o.crowdFrom || 300, o.crowdTo || W - 200, G, o.id.length * 977 + W, o.rain === undefined ? o.sky !== false : !!o.rain);
+  // a local who keeps to a spot (a resident, once the census has them), light, weather
   if (o.local) L.npc(Object.assign({ x: 260, y: G, sched: [[0, 24, 260, 'stand']] }, o.local, { look: Object.assign({ skin: SKINS[2], hair: 'short', top: '#3a4a5a', coat: 'jacket', legs: '#2a2a2a' }, o.local.look || {}) }));
   const amb = o.amb || [0.2, 0.17, 0.26];
   L.open = o.sky !== false; // (under the sky: day comes here, day.js)

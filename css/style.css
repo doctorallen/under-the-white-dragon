@@ -306,3 +306,7 @@ pre.mind:empty { display: none; }
 .goto .street button.room { opacity: 0.85; font-size: 15px; padding: 4px 8px; }
 .goto .street button.room::before { content: '↳ '; color: #8a809a; }
 button[data-devwho] small { color: #a69cb6; }
+.devfind { width: 100%; box-sizing: border-box; margin: 4px 0 8px; padding: 8px 10px; font: inherit; color: #e8e0f0; background: #1a1424; border: 2px solid #3a3050; }
+details.folk { margin: 2px 0; }
+details.folk > summary { cursor: pointer; padding: 4px 0; color: #b0a6c0; letter-spacing: 0.04em; }
+details.folk > .buttons { margin: 4px 0 8px; }

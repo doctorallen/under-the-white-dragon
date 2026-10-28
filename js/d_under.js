@@ -103,7 +103,7 @@ function unShaft(L, x, G, top, o = {}) {
 
 // ---- The Main Drain ---------------------------------------------------------------
 addDistrict('d_drain', 'The Main Drain', 2, -95, 300, 'The great brick sewer under the street: arches, a channel of black water, manholes up to the rain. Ferals live in the side tunnels.', 'Sewers', () => district({
-  id: 'd_drain', name: 'The Main Drain', tier: 2, W: 2700, sky: false, transit: 'hatch', crowd: 2, rain: 1, amb: [0.21, 0.2, 0.2], floor: UNMAT.slime,
+  id: 'd_drain', name: 'The Main Drain', tier: 2, W: 2700, sky: false, transit: 'hatch', rain: 1, amb: [0.21, 0.2, 0.2], floor: UNMAT.slime,
   local: { name: 'Sewerman Dodd', lines: ['Mind the channel. What goes in doesn\'t come out.', 'Hundred and forty years these arches have held the street up. Brick. Nobody makes brick now.', 'The ferals keep to the side tunnels. Mostly. Don\'t go poking.', 'Somebody\'s been dumping coolant again. Look at it shine.'], look: { hair: 'cap', capCol: '#3a4a2a', top: '#3a4a3a', coat: 'long', legs: '#2a2a20', mask: '#3a3a30' } },
   build(L, G) {
     const W = L.w, YS = 282;
@@ -187,7 +187,7 @@ function unHopper(P, x0, x1, G, o = {}) {
   for (let k = 0; k <= n; k++) { const t = k / n, x = lerp(bx0, bx1, t), y = lerp(by0, by1, t); for (let j = 0; j < 4; j++) P.put(x, y + j, tone(MAT.steel, j === 0 ? 0.8 : 0.4)); if (k % 6 === 0) { unWheel(P, Math.round(x), Math.round(y + 2), 2, UNMAT.iron, { spokes: 3 }); for (let j = 4; j < (G - y) && j < 200; j += 1) if (k % 12 === 0) { P.put(x, y + j, tone(MAT.steel, 0.5)); P.put(x + 1, y + j, tone(MAT.steel, 0.25)); } } if (k % 4 === 1 && t < 0.9) for (let i = 0; i < 3; i++) { P.put(x + i, y - 1, [20, 20, 22]); P.put(x + i, y - 2, [40, 40, 44]); } }
 }
 addDistrict('d_boilers', 'Boiler House Nine', 2, -105, 520, 'The district heating plant under the blocks: riveted boilers burning day and night, coal on a conveyor, steam everywhere, the stokers.', 'Boiler house', () => district({
-  id: 'd_boilers', name: 'Boiler House Nine', tier: 2, W: 2600, sky: false, transit: 'hatch', crowd: 3, amb: [0.27, 0.22, 0.19], floor: UNMAT.iron,
+  id: 'd_boilers', name: 'Boiler House Nine', tier: 2, W: 2600, sky: false, transit: 'hatch', amb: [0.27, 0.22, 0.19], floor: UNMAT.iron,
   local: { name: 'Stoker Ama', lines: ['Nine boilers. Every flat from here to the Stack is warm because of us.', 'Coal, if you can believe it. The Works sends it up. Nobody asks from where.', 'Don\'t touch number four. She\'s been angry since Tuesday.', 'You want a cup of tea? Water\'s always hot down here.'], look: { skin: SKINS[4], hair: 'cap', capCol: '#3a2a1a', top: '#5a3a2a', apron: '#2a1a10', legs: '#2a2420', wide: 1 } },
   build(L, G) {
     const W = L.w, HEAD = G - 214;
@@ -290,7 +290,7 @@ function unGenerator(P, x0, G, o = {}) {
   P.block(x0 + w - 30, top - 26, x0 + w - 6, top, ramp, { base: 0.5 }); unGauge(P, x0 + w - 18, top - 13, 6, 0.6);
 }
 addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under the city: transformers humming behind the fence, busbars, cable trays, a hall of generators, and the engineers who keep the lights on.', 'Substation', () => district({
-  id: 'd_substation', name: 'Substation Seven', tier: 2, W: 2600, sky: false, transit: 'hatch', crowd: 2, amb: [0.28, 0.31, 0.36], floor: MAT.concrete,
+  id: 'd_substation', name: 'Substation Seven', tier: 2, W: 2600, sky: false, transit: 'hatch', amb: [0.28, 0.31, 0.36], floor: MAT.concrete,
   local: { name: 'Lineman Bex', lines: ['Don\'t touch anything that hums. Everything hums.', 'Half the Stack\'s lights run through that yard. When it trips, people riot.', 'The arcing\'s normal. Mostly. Stand back from the blue.'], look: { skin: SKINS[1], hair: 'helmet', armor: '#ffd040', visor: '#2a2a2a', top: '#2a4a6a', legs: '#2a2a2a' } },
   build(L, G) {
     const W = L.w;
@@ -368,7 +368,7 @@ function unCistern(P, x0, x1, G, o = {}) {
   for (let cx = x0; cx < x1; cx += 120) for (let y = wy + 2; y < G; y++) for (let i = -7; i <= 7; i++) if (hash(cx + i, y, 2) < 0.5) P.tint(cx + i + Math.round(Math.sin(y) * 1), y, [120, 120, 110], 0.18);
 }
 addDistrict('d_waterworks', 'The Waterworks', 2, -122, 900, 'Where the city\'s water is pumped and kept: old beam engines, a cistern of columns standing in still water, filter beds, a wall of gauges.', 'Waterworks', () => district({
-  id: 'd_waterworks', name: 'The Waterworks', tier: 2, W: 2700, sky: false, transit: 'hatch', crowd: 2, amb: [0.2, 0.24, 0.27], floor: KMAT.stone,
+  id: 'd_waterworks', name: 'The Waterworks', tier: 2, W: 2700, sky: false, transit: 'hatch', amb: [0.2, 0.24, 0.27], floor: KMAT.stone,
   local: { name: 'Keeper Ines', lines: ['Two million people drink what comes through here. Most of it\'s even water.', 'Don\'t lean on the rails in the cistern. The water\'s deeper than the street is high.', 'Something swims in there. I\'ve stopped asking what.'], look: { skin: SKINS[3], hair: 'bun', hairCol: '#2a1a14', top: '#2a4a5a', coat: 'long', legs: '#2a2a30' } },
   build(L, G) {
     const W = L.w, CX0 = 760, CX1 = 2000;

@@ -62,7 +62,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/dragon.js` | The White Dragon's neon sign and the dragon drawn as tubes (also the icon) |
 | `js/items.js` | Salvage: what you carry |
 | `js/world.js` | The level builder and `World` |
-| `js/levels.js` | What places share: deco by name, everyone's names, passers-by, `cityLayers` |
+| `js/levels.js` | What places share: deco by name, everyone's names, what people say, `cityLayers` |
 | `js/kit.js` | The architect's kit: shophouses, capsule towers, townhouses, temples, shrine gates, pagodas, glass towers, shanty stacks, slab blocks, theatres, bathhouses, arcades, shopfronts, trees, fifteen kinds of stall; and `district()`, the frame every place is built in |
 | `js/travel.js` | `Travel` (what's open and how you get there), great halls, locals' lines |
 | `js/d_high.js` | Up high: Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge, the Arcology Gardens, the Spires |
@@ -83,8 +83,10 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/bench.js` | The bench: the repair, its tools and its drawing (`Bench`) |
 | `js/jobs.js` | Jobs at the White Dragon, residents' odd jobs, heat, the morning after (`Jobs`) |
 | `js/tips.js` | Residents' tips about parts out in the city, and the tool tiers that strip them (`Tips`, `TOOLS`, `TIPS`) |
-| `js/town.js` | The block's residents: homes, jobs, friends, a day plan each, walked along their routes (`Town`, `RESIDENTS`) |
-| `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which keeps their days, needs, memories and gossip, and saves them (`City`) |
+| `js/town.js` | The city's people on screen: the block's own residents and their days, the routes between places, who's in your level now (`Town`, `RESIDENTS`) |
+| `js/census.js` | Every place in the city people live, work and spend time, read from the levels: streets, rooms, doors, spots, posts (`Census`) |
+| `js/folk.js` | The city's population: households made to fill the jobs and homes, with schools and hobbies (`Folk`) |
+| `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which runs their days, needs, hobbies, memories and gossip, and saves them (`City`) |
 | `vendor/tyrell/` | Tyrell, the minds engine (a git submodule; the game loads `dist/tyrell.js`) |
 | `js/day.js` | Day and night, and the weather (`Day`, `Weather`) |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |

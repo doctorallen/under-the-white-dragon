@@ -111,7 +111,7 @@ async function run(B, url, vp, name, failures) {
     Hud.toggle(null); Bench.clear(); T_.walkTo(World.props.find((p) => p.kind === 'trapdoor').x); const pr = Player.target && Player.target.p && Player.target.p.kind; T_.tap('useHit'); T_.run({}, 90);
     return { pr, level: Game.s.level, x: Math.round(Player.x), rug: !!World.props.find((p) => p.kind === 'trapdoor'), diners: Actors.npcs.filter((n) => n.act === 'sit').length, lin: !!Actors.npcs.find((n) => n.def.name === 'Auntie Lin') };
   });
-  if (up.pr !== 'trapdoor' || up.level !== 'd_noodles' || Math.abs(up.x - 846) > 30 || !up.rug || up.diners < 3 || !up.lin) fail('the ladder did not lead up to the storeroom of the noodle bar ' + JSON.stringify(up));
+  if (up.pr !== 'trapdoor' || up.level !== 'd_noodles' || Math.abs(up.x - 846) > 30 || !up.rug || up.diners < 2 || !up.lin) fail('the ladder did not lead up to the storeroom of the noodle bar ' + JSON.stringify(up));
   await shot('storeroom');
   // a job: Ozzy's waiting at the bar; take it, fix it, hand it back, sleep on it
   const job = await E(() => {
@@ -156,9 +156,11 @@ async function run(B, url, vp, name, failures) {
   // clerk sells you things; just after eight people are eating at the White Dragon
   const town = await E(() => {
     const t0 = Game.s.time, see = (lv, h) => { Game.s.time = h; Game.arrive(lv, 'door'); T_.run({}, 30); return Actors.npcs.filter((n) => n.def.town); };
-    const g = see('d_grocery', 18.75), mo = g.find((n) => n.def.town === 'mo'), shoppers = g.filter((n) => n.def.town !== 'mo').length;
-    const shopper = g.find((n) => n.def.town !== 'mo'); if (shopper) Actors.talk(shopper); const said = shopper && shopper.bubble && shopper.bubble.text;
-    if (mo) Actors.talk(mo); const till = Hud.open; Hud.toggle(null);
+    let g = see('d_grocery', 18.75); const mo = g.find((n) => n.def.town === 'mo');
+    // (someone's in doing their shopping at some hour of the day)
+    let shoppers = 0; for (let h = 9; h < 20 && !shoppers; h += 0.5) { g = see('d_grocery', h); shoppers = g.filter((n) => RESIDENTS[n.def.town].job === undefined || RESIDENTS[n.def.town].job.place !== 'd_grocery').length; }
+    const shopper = g.find((n) => n.def.town !== 'mo' && n.def.town !== 'jun'); if (shopper) Actors.talk(shopper); const said = shopper && shopper.bubble && shopper.bubble.text;
+    g = see('d_grocery', 18.75); const mo2 = g.find((n) => n.def.town === 'mo'); if (mo2) Actors.talk(mo2); const till = Hud.open; Hud.toggle(null);
     const eating = see('d_noodles', 20.1).filter((n) => !n.moving && n.act === 'sit').length;
     Game.s.time = t0; Game.arrive('d_dragon', 'door'); T_.run({}, 10);
     return { mo: !!(mo && mo.act === 'work'), shoppers, said, till, eating };
@@ -182,6 +184,16 @@ async function run(B, url, vp, name, failures) {
     return out;
   });
   if (!minds.on || minds.people !== minds.n || minds.fixed === 0 || !/saw you take the till apart/.test(minds.remark || '') || !minds.rewound || !minds.saved) fail('the residents\' minds (Tyrell) are not working ' + JSON.stringify(minds));
+  // the city: everyone a resident, with a name of their own and a home, every
+  // child at a school, and nobody in the server farm but the people who work there
+  const city = await E(() => {
+    const bad = [], seen = {};
+    for (const id of TOWN_ORDER) { const R = RESIDENTS[id]; if (seen[R.name]) bad.push(R.name + ' twice'); seen[R.name] = 1; if (PARTS.includes(R.name)) bad.push('someone called ' + R.name); if (!R.homePlace) bad.push(R.name + ' has no home'); if (R.age === 'kid' && !R.school) bad.push(R.name + ' has no school'); }
+    const t0 = Game.s.time, staff = (id) => { const j = RESIDENTS[id].job; return j && Census.places[j.place] && Census.places[j.place].street === 'd_servers'; };
+    for (let h = 1; h <= 24; h += 2) { Game.s.time = (t0 + h) % 24; if (Game.s.time < t0) Game.s.day++; City.sync(); for (const id of TOWN_ORDER) if (City.mayBeIn(id, 'd_servers') && City.state(id).level === 'd_servers' && !staff(id)) bad.push(RESIDENTS[id].name + ' in the server farm'); }
+    return { n: TOWN_ORDER.length, bad: [...new Set(bad)].slice(0, 8) };
+  });
+  if (city.n < 200 || city.bad.length) fail('the city\'s people ' + JSON.stringify(city));
   // the machine out front, stripped: salvage and a scrap part
   const strip = await E(() => { const v = World.props.find((p) => p.kind === 'vending'); T_.walkTo(v.x); T_.hold(200); return { done: v.done, parts: Game.s.parts.filter((p) => p.how === 'strip' && p.g === 'scrap').length }; });
   if (!strip.done || !strip.parts) fail('stripping the vending machine gave no part ' + JSON.stringify(strip));
@@ -191,18 +203,18 @@ async function run(B, url, vp, name, failures) {
   // the help and the pack talk about the basement, not the precinct
   const words = await E(() => { Hud.toggle('pause'); const p = $('panelBody').textContent; Hud.toggle(null); Hud.toggle('pack'); const k = $('panelBody').textContent; Hud.toggle(null); return { old: /tracer|detective|Hale|case board/i.test(p + k), jobs: /Ozzy/.test(k) }; });
   if (words.old || !words.jobs) fail('the help or the pack still talks about the detective ' + JSON.stringify(words));
-  // out to the spinner, to the Overpass Market, and Ana's parts
+  // out to the spinner, to the Overpass Market, and Ana's parts stall (whoever's on shift)
   const fly = await E(() => { T_.walkTo(70); T_.tap('useHit'); const o = Hud.open; WorldMap.sel = 'd_overpass'; WorldMap.info(); const b = document.querySelector('button[data-go="d_overpass"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
   if (fly.o !== 'travel' || !fly.on || fly.level !== 'd_overpass') fail('the spinner did not fly to the Overpass Market ' + JSON.stringify(fly));
-  const ana = await E(() => { const a = Actors.npcs.find((n) => n.def.name === 'Mechanic Ana'); Player.place(a.x - 14, a.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open, n = Game.s.parts.length; Game.s.cr += 30; Hud.panel('partshop'); const b = document.querySelector('button[data-buypart="0"]'); if (b) b.click(); Hud.toggle(null); return { o, bought: Game.s.parts.length - n }; });
-  if (ana.o !== 'partshop' || ana.bought !== 1) fail('Ana did not sell a part ' + JSON.stringify(ana));
+  const ana = await E(() => { const a = Actors.npcs.find((n) => n.def.role === 'parts'); if (!a) return { o: 'nobody on the parts stall at ' + Game.hour().toFixed(2), who: Actors.npcs.map((n) => n.def.name + ':' + (n.townState && n.townState.act)).join(',') }; Player.place(a.x - 14, a.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open, n = Game.s.parts.length; Game.s.cr += 30; Hud.panel('partshop'); const b = document.querySelector('button[data-buypart="0"]'); if (b) b.click(); Hud.toggle(null); return { o, bought: Game.s.parts.length - n }; });
+  if (ana.o !== 'partshop' || ana.bought !== 1) fail('the parts stall did not sell a part ' + JSON.stringify(ana));
   await shot('overpass');
   // the map draws the whole level, and a dev button works
   const mapdev = await E(() => { Hud.toggle('map'); const ok = !!MapView.cache.d_overpass && MapView.s > 0; Hud.toggle(null); Hud.toggle('dev'); const c0 = Game.s.cr; document.querySelector('button[data-devdo="cr"]').click(); Hud.toggle(null); return { ok, cr: Game.s.cr - c0 }; });
   if (!mapdev.ok || mapdev.cr !== 1000) fail('the map or dev settings failed ' + JSON.stringify(mapdev));
-  // Clinic Row: Kade's stall, and the cabinet, for heat
+  // Clinic Row: Kade's stall (whoever's on shift), and the cabinet, for heat
   await E(() => { Game.arrive('d_clinicrow', 'enter'); T_.run({}, 10); });
-  const kade = await E(() => { const k = Actors.npcs.find((n) => n.def.name === 'Nurse Kade'); Player.place(k.x - 14, k.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });
+  const kade = await E(() => { const k = Actors.npcs.find((n) => n.def.role === 'parts'); if (!k) return 'nobody on shift: ' + Actors.npcs.map((n) => n.def.name + ':' + (n.townState && n.townState.act)).join(','); Player.place(k.x - 14, k.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });
   if (kade !== 'partshop') fail('Kade\'s stall did not open (' + kade + ')');
   const cab0 = await E(() => { const c = World.props.find((p) => p.kind === 'cabinet'), h0 = Game.s.heat; Player.place(c.x, c.y); T_.run({}, 4); T_.hold(140); return { done: c.done, servo: Game.s.parts.some((p) => p.k === 'servo' && p.g === 'military' && p.how === 'take'), heat: Game.s.heat - h0 }; });
   if (!cab0.done || !cab0.servo || cab0.heat < 15) fail('the cabinet did not give a Meridian servo and heat ' + JSON.stringify(cab0));

@@ -13,7 +13,7 @@
 const WD = { FRONT: 300, DOOR: 424, END: 470, CEIL: 62 }; // (the shop's ground floor: a door's height and the fascia over it)
 
 addDistrict('d_dragon', 'The White Dragon', 1, 2, 230, 'A street of shophouses and capsules, and on it a noodle bar with what nobody knows under it.', 'The White Dragon', () => district({
-  id: 'd_dragon', name: 'The White Dragon', tier: 1, W: 1500, crowd: 0, amb: [0.2, 0.17, 0.26], layerDy: 0,
+  id: 'd_dragon', name: 'The White Dragon', tier: 1, W: 1500, amb: [0.2, 0.17, 0.26], layerDy: 0,
   build(L, G) {
     const C = G - WD.CEIL;
     // the street: a shophouse, then an alley, the White Dragon, then the rest of the block

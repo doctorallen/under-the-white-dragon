@@ -4,7 +4,7 @@
 // and a spare chunk painted ahead of the camera when there's time.
 // ---------------------------------------------------------------------------
 function boot() {
-  Dev.load(); Town.init();
+  Dev.load(); Census.take(); Folk.make(); Town.init(); // (the city's places, its people, the block's written days)
   const loaded = Save.start();
   City.init(); // the residents' minds (Tyrell), from the save if there is one
   View.init(); Input.init();

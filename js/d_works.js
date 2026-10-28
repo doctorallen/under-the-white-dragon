@@ -158,7 +158,7 @@ function wkDuct(P, x0, y0, x1, y1, ramp = MAT.chrome) { P.area(x0, y0, x1, y1, r
 
 // ---- the Works hub: the workers' floor, the canteen, the Foreman's crane hall
 LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub: true, mapX: 500, label: 'The machine floors', blurb: 'The machine floors under everything: Cookie\'s canteen, the conveyors, the Foreman\'s crane hall and the shaft down to the Bowels.',
-  make: () => district({ id: 'works', name: 'The Works', tier: 4, W: 3400, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.25, 0.21, 0.19], crowd: 3, crowdTo: 2300,
+  make: () => district({ id: 'works', name: 'The Works', tier: 4, W: 3400, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.25, 0.21, 0.19],
     local: { name: 'Worker', lines: LOCAL_LINES.works, look: { hair: 'cap', capCol: '#e8b030', top: '#5a4a2a', coat: 'jacket', legs: '#2a2a2a' } },
     build(L, G) {
       L.spawns.lift = [140, G];
@@ -202,7 +202,7 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
 
 // ---- Pump Hall Seven: a cathedral of pumps, pipes as wide as a man, the sump
 addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps that keeps the lower city from drowning: flywheels, pistons, the flooded sump.', 'Pumps and the sump', () => district({
-  id: 'd_pumphall', name: 'Pump Hall Seven', tier: 4, W: 2600, sky: false, transit: 'lift', floor: MAT.concreteD, amb: [0.22, 0.22, 0.23], crowd: 2, crowdTo: 1200,
+  id: 'd_pumphall', name: 'Pump Hall Seven', tier: 4, W: 2600, sky: false, transit: 'lift', floor: MAT.concreteD, amb: [0.22, 0.22, 0.23],
   local: { name: 'Pump hand', lines: ['Seven pumps. Six working. The seventh just sounds angry.', 'If the pumps stop, Old Town is a lake by morning.', 'Don\'t lean on the pipes. They\'re hotter than they look.'], look: { hair: 'cap', capCol: '#3a6a8a', top: '#3a4a5a', legs: '#2a2a2a' } },
   build(L, G) {
     wkHall(L, 2600, G, { wall: MAT.machine, ceil: MAT.concreteD, colStep: 300, col0: 200, pipeRamp: MAT.copper, seed: 11 });
@@ -245,7 +245,7 @@ addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps
 
 // ---- The Foundry: furnaces, ladles pouring, moulds glowing, the slag heap
 addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go out: ladles of molten metal, moulds glowing on the floor, a slag heap and a crane overhead.', 'Furnaces and molten metal', () => district({
-  id: 'd_foundry', name: 'The Foundry', tier: 4, W: 2400, sky: false, transit: 'lift', floor: MAT.asphalt, amb: [0.25, 0.18, 0.15], crowd: 2, crowdTo: 1100,
+  id: 'd_foundry', name: 'The Foundry', tier: 4, W: 2400, sky: false, transit: 'lift', floor: MAT.asphalt, amb: [0.25, 0.18, 0.15],
   local: { name: 'Smelter', lines: ['Two thousand degrees in the ladle. Stand back of the yellow line.', 'We cast the bones of the city here. Beams for the Spires.', 'Lost a glove in the pour once. Hand was still in it.'], look: { hair: 'helmet', armor: '#c8a040', visor: '#ff8a3a', top: '#5a3a2a', apron: '#3a2a1a', legs: '#2a2420' } },
   build(L, G) {
     wkHall(L, 2400, G, { wall: MAT.brickD, colRamp: MAT.brickD, colStep: 420, col0: 340, pipeRamp: MAT.rust, seed: 21 });
@@ -285,7 +285,7 @@ addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go ou
 
 // ---- The Server Farm: cold blue aisles of racks, ducts, frost, the watch room
 addDistrict('d_servers', 'Server Farm', 4, -300, 820, 'The city\'s thinking, racked floor to ceiling in the cold: blue aisles, ducts breathing frost, a watch room full of screens.', 'Racks in the cold', () => district({
-  id: 'd_servers', name: 'Server Farm', tier: 4, W: 2500, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.17, 0.21, 0.27], crowd: 1, crowdTo: 900,
+  id: 'd_servers', name: 'Server Farm', tier: 4, W: 2500, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.17, 0.21, 0.27],
   local: { name: 'Night tech', lines: ['Cold enough to keep the racks happy. Not me.', 'Every screen up top is running on something down here.', 'Don\'t touch the blue lights. Don\'t touch anything.'], look: { hair: 'short', top: '#2a3a4a', coat: 'long', legs: '#1a2030', shades: '#3af0e0' } },
   build(L, G) {
     wkHall(L, 2500, G, { wall: KMAT.blackglass, ceil: MAT.steelD, colStep: 500, col0: 460, colRamp: MAT.steelD, pipes: false, seed: 31 });
@@ -319,7 +319,7 @@ addDistrict('d_servers', 'Server Farm', 4, -300, 820, 'The city\'s thinking, rac
 
 // ---- The Coolant Vats: tanks of glowing coolant, open vats, drums, the lab
 addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant is mixed: tanks and open vats glowing green and blue, drums of worse, a lab of people in suits.', 'Tanks of coolant', () => district({
-  id: 'd_vats', name: 'Coolant Vats', tier: 4, W: 2300, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.18, 0.23, 0.21], crowd: 1, crowdTo: 900,
+  id: 'd_vats', name: 'Coolant Vats', tier: 4, W: 2300, sky: false, transit: 'lift', floor: MAT.steel, amb: [0.18, 0.23, 0.21],
   local: { name: 'Vat hand', lines: ['Don\'t breathe the green. Don\'t touch the blue. Don\'t drink either.', 'Coolant keeps the racks cold and the Works from melting.', 'Somebody\'s been skimming drums. Again.'], look: { hair: 'hood', top: '#c8c840', legs: '#c8c840', mask: '#3a4a3a' } },
   build(L, G) {
     wkHall(L, 2300, G, { wall: MAT.machine, ceil: MAT.concreteD, colStep: 380, col0: 260, pipeRamp: MAT.steel, seed: 41 });

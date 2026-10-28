@@ -36,6 +36,7 @@ const Props = {
     if (YIELDS[p.kind]) return p.done ? null : Tips.canStrip(p.kind) ? { verb: 'Strip', text: 'Strip ' + (p.label || p.kind) + (OWNED[p.kind] ? ' · someone\'s: heat' : ''), hold: STRIP_TIME[p.kind] } : { verb: 'Strip', text: (p.label || p.kind)[0].toUpperCase() + (p.label || p.kind).slice(1) + ': it needs the ' + Tips.need(p.kind).name.toLowerCase(), tap: true, no: true };
     if (p.kind === 'bed') return { verb: 'Sleep', text: p.label || 'Your cot', tap: true };
     if (p.kind === 'workbench') return { verb: 'Work', text: 'Your bench', tap: true };
+    if (p.kind === 'door' && !p.to) return { verb: p.home ? 'Knock' : 'Look', text: Census.doorText(p), tap: true }; // (homes, and the doors the city goes in and out of: census.js)
     if (p.kind === 'door') { if (p.hours && !Props.openNow(p.hours)) return { verb: 'Closed', text: `${p.label}: opens at ${String(p.hours[0]).padStart(2, '0')}:00`, tap: true, no: true }; return p.out ? { verb: 'Leave', text: p.label, tap: true } : { verb: 'Enter', text: p.label, tap: true }; }
     if (p.kind === 'trapdoor') return p.up ? { verb: 'Climb', text: 'Up the ladder, into the storeroom', tap: true } : { verb: 'Climb down', text: 'The rug, and the trapdoor under it', tap: true };
     if (p.kind === 'cabinet') return p.done ? null : { verb: 'Jimmy', text: 'A locked parts cabinet: Meridian stock', hold: 1.6 };
@@ -58,6 +59,7 @@ const Props = {
     }
     if (p.kind === 'bed') { Hud.toggle('bed'); return; }
     if (p.kind === 'workbench') { Bench.open(); return; }
+    if (p.kind === 'door' && !p.to) { Game.toast(Census.doorUse(p)); return; }
     if (p.kind === 'trapdoor' || p.kind === 'door') { Game.go(p.to[0], p.to[1]); return; }
     if (p.kind === 'cabinet') {
       this.finish(p); Fx.sparks(p.x, p.y - 20, 6);

@@ -11,9 +11,9 @@ const DECO = {
   capsule: (o) => () => capsule(o), chair: () => () => docChair(), door: (o) => () => door(o), shutter: (o) => () => shutter(o), terminal: (o) => () => terminal(o),
 };
 
-// people passing through: a few made up from a seed, wandering their stretch
-// of floor in the day and gone home at night, with something to say
-const CROWD_LINES = [
+// what the city's people say about their lives, when there's nothing more to
+// the moment (folk.js deals them out)
+const STREET_LINES = [
   'Third shift this week. Fourth if you count this one.', 'Rain\'s warm tonight. That\'s the chemicals.', 'Lift\'s out again. Lift\'s always out.',
   'My kid wants a chrome arm for her birthday. She\'s nine.', 'They\'re hiring at the Works. Nobody comes back up to say how it is.', 'You see the fish on the billboard? It follows you if you look at it.',
   'Got any change? No? Me neither.', 'They say synths don\'t sleep. I don\'t sleep either. Doesn\'t make me one.', 'Don\'t eat the street noodles. Eat Lin\'s.',
@@ -42,18 +42,6 @@ function personName(L, def) {
   def.title = PART_TITLE[part] || part.toLowerCase();
 }
 
-function crowd(L, n, x0, x1, y, seed, wet = true) {
-  const r = new Rng(seed);
-  for (let i = 0; i < n; i++) {
-    const hairs = ['short', 'bob', 'long', 'cap', 'hood', 'bun', 'bald', 'undercut'], tops = ['#3a4a5a', '#5a3a3a', '#3a5a3a', '#4a4a4a', '#6a5a3a', '#2a2a3a', '#5a3a5a', '#c8c0b0'];
-    const look = { skin: r.pick(SKINS), hair: r.pick(hairs), hairCol: r.pick(['#1a1414', '#3a2a20', '#8a6a4a', '#c8c8c8', '#ff4ab0', '#3af0e0']), top: r.pick(tops), coat: r.f() < 0.4 ? 'long' : 'jacket', legs: r.pick(['#2a2a2a', '#1a1a24', '#3a3028']), tall: 0.88 + r.f() * 0.14 };
-    if (r.f() < 0.25) { look.umbrella = r.pick(['#2a3a5a', '#5a2a3a', '#2a2a2a']); if (r.f() < 0.5) look.umbrellaGlow = r.pick(['#3af0e0', '#ff4ab0']); if (!wet) delete look.umbrella, delete look.umbrellaGlow; } // (no umbrellas under a roof)
-    if (r.f() < 0.2) { look.cyArm = true; look.acc = r.pick(['#3af0e0', '#ff4ab0', '#ffb040']); }
-    // a night city: out most hours, home for a few before dawn
-    const home = x0 + r.f() * (x1 - x0), h0 = 2 + r.i(0, 2), h1 = h0 + 3 + r.i(0, 3);
-    L.npc({ name: r.pick(['Passer-by', 'Commuter', 'Local', 'Night worker']), look, x: home, y, sched: [[0, h0, home, 'wander'], [h0, h1, home, 'away'], [h1, 24, home, 'wander']], lines: [r.pick(CROWD_LINES), r.pick(CROWD_LINES)], smoke: r.f() < 0.2 && !look.umbrella });
-  }
-}
 
 // the city behind, seen from the Stack and through windows above it: three
 // layers of towers, holograms between them, the monorail

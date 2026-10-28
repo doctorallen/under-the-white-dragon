@@ -78,7 +78,7 @@ function otTiles(P, x0, y0, x1, y1, seed, band = '#2a6a5a') {
 // ---- Old Town: the hub. The subway platform, an old street, a canal, a
 // temple, Ferrin's stall, and the Mayor's hall at the east end
 LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', metres: -140, tier: 3, hub: true, mapX: 500, label: 'The first city', blurb: 'The first city, sunk under the new one: canals, temples, lanterns, and the Old Mayor who runs it.', make: () => district({
-  id: 'oldtown', name: 'Old Town', tier: 3, W: 3400, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.21, 0.18, 0.19], crowd: 6, crowdTo: 2300,
+  id: 'oldtown', name: 'Old Town', tier: 3, W: 3400, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.21, 0.18, 0.19],
   local: { name: 'Old-timer', lines: LOCAL_LINES.flood, look: { hair: 'long', hairCol: '#c8c8c8', top: '#4a3a2a', coat: 'long' } },
   build(L, G) {
     L.spawns.subway = [140, G];
@@ -111,8 +111,8 @@ LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', metres: -140, tier: 3, hub
     kStallAt(L, 1560, G, 'dumpling', { npc: { name: 'Auntie Bo', lines: ['Dumplings from the old recipe. The old city\'s, not mine.', 'The Mayor\'s men don\'t pay. Everyone else pays double.'] } });
     // the second canal, a stack of old houses with ladders up them
     otWater(L, 1850, 2010, G); otBridge(L, 1860, 2000, G); otBoat(L, 1960, G + 8, {});
-    bShophouse(L, 2020, 2160, G, { floors: 3, wall: MAT.brick, shops: [['half', '#ffb040']], roof: 'tile', seed: 304 });
-    bShophouse(L, 2160, 2370, G, { floors: 2, wall: KMAT.stucco, shops: [['izakaya', '#ff6a3a'], ['shutter', '#3af0e0']], roof: 'tile', seed: 305, blade: '#ffd040' });
+    bShophouse(L, 2020, 2160, G, { floors: 3, wall: MAT.brick, shops: [['half', '#ffb040', { kind: 'school', label: 'The old school', staff: 2, hours: [7, 17] }]], roof: 'tile', seed: 304 });
+    bShophouse(L, 2160, 2370, G, { floors: 2, wall: KMAT.stucco, shops: [['izakaya', '#ff6a3a'], ['half', '#3af0e0', { kind: 'laundry', label: 'The wash-house', hours: [6, 22] }]], roof: 'tile', seed: 305, blade: '#ffd040' });
     L.walk(2026, 2366, G - 80, 5); L.ladder(2030, G - 80, G); L.walk(2060, 2360, G - 142, 5); L.ladder(2340, G - 142, G - 80);
     L.dry.push([2020, G - 142, 2370, G]); L.spots.push([2200, G - 80], [2200, G - 142]);
     bLanterns(L, 2020, 2370, G - 160, ['#ff3a2a', '#ffb040']);
@@ -137,7 +137,7 @@ LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', metres: -140, tier: 3, hub
 // ---- Flooded Arcade: a covered shopping street of the old city, half under
 // water: a glass roof on iron arches, shuttered shops, signs from a century ago
 addDistrict('d_arcade', 'Flooded Arcade', 3, -150, 300, 'A covered shopping street of the old city, half under water, under a roof of broken glass.', 'Drowned arcade', () => district({
-  id: 'd_arcade', name: 'Flooded Arcade', tier: 3, W: 2600, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.16, 0.16, 0.2], crowd: 3,
+  id: 'd_arcade', name: 'Flooded Arcade', tier: 3, W: 2600, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.16, 0.16, 0.2],
   local: { name: 'Shopkeeper', lines: ['Forty years I kept this shop. The water came in the night, and I kept it anyway.', 'Wade, don\'t swim. The deep channels have things in them.', 'Somebody came through with a cut wrist. Bought a bandage. Paid in clean money.'], look: { hair: 'bald', top: '#4a4a3a', apron: '#2a2a1a' } },
   build(L, G) {
     otBack(L, G, { seed: 41, col0: 900, cols: 900 });
@@ -177,7 +177,7 @@ addDistrict('d_arcade', 'Flooded Arcade', 3, -150, 300, 'A covered shopping stre
 // knee: pillars in the water, rows of pews going under, candles, a bell tower,
 // and a graveyard of stone lanterns on the rise outside
 addDistrict('d_chapel', 'Drowned Chapel', 3, -165, 560, 'The old city\'s great hall of worship, flooded to the knee: candles, pillars, a bell tower, a field of graves.', 'Flooded chapel', () => district({
-  id: 'd_chapel', name: 'Drowned Chapel', tier: 3, W: 2500, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.19, 0.18, 0.23], crowd: 2,
+  id: 'd_chapel', name: 'Drowned Chapel', tier: 3, W: 2500, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.19, 0.18, 0.23],
   local: { name: 'Keeper', lines: ['I light the candles. Somebody has to.', 'They prayed for the water to stop. It stopped at the knee. That\'s a sort of answer.', 'The bell still rings when the trains go over. Seven times a night.'], look: { hair: 'bald', top: '#2a2a3a', coat: 'long', legs: '#1a1a24' } },
   build(L, G) {
     otBack(L, G, { seed: 51, col0: 300, cols: 2000 });
@@ -242,7 +242,7 @@ function otCarriage(P, x0, x1, G, seed) {
   for (const wx of [x0 + 14, x1 - 14]) for (let a = 0; a < Math.PI * 2; a += 0.15) P.put(Math.round(wx + Math.cos(a) * 5), Math.round(G - 4 + Math.sin(a) * 5), tone(MAT.steelD, 0.4));
 }
 addDistrict('d_line', 'Old Line Four', 3, -155, 760, 'An abandoned subway line: tiled platforms, old route maps, and a dead train that people live in.', 'Dead subway line', () => district({
-  id: 'd_line', name: 'Old Line Four', tier: 3, W: 2800, sky: false, transit: 'subway', floor: MAT.concrete, amb: [0.15, 0.16, 0.16], crowd: 3,
+  id: 'd_line', name: 'Old Line Four', tier: 3, W: 2800, sky: false, transit: 'subway', floor: MAT.concrete, amb: [0.15, 0.16, 0.16],
   local: { name: 'Platform squatter', lines: ['Last train ran in sixty-four. People still wait for it.', 'Watch the third rail. It remembers.', 'Car six is mine. Knock. Don\'t just come in.'], look: { hair: 'hood', top: '#3a4a3a', coat: 'long' } },
   build(L, G) {
     const CE = G - 150;
@@ -290,7 +290,7 @@ addDistrict('d_line', 'Old Line Four', 3, -155, 760, 'An abandoned subway line: 
 // ---- Cistern Market: a market in the old city's vaulted cistern. Columns
 // stand in black water, rafts and boats are stalls, a boardwalk runs through
 addDistrict('d_cistern', 'Cistern Market', 3, -175, 420, 'A floating market in the old city\'s vaulted cistern: columns in black water, boats for stalls.', 'Floating market', () => district({
-  id: 'd_cistern', name: 'Cistern Market', tier: 3, W: 2600, sky: false, transit: 'subway', floor: MAT.wood, amb: [0.16, 0.14, 0.15], crowd: 6,
+  id: 'd_cistern', name: 'Cistern Market', tier: 3, W: 2600, sky: false, transit: 'subway', floor: MAT.wood, amb: [0.16, 0.14, 0.15],
   local: { name: 'Boatwoman', lines: ['Everything floats down here eventually. I sell it.', 'Mind the boards. The water\'s deeper than the columns are tall.', 'Lanterns are free. Light costs.'], look: { hair: 'bun', top: '#3a5a5a', coat: 'jacket' } },
   build(L, G) {
     const CE = G - 160, VB = R(['#140c0a', '#2a1810', '#442818', '#8a5a38']);
@@ -334,7 +334,7 @@ addDistrict('d_cistern', 'Cistern Market', 3, -175, 420, 'A floating market in t
 // of shrine gates up to a pagoda, food stalls of every kind, a teahouse, a
 // bathhouse, mask stalls, a stage for the drums
 addDistrict('d_lantern', 'Lantern Quarter', 3, -145, 660, 'The festival quarter: a sky of paper lanterns, shrine gates, a pagoda, food stalls, a bathhouse.', 'Festival quarter', () => district({
-  id: 'd_lantern', name: 'Lantern Quarter', tier: 3, W: 2800, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.2, 0.15, 0.14], crowd: 9,
+  id: 'd_lantern', name: 'Lantern Quarter', tier: 3, W: 2800, sky: false, transit: 'subway', floor: KMAT.stone, amb: [0.2, 0.15, 0.14],
   local: { name: 'Festival-goer', lines: ['The festival\'s every night. Nobody remembers what for.', 'Try the skewers. Don\'t ask about the meat.', 'The lanterns are the only sky we\'ve got.'], look: { hair: 'bob', hairCol: '#1a1414', top: '#8a2a3a', coat: 'jacket' } },
   build(L, G) {
     otBack(L, G, { seed: 81, col0: 560, cols: 700, back: R(['#0a0606', '#140c0c', '#201414', '#402828']) });
