@@ -31,7 +31,7 @@ function wmapY(m) {
 function stratumOf(m) { return STRATA.find((S) => m <= S.top && m >= S.bot) || STRATA[STRATA.length - 1]; }
 
 const WorldMap = {
-  cv: null, img: null, K: 1.3, s: 1, ox: 0, oy: 0, sel: null, browse: false, timer: 0,
+  cv: null, img: null, K: 1.3, s: 1, ox: 0, oy: 0, sel: null, browse: false, timer: 0, unlisten: null,
   // every place on the map: its pin and what you know of it
   places() {
     return Object.keys(LEVELS).filter((id) => LEVELS[id].meters !== undefined && LEVELS[id].mapX !== undefined && !LEVELS[id].hidden).map((id) => {
@@ -120,17 +120,14 @@ const WorldMap = {
     this.s = Math.max(cv.width / WMAP_W, 0.6 * dpr); const here = this.places().find((p) => p.id === World.L.id) || { x: 500, y: wmapY(0) };
     this.ox = cv.width / 2 - here.x * this.s; this.oy = cv.height * 0.42 - here.y * this.s; this.clampView();
     this.sel = this.sel && LEVELS[this.sel] ? this.sel : null; this.info(); this.draw();
-    const pts = new Map(); let moved = 0, pinch = 0;
-    cv.onpointerdown = (e) => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); } };
-    cv.onpointermove = (e) => {
-      if (!pts.has(e.pointerId)) return; const [px, py] = pts.get(e.pointerId), dx = e.clientX - px, dy = e.clientY - py; pts.set(e.pointerId, [e.clientX, e.clientY]);
-      if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (pinch) this.zoom(d / pinch, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); pinch = d; moved = 99; return; }
-      moved += Math.abs(dx) + Math.abs(dy); this.ox += dx * dpr; this.oy += dy * dpr; this.clampView(); this.draw();
-    };
-    cv.onpointerup = (e) => {
-      pts.delete(e.pointerId); if (pts.size < 2) pinch = 0;
-      if (moved < 8) { const r = cv.getBoundingClientRect(); this.tap((e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr); }
-    };
+    // dragging and pinching (Tycho's gestures), the wheel; a tap picks a place
+    if (this.unlisten) this.unlisten();
+    this.unlisten = new Tycho.input.Gestures({
+      travel: 8,
+      onPan: (dx, dy) => { this.ox += dx * dpr; this.oy += dy * dpr; this.clampView(); this.draw(); },
+      onPinch: (k, mx, my) => { if (k !== null) this.zoom(k, mx, my); },
+      onTap: (tx, ty) => { const r = cv.getBoundingClientRect(); this.tap((tx - r.left) * dpr, (ty - r.top) * dpr); },
+    }).listen(cv);
     cv.onwheel = (e) => { e.preventDefault(); const r = cv.getBoundingClientRect(); this.zoom(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX - r.left, e.clientY - r.top); };
     document.querySelectorAll('button[data-wm]').forEach((b) => (b.onclick = () => { const k = b.dataset.wm; if (k === 'me') { const p = this.places().find((q) => q.id === World.L.id); if (p) { this.ox = cv.width / 2 - p.x * this.s; this.oy = cv.height * 0.42 - p.y * this.s; this.clampView(); } } else this.zoom(k === 'in' ? 1.4 : 1 / 1.4, cv.clientWidth / 2, cv.clientHeight / 2); this.draw(); }));
     clearInterval(this.timer); this.timer = setInterval(() => { if (!document.body.contains(cv)) { clearInterval(this.timer); return; } this.draw(); }, 120);

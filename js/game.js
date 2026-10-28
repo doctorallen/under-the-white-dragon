@@ -21,12 +21,15 @@ const Game = {
   OLD: ['hp', 'ram', 'gadgets', 'quick', 'quests', 'gear', 'programs', 'prog', 'track', 'warrants', 'cases', 'xp', 'closed', 'night', 'deaths'],
   flag(f) { return !!this.s.flags[f]; },
   // ---- what you carry: no limit, and once it's yours it stays yours ----
-  packCount() { let n = 0; for (const k in this.s.pack) n += this.s.pack[k]; return n; },
-  give(item, n) { if (n <= 0) return 0; this.s.pack[item] = (this.s.pack[item] || 0) + n; Hud.refresh(); return n; },
-  canPay(cost) { for (const k in cost) { if (k === 'cr') { if (this.s.cr < cost.cr) return false; } else if ((this.s.pack[k] || 0) < cost[k]) return false; } return true; },
+  // (the pockets are a bag of counts, Tycho.items.bag; a cost is cr and salvage)
+  packCount() { return bag.total(this.s.pack); },
+  give(item, n) { const got = bag.add(this.s.pack, item, n); if (got) Hud.refresh(); return got; },
+  canPay(cost) { const { cr, ...items } = cost; if (cr !== undefined && this.s.cr < cr) return false; return bag.has(this.s.pack, items); },
   pay(cost) {
     if (!this.canPay(cost)) return false;
-    for (const k in cost) { if (k === 'cr') this.s.cr -= cost.cr; else this.s.pack[k] -= cost[k]; }
+    const { cr, ...items } = cost;
+    if (cr !== undefined) this.s.cr -= cr;
+    bag.pay(this.s.pack, items);
     Hud.refresh(); return true;
   },
   // ---- the clock ----
