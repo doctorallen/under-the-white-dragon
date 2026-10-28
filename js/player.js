@@ -3,8 +3,10 @@
 // The runner. x is the middle of the feet, y the soles (world px). Moves as a
 // box against the level: solid boxes stop it, walkways and stairs hold it up
 // from above only (down and jump drops through), small ledges are stepped
-// up. Ladders are climbed with up and down. Use works on whatever's nearest
-// (a prop or a person); stripping and cutting are held.
+// up. Ladders are climbed with up and down. The moving is Tycho's platform
+// mover (vendor/tycho/docs/world.md) with the numbers in T.player, as this
+// file had it, bit for bit (test/traces.js holds it to that). Use works on
+// whatever's nearest (a prop or a person); stripping and cutting are held.
 // ---------------------------------------------------------------------------
 // the runner, in the work clothes they live in: a knit cap, a canvas work
 // jacket over a work shirt, old slacks, worn boots
@@ -32,68 +34,23 @@ const RunnerArt = {
   },
 };
 
+// how the runner moves: T.player's numbers (read each step), and the rest of
+// the feel the mover's own, which are this game's (the stick's walk under
+// 0.62 and run past 0.9, coyote time, the short hop, ledges of 2 to 7 px
+// stepped up, stairs followed 7 px, dropping through for a quarter second,
+// a ladder taken within 6 px and jumped off at 0.7 of a jump)
+const RUNNER_MOVER = new Tycho.move.Platform(T.player);
+
 const Player = {
   x: 0, y: 0, vx: 0, vy: 0, face: 1, ground: false, coyote: 0, drop: 0, ladder: null, walked: 0, target: null, hold: null,
   place(x, y) { this.x = x; this.y = y; this.vx = this.vy = 0; this.ladder = null; this.hold = null; this.ground = true; },
-  box(x = this.x, y = this.y) { const P = T.player; return [x - P.w / 2, y - P.h, x + P.w / 2, y]; },
-  hits(x, y) { const b = this.box(x, y); return World.hits(b[0] + 0.01, b[1] + 0.01, b[2] - 0.01, b[3] - 0.01); },
   step(dt) {
-    const P = T.player; Input.apply();
-    const ax = Input.ax, ay = Input.ay;
-    this.drop = Math.max(0, this.drop - dt);
-    if (ax) this.face = ax > 0 ? 1 : -1;
-    const jumpHit = Input.take('jumpHit');
-    // ---- on a ladder
-    if (!this.ladder && Math.abs(ay) > 0.5 && Math.abs(ax) < 0.6) {
-      const l = World.ladderAt(this.x, this.y - P.h, this.y + (ay > 0 ? 3 : 0));
-      if (l && (ay < 0 ? this.y > l.y0 + 2 : this.y < l.y1 - 1)) { this.ladder = l; this.x = l.x; this.vx = 0; this.hold = null; }
-    }
-    if (this.ladder) {
-      const l = this.ladder;
-      this.vy = ay * P.climb; this.y += this.vy * dt; this.vx = 0;
-      if (this.y <= l.y0) { this.y = l.y0; this.ladder = null; this.ground = true; this.vy = 0; }
-      else if (this.y >= l.y1) { this.y = l.y1; this.ladder = null; this.ground = true; this.vy = 0; }
-      else if (jumpHit) { this.ladder = null; this.vy = -P.jump * 0.7; this.vx = this.face * 60; }
-      else if (Math.abs(ax) > 0.6 && Math.abs(ay) < 0.3) { this.ladder = null; }
-      if (this.ladder) { this.walked += Math.abs(this.vy * dt); this.interact(dt); return; }
-    }
-    // ---- running
-    // the stick sets the pace: a light push walks, a full one runs
-    const m = Math.abs(ax), sp = Dev.s.speed, pace = (m < 0.62 ? P.walk : lerp(P.walk, P.speed, clamp((m - 0.62) / 0.28, 0, 1))) * sp;
-    const busy = this.hold ? 0.15 : 1, target = Math.sign(ax) * pace * busy, acc = this.ground ? P.accel : P.airAccel;
-    if (ax) this.vx += clamp(target - this.vx, -acc * dt, acc * dt);
-    else this.vx -= clamp(this.vx, -P.friction * dt, P.friction * dt);
-    // ---- jumping, dropping through
-    this.coyote = this.ground ? P.coyote : Math.max(0, this.coyote - dt);
-    if (jumpHit) {
-      const onWay = this.ground && !World.hits(this.x - 4, this.y, this.x + 4, this.y + 2) && World.way(this.x, this.y - 1, this.y + 1) !== null;
-      if (ay > 0.5 && onWay) { this.drop = 0.25; this.ground = false; this.y += 1; }
-      else if (this.coyote > 0) { this.vy = -P.jump; this.coyote = 0; this.ground = false; }
-    }
-    this.vy = Math.min(this.vy + P.gravity * dt, P.maxFall);
-    if (!Input.jump && this.vy < -70) this.vy += P.gravity * dt * 0.9;
-    // ---- across: step up a small ledge, or stop at the wall
-    let nx = this.x + this.vx * dt;
-    const hx = this.hits(nx, this.y);
-    if (hx) {
-      let stepped = false;
-      if (this.ground) for (let s = 2; s <= 7; s += 1) if (!this.hits(nx, this.y - s)) { this.y -= s; stepped = true; break; }
-      if (!stepped) { nx = this.vx > 0 ? hx.x0 - P.w / 2 - 0.01 : hx.x1 + P.w / 2 + 0.01; if (this.hits(nx, this.y)) nx = this.x; this.vx = 0; }
-    }
-    this.walked += Math.abs(nx - this.x); this.x = nx;
-    // following stairs down or up while walking on them
-    if (this.ground && this.vy >= 0 && !this.drop) { const s = World.way(this.x, this.y - 7, this.y + 7); if (s !== null && !this.hits(this.x, s)) this.y = s; }
-    // ---- down (or up)
-    const wasY = this.y; let ny = this.y + this.vy * dt; this.ground = false;
-    if (this.vy >= 0) {
-      const hy = this.hits(this.x, ny);
-      if (hy) { ny = hy.y0; this.vy = 0; this.ground = true; }
-      else if (!this.drop) { const s = World.way(this.x, wasY - 0.5, ny + 0.5); if (s !== null) { ny = s; this.vy = 0; this.ground = true; } }
-    } else {
-      const hy = this.hits(this.x, ny);
-      if (hy) { ny = hy.y1 + T.player.h + 0.01; this.vy = 0; }
-    }
-    this.y = ny;
+    Input.apply();
+    // the stick sets the pace (a light push walks, a full one runs; the dev
+    // speed on top), slowed while busy at a machine
+    const r = RUNNER_MOVER.step(World.space, this, { ax: Input.ax, ay: Input.ay, jump: Input.jump, jumpHit: Input.take('jumpHit'), scale: Dev.s.speed, busy: this.hold ? 0.15 : 1 }, dt);
+    if (r.grabbed) this.hold = null; // (taking a ladder lets go of the machine)
+    if (r.climbing) { this.interact(dt); return; }
     if (this.y > World.L.h + 40) { const sp = Object.values(World.L.spawns)[0]; this.place(sp[0], sp[1]); } // (fallen off the world: put back)
     this.interact(dt);
     Travel.edge();
