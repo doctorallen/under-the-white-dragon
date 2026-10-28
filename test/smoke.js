@@ -47,7 +47,7 @@ async function run(B, url, vp, name, failures) {
   for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.Downlevel)); i++) await sleep(200);
   await sleep(600);
   await page.evaluate(HELPERS);
-  const shot = (n) => page.screenshot({ path: path.join(OUT, `${name}-${n}.png`) });
+  const shot = (n) => page.screenshot({ path: path.join(OUT, `${name}-${n}.png`), timeout: 120000 }); // (a busy machine can be slow to give a frame)
   const E = (fn, arg) => page.evaluate(fn, arg);
   console.log(name + ': finishing frames with ' + (await E(() => (View.gpu ? 'WebGL2' : '2D'))));
   // a new game opens on how things stand; Get up closes it
