@@ -29,7 +29,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 
 | | Keyboard | Phone |
 |---|---|---|
-| Move (walk or run) | Arrows / WASD, hold Shift to walk | Drag on the left side: a little to walk, all the way to run |
+| Move (walk, run or sprint) | Arrows / WASD run; hold Shift to sprint, C to walk | Drag on the left side: a little to walk, further to run, all the way to sprint |
 | Ladders | Up / down | Stick up / down |
 | Drop through a walkway | Down + jump | Stick down + Jump |
 | Jump | Space / K | Jump |

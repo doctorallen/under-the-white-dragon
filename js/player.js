@@ -35,19 +35,19 @@ const RunnerArt = {
 };
 
 // how the runner moves: T.player's numbers (read each step), and the rest of
-// the feel the mover's own, which are this game's (the stick's walk under
-// 0.62 and run past 0.9, coyote time, the short hop, ledges of 2 to 7 px
+// the feel the mover's own, which are this game's (the stick's paces, T.pace:
+// a walk under 0.45, a run from 0.55, a sprint from 0.9; coyote time, the short hop, ledges of 2 to 7 px
 // stepped up, stairs followed 7 px, dropping through for a quarter second,
 // a ladder taken within 6 px and jumped off at 0.7 of a jump)
-const RUNNER_MOVER = new Tycho.move.Platform(T.player);
+const RUNNER_MOVER = new Tycho.move.Platform(T.player, T.pace);
 
 const Player = {
   x: 0, y: 0, vx: 0, vy: 0, face: 1, ground: false, coyote: 0, drop: 0, ladder: null, walked: 0, target: null, hold: null,
   place(x, y) { this.x = x; this.y = y; this.vx = this.vy = 0; this.ladder = null; this.hold = null; this.ground = true; },
   step(dt) {
     Input.apply();
-    // the stick sets the pace (a light push walks, a full one runs; the dev
-    // speed on top), slowed while busy at a machine
+    // the stick sets the pace (a light push walks, further runs, all the way
+    // sprints; the dev speed on top), slowed while busy at a machine
     const r = RUNNER_MOVER.step(World.space, this, { ax: Input.ax, ay: Input.ay, jump: Input.jump, jumpHit: Input.take('jumpHit'), scale: Dev.s.speed, busy: this.hold ? 0.15 : 1 }, dt);
     if (r.grabbed) this.hold = null; // (taking a ladder lets go of the machine)
     if (r.climbing) { this.interact(dt); return; }
