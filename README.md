@@ -54,10 +54,10 @@ On Android the browser offers to install it the first time you tap; after that, 
 |---|---|
 | `index.html` | The page; loads every script in order |
 | `css/style.css` | HUD, touch controls, panels |
-| `js/util.js` | Math, `hash`, `noise`, `Rng`, colors, `rampOf`, `strokeRow` |
+| `js/util.js` | Math, `hash`, `noise`, `Rng`, colors, `rampOf` (Tycho's core), `canvasOf` |
 | `js/tuning.js` | Every number (`T`) |
-| `js/spr.js` | The shape painter for sprites (`Spr`) |
-| `js/paint.js` | Materials, the city painter (`Pix`), decals, the chunk cache |
+| `js/spr.js` | The shape painter for sprites (`Spr`: Tycho's `Tycho.sprite.Shapes`), `flipSprite` |
+| `js/paint.js` | Materials and the city's painters (windows, signs, pipes, railings...) on Tycho's painter (`Pix`, the chunk cache `Paint`: `Tycho.paint`) |
 | `js/people.js` | People, side-on and from behind |
 | `js/props.js` | Props: stalls, machines, doors, the bench and shelf |
 | `js/dragon.js` | The White Dragon's neon sign and the dragon drawn as tubes (also the icon) |

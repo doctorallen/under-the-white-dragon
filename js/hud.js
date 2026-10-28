@@ -45,7 +45,7 @@ const Hud = {
     for (const n of said) { const x = (n.x - V.cx) * sc, y = (n.y - 44 - V.cy) * sc; h += `<div class="bubble${n === said[said.length - 1] ? ' new' : ''}" style="left:${x}px;top:${y}px"><b>${n.def.name}</b> ${n.bubble.text}</div>`; }
     // what you just got: a line each, stacked first on top, rising and fading
     let gh = ''; Game.gains = Game.gains.filter((g) => Game.t - g.t < 2.4);
-    for (const g of Game.gains) { const a = Game.t - g.t; if (a < 0) continue; const x = (g.x - V.cx) * sc, y = (g.y - V.cy) * sc - (g.of - 1 - g.i) * 21 - a * 12, o = a > 1.8 ? Math.max(0, 1 - (a - 1.8) / 0.6) : 1; gh += `<div class="gain${g.kind ? ' ' + g.kind : ''}" style="left:${(x - 34).toFixed(1)}px;top:${y.toFixed(1)}px;opacity:${o.toFixed(2)}"><b>+${g.n}</b> ${g.name}${g.icon ? `<img src="${g.icon}" alt="">` : ''}${g.tag ? `<i>${g.tag}</i>` : ''}</div>`; }
+    for (const g of Game.gains) { const r = Tycho.fx.rise(Game.t - g.t, g.i, g.of); if (!r) continue; const x = (g.x - V.cx) * sc, y = (g.y - V.cy) * sc - r.stack - r.up, o = r.alpha; gh += `<div class="gain${g.kind ? ' ' + g.kind : ''}" style="left:${(x - 34).toFixed(1)}px;top:${y.toFixed(1)}px;opacity:${o.toFixed(2)}"><b>+${g.n}</b> ${g.name}${g.icon ? `<img src="${g.icon}" alt="">` : ''}${g.tag ? `<i>${g.tag}</i>` : ''}</div>`; }
     this.set('gains', gh, 'innerHTML');
     if (this.set('bubbles', h, 'innerHTML') !== false && said.length > 1) {
       const els = [...$('bubbles').children], placed = [];
