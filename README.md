@@ -97,8 +97,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/dev.js` | Dev settings for testing, kept in this browser only: switches, weather, go to a place or someone |
 | `js/flight.js` | Flying: the spinner's destinations, cabs, the flight through the city |
 | `js/skyline.js` | The city behind: layered towers, clouds, giant holograms, the monorail |
-| `js/gl.js` | The frame's last stage in WebGL2: bloom, reflections, the scale-up |
-| `js/render.js` | The frame: layers, light, actors, rain; a 2D finish without WebGL2 |
+| `js/render.js` | The frame: layers, light, actors, rain, drawn on the GPU through Tycho's renderer (or on 2D canvases without WebGL2, finished in 2D) |
 | `js/hud.js` | HUD and panels |
 | `js/panels.js` | Panels: talk, the morning, the stalls, the bench, the shelf, travel, pockets |
 | `js/pwa.js` | Installing, and reloading onto a new deploy |

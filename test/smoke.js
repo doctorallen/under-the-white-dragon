@@ -47,7 +47,7 @@ async function run(B, url, vp, name, failures) {
   await page.evaluate(HELPERS);
   const shot = (n) => page.screenshot({ path: path.join(OUT, `${name}-${n}.png`) });
   const E = (fn, arg) => page.evaluate(fn, arg);
-  console.log(name + ': finishing frames with ' + (await E(() => (GL.ok ? 'WebGL2' : '2D'))));
+  console.log(name + ': finishing frames with ' + (await E(() => (View.gpu ? 'WebGL2' : '2D'))));
   // a new game opens on how things stand; Get up closes it
   const intro = await E(() => { const was = Hud.open; const b = document.querySelector('button[data-act="resume"]'); if (b) b.click(); T_.run({}, 10); return was; });
   if (intro !== 'intro') fail('a new game did not open on the intro (' + intro + ')');

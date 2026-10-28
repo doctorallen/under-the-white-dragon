@@ -12,8 +12,17 @@
 const View = {
   cv: null, g: null, low: null, lg: null, gl: null, gg: null, bl: null, bg: null, bl2: null, bg2: null, lc: null, lgc: null, limg: null, tmp: null, tg: null,
   scale: 1, w: 0, h: 0, LC: 4, out: 1, q: 3,
-  // WebGL2 finishes the frame where there is one (gl.js); else the 2D canvas
-  init() { this.cv = $('view'); if (!GL.init(this.cv)) this.g = this.cv.getContext('2d'); addEventListener('resize', () => this.resize()); this.resize(); },
+  // Where there's WebGL2 the whole frame is drawn on the GPU (Tycho's
+  // batcher: lg and gg are its stand-ins for the picture's and the glow's 2D
+  // contexts, the light map is a light pass, the finish a pass of its own);
+  // else, or with ?nogl in the address, on the 2D canvases as before
+  gpu: null, light: null, post: null,
+  init() {
+    this.cv = $('view');
+    if (!/[?&]nogl\b/.test(location.search)) this.gpu = Tycho.gpu.Gpu.create(this.cv, { onError: (e) => console.warn('WebGL2 setup failed, drawing in 2D', e) });
+    if (this.gpu) { this.light = new Tycho.light.Smooth(this.gpu); this.post = new Tycho.post.Blur(this.gpu); } else this.g = this.cv.getContext('2d');
+    addEventListener('resize', () => this.resize()); this.resize();
+  },
   resize() {
     const dpr = window.devicePixelRatio || 1, W = Math.round(innerWidth * dpr), H = Math.round(innerHeight * dpr);
     this.scale = clamp(Math.round(Math.min(W, H) / T.view.min), 1, T.view.maxScale);
@@ -26,8 +35,8 @@ const View = {
     this.out = Math.max(1, Math.min(this.scale, q));
     this.cv.width = this.w * this.out; this.cv.height = this.h * this.out;
     this.cv.style.width = (this.w * this.scale) / dpr + 'px'; this.cv.style.height = (this.h * this.scale) / dpr + 'px';
-    [this.low, this.lg] = canvasOf(this.w, this.h);
-    [this.gl, this.gg] = canvasOf(this.w, this.h);
+    if (this.gpu) { this.gpu.resize(this.w, this.h); this.lg = this.gpu.ctx(Tycho.gpu.F.COL); this.gg = this.gpu.ctx(Tycho.gpu.F.EM); }
+    else { [this.low, this.lg] = canvasOf(this.w, this.h); [this.gl, this.gg] = canvasOf(this.w, this.h); }
     [this.bl, this.bg] = canvasOf(Math.ceil(this.w / 4), Math.ceil(this.h / 4)); this.bg.imageSmoothingEnabled = true;
     [this.bl2, this.bg2] = canvasOf(Math.ceil(this.w / 10), Math.ceil(this.h / 10)); this.bg2.imageSmoothingEnabled = true;
     const lw = Math.ceil(this.w / this.LC) + 2, lh = Math.ceil(this.h / this.LC) + 2;
@@ -40,10 +49,11 @@ function render() {
   const V = View, g = V.lg, gg = V.gg, w = V.w, h = V.h, L = World.L;
   const cx = Math.round(clamp(Game.cam.x - w / 2, 0, Math.max(0, L.w - w))), cy = Math.round(clamp(Game.cam.y - h / 2, 0, Math.max(0, L.h - h)));
   V.cx = cx; V.cy = cy;
+  if (V.gpu) V.gpu.frameBegin([g, gg]);
   g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
   g.fillStyle = '#08060c'; g.fillRect(0, 0, w, h);
   gg.globalCompositeOperation = 'source-over'; gg.fillStyle = '#000'; gg.fillRect(0, 0, w, h);
-  if (Flight.on) { Flight.draw(g, gg, w, h); finishFrame([]); return; }
+  if (Flight.on) { Flight.draw(g, gg, w, h); if (V.gpu) V.gpu.plain(); finishFrame([]); return; }
   // the far layer
   if (World.far) { const F = World.far, fx = -Math.round(cx * F.f), fy = -Math.round(cy * F.fy); g.drawImage(F.c, fx, fy); if (F.e) gg.drawImage(F.e, fx, fy); }
   // the layers of the city behind, back to front: each hides the glow of
@@ -81,12 +91,17 @@ function render() {
   // the light
   lightMap(cx, cy);
   const LC = V.LC, lw = V.lc.width, lh = V.lc.height, ox = -(((cx % LC) + LC) % LC), oy = -(((cy % LC) + LC) % LC);
-  // the light is smooth: its grid is scaled up with filtering, so no cell edges show
-  g.imageSmoothingEnabled = true;
-  g.globalCompositeOperation = 'multiply'; g.drawImage(V.lc, ox - LC / 2, oy - LC / 2, lw * LC, lh * LC);
-  g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.1; g.drawImage(V.lc, ox - LC / 2, oy - LC / 2, lw * LC, lh * LC); g.globalAlpha = 1;
-  g.imageSmoothingEnabled = false;
-  g.globalCompositeOperation = 'source-over';
+  // the light is smooth: its grid is scaled up with filtering, so no cell
+  // edges show, multiplied over the picture with a tenth of it added (on the
+  // GPU, Tycho's smooth light pass: what's drawn after goes over the lit picture)
+  if (V.gpu) V.light.draw({ cells: V.limg.data, w: lw, h: lh, cell: LC, org: [ox - LC / 2, oy - LC / 2], add: 0.1 });
+  else {
+    g.imageSmoothingEnabled = true;
+    g.globalCompositeOperation = 'multiply'; g.drawImage(V.lc, ox - LC / 2, oy - LC / 2, lw * LC, lh * LC);
+    g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.1; g.drawImage(V.lc, ox - LC / 2, oy - LC / 2, lw * LC, lh * LC); g.globalAlpha = 1;
+    g.imageSmoothingEnabled = false;
+    g.globalCompositeOperation = 'source-over';
+  }
   // people, enemies, the runner
   Actors.built = 0;
   const actor = (s, x, y, flash, who) => {
@@ -97,6 +112,8 @@ function render() {
     // by more than a step: walking under strings of lamps, it would otherwise
     // need a new tinted copy every few paces
     if (who) { const L = who.litCol; if (L && Math.abs(L[0] - col[0]) < 14 && Math.abs(L[1] - col[1]) < 14 && Math.abs(L[2] - col[2]) < 14) col = L; else who.litCol = col = col.map((q) => ((q >> 4) << 4) + 8); }
+    // on the GPU the sprite is tinted as it's drawn
+    if (V.gpu && !flash) { g.tint = col.map((q) => (((q >> 3) << 3) + 4) / 255); g.drawImage(s.c, sx, sy); g.tint = null; occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); return [sx, sy]; }
     // the sprite lit by that color, kept: most figures stand in the same light frame after frame
     const key = flash ? 'f' : ((col[0] >> 3) << 10) | ((col[1] >> 3) << 5) | (col[2] >> 3);
     if (!s.lit) s.lit = new Map();
@@ -126,7 +143,7 @@ function render() {
     actor(Actors.art(n, pose, n.face < 0), n.x, n.y - (n.lift || 0), false, n);
     if (n.def.smoke) { const on = (Game.t * 0.4 + n.i) % 1 < 0.3; gg.fillStyle = on ? '#ffb040' : '#a83a10'; gg.fillRect(Math.round(n.x + n.face * 6 - cx), Math.round(n.y - 24 - cy), 1, 1); }
   } };
-  const fronts = (fore) => { for (const p of World.props) if (p.front && !!p.fore === fore) { if (!p.frontSpr || p.frontDone !== p.done) { p.frontSpr = lowerPart(Props.sprite(p), p.front === true ? 0 : p.front); p.frontDone = p.done; } const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; if (V.tmp.width < s.w || V.tmp.height < s.h) { V.tmp.width = Math.max(V.tmp.width, s.w); V.tmp.height = Math.max(V.tmp.height, s.h); } t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } } };
+  const fronts = (fore) => { for (const p of World.props) if (p.front && !!p.fore === fore) { if (!p.frontSpr || p.frontDone !== p.done) { p.frontSpr = lowerPart(Props.sprite(p), p.front === true ? 0 : p.front); p.frontDone = p.done; } const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0 && V.gpu) { g.lightMap = true; g.drawImage(s.c, sx, sy); g.lightMap = false; occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } else if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; if (V.tmp.width < s.w || V.tmp.height < s.h) { V.tmp.width = Math.max(V.tmp.width, s.w); V.tmp.height = Math.max(V.tmp.height, s.h); } t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } } };
   people(true); fronts(false); people(false);
   actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1, false, Player);
   fronts(true);
@@ -157,7 +174,7 @@ function render() {
 // the frame's finish: glow, bloom, reflections, the fade, scaled up
 function finishFrame(wets) {
   const V = View, g = V.lg, w = V.w, h = V.h;
-  if (GL.ok) { GL.frame(V.low, V.gl, wets, Game.fade); return; }
+  if (V.gpu) { V.post.finish({ out: V.out, wets, fade: Game.fade, time: Game.t }); return; }
   // ---- without WebGL2: glow, bloom, reflections and the fade in 2D
   g.globalCompositeOperation = 'lighter'; g.drawImage(V.gl, 0, 0);
   V.bg.clearRect(0, 0, V.bl.width, V.bl.height); V.bg.drawImage(V.gl, 0, 0, V.bl.width, V.bl.height);
