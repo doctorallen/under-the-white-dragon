@@ -8,7 +8,7 @@
 // ---------------------------------------------------------------------------
 const Flight = {
   on: false, t: 0, dur: 4.6, to: null, spawn: null, cab: false, L: null, layers: null, skip: false,
-  cabFare() { return Game.flag('ozzy:rides') ? 0 : World.L.id === 'street' ? 45 : 30; },
+  cabFare() { return Game.flag('ozzy:rides') ? 0 : 30; },
   init() { addEventListener('pointerdown', () => { if (this.on && this.t > 0.6) this.skip = true; }); },
   start(level, spawn, cab) {
     if (!this.layers) {

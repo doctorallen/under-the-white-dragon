@@ -166,7 +166,7 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
       // the lift landing: a cage frame, stripes, the shift board
       L.paint(20, G - 120, 300, G, (P) => { wkStripes(P, 20, G - 6, 130, G - 2); wkBoard(P, 180, G - 100, 280, G - 60); P.block(176, G - 112, 284, G - 104, MAT.steelD, { base: 0.5 }); for (const [a, b] of GLYPHS[3]) P.put(222 + a, G - 110 + b, [255, 190, 90], 1); });
       L.light(230, G - 80, 60, [1, 0.7, 0.4], 0.6);
-      L.prop('locker', 300, G, { tier: 4, label: 'locker' }); L.prop('locker', 316, G, { tier: 4, label: 'locker' });
+      
       // the canteen: tiled, steamy windows, Cookie behind the counter
       L.paint(540, G - 110, 880, G, (P) => {
         P.block(540, G - 96, 880, G, MAT.tileW, { base: 0.42, panels: [10, 10] });
@@ -188,7 +188,6 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
       // a gantry walk over the belts, ladders up
       L.walk(980, 2260, G - 150, 5, MAT.steel); L.ladder(990, G - 150, G); L.ladder(2240, G - 150, G);
       L.spots.push([1300, G - 150], [1900, G - 150]);
-      L.prop('locker', 1700, G - 150, { tier: 4, label: 'tool locker' });
       for (const x of [1060, 1500, 1980]) wkHangLamp(L, x, 110, G - 150);
       L.prop('ac', 1180, G, { label: 'blower' }); L.prop('junk', 1420, G, { label: 'scrap bin' }); L.prop('rack', 2120, G, { label: 'control cabinet' });
       L.vents.push({ x: 1440, y: G - 20, kind: 'steam' }, { x: 2290, y: G - 20, kind: 'steam' });
@@ -196,10 +195,7 @@ LEVELS.works = { name: 'The Works', depth: '-260 m', metres: -260, tier: 4, hub:
       // the Foreman's crane hall, and the shaft down
       arena(L, 2400, 3260, G, 'crane');
       L.paint(2400, 60, 3260, G, (P) => { wkCrane(P, 2400, 3260, G - 150, { trolley: 2620, hookY: G - 84 }); wkStripes(P, 2420, G - 6, 3240, G - 2); });
-      L.enemy('foreman', 2860, G, { arena: [2420, 3240] });
-      keyDoor(L, 3330, G, 'workspass', 'lift', 'The shaft down to the Bowels');
       L.paint(3290, G - 70, 3380, G, (P) => wkStripes(P, 3296, G - 62, 3366, G - 56));
-      kFoes(L, G, [['turret', 1450, 1300, 1600], ['spider', 1650, 1500, 1800], ['gunner', 2000, 1850, 2200], ['bruiser', 1200, 1050, 1350]]);
       L.spots.push([400, G], [600, G], [900, G], [1150, G], [1500, G], [1750, G], [2050, G], [2250, G]);
       L.critter('rat', 300, 2300, G, 2);
     } }) };
@@ -222,7 +218,6 @@ addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps
     // a catwalk along the pumps' shoulders
     L.walk(330, 1700, G - 170, 5, MAT.steel); L.ladder(340, G - 170, G); L.ladder(1690, G - 170, G);
     L.spots.push([600, G - 170], [1000, G - 170], [1380, G - 170]);
-    L.prop('locker', 990, G - 170, { tier: 4, label: 'locker' });
     // the sump: a pit of black water the floor bridges, rails, a gauge board
     L.paint(1760, G - 120, 2160, G + 44, (P) => {
       water(P, 1760, 2160, G + 6, 38, KMAT.water); P.block(1760, G, 2160, G + 6, MAT.steelD, { base: 0.5 }); railing(P, 1760, 2160, G, MAT.steel, { h: 9 });
@@ -243,8 +238,6 @@ addDistrict('d_pumphall', 'Pump Hall Seven', 4, -270, 340, 'A cathedral of pumps
     L.light(2380, G - 140, 120, [1, 0.8, 0.5], 0.7);
     for (const x of [600, 1000, 1380, 1950]) wkHangLamp(L, x, 110, G - 150, '#ffc070', 0.7);
     L.prop('ac', 610, G, { label: 'pump motor' }); L.prop('junk', 1000, G, { label: 'scrap pile' }); L.prop('wreck', 1400, G, { label: 'dead maintenance drone' });
-    L.prop('locker', 2380, G, { tier: 4, label: 'locker' });
-    kFoes(L, G, [['spider', 980, 860, 1120], ['turret', 1360, 1240, 1480], ['gunner', 2000, 1800, 2150], ['sentinel', 1400, 1300, 1600, G - 220]]);
     L.spots.push([300, G], [620, G], [990, G], [1370, G], [1720, G], [2200, G], [2420, G]);
     L.critter('rat', 300, 2500, G, 3);
   },
@@ -280,13 +273,11 @@ addDistrict('d_foundry', 'The Foundry', 4, -285, 640, 'Furnaces that never go ou
       wkStripes(P, 2110, G - 98, 2380, G - 96);
     });
     L.stairs(2120, G, 2220, G - 96); L.walk(2110, 2380, G - 96, 5, MAT.steel);
-    L.prop('locker', 2340, G - 96, { tier: 4, label: 'locker' }); L.spots.push([2280, G - 96]);
+    L.spots.push([2280, G - 96]);
     // a gantry over the casting floor
     L.walk(480, 1490, G - 180, 5, MAT.steel); L.ladder(1480, G - 180, G); L.ladder(490, G - 180, G); L.spots.push([800, G - 180], [1250, G - 180]);
-    L.prop('locker', 1000, G - 180, { tier: 4, label: 'locker' });
     L.paint(0, G - 8, 2400, G, (P) => { for (const [a, b] of [[520, 900], [1100, 1490]]) wkStripes(P, a, G - 4, b, G - 2); });
     L.prop('junk', 1740, G, { label: 'scrap skip' }); L.prop('ac', 520, G, { label: 'blower' }); L.prop('wreck', 1120, G, { label: 'burnt-out loader' });
-    kFoes(L, G, [['bruiser', 800, 620, 900], ['turret', 1300, 1150, 1450], ['gunner', 1900, 1750, 2080], ['spider', 1100, 1000, 1250]]);
     L.spots.push([220, G], [520, G], [760, G], [1080, G], [1320, G], [1720, G], [2080, G]);
     L.critter('rat', 200, 2300, G, 2);
   },
@@ -318,13 +309,10 @@ addDistrict('d_servers', 'Server Farm', 4, -300, 820, 'The city\'s thinking, rac
     });
     L.stairs(1610, G, 1720, G - 100); L.walk(1600, 1960, G - 100, 5, MAT.steel);
     L.light(1780, G - 140, 110, [0.5, 0.85, 1], 0.7); L.spots.push([1820, G - 100]);
-    L.prop('locker', 1920, G - 100, { tier: 4, label: 'locker' });
     L.npc({ name: 'Operator Vey', look: { skin: SKINS[1], hair: 'bob', hairCol: '#e8e8f0', top: '#1a2a3a', coat: 'long', legs: '#1a1a24', glasses: true }, x: 1800, y: G - 100, face: 1, sched: [[0, 24, 1800, 'stand']], lines: ['Six hundred thousand racks and one of me.', 'Someone\'s been pulling memory from aisle four. Not my problem. Unless you make it mine.', 'The Bowels send the heat up and we send it back cold. The city breathes through us.'] });
     // gantries between the rack tops, ladders down the aisle ends
     L.walk(220, 1560, G - 160, 4, MAT.steelD); L.ladder(670, G - 160, G); L.ladder(1150, G - 160, G); L.spots.push([430, G - 160], [910, G - 160], [1370, G - 160]);
-    L.prop('locker', 1400, G - 160, { tier: 4, label: 'locker' });
     L.prop('ac', 1570, G, { label: 'chiller unit' }); L.prop('wreck', 2000, G, { label: 'dead cleaning drone' });
-    kFoes(L, G, [['sentinel', 900, 700, 1150, G - 200], ['turret', 1170, 1100, 1300], ['spider', 2100, 1980, 2350], ['gunner', 460, 300, 640]]);
     L.spots.push([300, G], [480, G], [900, G], [1300, G], [1500, G], [2100, G], [2300, G]);
   },
 }));
@@ -352,7 +340,6 @@ addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant i
     L.vents.push({ x: 700, y: G, kind: 'steam' }, { x: 1050, y: G, kind: 'steam' }, { x: 1340, y: G, kind: 'steam' });
     // gantries over the vats
     L.walk(560, 1460, G - 120, 4, MAT.steel); L.stairs(570, G, 660, G - 120); L.spots.push([800, G - 120], [1250, G - 120]);
-    L.prop('locker', 1100, G - 120, { tier: 4, label: 'locker' });
     // drums stacked, marked
     L.paint(1820, G - 40, 1960, G, (P) => { for (let k = 0; k < 9; k++) wkDrum(P, 1824 + (k % 5) * 14 + (k >= 5 ? 7 : 0), k >= 5 ? G - 19 : G, ['#3a8a3a', '#c8a020', '#3a5a8a', '#8a2a2a'][k % 4], { mark: k % 2 === 0 }); });
     // the lab: white panels, a window onto benches, people in suits
@@ -365,9 +352,7 @@ addDistrict('d_vats', 'Coolant Vats', 4, -280, 180, 'Where the city\'s coolant i
     L.light(2130, G - 80, 120, [0.8, 1, 0.9], 0.8);
     for (const [x, n] of [[2040, 'Chemist Orr'], [2220, 'Lab hand']]) L.npc({ name: n, look: { skin: SKINS[x % 6], hair: 'hood', top: '#e8e8d0', legs: '#e8e8d0', mask: '#3a5a5a', tall: 0.95 }, x, y: G, sched: [[0, 24, x, 'work']], lines: n === 'Chemist Orr' ? ['Coolant\'s mostly glycol and a secret. The secret is mostly glycol.', 'The suit isn\'t for show, tinker. Mind your boots.'] : ['Don\'t mind me. Counting drums.', 'Six short. Six short every week.'] });
     L.prop('ac', 1480, G, { label: 'coolant pump' }); L.prop('junk', 1960, G, { label: 'empty drums' }); L.prop('ac', 540, G, { label: 'coolant pump' });
-    L.prop('locker', 1990, G, { tier: 4, label: 'locker' });
     for (const x of [460, 1020, 1700]) wkHangLamp(L, x, 110, G - 150, '#c8ffd0', 0.7);
-    kFoes(L, G, [['spider', 1000, 900, 1200], ['turret', 1460, 1400, 1600], ['bruiser', 1700, 1600, 1900], ['sentinel', 1000, 700, 1300, G - 190]]);
     L.spots.push([300, G], [470, G], [700, G], [1020, G], [1330, G], [1560, G], [1900, G]);
     L.critter('rat', 200, 2200, G, 1);
   },

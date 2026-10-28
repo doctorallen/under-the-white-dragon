@@ -114,11 +114,10 @@ LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', metres: -140, tier: 3, hub
     bShophouse(L, 2020, 2160, G, { floors: 3, wall: MAT.brick, shops: [['half', '#ffb040']], roof: 'tile', seed: 304 });
     bShophouse(L, 2160, 2370, G, { floors: 2, wall: KMAT.stucco, shops: [['izakaya', '#ff6a3a'], ['shutter', '#3af0e0']], roof: 'tile', seed: 305, blade: '#ffd040' });
     L.walk(2026, 2366, G - 80, 5); L.ladder(2030, G - 80, G); L.walk(2060, 2360, G - 142, 5); L.ladder(2340, G - 142, G - 80);
-    L.dry.push([2020, G - 142, 2370, G]); L.spots.push([2200, G - 80], [2200, G - 142]); L.prop('locker', 2300, G - 142, { tier: 3, label: 'locker' });
+    L.dry.push([2020, G - 142, 2370, G]); L.spots.push([2200, G - 80], [2200, G - 142]);
     bLanterns(L, 2020, 2370, G - 160, ['#ff3a2a', '#ffb040']);
     // the Mayor's hall and his lift
-    arena(L, 2400, 3260, G, 'hall'); L.enemy('mayor', 2860, G, { arena: [2420, 3240] });
-    keyDoor(L, 3330, G, 'mayorkey', 'lift', 'The Mayor\'s lift, down to the Works');
+    arena(L, 2400, 3260, G, 'hall');
     // inside the hall: gold screens painted with pines, a dais, red banners, lanterns
     L.paint(2420, G - 140, 3240, G, (P) => {
       for (let x = 2470; x < 3200; x += 40) { P.block(x, G - 96, x + 38, G - 30, KMAT.gold, { base: 0.52, lip: 0.5 }); kV(P, x, G - 96, G - 30, tone(KMAT.darkwood, 0.3)); for (let k = 0; k < 14; k++) P.put(x + 4 + hash(k, 1, x) * 30, G - 50 - hash(k, 2, x) * 30, tone(KMAT.moss, 0.3 + hash(k, 3, x) * 0.4)); }
@@ -128,8 +127,7 @@ LEVELS.oldtown = { name: 'Old Town', depth: '-140 m', metres: -140, tier: 3, hub
     bLanterns(L, 2420, 3240, G - 132, ['#ff3a2a', '#ffb040'], { step: 26, sag: 8 });
     L.light(2860, G - 60, 220, [1, 0.6, 0.3], 0.6);
     // trouble, things to strip, lockers
-    kFoes(L, G, [['spider', 760, 650, 860], ['gang', 1600, 1500, 1700], ['gunner', 2100, 2020, 2200], ['feral', 2260, 2160, 2370]]);
-    L.prop('locker', 1150, G, { tier: 3, label: 'locker' }); L.prop('locker', 1840, G, { tier: 3, label: 'locker' });
+    
     L.prop('junk', 600, G, { label: 'junk pile' }); L.prop('ac', 1010, G - 80, { label: 'air conditioner' }); L.prop('vending', 2380, G, { look: { col: '#ffb040', body: '#5a3a1a' }, label: 'vending machine' });
     L.spots.push([340, G], [700, G], [1000, G], [1330, G], [1620, G], [1900, G], [2100, G], [2260, G]);
     L.critter('rat', 200, 2380, G, 3); L.critter('cat', 1500, 1700, G, 1);
@@ -168,8 +166,7 @@ addDistrict('d_arcade', 'Flooded Arcade', 3, -150, 300, 'A covered shopping stre
     // people who stayed, trouble that came
     kStallAt(L, 1310, G, 'books', { npc: { name: 'Archivist', lines: ['Paper from the old city. Water-stained, still readable.', 'A ticket stub came through last week. Old Town line. Punched at the Mayor\'s stop.'] } });
     L.prop('junk', 520, G, { label: 'junk pile' }); L.prop('vending', 990, G, { look: { col: '#ffb040', body: '#4a3a2a' }, label: 'dead vending machine' }); L.prop('ac', 1700, G - 90, { label: 'air conditioner' }); L.prop('junk', 2200, G, { label: 'junk pile' });
-    L.prop('locker', 860, G - 90, { tier: 3, label: 'locker' }); L.prop('locker', 1980, G, { tier: 3, label: 'locker' });
-    kFoes(L, G, [['spider', 900, 760, 1100], ['gunner', 1600, 1450, 1800], ['feral', 2100, 1950, 2300], ['spider', 1200, 1000, 1400, G - 90]]);
+    
     // spots: 5 is a case's, on the ground in the deep middle of the arcade
     L.spots.push([400, G], [700, G], [1000, G], [600, G - 90], [1100, G - 90], [1450, G], [1700, G], [2000, G], [1700, G - 90], [2300, G]);
     L.critter('rat', 300, 2400, G - 90, 2);
@@ -211,7 +208,7 @@ addDistrict('d_chapel', 'Drowned Chapel', 3, -165, 560, 'The old city\'s great h
     L.light(1170, G - 70, 120, [1, 0.75, 0.4], 0.8);
     // the gallery up the hall walls
     L.walk(H0 + 10, H1 - 10, G - 112, 5, KMAT.stone); L.stairs(H0 + 16, G, H0 + 100, G - 112, KMAT.stone); L.ladder(H1 - 30, G - 112, G);
-    L.spots.push([900, G - 112], [1450, G - 112]); L.prop('locker', 1640, G - 112, { tier: 3, label: 'offering box' });
+    L.spots.push([900, G - 112], [1450, G - 112]);
     // the cloister: a water garden, a willow
     otWater(L, 1780, 2020, G); bTree(L, 1840, G, 'willow', { h: 80 }); bToro(L, 1920, G); bTree(L, 1980, G, 'bamboo', { h: 70 });
     // the bell tower, a ladder to its bell
@@ -228,8 +225,7 @@ addDistrict('d_chapel', 'Drowned Chapel', 3, -165, 560, 'The old city\'s great h
     L.paint(2220, G - 40, 2480, G, (P) => { for (let x = 2240; x < 2470; x += 20) otGrave(P, x, G, 53); }); otCandles(L, 2340, 2400, G - 2, 4);
     bToro(L, 2300, G); bToro(L, 2420, G);
     // things that come out of the water
-    kFoes(L, G, [['feral', 900, 700, 1050], ['feral', 1400, 1260, 1700], ['spider', 1900, 1790, 2020], ['gunner', 2350, 2230, 2470]]);
-    L.prop('locker', 420, G, { tier: 3, label: 'locker' }); L.prop('junk', 1700, G, { label: 'fallen pew' }); L.prop('junk', 2040, G, { label: 'junk pile' });
+    L.prop('junk', 1700, G, { label: 'fallen pew' }); L.prop('junk', 2040, G, { label: 'junk pile' });
     L.spots.push([300, G], [640, G], [850, G], [1000, G], [1350, G], [1600, G], [1900, G], [2250, G]);
     L.critter('rat', 600, 1700, G, 2);
   },
@@ -282,11 +278,10 @@ addDistrict('d_line', 'Old Line Four', 3, -155, 760, 'An abandoned subway line: 
     L.walk(1562, 2578, G - 58, 4, MAT.steelD, { rail: false }); L.ladder(1600, G - 58, G); L.ladder(2540, G - 58, G); L.dry.push([1520, G - 58, 2600, G]);
     for (let x = 1540; x < 2600; x += 130) L.tube(x, CE + 4, 24, '#ffe8d0', 0.5);
     for (const x of [1700, 2100, 2450]) L.sign(x, CE + 8, 6, '#ff6a8a', { r: 40, dead: 0.4, seed: x });
-    L.prop('deco', 2000, G - 58, { art: DECO.door({ col: '#2a3a36', light: '#ffd8a0' }), id: 'otcar1' }); L.prop('locker', 2200, G - 58, { tier: 3, label: 'locker' });
+    L.prop('deco', 2000, G - 58, { art: DECO.door({ col: '#2a3a36', light: '#ffd8a0' }), id: 'otcar1' });
     // the far tunnel mouth
     L.paint(2600, CE, 2800, G, (P) => { P.area(2600, CE, 2800, G, R(['#030304', '#08080a', '#101014']), (x, y) => 0.3 - (x - 2600) / 400); for (let y = CE + 30; y < G; y += 4) for (const x of [2620, 2700]) P.put(x, y, [255, 40, 40], y % 40 === 0 ? 1 : 0); });
-    kFoes(L, G, [['gunner', 700, 500, 900], ['spider', 1200, 1000, 1500], ['gang', 1850, 1650, 2050], ['turret', 2620, 2560, 2700], ['gunner', 2350, 2200, 2550, G - 58]]);
-    L.prop('locker', 420, G, { tier: 3, label: 'locker' }); L.prop('vending', 330, G, { look: { col: '#ffd040', body: '#3a4a2a' }, label: 'vending machine' }); L.prop('junk', 1150, G, { label: 'junk pile' }); L.prop('wreck', 2650, G, { label: 'track drone' });
+    L.prop('vending', 330, G, { look: { col: '#ffd040', body: '#3a4a2a' }, label: 'vending machine' }); L.prop('junk', 1150, G, { label: 'junk pile' }); L.prop('wreck', 2650, G, { label: 'track drone' });
     L.spots.push([300, G], [600, G], [800, G], [1100, G], [1650, G], [1900, G], [2150, G], [2400, G], [1800, G - 58]);
     L.critter('rat', 200, 2700, G, 4);
   },
@@ -327,9 +322,8 @@ addDistrict('d_cistern', 'Cistern Market', 3, -175, 420, 'A floating market in t
     bLanterns(L, 300, 2400, CE + 90, ['#ff6a3a', '#ffe0a0'], { step: 24, sag: 6 });
     // a gallery round the vault, up by ladders
     L.walk(200, 1050, G - 110, 5, KMAT.stone); L.ladder(210, G - 110, G); L.walk(1300, 2350, G - 110, 5, KMAT.stone); L.ladder(2340, G - 110, G); L.ladder(1310, G - 110, G);
-    L.prop('locker', 600, G - 110, { tier: 3, label: 'locker' }); L.prop('locker', 1900, G - 110, { tier: 3, label: 'locker' }); L.prop('junk', 2000, G - 110, { label: 'junk pile' });
+     L.prop('junk', 2000, G - 110, { label: 'junk pile' });
     L.spots.push([700, G - 110], [1700, G - 110]);
-    kFoes(L, G, [['gang', 1650, 1550, 1750], ['feral', 2480, 2380, 2560], ['spider', 800, 650, 1000, G - 110]]);
     L.prop('junk', 2460, G, { label: 'flotsam' }); L.prop('vending', 1620, G, { look: { col: '#3af0e0', body: '#2a4a4a' }, label: 'vending machine' });
     L.spots.push([300, G], [450, G], [740, G], [1050, G], [1300, G], [1620, G], [2000, G], [2400, G]);
     L.critter('cat', 400, 2400, G, 1); L.critter('rat', 300, 2500, G, 2);
@@ -364,11 +358,10 @@ addDistrict('d_lantern', 'Lantern Quarter', 3, -145, 660, 'The festival quarter:
     bBath(L, 2040, 2180, G, {});
     bMachiya(L, 2200, 2290, G, { seed: 12, noren: '#4a1a1a' }); bMachiya(L, 2290, 2380, G, { seed: 13, noren: '#1a2a4a', doorLeft: true });
     bShophouse(L, 2380, 2520, G, { floors: 2, wall: KMAT.ochre, shops: [['izakaya', '#ff6a3a']], roof: 'tile', ac: false, seed: 502 });
-    L.walk(2384, 2516, G - 84, 5); L.ladder(2390, G - 84, G); L.spots.push([2460, G - 84]); L.prop('locker', 2500, G - 84, { tier: 3, label: 'locker' });
+    L.walk(2384, 2516, G - 84, 5); L.ladder(2390, G - 84, G); L.spots.push([2460, G - 84]);
     kStallAt(L, 2580, G, 'flowers'); kStallAt(L, 2660, G, 'books');
     bTree(L, 2740, G, 'sakura', { h: 76 });
-    kFoes(L, G, [['gang', 1150, 1020, 1350], ['gunner', 2300, 2200, 2500], ['feral', 2650, 2560, 2760]]);
-    L.prop('locker', 1000, G, { tier: 3, label: 'locker' }); L.prop('junk', 1780, G, { label: 'junk pile' }); L.prop('vending', 2030, G, { look: { col: '#ff6a3a', body: '#5a2a1a' }, label: 'vending machine' });
+    L.prop('junk', 1780, G, { label: 'junk pile' }); L.prop('vending', 2030, G, { look: { col: '#ff6a3a', body: '#5a2a1a' }, label: 'vending machine' });
     // spots: 3 is a case's, out in the stall street
     L.spots.push([260, G], [480, G], [700, G], [900, G], [1200, G], [1400, G], [1650, G], [2100, G], [2300, G], [2600, G]);
     L.critter('cat', 400, 1000, G, 1); L.critter('rat', 2000, 2700, G, 2);

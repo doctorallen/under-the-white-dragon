@@ -7,11 +7,12 @@
 // where people eat; Ozzy's job is taken, fixed, handed back and slept on; the
 // front door leads out onto the street; the block's residents shop, work the
 // till and eat when their days say, and talk when stopped; the vending machine
-// out front gives a scrap part; there's no gun, and the help and the pack talk
+// out front gives a scrap part; the old game (enemies, guns, gear, cases) is
+// gone; the help and the pack talk
 // about the basement; a cab flies from the stand to the Overpass Market, where Ana
 // sells a part; the map and dev settings work; on Clinic Row Kade's stall
-// opens, there are no enemies, and the cabinet gives a Meridian servo and heat; Ozzy's
-// cab flies home for free; a medpatch heals; every level loads and draws, and
+// opens, and the cabinet gives a Meridian servo and heat; Ozzy's
+// cab flies home for free; every level loads and draws, and
 // nobody in them is only a part ("Commuter") or shares a name; a
 // reload brings it all back.
 // Screenshots go to test/out. Chrome comes from $CHROME (puppeteer-core), or,
@@ -184,30 +185,26 @@ async function run(B, url, vp, name, failures) {
   // the machine out front, stripped: salvage and a scrap part
   const strip = await E(() => { const v = World.props.find((p) => p.kind === 'vending'); T_.walkTo(v.x); T_.hold(200); return { done: v.done, parts: Game.s.parts.filter((p) => p.how === 'strip' && p.g === 'scrap').length }; });
   if (!strip.done || !strip.parts) fail('stripping the vending machine gave no part ' + JSON.stringify(strip));
-  // no gun: nothing to fire, and the button only shows for a takedown
-  const nogun = await E(() => { const b0 = Actors.bolts.length; Input.strikeHit = true; T_.run({}, 4); Hud.tick(); return { bolts: Actors.bolts.length - b0, hidden: $('bStrike').classList.contains('gone'), blaster: RUNNER.blaster || !!Game.s.gear.on.ranged };
-  });
-  if (nogun.bolts || !nogun.hidden || nogun.blaster) fail('there is still a gun ' + JSON.stringify(nogun));
+  // the old game is gone: no enemies, guns, gear, programs, cases or side jobs, and no buttons for them
+  const old = await E(() => ({ code: ['ENEMY', 'Foes', 'Cases', 'Quests', 'Hack', 'GEAR', 'PROGRAMS', 'Enhancer', 'LEGACY'].filter((g) => typeof window[g] !== 'undefined' || (() => { try { return eval('typeof ' + g) !== 'undefined'; } catch (e) { return false; } })()), dom: ['bStrike', 'bItem', 'bProg', 'hp', 'ram', 'boss'].filter((id) => document.getElementById(id)), places: ['home', 'precinct', 'stack', 'street'].filter((id) => LEVELS[id]) }));
+  if (old.code.length || old.dom.length || old.places.length) fail('the old game is still here ' + JSON.stringify(old));
   // the help and the pack talk about the basement, not the precinct
   const words = await E(() => { Hud.toggle('pause'); const p = $('panelBody').textContent; Hud.toggle(null); Hud.toggle('pack'); const k = $('panelBody').textContent; Hud.toggle(null); return { old: /tracer|detective|Hale|case board/i.test(p + k), jobs: /Ozzy/.test(k) }; });
   if (words.old || !words.jobs) fail('the help or the pack still talks about the detective ' + JSON.stringify(words));
   // out to the spinner, to the Overpass Market, and Ana's parts
-  const fly = await E(() => { T_.walkTo(70); T_.tap('useHit'); const o = Hud.open, open = { home: Travel.open('home'), precinct: Travel.open('precinct') }; WorldMap.sel = 'd_overpass'; WorldMap.info(); const b = document.querySelector('button[data-go="d_overpass"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, open, level: Game.s.level }; });
-  if (fly.o !== 'travel' || !fly.on || fly.level !== 'd_overpass' || fly.open.home || fly.open.precinct) fail('the spinner did not fly to the Overpass Market (or the old places are open) ' + JSON.stringify(fly));
+  const fly = await E(() => { T_.walkTo(70); T_.tap('useHit'); const o = Hud.open; WorldMap.sel = 'd_overpass'; WorldMap.info(); const b = document.querySelector('button[data-go="d_overpass"]'); if (b) b.click(); const on = Flight.on; T_.run({}, 330); return { o, on, level: Game.s.level }; });
+  if (fly.o !== 'travel' || !fly.on || fly.level !== 'd_overpass') fail('the spinner did not fly to the Overpass Market ' + JSON.stringify(fly));
   const ana = await E(() => { const a = Actors.npcs.find((n) => n.def.name === 'Mechanic Ana'); Player.place(a.x - 14, a.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open, n = Game.s.parts.length; Game.s.cr += 30; Hud.panel('partshop'); const b = document.querySelector('button[data-buypart="0"]'); if (b) b.click(); Hud.toggle(null); return { o, bought: Game.s.parts.length - n }; });
   if (ana.o !== 'partshop' || ana.bought !== 1) fail('Ana did not sell a part ' + JSON.stringify(ana));
   await shot('overpass');
   // the map draws the whole level, and a dev button works
   const mapdev = await E(() => { Hud.toggle('map'); const ok = !!MapView.cache.d_overpass && MapView.s > 0; Hud.toggle(null); Hud.toggle('dev'); const c0 = Game.s.cr; document.querySelector('button[data-devdo="cr"]').click(); Hud.toggle(null); return { ok, cr: Game.s.cr - c0 }; });
   if (!mapdev.ok || mapdev.cr !== 1000) fail('the map or dev settings failed ' + JSON.stringify(mapdev));
-  // Clinic Row: Kade's stall, no enemies, and the cabinet, for heat
+  // Clinic Row: Kade's stall, and the cabinet, for heat
   await E(() => { Game.arrive('d_clinicrow', 'enter'); T_.run({}, 10); });
   const kade = await E(() => { const k = Actors.npcs.find((n) => n.def.name === 'Nurse Kade'); Player.place(k.x - 14, k.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });
   if (kade !== 'partshop') fail('Kade\'s stall did not open (' + kade + ')');
-  // no enemies anywhere: you fix things, you don't fight
-  const foes = await E(() => Actors.enemies.length);
-  if (foes) fail('there are still enemies on Clinic Row (' + foes + ')');
-  const cab0 = await E(() => { for (const e of Actors.enemies) { e.alert = false; e.aware = 0; } const c = World.props.find((p) => p.kind === 'cabinet'), h0 = Game.s.heat; Player.place(c.x, c.y); T_.run({}, 4); T_.hold(140); return { done: c.done, servo: Game.s.parts.some((p) => p.k === 'servo' && p.g === 'military' && p.how === 'take'), heat: Game.s.heat - h0 }; });
+  const cab0 = await E(() => { const c = World.props.find((p) => p.kind === 'cabinet'), h0 = Game.s.heat; Player.place(c.x, c.y); T_.run({}, 4); T_.hold(140); return { done: c.done, servo: Game.s.parts.some((p) => p.k === 'servo' && p.g === 'military' && p.how === 'take'), heat: Game.s.heat - h0 }; });
   if (!cab0.done || !cab0.servo || cab0.heat < 15) fail('the cabinet did not give a Meridian servo and heat ' + JSON.stringify(cab0));
   await shot('clinicrow');
   // no terminals to jack into, no lockers of loot: those were the detective's
@@ -216,20 +213,17 @@ async function run(B, url, vp, name, failures) {
   // a cab home: Ozzy flies you for nothing now
   const cab = await E(() => { const c0 = Game.s.cr; Hud.toggle('cab'); const b = document.querySelector('button[data-act="cab"]'); if (b) b.click(); T_.run({}, 330); return { level: Game.s.level, paid: c0 - Game.s.cr }; });
   if (cab.level !== 'd_dragon' || cab.paid !== 0) fail('Ozzy did not fly the runner home to the White Dragon for free ' + JSON.stringify(cab));
-  // nothing hurts: a fall or a trace leaves you as you were
-  const hurt = await E(() => { const h = Game.s.hp; Game.hurt(20); return Game.s.hp - h; });
-  if (hurt) fail('the runner can still be hurt (' + hurt + ')');
   // every level loads and draws, and everyone in them has a name of their own
   if (name === 'phone') {
-    const lv = await E(() => { const bad = [], names = {}, res = new Set(Object.values(RESIDENTS).map((r) => r.name)); const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); if (Actors.enemies.length) bad.push(id + ' has enemies'); for (const d of World.L.npcs) { if (PARTS.includes(d.name)) bad.push(id + ': someone still called ' + d.name); if (d.title) { const w = names[d.name]; if (w && w !== id + d.x) bad.push(d.name + ' twice (' + w + ', ' + id + ')'); if (res.has(d.name)) bad.push(d.name + ' is a resident\'s name'); names[d.name] = id + d.x; } } for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
+    const lv = await E(() => { const bad = [], names = {}, res = new Set(Object.values(RESIDENTS).map((r) => r.name)); const here = Game.s.level; for (const id of Object.keys(LEVELS)) { try { Game.arrive(id, Object.keys((LEVELS[id].built || LEVELS[id].make()).spawns)[0]); for (const d of World.L.npcs) { if (PARTS.includes(d.name)) bad.push(id + ': someone still called ' + d.name); if (d.title) { const w = names[d.name]; if (w && w !== id + d.x) bad.push(d.name + ' twice (' + w + ', ' + id + ')'); if (res.has(d.name)) bad.push(d.name + ' is a resident\'s name'); names[d.name] = id + d.x; } } for (const f of [0.2, 0.6]) { Player.x = World.L.w * f; for (let k = 0; k < 10; k++) step(1 / 60); render(); } } catch (e) { bad.push(id + ': ' + e.message); } } Game.arrive(here, 'enter'); return { n: Object.keys(LEVELS).length, bad }; });
     if (lv.bad.length || lv.n < 30) fail('levels failed to load: ' + JSON.stringify(lv));
     const cm = await E(() => { Hud.toggle('citymap'); const ok = !!WorldMap.img && !!$('worldcv'); const off = Object.keys(LEVELS).filter((id) => LEVELS[id].metres === undefined || LEVELS[id].mapX === undefined); Hud.toggle(null); return { ok, off }; });
     if (!cm.ok || cm.off.length) fail('the city map did not open, or places are missing from it ' + JSON.stringify(cm));
   }
   // a reload brings it back
-  const before = await E(() => { Save.write(); return JSON.stringify({ l: Game.s.level, parts: Game.s.parts.length, heat: Game.s.heat, jobs: Game.s.jobs, notes: Game.s.notes, g: Game.s.gear.on }); });
+  const before = await E(() => { Save.write(); return JSON.stringify({ l: Game.s.level, parts: Game.s.parts.length, heat: Game.s.heat, jobs: Game.s.jobs, notes: Game.s.notes }); });
   await page.reload(); for (let i = 0; i < 60 && !(await page.evaluate(() => !!window.Downlevel)); i++) await sleep(200);
-  const after = await E(() => JSON.stringify({ l: Game.s.level, parts: Game.s.parts.length, heat: Game.s.heat, jobs: Game.s.jobs, notes: Game.s.notes, g: Game.s.gear.on }));
+  const after = await E(() => JSON.stringify({ l: Game.s.level, parts: Game.s.parts.length, heat: Game.s.heat, jobs: Game.s.jobs, notes: Game.s.notes }));
   if (before !== after) fail('the save did not come back: ' + before + ' / ' + after);
   if (errors.length) fail('errors: ' + errors.slice(0, 5).join(' | '));
 }

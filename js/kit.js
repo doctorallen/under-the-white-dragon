@@ -155,10 +155,6 @@ function kWin(P, x, y, w, h, o = {}) {
   for (let i = -1; i <= w; i++) { P.put(x + i, y - 1, fr); P.put(x + i, y + h, tone(MAT.concrete, 0.7)); }
   for (let j = 0; j < h; j++) { P.put(x - 1, y + j, fr); P.put(x + w, y + j, fr); }
 }
-// a vertical sign hung off a wall on a bracket, Hong Kong style
-function kBlade(P, x, y, n, col, o = {}) {
-  const [w, h] = signSize(n, true); kH(P, x - 3, x + w + 3, y - 2, tone(MAT.steelD, 0.6)); sign(P, x, y, n, col, Object.assign({ vert: true }, o));
-}
 // a cross, lit: green for a pharmacy, red or white for a clinic
 function kCross(P, cx, cy, s, col) { const c = col3(col); for (let j = -s; j <= s; j++) for (let i = -s; i <= s; i++) if (Math.abs(i) <= s / 3 || Math.abs(j) <= s / 3) P.put(cx + i, cy + j, Math.abs(i) <= s / 3 && Math.abs(j) <= s / 3 ? mixRgb(c, [255, 255, 255], 0.5) : c, 1); }
 // a tree, painted: a cherry in blossom, a pine in layers, a willow, a dead one
@@ -710,8 +706,8 @@ const STALL_LINES = {
 // city's layers, or for places under the street a back wall and a ceiling),
 // the way in at the west end (a spinner pad, a subway platform, a lift cage,
 // a manhole ladder), passers-by, light and weather. o.build(L, G) places the
-// rest by hand. Spots (where cases and warrants put things) come from
-// L.spots; if a place gives fewer than ten, the ground is shared out.
+// rest by hand. Spots (places to stand: L.spots) the place gives are kept;
+// if it gives fewer than ten, the ground is shared out.
 //   o: { id, name, tier, W, H, G, sky, layerDy, floor, transit, amb, rain,
 //        crowd, crowdFrom, crowdTo, local: { name, lines, look }, build }
 function district(o) {
@@ -732,9 +728,6 @@ function district(o) {
   L.spawns.west = L.spawns.west || [26, G]; L.spawns.east = L.spawns.east || [W - 26, G];
   // the spots: the ones the place gave, then the ground shared out
   for (let x = 300; L.spots.length < 10 && x < W - 150; x += Math.max(140, Math.floor((W - 450) / 10))) if (!L.spots.some((s) => Math.abs(s[0] - x) < 60 && s[1] === G)) L.spots.push([x, G]);
-  // a terminal on the ground, by one of the spots: a network to jack into
-  const gs = L.spots.filter((s) => s[1] === G), ts = gs.length ? gs[Math.floor(hash(o.id.length, W, 23) * gs.length)] : [W * 0.5, G], tier = o.tier || 1;
-  if (LEGACY) L.prop('node', ts[0] - 26, G, { term: true, level: tier >= 5 ? 3 : tier >= 3 ? 2 : 1, col: '#ffb040' }); if (LEGACY) L.light(ts[0] - 26, G - 18, 40, [1, 0.7, 0.3], 0.5);
   // people passing, light, weather
   if (o.crowd) crowd(L, o.crowd, o.crowdFrom || 300, o.crowdTo || W - 200, G, o.id.length * 977 + W, o.rain === undefined ? o.sky !== false : !!o.rain);
   if (o.local) L.npc(Object.assign({ x: 260, y: G, sched: [[0, 24, 260, 'stand']] }, o.local, { look: Object.assign({ skin: SKINS[2], hair: 'short', top: '#3a4a5a', coat: 'jacket', legs: '#2a2a2a' }, o.local.look || {}) }));
@@ -744,10 +737,6 @@ function district(o) {
   else L.ambient = amb;
   L.rain = o.rain === undefined ? (o.sky !== false ? 1 : 0) : o.rain; if (!L.rain) L.dry = [[0, 0, W, H]];
   return L;
-}
-// enemies by hand: [type, x, from, to]; fliers hover, turrets sit on a wall
-function kFoes(L, G, list) {
-  for (const [type, x, a, b, y] of list) { const D = ENEMY[type]; L.enemy(type, x, y !== undefined ? y : D.ai === 'flyer' ? G - 70 : D.ai === 'turret' ? G - 60 : G, { range: [a === undefined ? x - 120 : a, b === undefined ? x + 120 : b] }); }
 }
 // a district's entry in LEVELS: where it sits on the world map (x across the
 // city, depth in metres) and a line about it

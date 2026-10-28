@@ -1,14 +1,12 @@
 'use strict';
 // ---------------------------------------------------------------------------
 // Input. Keyboard: arrows/WASD move (up and down climb ladders; down and jump
-// drops through a walkway), Space/K jump, J strike, E use (hold to strip or
-// cut), Q runs your program, R picks the next one, I the pack, Esc pauses.
-// Touch: the left half of the screen is a stick wherever the thumb lands; the
-// buttons on the right jump, strike, use and run the program (hold it to
-// pick another).
+// drops through a walkway), Space/K jump, E use (hold to strip), I your jobs
+// and pockets, M the map, Esc pauses. Touch: the left half of the screen is
+// a stick wherever the thumb lands; the buttons on the right jump and use.
 // ---------------------------------------------------------------------------
 const Input = {
-  ax: 0, ay: 0, jump: false, use: false, jumpHit: false, strikeHit: false, useHit: false, progHit: false, itemHit: false,
+  ax: 0, ay: 0, jump: false, use: false, jumpHit: false, useHit: false,
   keys: new Set(), stick: null, touch: false, bot: null,
   init() {
     const map = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd', Space: 'j', KeyK: 'j', KeyE: 'e', KeyF: 'e', ShiftLeft: 'slow', ShiftRight: 'slow' };
@@ -16,11 +14,6 @@ const Input = {
       if (e.repeat) { if (map[e.code]) e.preventDefault(); return; }
       const k = map[e.code];
       if (k) { this.keys.add(k); if (k === 'j') this.jumpHit = true; if (k === 'e') this.useHit = true; e.preventDefault(); }
-      if (e.code === 'KeyJ' || e.code === 'KeyX') this.strikeHit = true;
-      if (e.code === 'KeyQ') this.progHit = true;
-      if (e.code === 'KeyR' && LEGACY) Hud.nextProgram();
-      if (e.code === 'KeyG') this.itemHit = true;
-      if (e.code === 'KeyT' && LEGACY) Hud.nextItem();
       if (e.code === 'KeyI' || e.code === 'Tab') { Hud.toggle('pack'); e.preventDefault(); }
       if (e.code === 'KeyM') Hud.toggle('map');
       if (e.code === 'Escape') Hud.toggle(Hud.open ? Hud.open : 'pause');
@@ -53,10 +46,7 @@ const Input = {
       el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
     };
     hold($('bJump'), () => { this.jump = true; this.jumpHit = true; }, () => { this.jump = false; });
-    hold($('bStrike'), () => { this.strikeHit = true; }, () => {});
     hold($('bUse'), () => { this.use = true; this.useHit = true; }, () => { this.use = false; });
-    let progT = 0;
-    hold($('bProg'), () => { progT = performance.now(); }, () => { if (performance.now() - progT > 450) Hud.nextProgram(); else this.progHit = true; });
   },
   fromKeys() {
     const k = this.keys;

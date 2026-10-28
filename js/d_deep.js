@@ -187,7 +187,7 @@ LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', metres: -400, mapX: 500, 
     // a chasm of cables, a walkway over it
     L.paint(860, 54, 1320, G, (P) => { dpBundle(P, 960, 54, G, 34, DPMAT.cable, DP_VIOLET, 11); dpBundle(P, 1200, 54, G, 26, DPMAT.cableG, DP_GREEN, 12); dpCurtain(P, 1000, 1170, 54, 120, DP_GREEN, 13); });
     L.walk(880, 1320, G - 110, 5, MAT.steelD); L.stairs(880, G, 960, G - 110); L.ladder(1300, G - 110, G);
-    L.prop('locker', 1100, G - 110, { tier: 5, label: 'cache of scraps' }); L.spots.push([1150, G - 110]);
+    L.spots.push([1150, G - 110]);
     for (const x of [960, 1200]) L.light(x, G - 160, 90, x === 960 ? [0.7, 0.4, 1] : [0.3, 1, 0.6], 0.6);
     // a buried maintenance station: a lit booth, dead terminals, racks
     L.paint(1420, 220, 1900, G, (P) => {
@@ -204,7 +204,7 @@ LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', metres: -400, mapX: 500, 
     L.paint(2000, 54, 2400, G, (P) => { for (let k = 0; k < 5; k++) dpTube(P, [[2000 + k * 50, 54], [2100 + k * 40, 180], [2200 + k * 30, 300], [2300 + k * 20, G + 2]], 4 + k, k % 2 ? DPMAT.cable : DPMAT.cableG, { glow: k % 2 ? DP_VIOLET : DP_GREEN, seed: 30 + k, rib: 11 }); });
     L.light(2200, G - 100, 140, [0.7, 0.4, 1], 0.6);
     // the Root's chamber
-    arena(L, 2400, 3420, G, 'chamber'); L.enemy('root', 2900, G - 90, { arena: [2420, 3400], ground: G });
+    arena(L, 2400, 3420, G, 'chamber');
     L.paint(2400, 40, 3420, G, (P) => {
       dpHangRoots(P, 2420, 3400, 52, 200, DP_VIOLET, 9); for (const x of [2480, 3340]) dpBundle(P, x, 52, G, 30, DPMAT.cable, DP_VIOLET, x);
       // the heart: every root in the chamber reaching for the place the Root hangs
@@ -213,8 +213,6 @@ LEVELS.bowels = { name: 'The Bowels', depth: '-400 m', metres: -400, mapX: 500, 
       dpGrowth(P, 2440, 3400, G, DP_VIOLET, 11, { spores: 260 });
     });
     L.light(2900, G - 90, 260, [0.75, 0.45, 1], 0.9);
-    kFoes(L, G, [['feral', 800, 700, 860], ['spider', 1300, 1220, 1400], ['feral', 1700, 1440, 1880], ['sentinel', 2100, 2000, 2350, G - 90], ['feral', 2250, 2000, 2380]]);
-    L.prop('locker', 2320, G, { tier: 5, label: 'cache of scraps' });
     L.spots.push([700, G], [1250, G], [1700, G], [2100, G], [2600, G], [3000, G], [3200, G]);
     L.critter('rat', 300, 2300, G, 3); L.drips.push({ x: 1000, y0: 56, y1: G }, { x: 2150, y0: 56, y1: G });
   },
@@ -249,9 +247,8 @@ addDistrict('d_cables', 'Cable Run', 5, -420, 180, 'A tunnel where every cable i
     // gantries between the trunks, ladders up
     L.walk(360, 700, G - 100, 4, MAT.steelD); L.ladder(370, G - 100, G); L.walk(740, 1040, G - 160, 4, MAT.steelD); L.stairs(690, G - 100, 760, G - 160);
     L.walk(1520, 1880, G - 110, 4, MAT.steelD); L.ladder(1870, G - 110, G); L.walk(1940, 2280, G - 70, 4, MAT.steelD); L.ladder(1950, G - 70, G);
-    L.prop('locker', 900, G - 160, { tier: 5, label: 'cache of scraps' }); L.prop('locker', 2200, G, { tier: 5, label: 'tool locker' });
+    
     L.prop('wreck', 520, G, { label: 'dead drone' }); L.prop('rack', 1620, G - 110, { label: 'patch rack' }); L.prop('junk', 2050, G, { label: 'cable offcuts' }); L.prop('rack', 1350, G, { label: 'patch rack' });
-    kFoes(L, G, [['spider', 600, 420, 660], ['feral', 1300, 1120, 1440], ['sentinel', 1700, 1520, 1880, G - 160], ['spider', 2100, 1960, 2260], ['turret', 2480, 2380, 2560]]);
     L.spots.push([500, G], [520, G - 100], [900, G - 160], [1250, G], [1350, G], [1700, G - 110], [2000, G], [2100, G - 70], [2400, G], [800, G]);
     L.critter('rat', 200, 2500, G, 3); L.drips.push({ x: 1600, y0: 56, y1: G });
   },
@@ -279,9 +276,8 @@ addDistrict('d_vaults', 'Cooling Vaults', 5, -430, 360, 'The city\'s memory kept
     for (const x of [300, 1000, 1700, 2200]) L.vents.push({ x, y: G - 4, kind: 'steam' });
     // catwalks over the cores
     L.walk(540, 960, G - 150, 4, MAT.steel); L.ladder(550, G - 150, G); L.walk(1220, 1660, G - 120, 4, MAT.steel); L.stairs(1170, G, 1240, G - 120); L.walk(1920, 2120, G - 160, 4, MAT.steel); L.ladder(2110, G - 160, G);
-    L.prop('locker', 760, G - 150, { tier: 5, label: 'frozen locker' }); L.prop('locker', 2000, G - 160, { tier: 5, label: 'frozen locker' });
+    
     for (const x of [500, 1180, 1880]) L.prop('rack', x, G, { label: 'memory rack' }); L.prop('wreck', 1460, G, { label: 'frozen drone' }); L.prop('wreck', 780, G, { label: 'frozen drone' });
-    kFoes(L, G, [['sentinel', 700, 540, 960, G - 100], ['feral', 1000, 860, 1180], ['turret', 1350, 1250, 1450], ['spider', 1700, 1540, 1860], ['feral', 2050, 1900, 2250]]);
     L.spots.push([500, G], [720, G - 150], [980, G], [1300, G], [1450, G - 120], [1600, G], [1950, G], [2020, G - 160], [2200, G], [850, G]);
     L.critter('rat', 300, 2200, G, 1);
   },
@@ -311,9 +307,8 @@ addDistrict('d_gut', 'The Gut', 5, -450, 680, 'Where the city\'s waste ends up a
     // platforms over the pools
     L.walk(560, 800, G - 70, 5, MAT.rust); L.ladder(790, G - 70, G); L.walk(1280, 1540, G - 90, 5, MAT.rust); L.stairs(1220, G, 1290, G - 90); L.walk(2000, 2240, G - 70, 5, MAT.rust); L.ladder(2010, G - 70, G);
     L.walk(1100, 1300, G - 170, 4, MAT.steelD); L.ladder(1290, G - 170, G - 90);
-    L.prop('locker', 1000, G, { tier: 5, label: 'cache of scraps' }); L.prop('locker', 1180, G - 170, { tier: 5, label: 'cache of scraps' }); L.prop('locker', 2200, G - 70, { tier: 5, label: 'cache of scraps' });
+     
     L.prop('junk', 900, G, { label: 'bone scrap' }); L.prop('junk', 1650, G, { label: 'bone scrap' }); L.prop('wreck', 1880, G, { label: 'half-eaten drone' }); L.prop('ac', 450, G, { label: 'pump' });
-    kFoes(L, G, [['feral', 900, 820, 1080], ['feral', 1120, 1060, 1280], ['spider', 1500, 1300, 1560], ['feral', 1750, 1580, 1900], ['feral', 2100, 1950, 2300], ['spider', 2300, 2200, 2380]]);
     L.spots.push([480, G], [680, G - 70], [1000, G], [1200, G - 170], [1400, G - 90], [1580, G], [1900, G], [2100, G - 70], [2300, G], [820, G]);
     L.critter('rat', 200, 2300, G, 4);
   },
@@ -352,9 +347,8 @@ addDistrict('d_roots', 'Old Roots', 5, -460, 860, 'The oldest buried things, a s
     // up onto the footings and the old platform
     L.ways.push({ x0: 320, y0: G - 60, x1: 820, y1: G - 60 }); L.stairs(250, G, 330, G - 60);
     L.walk(960, 1080, G - 120, 5, MAT.concreteD); L.ladder(1070, G - 120, G); L.walk(1560, 1680, G - 120, 5, MAT.concreteD); L.ladder(1570, G - 120, G);
-    L.prop('locker', 760, G - 60, { tier: 5, label: 'old station locker' }); L.prop('locker', 1020, G - 120, { tier: 5, label: 'cache of scraps' }); L.prop('locker', 1620, G - 120, { tier: 5, label: 'cache of scraps' });
+     
     L.prop('junk', 1300, G, { label: 'rubble' }); L.prop('wreck', 900, G, { label: 'old maintenance drone' }); L.prop('junk', 1480, G, { label: 'rubble' });
-    kFoes(L, G, [['feral', 700, 360, 800, G - 60], ['spider', 1200, 1100, 1400], ['sentinel', 1400, 1150, 1550, G - 110], ['feral', 1700, 1480, 1760], ['turret', 2160, 2100, 2200]]);
     L.spots.push([880, G], [600, G - 60], [900, G], [1020, G - 120], [1200, G], [1450, G], [1620, G - 120], [1700, G], [2000, G], [1300, G]);
     L.critter('rat', 300, 2100, G, 2); L.drips.push({ x: 1100, y0: 56, y1: G }, { x: 1700, y0: 56, y1: G });
   },

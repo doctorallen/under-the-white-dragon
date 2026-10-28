@@ -123,11 +123,8 @@ function render() {
     if (n.def.smoke) { const on = (Game.t * 0.4 + n.i) % 1 < 0.3; gg.fillStyle = on ? '#ffb040' : '#a83a10'; gg.fillRect(Math.round(n.x + n.face * 6 - cx), Math.round(n.y - 24 - cy), 1, 1); }
   }
   for (const p of World.props) if (p.front) { if (!p.frontSpr) p.frontSpr = lowerPart(Props.sprite(p), p.front); const s = p.frontSpr, sx = Math.round(p.x - s.ax - cx), sy = Math.round(p.y - s.ay - cy); if (sx < w && sx + s.w > 0 && sy < h && sy + s.h > 0) { const t = V.tg; t.globalCompositeOperation = 'copy'; t.drawImage(s.c, 0, 0); t.globalCompositeOperation = 'multiply'; t.imageSmoothingEnabled = true; t.drawImage(V.lc, 0, 0, lw, lh, ox - LC / 2 - sx, oy - LC / 2 - sy, lw * LC, lh * LC); t.imageSmoothingEnabled = false; t.globalCompositeOperation = 'destination-in'; t.drawImage(s.c, 0, 0); g.drawImage(V.tmp, 0, 0, s.w, s.h, sx, sy, s.w, s.h); occlude(s.c, sx, sy); if (s.e) gg.drawImage(s.e, sx, sy); } }
-  for (const b of Actors.bodies) { const s = Actors.bodyArt(b), x = Math.round(b.x - cx), y = Math.round(b.y - cy); g.fillStyle = 'rgba(60,4,10,0.55)'; g.fillRect(x - 9, y - 1, 18, 2); actor(s, b.x, b.y + 1); }
-  for (const e of Actors.enemies) { const s = Actors.enemyArt(e), at = actor(s, e.x, e.type === 'drone' ? e.y + 6 : e.y - (e.hop || 0), e.flash > 0, e); if (at) tag(e, s, at[0], at[1]); }
-  if (Player.inv <= 0 || Math.floor(Game.t * 16) % 2) actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1, false, Player);
-  // bolts and sparks: all glow
-  for (const b of Actors.bolts) { const x = Math.round(b.x - cx), y = Math.round(b.y - cy); gg.fillStyle = css(b.c); if (b.player) { const sp = Math.hypot(b.vx, b.vy), ux = b.vx / sp, uy = b.vy / sp; for (let k = 0; k < 7; k++) { gg.fillStyle = k < 2 ? '#fff4d8' : css(b.c.map((q) => q * (1 - k / 9))); gg.fillRect(Math.round(x - ux * k), Math.round(y - uy * k), 1, 1); } continue; } if (b.wave) gg.fillRect(x - 3, y - 8, 6, 10); else { gg.fillRect(x - 2, y - 1, 4, 2); gg.fillStyle = '#fff'; gg.fillRect(x - 1, y - 1, 2, 2); } }
+  actor(RunnerArt.get(Player.pose(), Player.face < 0), Player.x, Player.y + 1, false, Player);
+  // sparks: all glow
   Life.drawGlints(gg, cx, cy);
   for (const p of Game.particles) { gg.fillStyle = css(p.c); gg.fillRect(Math.round(p.x - cx), Math.round(p.y - cy), 1, 1); }
   // rain, brighter where the light is: each drop two short strokes, drawn
@@ -175,40 +172,6 @@ function finishFrame(wets) {
   V.g.imageSmoothingEnabled = false;
   V.g.drawImage(V.low, 0, 0, w * V.out, h * V.out);
 }
-// The runner's retinal overlay tags what's hostile: a thin outline round its
-// shape and a bar of its health over its head, drawn as light (into the glow
-// layer, so it reads like a projection and blooms a little). Red for
-// hostiles, green for a drone you've taken over; brighter when it has seen
-// you. Under Ghost, the tags dim: you're not the only one hidden.
-const TagArt = { outlines: new WeakMap() };
-function outlineOf(s) {
-  let o = TagArt.outlines.get(s); if (o) return o;
-  const [c, g] = canvasOf(s.w + 2, s.h + 2);
-  for (const [dx, dy] of [[0, 1], [2, 1], [1, 0], [1, 2]]) g.drawImage(s.c, dx, dy);
-  g.globalCompositeOperation = 'destination-out'; g.drawImage(s.c, 1, 1);
-  g.globalCompositeOperation = 'source-in'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-  TagArt.outlines.set(s, c); return c;
-}
-function tag(e, s, sx, sy) {
-  const gg = View.gg, ally = e.ally > 0, alert = ally || e.alert || !Foes.hunts(e) && (e.state !== 'idle' || Actors.sees(e, 120) || e.hp < e.max);
-  const col = ally ? [80, 255, 140] : [255, 56, 80], k = (Game.ghost > 0 ? 0.35 : 1) * (alert ? 1 : 0.55);
-  // the outline, tinted
-  const o = outlineOf(s), t = View.tg; if (View.tmp.width < o.width || View.tmp.height < o.height) { View.tmp.width = Math.max(View.tmp.width, o.width); View.tmp.height = Math.max(View.tmp.height, o.height); }
-  t.globalCompositeOperation = 'copy'; t.drawImage(o, 0, 0); t.globalCompositeOperation = 'source-in'; t.fillStyle = css(col); t.fillRect(0, 0, o.width, o.height);
-  gg.globalAlpha = 0.55 * k; gg.drawImage(View.tmp, 0, 0, o.width, o.height, sx - 1, sy - 1, o.width, o.height); gg.globalAlpha = 1;
-  // the health bar: segments over the top of its shape
-  if (ENEMY[e.type].boss) return; // a boss's bar is on the HUD
-  const b = Actors.hurtbox(e), n = e.type === 'drone' ? 5 : 6, w = n * 3 - 1, x0 = Math.round((b[0] + b[2]) / 2 - w / 2 - View.cx), y0 = Math.round(b[1] - View.cy) - 5, lit = Math.ceil((e.hp / e.max) * n);
-  gg.globalAlpha = k;
-  // not yet alert: how near it is to noticing you, in amber, over the bar;
-  // just alerted: a mark that flashes
-  if (!ally && !e.alert && e.aware > 0.02) { const A = [255, 176, 64], m = Math.ceil(clamp(e.aware, 0, 1) * n); for (let i = 0; i < n; i++) { gg.fillStyle = i < m ? css(A) : css(A.map((q) => q * 0.2)); gg.fillRect(x0 + i * 3, y0 - 3, 2, 1); } }
-  if (e.seen > 0 && Math.floor(e.seen * 10) % 2) { gg.fillStyle = css(col); const mx = x0 + Math.floor(w / 2); gg.fillRect(mx, y0 - 9, 1, 4); gg.fillRect(mx, y0 - 4, 1, 1); }
-  for (let i = 0; i < n; i++) { gg.fillStyle = i < lit ? css(col) : css(col.map((q) => q * 0.25)); gg.fillRect(x0 + i * 3, y0, 2, 2); }
-  // brackets at the bar's ends, the overlay's mark
-  gg.fillStyle = css(col.map((q) => q * 0.7)); gg.fillRect(x0 - 2, y0 - 1, 1, 4); gg.fillRect(x0 + w + 1, y0 - 1, 1, 4);
-  gg.globalAlpha = 1;
-}
 // hide the glow layer under a sprite's shape: the glow is added over the
 // whole frame at the end, so without this a sign or a monitor behind
 // someone would shine through them
@@ -226,12 +189,10 @@ function lightMap(cx, cy) {
   const gx0 = Math.floor(cx / LC), gy0 = Math.floor(cy / LC);
   const lights = [];
   for (const l of L.lights) if (l.x > cx - l.r && l.x < cx + w + l.r && l.y > cy - l.r && l.y < cy + h + l.r) lights.push(l.flick ? { x: l.x, y: l.y, r: l.r, c: l.c, flat: l.flat, k: l.k * Life.flick(l.flick) } : l);
-  // the runner's cutter gives off a little light of its own; so do the bolts
+  // the runner's work lamp gives off a little light of its own
   lights.push({ x: Player.x + Player.face * 6, y: Player.y - 16, r: T.light.lamp, c: [1, 0.78, 0.5], k: 0.32, flat: 1 });
-  for (const b of Actors.bolts) lights.push({ x: b.x, y: b.y, r: 30, c: b.c.map((q) => q / 255), k: 0.5, flat: 1 });
-  if (Game.flash) lights.push({ x: Game.flash.x, y: Game.flash.y, r: Game.flash.r || 60, c: Game.flash.c || [1, 0.75, 0.4], k: 1, flat: 1 });
-  for (const e of Actors.enemies) if (e.type === 'warden') lights.push({ x: e.x + e.face * 20, y: e.y - 50, r: 50, c: [1, 0.25, 0.3], k: 0.5, flat: 1 });
-  const low = Game.has('scanner') ? T.light.lowlight : 0, amb = L.ambient, n = lw * lh;
+  if (Game.flash) lights.push({ x: Game.flash.x, y: Game.flash.y, r: Game.flash.r || 60, c: Game.flash.c || [1, 0.75, 0.4], k: 1, flat: 1 }); // (sparks light up)
+  const amb = L.ambient, n = lw * lh;
   // ambient first, then each light adds itself over just the cells it reaches
   if (!V.lR || V.lR.length !== n) { V.lR = new Float32Array(n); V.lG = new Float32Array(n); V.lB = new Float32Array(n); }
   const R = V.lR, G = V.lG, B = V.lB, fn = typeof amb === 'function', dl = Day.open(L) ? Day.light() : 0, dw = dl ? Day.warmth() : 0; // (outdoors by day, the overcast lifts it all)
@@ -250,7 +211,6 @@ function lightMap(cx, cy) {
   }
   for (let o = 0; o < n; o++) {
     let r = R[o], g = G[o], b = B[o];
-    if (low) { r = Math.max(r, low * 0.8); g = Math.max(g, low); b = Math.max(b, low * 0.9); }
     const mx = Math.max(r, g, b, 0.001), qm = mx < 0.03 ? 0.03 : mx > 1.3 ? 1.3 : mx, k = (qm / mx) * 255, q = o * 4;
     d[q] = Math.min(255, r * k); d[q + 1] = Math.min(255, g * k); d[q + 2] = Math.min(255, b * k); d[q + 3] = 255;
   }

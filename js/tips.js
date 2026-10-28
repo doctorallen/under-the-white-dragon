@@ -37,7 +37,7 @@ const Tips = {
   // the next tip someone has for you: due by today, not told yet
   due() { return TIP_ORDER.find((id) => !Game.s.tips[id] && TIPS[id].day <= Game.s.day); },
   dueFrom(res) { const id = this.due(); return id && TIPS[id].who === res ? id : null; },
-  tell(id) { Game.s.tips[id] = Game.s.day; const T = TIPS[id]; Game.toast('New lead: ' + T.label + ', ' + LEVELS[T.level].name + '.', 'good'); World.questProps(); },
+  tell(id) { Game.s.tips[id] = Game.s.day; const T = TIPS[id]; Game.toast('New lead: ' + T.label + ', ' + LEVELS[T.level].name + '.', 'good'); World.tipProps(); },
   // a message in the morning, from whoever's heard something
   morning(news) { const id = this.due(); if (!id) return; const T = TIPS[id], R = RESIDENTS[T.who]; Game.s.tips[id] = Game.s.day; news.push(`A message from ${R.name}: "${T.say}"`); },
   // in person: a resident with a tip for you tells you it instead of small talk
@@ -54,5 +54,5 @@ const Tips = {
   objective() { const id = TIP_ORDER.find((k) => this.st(k) === 'known' && this.canStrip(TIPS[k].kind)); return id ? `▸ Lead: ${TIPS[id].label}, ${LEVELS[TIPS[id].level].name}` : ''; },
   // a stall's tool upgrade, if it has the next one
   forSale(stock) { return +Object.keys(TOOLS).find((k) => TOOLS[k].at === stock && +k > this.tier()) || 0; },
-  buy(t) { if (this.tier() !== t - 1 || !Game.pay({ cr: TOOLS[t].cr })) return false; Game.s.tools = t; Game.toast('New tools: the ' + TOOLS[t].name.toLowerCase() + '. ' + TOOLS[t].note, 'good'); World.questProps(); Save.write(); return true; },
+  buy(t) { if (this.tier() !== t - 1 || !Game.pay({ cr: TOOLS[t].cr })) return false; Game.s.tools = t; Game.toast('New tools: the ' + TOOLS[t].name.toLowerCase() + '. ' + TOOLS[t].note, 'good'); World.tipProps(); Save.write(); return true; },
 };

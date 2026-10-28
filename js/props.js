@@ -185,45 +185,6 @@ function lowerPart(s, y0) {
   return Object.assign({}, s, { c: cut(s.c), e: cut(s.e) });
 }
 
-// ---- things you can open, strip and use ----------------------------------------
-// a steel grate over a gap: bars you cut through
-function grate(o = {}) {
-  const w = o.w || 12, h = o.h || 30, S = new Spr(w, h, 63); S.ax = w / 2; S.ay = h - 1;
-  for (let x = 0; x < w; x++) { S.px(x, 0, MAT.steel[6]); S.px(x, 1, MAT.steel[3]); S.px(x, h - 1, MAT.steel[2]); S.px(x, h - 2, MAT.steel[4]); }
-  for (let x = 1; x < w; x += 3) for (let y = 2; y < h - 2; y++) { S.px(x, y, MAT.steel[5]); S.px(x + 1, y, MAT.steel[2]); }
-  for (let y = 8; y < h - 2; y += 10) for (let x = 0; x < w; x++) S.px(x, y, MAT.steel[4]);
-  return S.done();
-}
-// a reinforced shutter: striped, too heavy for the plain cutter
-// a reinforced security shutter: a steel frame with a lock box on top, the
-// slatted shutter down to the ground, hazard paint, a red light saying locked
-function heavyShutter(o = {}) {
-  const w = o.w || 30, h = o.h || 30, W = w + 8, H = h + 12, S = new Spr(W, H, 65); S.ax = W / 2; S.ay = H - 1; const r = rp('#7a7e88', 7), fr = rp('#3a3a42', 6);
-  for (let y = 0; y < H; y++) for (const x of [0, 1, 2, W - 3, W - 2, W - 1]) S.px(x, y, fr[x < 3 ? 2 + x : 6 - (x - W + 3)]);
-  for (let y = 0; y < 10; y++) for (let x = 0; x < W; x++) S.px(x, y, y === 0 ? fr[5] : y === 9 ? fr[0] : fr[2 + ((x >> 3) % 2)]);
-  S.px(W / 2 - 1, 4, '#ff2030', true); S.px(W / 2, 4, '#ff2030', true); S.px(W / 2 - 1, 5, '#ff6070', true); S.px(W / 2, 5, '#ff6070', true);
-  for (let y = 10; y < H; y++) for (let x = 3; x < W - 3; x++) S.px(x, y, (y - 10) % 4 === 0 ? r[1] : (y - 10) % 4 === 1 ? r[5] : r[3 + ((x * 7 + y) % 3 === 0 ? 1 : 0)]);
-  for (let x = 3; x < W - 3; x++) for (let y = H - 7; y < H - 2; y++) S.px(x, y, ((x + y) >> 2) % 2 ? '#e8b830' : '#1a1a1a');
-  return S.done();
-}
-// a hatch in the floor or a service door, locked until breached
-function hatch(o = {}) {
-  const w = o.w || 26, h = o.h || 34, S = new Spr(w, h, 67); S.ax = w / 2; S.ay = h - 1; const r = rp(o.col || '#4a5058', 7), c = col3(o.lock || '#ff3040');
-  S.box(0, 0, w - 1, h - 1, MAT.steelD, { lo: 1, hi: 6 }); S.box(3, 3, w - 4, h - 1, r, { lo: 0, hi: 6 });
-  for (let y = 6; y < h - 2; y += 7) for (let x = 4; x < w - 4; x++) S.px(x, y, r[1]);
-  S.box(w - 8, h / 2 - 3, w - 5, h / 2 + 3, MAT.steelD, { lo: 1, hi: 5 }); S.px(w - 7, h / 2 - 1, c, true); S.px(w - 6, h / 2 - 1, c, true);
-  if (o.stripe) for (let x = 3; x < w - 3; x++) for (let y = 0; y < 3; y++) S.px(x, y, ((x + y) >> 1) % 2 ? '#d8a830' : '#1a1a1a');
-  return S.done();
-}
-// a data node: a column with a core of light; you jack in here
-function node(o = {}) {
-  const S = new Spr(16, 34, 69); S.ax = 8; S.ay = 33; const c = col3(o.col || '#3af0e0');
-  S.box(2, 6, 13, 33, MAT.steelD, { lo: 1, hi: 6 }); S.box(0, 0, 15, 6, MAT.steel, { lo: 1, hi: 7 }); S.box(1, 30, 14, 33, MAT.steel, { lo: 1, hi: 5 });
-  for (let y = 9; y < 28; y++) for (let x = 6; x < 10; x++) S.px(x, y, mixRgb(c, [255, 255, 255], (y % 4 === 0) ? 0.5 : 0.05 + (x === 7 ? 0.25 : 0)), o.spent ? 0 : true);
-  if (o.spent) for (let y = 9; y < 28; y++) for (let x = 6; x < 10; x++) S.px(x, y, mixRgb(c, [10, 12, 16], 0.85));
-  for (let y = 10; y < 28; y += 3) { S.px(3, y, mixRgb(c, [0, 0, 0], 0.4), !o.spent); S.px(12, y, mixRgb(c, [0, 0, 0], 0.5), !o.spent); }
-  return S.done();
-}
 // the freight lift: a cage, dark until you get it running
 function liftCage(o = {}) {
   const S = new Spr(34, 46, 71); S.ax = 17; S.ay = 45; const r = MAT.steel;
@@ -282,63 +243,6 @@ function bed(o = {}) {
   for (let y = 12; y < H - 2; y += 2) for (let x = 6; x < W - 4; x += 8) S.px(x, y, MAT.steelD[0]);
   return S.done();
 }
-// a closet: two doors, one open on a rail of coats, and a mirror
-function closet() {
-  const W = 30, H = 40, S = new Spr(W, H, 202); S.ax = W / 2; S.ay = H - 1; const wd = MAT.wood;
-  panel(S, 0, 0, W - 1, H - 1, wd, { a: 0.6, b: 0.45 });
-  panel(S, 2, 2, 14, H - 3, ['#140c08', '#2a1a10', '#3a2618'], { a: 0.4, b: 0.6 });
-  for (let x = 3; x < 14; x++) S.px(x, 5, MAT.chrome[3]);
-  for (const [x, c] of [[4, '#5e4c38'], [8, '#2a2438'], [11, '#34343c']]) S.shape([[x, 6], [x + 3, 6], [x + 3.5, 26], [x - 0.5, 26]], rp(c, 6), { down: 0.25 });
-  panel(S, 16, 2, W - 3, H - 3, wd, { a: 0.65, b: 0.5 }); panel(S, 18, 5, W - 5, 24, ['#3a5060', '#6a90a0', '#a8d0dc'], { a: 0.7, b: 0.3 });
-  S.px(17, 20, MAT.chrome[4]);
-  return S.done();
-}
-// a kitchenette: a counter, a hotplate, a sink, cups of noodles, a shelf
-function kitchen() {
-  const W = 44, H = 36, S = new Spr(W, H, 203); S.ax = W / 2; S.ay = H - 1;
-  panel(S, 0, 16, W - 1, H - 1, rp('#4a5058', 6)); panel(S, 0, 14, W - 1, 17, rp('#8a8a84', 6), { a: 0.7, b: 0.55 });
-  for (let x = 4; x < W - 2; x += 14) { panel(S, x, 20, x + 11, H - 3, rp('#3a4048', 6), { a: 0.5, b: 0.4 }); S.px(x + 9, 24, MAT.chrome[4]); }
-  S.ell(10, 13, 4, 1.4, MAT.steelD); S.px(10, 14, '#ff4020', true); S.px(11, 14, '#ff6030', true);
-  S.box(26, 13, 36, 15, MAT.chrome, { lo: 1, hi: 5 }); S.limb(34, 13, 34, 8, 0.8, MAT.chrome); S.limb(34, 8, 31, 8, 0.8, MAT.chrome);
-  for (const x of [17, 21]) { S.box(x, 9, x + 3, 13, ['#c8c0b0', '#e8e0d0', '#ffffff'], { lo: 1, hi: 2 }); S.px(x + 1, 10, '#d83a3a'); }
-  S.box(2, 4, W - 3, 5, MAT.wood, { lo: 1, hi: 5 }); for (let x = 5; x < W - 6; x += 5) S.box(x, 0, x + 2, 3, rp(['#3a8a8a', '#a88a3a', '#8a3a6a'][x % 3]), { lo: 1, hi: 4 });
-  return S.done();
-}
-// a screen on a stand, playing (life.js draws nothing on it; it's a still)
-function tvSet(o = {}) {
-  const W = 26, H = 26, S = new Spr(W, H, 204); S.ax = W / 2; S.ay = H - 1; const c = col3(o.col || '#3a8aff');
-  panel(S, 0, 0, W - 1, 15, MAT.steelD);
-  for (let y = 2; y < 14; y++) for (let x = 2; x < W - 2; x++) S.px(x, y, mixRgb(c, [10, 10, 30], 0.35 + hash(x >> 2, y >> 1, 9) * 0.5 + (y % 2) * 0.1), true);
-  S.limb(W / 2, 16, W / 2, H - 4, 1, MAT.steelD); S.box(W / 2 - 6, H - 3, W / 2 + 6, H - 1, MAT.steelD, { lo: 1, hi: 4 });
-  return S.done();
-}
-// a plant in a pot, a little sad
-function plant() {
-  const S = new Spr(14, 22, 205); S.ax = 7; S.ay = 21;
-  S.box(3, 15, 10, 21, rp('#8a4a2a', 6), { lo: 1, hi: 5 });
-  for (let k = 0; k < 7; k++) { const a = -1.4 + k * 0.45, l = 6 + (k % 3) * 2; S.limb(7, 15, 7 + Math.cos(a - 0.2) * l * 0.6, 15 - Math.sin(Math.abs(a) + 0.6) * l, 1, ['#1a3a1a', '#2a5a2a', '#4a8a3a']); }
-  return S.done();
-}
-// a neighbour's door in the hall: a number plate, a peephole, maybe open
-function aptDoor(o = {}) {
-  const w = 20, h = 32, S = new Spr(w + 4, h + 6, 206); S.ax = (w + 4) / 2; S.ay = h + 5; const r = rp(o.col || '#4a4450', 7);
-  panel(S, 0, 4, w + 3, h + 5, MAT.steelD, { a: 0.6, b: 0.4 });
-  if (o.open) { panel(S, 2, 6, w + 1, h + 5, ['#2a1a10', '#6a4020', '#a87040', '#e8b070'], { a: 0.75, b: 0.45 }); for (let y = 8; y < h + 4; y++) S.px(w - 4, y, '#ffd8a0', true); panel(S, w - 3, 6, w + 1, h + 5, r); }
-  else { panel(S, 2, 6, w + 1, h + 5, r); S.px(w / 2 + 2, 14, '#c8c8d0'); S.px(w - 2, h / 2 + 6, '#c8c8d0'); }
-  // the number, in little lit digits
-  panel(S, 5, 7, 13, 11, ['#0a0a0e', '#16161c']); for (let i = 0; i < 3; i++) S.px(6 + i * 2, 9, o.lit || '#ffd8a0', true);
-  return S.done();
-}
-// elevator doors: brushed steel, a seam down the middle, floor lights over them
-function elevator(o = {}) {
-  const W = 40, H = 48, S = new Spr(W, H, 207); S.ax = W / 2; S.ay = H - 1;
-  panel(S, 0, 6, W - 1, H - 1, MAT.steelD, { a: 0.6, b: 0.4 });
-  panel(S, 4, 9, W / 2 - 1, H - 1, MAT.chrome, { a: 0.62, b: 0.45 }); panel(S, W / 2, 9, W - 5, H - 1, MAT.chrome, { a: 0.5, b: 0.32 });
-  for (let y = 10; y < H; y++) S.px(W / 2 - 1, y, '#141418');
-  for (let i = 0; i < 6; i++) S.px(8 + i * 5, 2, i === (o.at || 0) ? '#ffb040' : '#3a3020', i === (o.at || 0));
-  panel(S, W - 4, 24, W - 1, 30, MAT.steel); S.px(W - 3, 26, '#3af0e0', true); S.px(W - 3, 28, '#3af0e0', true);
-  return S.done();
-}
 
 // ---- salvage, as icons for the inventory: 16 px, lit from the upper left ----
 function salvageIcon(k) {
@@ -391,36 +295,11 @@ function subwayDoor() {
   panel(S, 8, 0, 35, 6, ['#0a0a0e', '#16161c']); for (let x = 11; x < 33; x += 3) S.px(x, 3, '#ffd040', true);
   return S.done();
 }
-// a locker: a tall steel box, a lit latch
-function locker() {
-  const S = new Spr(14, 26, 431); S.ax = 7; S.ay = 25;
-  panel(S, 0, 0, 13, 25, rp('#4a5058', 6)); for (let y = 3; y < 9; y += 2) for (let x = 3; x < 11; x++) S.px(x, y, '#1a1e24');
-  S.px(10, 14, '#3aff80', true); S.px(10, 15, '#1a5a2a');
-  return S.done();
-}
-// an evidence marker: a little lit tent by whatever's there
-function marker(o = {}) {
-  const S = new Spr(12, 12, 432); S.ax = 6; S.ay = 11; const c = col3(o.col || '#ffd040');
-  for (let y = 0; y < 8; y++) for (let x = -y / 2; x <= y / 2; x++) S.px(6 + x, 3 + y, mixRgb(c, [0, 0, 0], x < 0 ? 0.2 : 0), true);
-  S.px(6, 6, '#1a1a1a'); S.px(6, 8, '#1a1a1a');
-  S.px(2, 11, '#c8c8d0'); S.px(9, 10, '#e8e8f0', true);
-  return S.done();
-}
 
 // an icon for anything you carry: salvage as before; the rest by kind, in
 // the item's own colours
-function itemIcon(k) {
-  const I = ITEM[k]; if (!I || I.kind === 'salvage') return salvageIcon(k);
-  const S = new Spr(16, 16, 320 + k.length), c = I.col || ['#3a3a3a', '#8a8a8a', '#e8e8e8'], ramp = rp(c[1], 6);
-  if (I.kind === 'consumable') {
-    if (k === 'noodlecup') { S.shape([[3, 5], [13, 5], [11, 14], [5, 14]], rp('#e8e0d0', 6), { down: 0.3 }); for (let x = 4; x < 13; x++) S.px(x, 8, c[2]); S.limb(9, 5, 12, 0, 0.8, ['#3a2a1a', '#6a4a2a']); }
-    else if (k === 'stim') { S.cap(4, 12, 11, 5, 1.6, 1.6, ramp); S.limb(11, 5, 14, 2, 0.8, MAT.chrome); S.px(6, 10, c[2], true); S.px(8, 8, c[2], true); }
-    else { S.box(2, 4, 13, 12, rp('#e8f0e8', 5), { lo: 1, hi: 4 }); S.box(6, 5, 9, 11, ramp, { glow: true }); S.box(4, 7, 11, 9, ramp, { glow: true }); }
-  } else if (I.kind === 'throwable') { S.ell(8, 9, 5, 5.5, ramp); S.box(6, 2, 10, 4, MAT.steel, { lo: 1, hi: 5 }); S.limb(10, 3, 13, 5, 0.8, MAT.chrome); S.px(8, 9, c[2], true); }
-  else if (I.kind === 'key') { panel(S, 1, 4, 14, 12, ramp, { a: 0.7, b: 0.45 }); for (let x = 3; x < 8; x++) S.px(x, 7, '#1a1a1a'); S.px(11, 9, c[2], true); }
-  else { panel(S, 2, 3, 13, 13, rp('#c8b890', 5), { a: 0.7, b: 0.5 }); for (let y = 6; y < 12; y += 2) for (let x = 4; x < 11; x++) if (hash(x, y, k.length) > 0.3) S.px(x, y, '#3a3428'); S.box(9, 1, 12, 4, rp('#ff4a6a', 4)); }
-  S.ax = 8; S.ay = 15; return S.done();
-}
+// what you carry, as an icon: salvage only now
+function itemIcon(k) { return salvageIcon(k); }
 
 // a ladder up to a manhole: rungs in a shaft, light from the street coming down
 function manholeLadder() {

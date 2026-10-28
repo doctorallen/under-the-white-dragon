@@ -44,7 +44,7 @@ addDistrict('d_neonrow', 'Neon Row', 1, 60, 380, 'The nightlife strip: bars, pac
     // a stack of shacks on an old block, a stair up to its roof walk
     bStack(L, 1460, 1700, G, { levels: 5, blade: '#ffd040', shop: 'pawn', shopCol: '#ffb040', seed: 81 });
     L.stairs(1470, G, 1560, G - 112); L.walk(1470, 1700, G - 112, 6); L.dry.push([1460, G - 112, 1700, G]);
-    L.prop('locker', 1650, G - 112, { tier: 1, label: 'locker' }); L.prop('ac', 1600, G - 112, { label: 'air conditioner' });
+    L.prop('ac', 1600, G - 112, { label: 'air conditioner' });
     L.spots.push([1600, G - 112]);
     kStallAt(L, 1520, G, 'dumpling'); kStallAt(L, 1610, G, 'skewers', { npc: { name: 'Skewer kid', lines: ['Two for one. One for two. Whatever.', 'The dancer from the Coil? She don\'t eat. Never seen her eat.'] } });
     // two shophouses joined by a gallery at the first floor, doors along it
@@ -79,8 +79,6 @@ addDistrict('d_neonrow', 'Neon Row', 1, 60, 380, 'The nightlife strip: bars, pac
     L.paint(300, G - 180, 1950, G - 120, (P) => { for (let k = 0; k < 3; k++) cable(P, 300, G - 170 + k * 8, 1950, G - 160 + k * 6, 30 + k * 6, '#08080c'); });
     bLanterns(L, 300, 540, G - 132, ['#ff3a2a', '#ffb040']); bLanterns(L, 1144, 1440, G - 140, ['#ff4ab0', '#3af0e0'], { step: 16 }); bLanterns(L, 2190, 2410, G - 128, ['#ff3a2a', '#ffd040']);
     // the Row's people, its trouble
-    kFoes(L, G, [['gang', 1200, 1140, 1300], ['gunner', 1580, 1480, 1700], ['drone', 2280, 2180, 2420], ['gang', 2560, 2440, 2700]]);
-    L.prop('locker', 2620, G, { tier: 1, label: 'locker' });
     L.spots.push([380, G], [700, G], [1050, G], [1350, G], [2050, G], [2350, G], [2600, G]);
     L.critter('rat', 300, 2800, G, 2); L.critter('dog', 1700, 2400, G, 1); L.litter(200, 2800, G, 8);
   },
@@ -165,7 +163,6 @@ addDistrict('d_kessler', 'Kessler Blocks', 1, 50, 230, 'A housing estate up high
     bDanchi(L, 180, 560, G, { floors: 7, number: 14, seed: 201 });
     L.walk(204, 560, G - 60, 4, KMAT.concreteL, { rail: false }); L.stairs(640, G, 560, G - 60); L.spots.push([400, G - 60]);
     for (const x of [260, 360, 460]) L.prop('deco', x, G - 60, { art: DECO.door({ col: ['#5a4a3a', '#3a4a5a', '#4a3a4a'][x % 3], light: '#ffd8a0' }), id: 'kbd' + x });
-    L.prop('locker', 520, G - 60, { tier: 1, label: 'locker' });
     // the corner shop and the noodle bar at the foot of the flats
     bShophouse(L, 640, 760, G, { floors: 4, wall: KMAT.cream, shops: [['counter', '#ffd040']], roof: 'tank', balcony: 'all', awning: '#2a6a4a', stripe: '#e8e0d0', seed: 211 });
     bShophouse(L, 760, 860, G, { floors: 4, wall: KMAT.mint, shops: [['ramen', '#ff3a2a']], roof: 'garden', blade: '#3af0e0', seed: 212 });
@@ -187,7 +184,7 @@ addDistrict('d_kessler', 'Kessler Blocks', 1, 50, 230, 'A housing estate up high
     bDanchi(L, 1620, 2060, G, { floors: 8, number: 9, wall: KMAT.stucco, seed: 241 });
     L.walk(1644, 2060, G - 90, 4, KMAT.stucco, { rail: false }); L.ladder(1650, G - 90, G); L.spots.push([1850, G - 90]);
     L.walk(1644, 2060, G - 180, 4, KMAT.stucco, { rail: false }); L.ladder(2040, G - 180, G - 90); L.spots.push([1800, G - 180]);
-    L.prop('locker', 1700, G - 180, { tier: 1, label: 'locker' }); L.prop('ac', 1960, G - 90, { label: 'air conditioner' });
+    L.prop('ac', 1960, G - 90, { label: 'air conditioner' });
     for (const x of [1720, 1840, 1960]) L.prop('deco', x, G - 90, { art: DECO.door({ col: '#3a4a5a', light: x % 2 ? '#ffd8a0' : '#9af0ff' }), id: 'k9d' + x });
     // the end: a laundrette and a pawn shop, a stack of shacks on an old block
     bShophouse(L, 2080, 2200, G, { floors: 3, wall: MAT.concrete, shops: [['glass', '#9af0ff']], roof: 'shack', seed: 251 });
@@ -195,7 +192,6 @@ addDistrict('d_kessler', 'Kessler Blocks', 1, 50, 230, 'A housing estate up high
     bShophouse(L, 2430, 2600, G, { floors: 5, wall: KMAT.pink, shops: [['tea', '#ffd040'], ['shutter', '#3af0e0']], roof: 'tank', seed: 271 });
     kStallAt(L, 2150, G, 'fruit', { col: '#2a8a4a' });
     L.prop('car', 2340, G, { look: { col: '#2a3a4a', under: '#3af0e0' }, label: 'parked car' }); L.prop('junk', 600, G, { label: 'junk pile' });
-    kFoes(L, G, [['gang', 1300, 1180, 1400], ['drone', 1840, 1660, 2040, G - 120], ['gunner', 2300, 2200, 2440]]);
     L.spots.push([300, G], [700, G], [1050, G], [1280, G], [1500, G], [1900, G], [2140, G], [2500, G]);
     L.critter('rat', 300, 2500, G, 2); L.litter(200, 2500, G, 7);
   },
@@ -227,7 +223,7 @@ addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza
     bGlass(L, 1380, 1580, G, { h: 400, crown: 'slant', glass: KMAT.blackglass, edge: '#ff4ab0', lit: 0.25, panel: 60, seed: 321 });
     L.walk(1380, 1580, G - 130, 6, KMAT.whitepanel); L.ladder(1574, G - 130, G);
     for (const x of [1410, 1480, 1550]) bTree(L, x, G - 130, x === 1480 ? 'sakura' : 'pine', { h: 44 });
-    L.prop('locker', 1440, G - 130, { tier: 1, label: 'locker' }); L.spots.push([1500, G - 130]);
+    L.spots.push([1500, G - 130]);
     L.light(1480, G - 150, 90, [0.7, 1, 0.75], 0.5);
     // the security post and a corp lobby
     L.paint(1600, G - 40, 1680, G, (P) => { P.block(1600, G - 40, 1680, G, KMAT.whitepanel, { base: 0.5 }); kFill(P, 1606, G - 34, 1674, G - 16, '#3a8aff', 0.3); for (let x = 1610; x < 1670; x += 10) kFill(P, x, G - 30, x + 7, G - 22, '#0a1a2a', 0); });
@@ -242,9 +238,7 @@ addDistrict('d_glasshouse', 'Glasshouse Plaza', 1, 90, 560, 'The corporate plaza
     L.paint(2580, G - 70, 2700, G, (P) => { P.block(2580, G - 70, 2700, G - 64, KMAT.whitepanel, { base: 0.6 }); for (const x of [2590, 2690]) P.block(x, G - 64, x + 4, G, KMAT.whitepanel, { base: 0.5, lip: 0 }); });
     L.sign(2600, G - 84, 7, '#e8e8ff', { r: 60 }); L.prop('deco', 2640, G, { art: () => bench(), id: 'gmb' });
     L.prop('vending', 1300, G, { look: { col: '#9af0ff', body: '#c8d0d8' }, label: 'vending machine' });
-    L.prop('locker', 2620, G, { tier: 1, label: 'locker' });
     // Meridian's security
-    kFoes(L, G, [['guard', 1100, 960, 1300], ['turret', 1590, 1520, 1700, G - 70], ['sentinel', 1840, 1700, 2000, G - 80], ['guard', 2100, 1980, 2260], ['guard', 2420, 2300, 2560]]);
     // spots: spot 6 is the sky-garden (a case photo is taken there)
     L.spots.length = 0; L.spots.push([300, G], [560, G - 66], [700, G], [1000, G], [1230, G], [1300, G], [1500, G - 130], [1850, G], [2080, G], [2400, G], [2620, G]);
     L.critter('cat', 2290, 2550, G, 1); L.litter(200, 2600, G, 3);
@@ -278,7 +272,7 @@ addDistrict('d_skybridge', 'The Skybridge', 1, 140, 760, 'A deck slung between t
       // a maintenance gantry over the deck, a ladder up
       L.paint(800, G - 140, 1100, G, (P) => { for (let x = 800; x < 1100; x += 50) girder(P, x, G - 132, x + 50, G - 120, MAT.steelD, { step: 10 }); for (const x of [806, 1090]) P.block(x, G - 132, x + 4, G, MAT.steelD, { base: 0.4, lip: 0 }); });
       L.walk(800, 1100, G - 120, 4, MAT.steelD); L.ladder(820, G - 120, G); L.spots.push([950, G - 120]);
-      L.prop('locker', 1060, G - 120, { tier: 1, label: 'maintenance locker' }); L.prop('wreck', 960, G - 120, { label: 'downed drone' });
+      L.prop('wreck', 960, G - 120, { label: 'downed drone' });
       // the bridge's middle: a glass shelter with a hanging garden, a viewing point
       L.paint(1150, G - 80, 1400, G, (P) => { glassWall(P, 1150, G - 70, 1400, G - 4, { ramp: MAT.glass, mw: 16, mh: 22 }); P.block(1146, G - 80, 1404, G - 70, KMAT.whitepanel, { base: 0.6 }); });
       for (const x of [1180, 1260, 1340]) bTree(L, x, G - 2, 'bamboo', { h: 60 });
@@ -291,10 +285,8 @@ addDistrict('d_skybridge', 'The Skybridge', 1, 140, 760, 'A deck slung between t
       // a second gantry and a crane arm out over the drop
       L.paint(1880, G - 180, 2140, G, (P) => { for (let x = 1880; x < 2140; x += 40) girder(P, x, G - 170, x + 40, G - 160, MAT.rust, { step: 10 }); for (const x of [1884, 2130]) P.block(x, G - 170, x + 4, G, MAT.rust, { base: 0.4, lip: 0 }); });
       L.walk(1880, 2140, G - 160, 4, MAT.rust); L.stairs(1900, G, 1990, G - 80); L.walk(1990, 2100, G - 80, 4, MAT.rust); L.ladder(2096, G - 160, G - 80); L.spots.push([2040, G - 160], [2040, G - 80]);
-      L.prop('locker', 2110, G - 160, { tier: 1, label: 'maintenance locker' });
       // the east tower
       bGlass(L, 2300, 2540, G, { h: 420, crown: 'slant', glass: KMAT.blackglass, edge: '#ff4ab0', lit: 0.3, logo: '#ff4ab0', seed: 441 });
-      kFoes(L, G, [['drone', 900, 800, 1120, G - 70], ['gang', 1600, 1500, 1800], ['drone', 2000, 1880, 2200, G - 100], ['gunner', 2200, 2120, 2290]]);
       L.spots.push([350, G], [600, G], [760, G], [1270, G], [1460, G], [1700, G], [2200, G]);
       L.litter(200, 2300, G, 12);
     },
@@ -341,12 +333,10 @@ addDistrict('d_gardens', 'Arcology Gardens', 1, 110, 660, 'The arcology\'s terra
     bTree(L, 2150, G - 30, 'sakura', { h: 70 }); bToro(L, 2210, G - 30);
     L.paint(2240, G - 90, 2370, G - 30, (P) => { P.block(2246, G - 76, 2364, G - 30, KMAT.darkwood, { base: 0.3 }); for (const x of [2246, 2300, 2360]) P.block(x, G - 76, x + 4, G - 30, KMAT.lacquer, { base: 0.5, lip: 0 }); kRoof(P, 2240, 2370, G - 76, 14, KMAT.kawara, { over: 10, inset: 20, curve: 4 }); });
     L.light(2300, G - 50, 70, [1, 0.7, 0.4], 0.6); L.prop('deco', 2300, G - 30, { art: () => bench(), id: 'gpb' });
-    L.prop('locker', 2340, G - 30, { tier: 1, label: 'tool locker' }); L.spots.push([1900, G - 30], [2100, G - 30], [2300, G - 30]);
+    L.spots.push([1900, G - 30], [2100, G - 30], [2300, G - 30]);
     L.stairs(2380, G - 30, 2420, G, KMAT.stone);
     bPark(L, 2420, 2600, G, { trees: ['pine', 'bamboo'], seed: 521 });
-    L.prop('locker', 1480, G, { tier: 1, label: 'tool locker' });
     L.critter('cat', 400, 700, G, 1); L.critter('owl', 1300, 1300, G - 60, 1); L.critter('dog', 2420, 2580, G, 1);
-    kFoes(L, G, [['drone', 1500, 1350, 1700, G - 90], ['gang', 2500, 2430, 2580]]);
     L.spots.push([300, G], [520, G], [1180, G - 16], [1480, G], [1700, G], [2500, G]);
   },
 }));
@@ -394,7 +384,7 @@ LEVELS.spires = { name: 'The Spires', depth: '+300 m', metres: 300, mapX: 520, t
       bGlass(L, 880, 1080, G, { h: 420, crown: 'step', glass: MAT.glass, panel: 24, fins: 20, edge: '#9af0ff', logo: '#9af0ff', seed: 611 });
       L.walk(880, 1080, G - 120, 6, KMAT.whitepanel); L.ladder(1074, G - 120, G);
       for (const x of [910, 980, 1040]) bTree(L, x, G - 120, x === 980 ? 'sakura' : 'pine', { h: 42 });
-      L.prop('locker', 920, G - 120, { tier: 6, label: 'locker' }); L.spots.push([1000, G - 120]);
+      L.spots.push([1000, G - 120]);
       // the concierge's desk in a marble lobby
       L.paint(1100, G - 60, 1320, G, (P) => { P.block(1100, G - 60, 1320, G, KMAT.plaster, { base: 0.62, panels: [36, 60] }); P.block(1100, G - 64, 1320, G - 58, KMAT.gold, { base: 0.6 }); for (let x = 1150; x < 1270; x++) for (let y = G - 50; y < G - 30; y++) P.put(x, y, mixRgb([255, 236, 200], [150, 120, 90], (y - G + 50) / 20 + ((x - 1150) % 20 < 2 ? 0.4 : 0)), 0.1); });
       L.prop('deco', 1200, G, { art: () => desk({ col: '#e8e0d0' }), id: 'condesk' }); L.light(1210, G - 30, 90, [1, 0.92, 0.78], 0.8);
@@ -405,10 +395,8 @@ LEVELS.spires = { name: 'The Spires', depth: '+300 m', metres: 300, mapX: 520, t
       L.prop('rack', 1840, G, { label: 'data rack' });
       bGlass(L, 1880, 2080, G, { h: 400, crown: 'step', glass: R(['#1a1408', '#3a2a10', '#6a5020', '#e8c070']), edge: '#ffd040', fins: 14, seed: 631 });
       bPark(L, 2090, 2390, G, { trees: ['pine', 'street'], fence: false, critters: false, seed: 641 });
-      for (const [x, a, b] of [[1500, 1400, 1700], [1900, 1800, 2150], [2200, 2100, 2350]]) L.enemy('enforcer', x, G, { range: [a, b] });
-      L.enemy('sentinel', 2000, G - 80, { range: [1800, 2300] });
       // Halden's penthouse
-      arena(L, 2400, 3300, G, 'penthouse'); L.enemy('halden', 2800, G, { arena: [2420, 3280] });
+      arena(L, 2400, 3300, G, 'penthouse');
       // the penthouse dressed: a wall of glass on the night, gold columns, marble, a chandelier, palms in pots
       L.paint(2400, 60, 3300, G, (P) => {
         P.area(2420, 90, 3280, G - 60, KMAT.blackglass, (x, y) => 0.25 + ((x + y) % 31 < 2 ? 0.25 : 0) + (hash(x >> 2, y >> 2, 7) < 0.02 ? 0.6 : 0));

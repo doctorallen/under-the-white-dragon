@@ -39,7 +39,6 @@ function person(o = {}) {
     if (o.kneePad) S.cap(kx - 0.3, ky - 0.6, kx + 0.6, ky + 0.6, 1.4, 1.2, back ? dark(rp(o.kneePad, 5)) : rp(o.kneePad, 5));
     if (o.pockets && pose !== 'sit') S.cap(kx - 0.6 - dx * 0.15, ky - 3, kx - 0.4 - dx * 0.12, ky - 1.4, 1.2, 1.1, back ? dark(dark(legs)) : dark(legs));
     S.part(); const B = back ? dark(boots) : boots;
-    if (o.jets && !back) { S.cap(ax - 1.6, ay - 1.4, ax - 1.6, ay + 0.2, 1, 1, MAT.steelD); S.px(ax - 2.4, ay + 0.8, '#ffb040', true); }
     S.cap(ax - 0.5, ay + 0.1, ax + 2.8, ay + 0.5, 1.7, 1.35, B, { bias: 0.05 });
     S.px(ax + 2.6, ay - 0.4, B[4]); S.px(ax - 1, ay - 1.2, B[3]); S.px(ax, ay - 1.2, B[3]);
     for (let x = Math.round(ax - 1.5); x <= Math.round(ax + 3.5); x++) if (S.get(x, Math.round(ay + 1.6))) S.px(x, ay + 1.6, o.soles ? (back ? dark([col3(o.soles)])[0] : col3(o.soles)) : B[0], !!o.soles && !back);
@@ -58,8 +57,6 @@ function person(o = {}) {
   const H = o.hands || {}, hb = [H.bx === undefined ? cx - 2.5 : H.bx, H.by === undefined ? hip + 0.5 : H.by], hf = [H.fx === undefined ? cx + 4.8 : H.fx, H.fy === undefined ? hip + 1 : H.fy];
   // behind: a pack, an umbrella's shaft, the back arm and leg
   if (o.pack) { const pk = rp(o.pack, 6); S.shape([[cx - 8.6, sh], [cx - 3, sh - 0.5], [cx - 3, waist + 1], [cx - 9, waist + 1]], pk, { down: 0.3 }); S.cap(cx - 8.4, sh - 1.2, cx - 3.6, sh - 1.4, 1.4, 1.4, rp('#5a4a3a', 5)); for (let y = Math.round(sh + 2); y < waist; y += 3) S.px(cx - 8, y, pk[0]); if (acc) S.px(cx - 7, sh + 4, acc, true); }
-  // a weapon carried when it isn't in hand: a katana across the back, a baton at the hip
-  if (o.sheath === 'katana') { S.limb(cx - 6.5, sh - 5, cx + 1, waist + 3, 1.2, ['#1a1a20', '#3a3a44', '#5a5a66']); S.limb(cx - 7.5, sh - 6.5, cx - 6, sh - 4, 1.2, rp(o.sheathCol || '#ff4ab0', 4)); }
   S.part(); arm(cx - 2.6, hb[0], hb[1], true);
   S.part(); leg(st[0], true);
   S.part();
@@ -75,7 +72,7 @@ function person(o = {}) {
   S.shape([[sx0 + 0.6, sh - 0.6], [sx1 - 0.2, sh - 0.6], [sx1 + 0.6, sh + 2], [sx1 - 0.4, waist], [sx1, hip + 0.8], [sx0, hip + 0.8], [sx0 + 0.4, waist], [sx0 - 0.4, sh + 2]], top);
   if (o.shirt) S.shape([[cx + 1.6, sh], [sx1 - 0.6, sh], [sx1 - 0.8, waist - 1], [cx + 2.4, waist - 1]], rp(o.shirt, 5));
   // a vest over the shirt: a plate and its straps, where the coat's open
-  if (o.vest) { const vr = rp(o.vest, 6), x0 = o.coat === 'long' || o.coat === 'jacket' ? cx + 1.4 : sx0 + 0.6; S.shape([[x0, sh + 1.5], [sx1 - 0.4, sh + 1.5], [sx1 - 0.6, waist + 0.5], [x0 + 0.6, waist + 0.5]], vr, { down: 0.2 }); for (let x = Math.round(x0 + 1); x < sx1 - 1; x += 2) S.px(x, waist - 2, vr[1]); if (o.vestLight) S.px(sx1 - 1.5, sh + 3, o.vestLight, true); }
+  if (o.vest) { const vr = rp(o.vest, 6), x0 = o.coat === 'long' || o.coat === 'jacket' ? cx + 1.4 : sx0 + 0.6; S.shape([[x0, sh + 1.5], [sx1 - 0.4, sh + 1.5], [sx1 - 0.6, waist + 0.5], [x0 + 0.6, waist + 0.5]], vr, { down: 0.2 }); for (let x = Math.round(x0 + 1); x < sx1 - 1; x += 2) S.px(x, waist - 2, vr[1]); }
   if (o.apron) S.shape([[cx - 1, sh + 3], [sx1 + 0.8, sh + 3], [sx1 + 1.6, Y(5)], [cx - 1.5, Y(5)]], rp(o.apron, 6), { down: 0.25 });
   if (o.armor) { S.cap(cx - 2.5, sh + 2.5, cx + 2.5, sh + 2.5, 3.4, 3.4, rp(o.armor, 7)); S.cap(cx - 3.5, sh + 1, cx - 4.5, sh + 1.5, 2.6, 2.6, rp(o.armor, 7)); }
   if (o.collar) S.cap(cx - 3, sh - 1, cx + 0.5, sh - 1.8, 2.2, 1.6, top, { bias: 0.12 });
@@ -96,9 +93,6 @@ function person(o = {}) {
   for (let x = Math.round(sx0); x <= Math.round(sx1); x++) if (S.get(x, Math.round(hip))) S.px(x, hip, rp(o.belt || '#141216')[1]);
   if (!o.apron && S.get(Math.round(sx1) - 1, Math.round(hip))) S.px(Math.round(sx1) - 1, hip, '#b8a070');
   if (acc && o.trim !== false) for (let y = Math.round(sh + 1); y < (o.coat === 'long' ? Y(6) : hip); y++) { const x = Math.round(sx1 - 0.5 + (y > waist ? (y - waist) * 0.12 : 0)); if (S.get(x, y)) S.px(x, y, acc, (y % 3) === 0); }
-  if (o.plates && acc) for (let y = Math.round(sh + 2); y < waist; y += 2) S.px(cx + 1, y, acc, true);
-  // a baton hangs at the back of the belt, over the coat
-  if (o.sheath === 'baton') { S.limb(sx0 - 0.6, hip - 1, sx0 - 1.6, hip + 7, 1.3, ['#14141a', '#2a2a34', '#44444e']); S.px(sx0 - 1.6, hip + 7, o.sheathCol || '#5aa8ff', true); }
   // the front leg, over the body's hem
   if (o.coat !== 'long') { S.part(); leg(st[1], false); }
   S.part();
@@ -139,25 +133,9 @@ function person(o = {}) {
   const [hx, hy] = hf; S.part();
   if (o.cutter) { const c = col3(o.cutterCol || '#ffb040'); S.cap(hx - 1, hy, hx + 5, hy - 0.5, 1.2, 1.1, MAT.steel); S.cap(hx + 0.5, hy + 1, hx + 0.5, hy + 2.5, 0.9, 0.8, MAT.steelD); S.px(hx + 6, hy - 0.5, c, true); S.px(hx + 7, hy - 0.5, mixRgb(c, [255, 255, 255], 0.6), true); S.px(hx + 2, hy - 1.5, c, true); }
   if (o.blade) { const c = col3(o.blade); for (let q = 0; q < 11; q++) S.px(hx + 1 + q * 0.95, hy - 1 - q * 0.45, q < 2 ? chrome[2] : mixRgb(c, [255, 255, 255], q % 4 ? 0.25 : 0.7), q >= 2); }
-  // the blaster, along the line it points: level when it's aimed, down at
-  // the ground when it's only carried (gunDown)
-  if (o.blaster) {
-    const a = o.gunDown ? 1.05 : 0, ux = Math.cos(a), uy = Math.sin(a), P = (u, v) => [hx + u * ux - v * uy, hy + u * uy + v * ux];
-    const C = (u0, v0, u1, v1, r0, r1, R) => { const [x0, y0] = P(u0, v0), [x1, y1] = P(u1, v1); S.cap(x0, y0, x1, y1, r0, r1, R); };
-    if (o.blasterBig) { C(-2, -1.6, 8, -2.2, 2.3, 1.9, MAT.steelD); C(6, -3.2, 9.5, -3.2, 0.8, 0.8, MAT.steel); }
-    C(-1.5, -1.2, 5.5, -1.6, 1.7, 1.4, MAT.steelD);
-    if (o.blasterCol) for (let q = 0; q < 4; q++) { const [x, y] = P(q, -1.4); S.px(x, y, col3(o.blasterCol), q % 2 === 0); }
-    C(5, -1.6, 7.5, -1.6, 0.8, 0.8, MAT.steel);
-    C(-0.5, 0, -0.8, 2.6, 0.9, 0.8, ['#1a120c', '#3a2618', '#5a3c24']);
-    { const [x, y] = P(2, -2.6); S.px(x, y, '#ff8a20', true); }
-    if (o.muzzle) for (const [u, v, c] of [[8.5, -1.6, '#ffffff'], [9.5, -1.6, '#ffd080'], [8.5, -2.6, '#ffb040'], [8.5, -0.6, '#ffb040']]) { const [x, y] = P(u, v); S.px(x, y, c, true); }
-  }
-  if (o.gun) { S.cap(hx - 1, hy - 1, hx + 6, hy - 1.4, 1.4, 1.2, MAT.steelD); S.px(hx + 1, hy + 0.8, MAT.steelD[2]); S.px(hx + 4, hy - 1.4, col3(o.visor || '#ff3040'), true); }
   if (o.bowl) { S.cap(hx - 0.5, hy - 1, hx + 3, hy - 1, 1.6, 1.4, ['#5a1a0e', '#a83a1e', '#e06a3a', '#ffa070']); S.px(hx + 1, hy - 4, '#d8d8e0'); S.px(hx + 2, hy - 6, '#b8b8c0'); S.px(hx + 1, hy - 8, '#9898a0'); }
   if (o.phone) { S.px(hx + 1, hy - 1, col3(o.phone), true); S.px(hx + 1, hy - 2, col3(o.phone), true); }
   if (o.umbrella) { const uc = rp(o.umbrella, 6); S.cap(hx, hy, hx, head - 9, 0.6, 0.6, ['#2a2a2a', '#5a5a5a', '#8a8a8a']); S.cap(hx - 9, head - 9, hx + 9, head - 9, 2.4, 2.4, uc, { mask: (x, y) => y <= head - 9 }); for (let x = -10; x <= 10; x++) S.px(hx + x, head - 8.6, o.umbrellaGlow ? col3(o.umbrellaGlow) : uc[0], !!o.umbrellaGlow && x % 2 === 0); }
-  // a riot shield in front, a lit strip down its edge
-  if (o.shield) { const sc = rp(o.shield, 6); S.box(hx + 2, hy - 13, hx + 6, hy + 9, sc, { lo: 1, hi: 4 }); for (let y = hy - 12; y < hy + 9; y += 2) S.px(hx + 6, y, col3(o.visor || '#3af0e0'), true); S.px(hx + 4, hy - 6, '#c8d8e8'); }
   const out = S.done(); out.actor = true; return out;
 }
 // The same person from behind, as they climb a ladder: legs side by side,
@@ -198,7 +176,6 @@ function personBack(o = {}) {
   if (acc && o.trim !== false) for (let y = Math.round(sh + 1); y < Math.round(hem); y += 2) { S.px(cx - w0 + 0.6, y, acc, true); S.px(cx + w0 - 0.6, y, acc, true); }
   if (o.armor) S.cap(cx - 3, sh + 2.5, cx + 3, sh + 2.5, 3.4, 3.4, rp(o.armor, 7));
   if (o.pack) { const pk = rp(o.pack, 6); S.box(cx - 3.5, sh + 1, cx + 3.5, waist + 1, pk, { lo: 1, hi: 4 }); S.px(cx, sh + 4, pk[0]); if (acc) S.px(cx + 2, sh + 3, acc, true); }
-  if (o.sheath === 'katana') S.limb(cx - 5, sh - 4, cx + 5, waist + 2, 1.2, ['#1a1a20', '#3a3a44', '#5a5a66']);
   S.part(); arm(-1); S.part(); arm(1);
   // the collar and the head: the nape, the ears, and over them the hair
   S.part();
@@ -220,71 +197,4 @@ function personBack(o = {}) {
   if (o.goggles) { for (let x = -4; x <= 4; x++) S.px(cx + x, head - 0.4, '#1a1a20'); }
   if (o.port && acc) S.px(cx, head + 2.4, acc, true);
   const out = S.done(); out.actor = true; return out;
-}
-// walking frames come from the same choices
-
-// ---- the machines -----------------------------------------------------------
-function drone(o = {}) {
-  const S = Spr.figure(24, 14, 31); S.ax = 12; S.ay = 13;
-  const b = rp(o.col || '#3a4048'), eye = o.eye || '#ff3040';
-  S.ell(12, 7, 6, 3.4, b); for (let x = 1; x < 23; x++) if (x < 6 || x > 18) S.px(x, 4, MAT.steel[3]);
-  S.part(); for (const x of [3, 21]) { S.ell(x, 3.5, 3, 0.8, ['#3a3a40', '#8a8a96']); S.px(x, 3, '#c8c8d0'); }
-  // a seam, a vent, an antenna, the eye in its socket
-  for (let x = 7; x < 18; x++) if (S.get(x, 8) && x !== 14 && x !== 15) S.px(x, 8, b[0]); S.px(9, 6, b[5]); S.px(10, 6, b[5]);
-  S.px(8, 3, MAT.steel[2]); S.px(8, 2, '#ff3040', true);
-  S.px(13, 7, '#0a0a0e'); S.px(14, 7, eye, true); S.px(15, 7, mixRgb(col3(eye), [255, 255, 255], 0.5), true); S.px(15, 8, eye, true);
-  if (o.light) for (let y = 10; y < 14; y++) S.px(12, y, col3(o.light), true);
-  return S.done();
-}
-function spider(o = {}) {
-  const S = Spr.figure(30, 18, 33); S.ax = 15; S.ay = 17; const b = rp(o.col || '#2a2e34'), eye = o.eye || '#ff3040';
-  for (const [a, b2, c] of [[8, 4, -1], [10, 7, 1], [20, 24, -1], [22, 27, 1]]) { S.limb(a + 3, 8, b2, 4 + c, 1.4, MAT.steel); S.limb(b2, 4 + c, b2 + (b2 < 15 ? -2 : 2), 17, 1.2, MAT.steel); }
-  S.part(); S.ell(15, 8, 7, 4.2, b); S.part(); S.ell(17, 6, 3, 2, b, { bias: 0.2 });
-  // plates and a seam, a cluster of eyes
-  for (let y = 5; y < 12; y++) S.px(12, y, b[0]); S.px(9, 6, b[5]); S.px(14, 4, b[5]);
-  for (let x = 0; x < 3; x++) S.px(19 + x, 8, eye, true); S.px(20, 7, eye, true); S.px(21, 9, mixRgb(col3(eye), [255, 255, 255], 0.5), true);
-  return S.done();
-}
-// a security mech: the Stack's boss, the Warden (and, recoloured, the Old
-// Mayor and the Foreman). Flat plate in panels, seams and rivets, pistons at
-// the knees, a lit slit of a cockpit, a gun arm and a claw.
-function mech(o = {}) {
-  const S = Spr.figure(80, 86, 35); S.ax = 40; S.ay = 85; const pl = rp(o.col || '#c8c4bc', 7), dk = MAT.steelD, st = MAT.steel, eye = col3(o.eye || '#ff3040');
-  const seam = mixRgb(pl[1], [0, 0, 0], 0.25), rivet = pl[6];
-  const dim = (r) => r.map((c) => mixRgb(c, [8, 6, 12], 0.35));
-  // legs, reverse-jointed: the far one first and darker
-  const leg = (dx, far) => {
-    const L = far ? dim(st) : st, D = far ? dim(dk) : dk, hx = 40 + dx, kx = 40 + dx * 1.4 + 6, fx = 40 + dx * 1.2;
-    S.limb(hx, 50, kx, 64, 6, L); S.limb(kx - 1, 56, fx + 2, 74, 1.4, D); // the thigh, a piston behind
-    S.limb(kx, 64, fx, 82, 4.5, L);
-    for (let y = 70; y < 80; y += 3) { const x = kx + (fx - kx) * (y - 64) / 18; for (let q = -1; q <= 1; q++) S.px(x + q, y, D[1]); }
-    S.ell(kx, 64, 3.2, 3.2, D); S.px(kx, 64, far ? mixRgb(eye, [0, 0, 0], 0.4) : eye, !far);
-    S.box(fx - 7, 81, fx + 6, 85, D, { lo: 1, hi: 6 }); for (const x of [fx - 3, fx + 2]) S.px(x, 84, D[0]); S.px(fx - 7, 85, D[0]); S.px(fx + 6, 81, D[5]);
-  };
-  leg(12, true); S.part();
-  // the claw arm behind the hull
-  S.limb(24, 40, 12, 52, 5, st); S.ell(12, 52, 2.6, 2.6, dk); S.limb(12, 52, 6, 46, 2.5, MAT.chrome); S.limb(12, 52, 5, 58, 2.5, MAT.chrome); S.limb(6, 46, 3, 49, 2, MAT.chrome); S.limb(5, 58, 2, 55, 2, MAT.chrome);
-  S.part();
-  // the hull: a dome over a belly box
-  S.ell(40, 38, 21, 16, pl); S.box(22, 44, 58, 54, rp(mixRgb(col3(o.col || '#c8c4bc'), [40, 40, 50], 0.35), 6), { lo: 0, hi: 5 });
-  // seams and their rivets, a vent grille on the belly, a hatch
-  for (let x = 21; x < 60; x++) if (S.get(x, 44)) S.px(x, 44, seam);
-  for (const sx of [31, 47]) for (let y = 24; y < 44; y++) { const x = sx + (y - 34) * (sx < 40 ? -0.25 : 0.25); if (S.get(Math.round(x), y)) S.px(x, y, seam); }
-  for (let x = 24; x < 57; x += 4) { S.px(x, 46, rivet); S.px(x, 52, dk[1]); }
-  for (const sx of [31, 47]) for (let y = 27; y < 43; y += 5) S.px(sx + 1 + (y - 34) * (sx < 40 ? -0.25 : 0.25), y, rivet);
-  for (let x = 36; x < 46; x += 2) for (let y = 47; y < 51; y++) S.px(x, y, dk[0]);
-  // the cockpit: a framed slit, lit
-  for (let x = 43; x < 59; x++) { S.px(x, 32, dk[0]); S.px(x, 35, dk[0]); S.px(x, 33, mixRgb(eye, [255, 255, 255], x === 52 ? 0.5 : 0), true); S.px(x, 34, mixRgb(eye, [0, 0, 0], 0.4), true); }
-  // an antenna, warning stripes, a stencilled number
-  S.limb(30, 24, 27, 14, 1, dk); S.px(27, 13, eye, true);
-  for (let x = 22; x < 40; x++) for (let y = 26; y < 29; y++) if (S.get(x, y)) S.px(x, y, ((x + y) >> 1) % 2 ? '#e8b030' : '#1a1a1a');
-  for (const [x, y] of [[34, 37], [35, 37], [36, 37], [34, 38], [34, 39], [35, 39], [36, 39], [36, 40], [34, 41], [35, 41], [36, 41]]) S.px(x, y, '#2a2a2a');
-  S.part();
-  // the gun arm: a shoulder mount, a housing, a barrel in rings, lit vents
-  S.ell(56, 39, 4, 4, dk); S.box(56, 36, 72, 42, dk, { lo: 1, hi: 6 }); for (let x = 59; x < 70; x += 3) S.px(x, 37, dk[5]);
-  S.box(70, 34, 79, 44, st, { lo: 1, hi: 7 }); for (const x of [72, 75]) for (let y = 35; y < 44; y++) S.px(x, y, st[1]);
-  for (let y = 36; y < 43; y += 2) S.px(79, y, '#ffb040', true);
-  S.part();
-  leg(-12, false);
-  return S.done();
 }

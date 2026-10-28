@@ -1,113 +1,45 @@
 # Under the White Dragon: design
 
-The game is becoming Under the White Dragon: you fix things in a hidden basement under a noodle bar, and heat, not shooting, is the danger. Its design is in [the design doc](https://claude.ai/artifact/6q6FiLoTUN74PSnhsy7hNT); its first slice is built (see **Built: the basement**). The rest of this file describes Downlevel, the detective game it grew out of, whose cases, jobs and fights are still in the code.
+You fix things in a hidden basement under a noodle bar, and heat, not shooting, is the danger. The full design is in [the design doc](https://claude.ai/artifact/6q6FiLoTUN74PSnhsy7hNT). The game grew out of Downlevel, a detective game in the same city: its cases, side jobs, enemies, gear, gadgets, programs and the precinct are gone from the code, and the deeper districts it built are part of the city now.
 
 ## Built: the basement
 
 - **Home is under the White Dragon** (`d_dragon.js`): a street with the neon sign (`dragon.js`), Auntie Lin's bar, her storeroom with a rug over the trapdoor, and down the ladder the basement (`d_cellar`, its own place, `hidden` so it's not on the city map or open to travel): bench, parts shelf, cot, a terminal. New games start by the cot. Customers wait at the bar.
 - **The bench** (`bench.js`), hands-on and saved as it stands (`Game.s.bench`), so a job waits: unscrew (a screw binds now and then: ease off, or strip it, and it never holds tight again), probe (fine, worn, dead, burnt, wrong gauge), desolder and solder with the iron (three scorches cook the control board), lift parts out and seat new ones, close up, power up: works, half works, dead or smoke. The lens shows wear, burns and serials.
 - **Parts** (`parts.js`) have a kind, a grade (scrap, street, clinic, Meridian), a state, sometimes a gauge, and where they came from and how. Stripping a machine gives a scrap part; Mechanic Ana (Overpass Market) and Nurse Kade (Clinic Row) sell them; the clinic cabinet on Clinic Row holds a Meridian servo, for heat. **The notebook** learns a device once you've probed every part, and jots each fault.
-- **Jobs** (`jobs.js`): Ozzy's dead nav unit (a dead cell and a burnt aerial; 80 cr; a clean fix means free cab rides) and Vey's seizing arm (a dead heavy servo and a worn cell; a scrap servo fitted cleanly holds and she leaves a Spires schematic; a sloppy fix gives out; a stolen Meridian servo gets traced and she's taken).
-- **Heat** (`Game.s.heat`, the meter under health): illegal work on the bench, the cabinet, a traced serial. Honest repairs and each night bring it down. At 40 the block starts to talk; at 70 a detective knocks before dawn and searches the bar and the storeroom; at 90 he finds the trapdoor, and seizes illegal work on the bench.
-- **The morning after:** sleeping in the cot shows what your fixes did.
+- **Jobs** (`jobs.js`): Ozzy's dead nav unit (a dead cell and a burnt aerial; 80 cr; a clean fix means free cab rides) and Vey's seizing arm (a dead heavy servo and a worn cell; a scrap servo fitted cleanly holds and she leaves a Spires schematic; a sloppy fix gives out; a stolen Meridian servo gets traced and she's taken). Residents bring small paid repairs too, and tips about parts out in the city.
+- **Heat** (`Game.s.heat`, the meter by your money): illegal work on the bench, the cabinet, a traced serial, a business's machine stripped (more if anyone sees). Honest repairs and each night bring it down. At 40 the block starts to talk; at 70 a detective knocks before dawn and searches the bar and the storeroom; at 90 he finds the trapdoor, and seizes illegal work on the bench.
+- **The morning after:** sleeping in the cot shows what your fixes did, and what the block is saying.
 
-The full design doc with painted art for every level: https://claude.ai/artifact/Jr4SRs1tDLfp29Q5UrXr1s
+## Built: the city
 
-## The pitch
-
-A side-scrolling noir for the phone. You're a detective with the Stack precinct, in a trench coat with a blaster on your hip. Four synths walked off a corporate transport in the Spires and dropped out of sight; the precinct wants them found, and their trail goes down. You follow it level by level, deeper than anyone has mapped: strip machines for parts, crack terminals, hunt the illegal chrome, and carry better gadgets and gear to get further. In this city implants are a crime; you're one of the people who chase them down. At the bottom is the machine that runs the city, and the synths seem to think it's who made them. What you find there sends you up to the Spires, to the people who say they did.
-
-## The loop
-
-**Go down → strip and crack → bring it home → wire it in.** Short phone sessions: a trip down and back takes a few minutes.
-
-| Underhill had | Downlevel has |
-|---|---|
-| Dig through rock | Cut through grates, shutters, vents and hatches. Your gadgets decide what opens. |
-| Ore in veins | Salvage in machines: vending machines, AC units, server racks, cars, junk, downed drones. |
-| Curios for the catalog | Programs from data nodes. |
-| Picks, lamps, packs at the bench | Gadgets from the quartermaster, gear from the fabricator, programs on the deck. |
-| Ladders home | Ladders and freight lifts you get running again. |
-| Strata | Levels of city, from crowded and human at the top to machine and strange at the bottom. |
-
-## The city
-
-| Level | Depth | What's there | The way down |
+| Band | Depth | What's there | How you get there |
 |---|---|---|---|
-| L0 The Spires | +300 m | Corporate towers above the smog. The ending. | (proposed) |
-| Floor 31 | +40 m | Home: your apartment, the hall, the elevator | The elevator |
-| L1 The Stack | 0 m | Capsule hotel, market, bar, clinic, walkways, drones | The Warden, then Breach on the shaft hatch |
-| L2 Street level | −60 m | Under the overpasses: fence, clinic, gang turf | The subway, with Hale's transit pass |
-| L3 Old Town | −140 m | The first city, sunk under the new one | The Old Mayor, then his lift |
-| L4 The Works | −260 m | Pumps, power, server farms | The Foreman, then the works pass |
-| L5 The Bowels | −400 m | The core that runs the city | The Root |
+| Above the clouds | +300 m | The Spires: penthouse towers, a sky lounge | Cab |
+| Up high | +110 m to +2 m | The White Dragon's block, Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge, the Arcology Gardens | Cab |
+| Street level | −40 m to −65 m | The Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley, Clinic Row | Cab |
+| The undercity | −80 m to −130 m | The Main Drain, Boiler House Nine, Substation Seven, the Waterworks | Down a manhole, from street level |
+| Old Town | −140 m | The first city, sunk under the new one, and its districts | The old subway, from street level |
+| The Works | −260 m | Pumps, power, the foundry, the server farm | Lift cage |
+| The Bowels | −400 m | Cable runs, cooling vaults, the old roots | Lift cage |
 
-## Built: the detective
+Each band down opens once you've been in the one above (`Travel.open`).
 
-Inspired by Blade Runner's tone (the 1997 point-and-click especially: clues gathered at scenes, photos enhanced for a detail, a test to tell a synth, and whether to retire one left to you) but sized for a phone: one case is a few minutes and always moves you on.
-
-- **Cases** (`cases.js`). Hale gives them. A case has clues (an item to examine, a photo to enhance, a person to ask), leads you work out on the case board, a suspect who appears once you have the lead (sometimes behind a boss), and a verdict: retire, arrest or let go. Whether the suspect is a synth is decided when you take the case, and sometimes it's random.
-- **Interrogation.** A witness tells a story with a lie in it (the board shows the line that doesn't hold). Show them the clue from the case file that breaks it and they tell you what they hid, which is a clue of its own. Show them the wrong thing twice and they clam up until the next day.
-- **The case board.** Each lead is a question with three answers (one is right; the others are what a careless reading of the clues would say, and often a clue seems to back them). Pick the answer and pin exactly the evidence that proves it. A wrong call adds doubt (up to three): the suspect hears you're asking and starts the baseline test on edge, and the case pays 15% less a point. Tap the case line at the top of the screen to open it.
-- **The baseline test.** Ask questions of three strengths and watch an eye and two needles. A human reacts at once; a synth answers flat, then late, then too much. Harder questions read clearer but raise the stress, and at the top of it a synth bolts (a fugitive: bring them down before they reach the edge and they give up; let them go and the case closes badly) and a human just stops talking. Retiring a human costs 300 cr and a mark on your record.
-- **The photo enhancer.** A camera still of the scene (the place and the people in it, graded green-grey, stamped with the camera and the time), fitted whole to the screen. A few spots in it are too small to read, ringed faintly from far off: tap to enhance twice as close, drag about, pull back. Close in on one and the machine sharpens it into its own picture: a cat on a sill, a torn poster, or the clue (a tattoo in a reflection, a serial plate, a cup of coolant).
-- **Rank.** Closing cases earns rank, and rank raises what cases pay.
-- **The story:** the Menagerie (a pet shop's animals shot, on Neon Row), then the four who ran: Iris in Old Town (behind the Old Mayor, who sells synths back), Bishop in the Works (behind the Foreman), Wren in the Bowels (behind the Root), and the one who made them, in the Spires (behind Halden), with three endings: expose Meridian, take the deal, or take her home.
-- **The night desk:** a generated case each night in a district you can reach: a shot pet, a chrome deal or someone missing.
-- **Jobs and the warrants board** (`quests.js`): side work from the people in the hubs (go, talk, collect, kill, deliver, choose), and named chromers worth money on the spot.
-- **Places, all by hand** (`d_*.js`, from the kit in `kit.js`): each looks like its name. Buildings with shops on the bottom and people living above, a capsule tower like the Nakagin, wooden townhouses, temples and shrine gates and pagodas, white-metal and glass towers, shanty stacks on old blocks, slab estates, a theatre, a bathhouse, pachinko halls, clinics and pharmacies, parks; stalls of fifteen kinds that each look their own (ramen carts, yakitori grills, dumpling steamers, fishmongers, herbalists, street medics, cold boxes of organs...). The Docks are quays on piles over water with cranes and boats; Clinic Row is a street of clinics; the Lantern Quarter is lanterns and shrine gates. Hubs: Old Town, the Works, the Bowels and the Spires, each with a boss and a key to the next.
-- **The undercity,** between the street and Old Town: the Main Drain (brick sewers), Boiler House Nine (the district heating), Substation Seven (the power) and the Waterworks (pumps and a cistern). Down a manhole on street level.
-- **The city map** (`worldmap.js`): the city in cross-section, from the Spires above the clouds down to the Bowels, every place pinned at its depth, the subway and the lift shafts drawn in; open places lit, the ones a case wants marked. From any way out it's how you travel; from the pause menu it's to look at.
-- **Getting around:** from any way out, the city map, to anywhere open: up high and the street by spinner, the undercity down a manhole, Old Town by the old subway (once Hale gives you the transit pass), deeper by lift cage (the Mayor's key, then the Works pass).
-- **Items,** kept few: noodle cups, med-patches, stims; frag grenades (lobbed onto the nearest hostile) and EMPs (stun machines and shields); keys; evidence. One is your quick item, on the Item button.
-
-## Built (first slice)
-
-- **Home:** an apartment on floor 31 of the block above the Stack: a bed (sleep heals you and passes the night), a closet (your gear), a window on the city. You walk out past the neighbours' doors and the people in the hall to the elevator, which goes to every level you've reached.
-- **Two levels below:** the Stack and street level, joined by the shaft from the Stack's service yard, by the freight lift once you restore it (4 wire, 2 chips), and by the block's elevator once you've been down.
-- **Movement:** the stick sets the pace: a light push walks, a full push runs (Shift walks on a keyboard). Jump, drop through walkways, stairs, ladders, a second jump with jump jets.
-- **Salvage:** hold Use on a machine to strip it. Yields are fixed per kind of machine (`things.js`). There's no limit to what you carry and nothing to bank: once you have it, it's yours.
-- **Cutting:** grates take the hand cutter; heavy shutters need the plasma cutter.
-- **Gadgets** (`GADGETS` in `items.js`), built by Quartermaster Ito at the precinct for credits and parts (short parts bought at Mags's price). Implants are illegal, so there's no ware and no neural load; a gadget works once it's yours, and shows on the detective:
-  - spectral lenses (goggles): see in the dark, see hidden panels
-  - jump jets (on the heels): double jump
-  - plasma cutter: heavy shutters, faster cutting, much harder blows
-- **Getting around:** the elevator in your block reaches every level you've been to. Your spinner on the pad at the end of your hall flies to the precinct, the Stack (setting down on the block's roof) and street level, with a flight through the city each time (tap to skip). From anywhere, a cab takes you home for a fare (30 cr, 45 from street level).
-- **Programs**, from data nodes, run for RAM (3, refilling over time). Jacking in is a small network to cross to the core, a node at a time, every move spending trace (run out and you're thrown out, hurt). You see what a node is once you're beside it: ICE to Breach or force, sentries that eat trace (Puppet turns one), mail with leads on your case, caches, cameras with a case's photo, and a security node that blinds the level's machines for forty seconds. Ghost makes three moves free. Every district has a terminal to jack into, its core paying out once.
-  - Breach: locked hatches, stuns a drone
-  - Ghost: enemies lose you
-  - Puppet: a drone fights for you
-- **People:** a day passes in 20 minutes. People keep schedules (work, sit, wander, go home) and talk.
-  - Vendors buy salvage: Kit at base price, Ozu at 1.4×.
-  - Mama Ruiz sells noodles that heal.
-  - Lieutenant Hale at the precinct gives three cases: the hacked drones on the walkway, a chrome warrant on the street gang (three of them down), then the clinic's record. Juno at the bar is an informant who talks.
-- **Stealth first.** Hostiles don't fight until they know you're there. Each has an awareness meter (amber, over its head) that fills only while it's facing you: faster up close, in light and at a run; slower walking, and still in the dark. Half aware, it stops and looks; full, it's alert (a red mark flashes) and the others close by are too. Out of its sight for six seconds, it gives up. Getting hit or a shot nearby wakes it at once. Come up behind one that hasn't seen you and Fire takes it down quietly (not drones or turrets). Most fights can be walked round, sneaked past or ended before they start; bosses and fugitives still fight.
-- **Fights:** the blaster fires a bolt at the nearest hostile ahead (aim-assisted, up or down a little), six shots that recharge one at a time; up close, Fire is a blow instead (the melee weapon's, and the plasma cutter's on top).
-  - Block drones hover and shoot.
-  - Gangers close in with blades.
-  - The Warden walks, fires bursts, stomps a shockwave you jump over, and charges. Beating it unlocks the shaft.
-- **The retinal overlay:** the runner's stock eye tags hostiles in sight with a thin red outline and a segmented health bar over the head; a drone taken over with Puppet is tagged green. Tags brighten once the enemy has seen you and dim under Ghost.
-- **A lived-in city:** everyone breathes when standing still; vendors work their hands; people glance about, and some smoke. Passers-by wander their stretch of floor most of the night with a line or two each. Signs breathe and now and then blink, a bad one stutters, tubes buzz, fires dance, and their light does the same. Adverts play on screens (scrolling glyphs, a koi, a three-scene billboard, an equaliser) and tint their own light. Behind the Stack the city stands in three layers of towers of every height and shape, moving at their own depths: setbacks, cantilevers, spires, masts, water tanks and rooftop billboards under a broken cloud deck. Giant holograms (a projected advert for a drink and a scent, a koi, a turning corporate mark) play between the layers and a monorail train runs the nearest. Flying cars cross the sky in three lanes of depth. Rats run the gutters and scatter from you, a cat keeps the walkway, newspapers, bags and cans blow along in a gusting wind, steam and smoke rise, water drips from the underside of the Stack onto the street, rain splashes.
-- **Gear,** in the spirit of Cyberpunk 2077: a slot each for head, face, outer torso, inner torso, legs, feet, a ranged weapon and a melee one. Every piece has a rarity (common, uncommon, rare, epic, legendary), armour or weapon stats, sometimes a perk (faster running, recharge, RAM), and shows on the runner. Every piece changes how the runner looks (hats, helmets, visors, masks, coats and vests, pockets and knee pads, lit soles, a heavier gun, a baton at the hip or a katana across the back). The inventory takes the whole screen: on the Gear tab your loadout is on the left, you between your slots with a thumbnail of each piece, and the piece you pick is on the right with its stats against what you wear; the other tabs are items, gadgets and programs, and cases. Gear comes from vendors (Kit sells clothes, Ozu sells weapons and armour), jobs, stashes, the hidden panel and the Warden.
-- **The fabricator:** Mags, at her stall in the Stack's market, makes gear from parts and money, upgrades any piece you own up to +3 (each level adds a quarter of its base armour or damage), and breaks pieces down into about half their parts. She sells parts at two and a half times what Kit pays; when you make or upgrade something you're short of parts for, the button buys what's missing at her price as part of the same payment.
-- **Salvage** shows as icons in a grid, in the inventory and at Mags's.
-- **Bodies:** a ganger you take down stays where they fell until you leave the level.
-- **The map:** paused, the whole level as one picture to drag and zoom, with you, the people who matter, the ways in and out and the hostiles marked.
-- **Dev settings** (pause menu): god mode, endless charge, stop the clock, teleport from the map, frame rate, run speed, time of day, give credits, parts, gear, gadgets and programs, set the world's flags, close or reset cases, kill or respawn enemies, restore stripped machines, and go to any level's spawn.
+- **Places, all by hand** (`d_*.js`, from the kit in `kit.js`): each looks like its name. Buildings with shops on the bottom and people living above, a capsule tower like the Nakagin, wooden townhouses, temples and shrine gates and pagodas, white-metal and glass towers, shanty stacks on old blocks, slab estates, a theatre, a bathhouse, pachinko halls, clinics and pharmacies, parks; stalls of fifteen kinds that each look their own (ramen carts, yakitori grills, dumpling steamers, fishmongers, herbalists, street medics...). The Docks are quays on piles over water with cranes and boats; Clinic Row is a street of clinics; the Lantern Quarter is lanterns and shrine gates.
+- **The city map** (`worldmap.js`): the city in cross-section, from the Spires down to the Bowels, every place pinned at its depth, the subway and the lift shafts drawn in; open places lit, the ones a tip points to marked. From any way out it's how you travel; from the pause menu it's to look at.
+- **On foot:** walking off the end of a street takes you to the next one at the same depth.
+- **Its people:** the White Dragon's block and Neon Row are lived in by residents with homes, jobs and shifts, friends and day plans, run by Tyrell (`city.js`): they keep their days on screen and off, and remember, gossip about and report what you do in front of them. Everyone else has a name of their own, and keeps to where they can walk.
+- **A lived-in city:** everyone breathes when standing still; vendors work their hands; people glance about, and some smoke. Signs breathe and now and then blink, a bad one stutters, tubes buzz, fires dance, and their light does the same. Adverts play on screens (scrolling glyphs, a koi, a three-scene billboard, an equaliser) and tint their own light. Behind the city stands three layers of towers of every height and shape, moving at their own depths, under a broken cloud deck. Giant holograms play between the layers and a monorail train runs the nearest. Flying cars cross the sky in three lanes of depth. Rats run the gutters and scatter from you, cats keep the walkways, litter blows along in a gusting wind, steam and smoke rise, water drips.
+- **Day and weather** (`day.js`): by day the sky's a low overcast, rose at dawn and amber at dusk; rain comes and goes in spells, and the streets shine only while they're wet.
+- **Movement:** the stick sets the pace: a light push walks, a full push runs (Shift walks on a keyboard). Jump, drop through walkways, stairs, and ladders (climbed seen from behind).
+- **Salvage:** hold Use on a machine to strip it; what came out rises over it a line each. There's no limit to what you carry: once you have it, it's yours. The stalls' scrap bins buy it.
+- **The map:** paused, the whole level as one picture to drag and zoom, with you, the people who matter and the ways in and out marked.
+- **Dev settings** (pause menu, with `?dev`): stop the clock, teleport from the map, frame rate, the weather, resolution, run speed, time of day, give credits and salvage, been everywhere, restore stripped machines, the block's minds with time walk, and go to any place (by band, each street with its rooms) or to anyone.
 - **Menus** take the whole screen.
-- **Death:** you wake in your own bed six hours later, with everything you had.
-
-## Story (light)
-
-Told through Lieutenant Hale's cases, Juno (an informant), the people, and what the nodes remember. Original, in the spirit of Blade Runner rather than borrowing from it.
-- **The case:** four synths ran from the Spires. The precinct calls you a tracer.
-- **First lead:** the street clinic's records show a woman with no ID who paid to have a serial cut from her wrist and asked the way to the subway.
-- **Further down:** the synths are looking for whoever made them. Nobody up top did. The Root at the bottom is the city's mind, or what's left of it. What you learn there sends you up to the Spires for the ending.
-- Each synth is a case with a choice at the end: retire, arrest or let them go. (proposed) People react to what you chose.
 
 ## Proposed (not built)
 
-- **(proposed)** More gadgets: a grapple, a drone of your own, a heat sink, thermal camo, a better deck. Chrome warrants on more levels.
-- **(proposed)** Standing with each level's crowd, and more jobs with real choices.
-- **(proposed)** Better places to live as you earn, with your gear on display.
+- **(proposed)** The whole city lived in: everyone a resident with a household (singles in capsules, couples, families with kids), a home behind a door on a street, a job with shifts at a workplace that's staffed by people whose job it is, school and play for kids, hobbies; secured places (the server farm) staff only.
+- **(proposed)** Customers come back for finished jobs, when they're awake, and pay then.
+- **(proposed)** Better places to live as you earn.
 - **(proposed)** Sound.

@@ -35,5 +35,5 @@ dups=$(grep -hoE '^(function|const|let|var|class) [A-Za-z0-9_$]+' js/*.js | awk 
 if [ -n "$dups" ]; then echo "declared in more than one file: $dups"; exit 1; fi
 
 # the world and its paint may only use seeded randomness
-if grep -n 'Math\.random' js/world.js js/paint.js js/spr.js js/util.js js/levels.js js/people.js js/props.js js/travel.js js/enemies.js js/kit.js js/d_*.js | grep -v '//'; then echo "generation and painting must be seeded (hash / Rng), never Math.random"; exit 1; fi
+if grep -n 'Math\.random' js/world.js js/paint.js js/spr.js js/util.js js/levels.js js/people.js js/props.js js/travel.js js/kit.js js/d_*.js | grep -v '//'; then echo "generation and painting must be seeded (hash / Rng), never Math.random"; exit 1; fi
 echo "check: ok"

@@ -6,43 +6,58 @@
 const Dev = {
   // only for testing: ?dev in the address, or once it's been opened that way
   shown() { return /[?&]dev\b/.test(location.search) || !!(this.s && this.s.shown); },
-  s: { god: false, ammo: false, freeze: false, fps: false, teleport: false, speed: 1, res: 'auto' },
+  s: { freeze: false, fps: false, teleport: false, speed: 1, res: 'auto' },
   fps: 0, fa: 0, fn: 0,
   load() { try { Object.assign(this.s, JSON.parse(localStorage.getItem('downlevel.dev') || '{}')); } catch (e) { /* storage unavailable */ } if (/[?&]dev\b/.test(location.search) && !this.s.shown) { this.s.shown = true; this.save(); } },
   save() { try { localStorage.setItem('downlevel.dev', JSON.stringify(this.s)); } catch (e) { /* storage unavailable */ } },
   // a Tyrell time (game minutes) as day and clock
   when(t) { const h = (t / 60) % 24; return 'day ' + Math.floor(t / 1440) + ' ' + String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0'); },
   frame(dt) { this.fa += dt; this.fn++; if (this.fa >= 0.5) { this.fps = Math.round(this.fn / this.fa); this.fa = 0; this.fn = 0; } },
+  // Go to, organized: the bands of the city from the top down, each street
+  // with the rooms you walk into from it (and the rooms off those) beside it
+  rooms() {
+    if (this.kids) return this.kids;
+    const kids = {};
+    for (const id in LEVELS) { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); for (const p of L.props) if (p.to && (p.kind === 'door' || p.kind === 'trapdoor') && !p.out && !p.up && LEVELS[p.to[0]] && LEVELS[p.to[0]].hidden && p.to[0] !== id) (kids[id] = kids[id] || []).includes(p.to[0]) || (kids[id] = kids[id] || []).push(p.to[0]); }
+    return (this.kids = kids);
+  },
+  goHtml() {
+    const kids = this.rooms(), here = World.L.id, b = (id, sp, cls = '') => `<button data-devgo="${id}:${sp}" class="${cls}${id === here ? ' go' : ''}">${LEVELS[id].name}</button>`;
+    const spawn = (id) => { const L = LEVELS[id].built; return L.spawns.enter ? 'enter' : L.spawns.door ? 'door' : Object.keys(L.spawns)[0]; };
+    const seen = new Set(), tree = (id) => { seen.add(id); return (kids[id] || []).filter((k) => !seen.has(k)).map((k) => { seen.add(k); return b(k, spawn(k), 'room') + tree(k); }).join(''); };
+    return STRATA.map((S) => {
+      const ids = Object.keys(LEVELS).filter((id) => !LEVELS[id].hidden && LEVELS[id].metres !== undefined && Travel.band(id) === S.id).sort((a, c) => (LEVELS[a].mapX || 0) - (LEVELS[c].mapX || 0));
+      if (!ids.length) return '';
+      return `<h4 class="band">${S.name}</h4><div class="streets">` + ids.map((id) => `<div class="street">${b(id, spawn(id))}${tree(id)}</div>`).join('') + '</div>';
+    }).join('');
+  },
+  // Go to someone: where each resident is now, and what they're doing
+  peopleHtml() {
+    return '<div class="buttons">' + TOWN_ORDER.map((id) => { const st = Town.state(id, Game.hour()), at = st.level ? LEVELS[st.level].name : st.moving ? 'between streets' : 'away'; return `<button data-devwho="${id}" ${st.level ? '' : 'disabled'}><b>${RESIDENTS[id].name}</b> <small>${at}${st.act ? ' · ' + st.act : ''}</small></button>`; }).join('') + '</div>';
+  },
   html() {
     const s = Game.s, tog = (k, name, note) => `<label class="tog"><input type="checkbox" data-dev="${k}" ${this.s[k] ? 'checked' : ''}><span><b>${name}</b><small>${note}</small></span></label>`;
     const btn = (k, name) => `<button data-devdo="${k}">${name}</button>`;
-    const spawns = Object.keys(LEVELS).map((id) => { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); return Object.keys(L.spawns).map((sp) => `<button data-devgo="${id}:${sp}">${LEVELS[id].name} · ${sp}</button>`).join(''); }).join('');
     return `<p class="sub">For testing. These live in this browser only, not in your save.</p>
-      <h3>Switches</h3><div class="togs">${tog('god', 'God mode', 'Nothing hurts you.')}${tog('ammo', 'Endless charge', 'The blaster never runs dry.')}${tog('freeze', 'Stop the clock', 'Time of day stays put.')}${tog('teleport', 'Teleport from the map', 'Tap anywhere on the map to go there.')}${tog('fps', 'Frame rate', 'Shown by the clock.')}</div>
+      <h3>Switches</h3><div class="togs">${tog('freeze', 'Stop the clock', 'Time of day stays put.')}${tog('teleport', 'Teleport from the map', 'Tap anywhere on the map to go there.')}${tog('fps', 'Frame rate', 'Shown by the clock.')}</div>
       <h3>Weather · now ${Weather.rain() > 0.01 ? 'raining' : Weather.wet() > 0.02 ? 'drying' : 'dry'}</h3><div class="buttons">${['auto', 'rain', 'dry'].map((r) => `<button data-devwx="${r}" class="${(this.s.weather || 'auto') === r ? 'go' : ''}">${r === 'auto' ? 'By the clock' : r === 'rain' ? 'Rain' : 'Dry'}</button>`).join('')}</div>
       <h3>Resolution · now ${View.out}× the view</h3><div class="buttons">${['auto', '1', '2', '3'].map((r) => `<button data-devres="${r}" class="${(this.s.res || 'auto') === r ? 'go' : ''}">${r === 'auto' ? 'Auto' : r + '×'}</button>`).join('')}</div><p class="dim">Auto starts at 3× and drops a step when frames run under 40 a second.</p>
       <h3>Run speed · ×${this.s.speed}</h3><input type="range" min="0.5" max="4" step="0.25" value="${this.s.speed}" data-devrange="speed">
       <h3>Time of day · ${Game.clock()}</h3><input type="range" min="0" max="23.99" step="0.25" value="${Game.hour()}" data-devrange="time">
-      <h3>Give</h3><div class="buttons">${btn('cr', '+1000 cr')}${btn('parts', '+10 of every part')}${btn('gear', 'All gear')}${btn('gadgets', 'All gadgets')}${btn('programs', 'All programs')}${btn('heal', 'Heal, fill RAM')}${btn('levels', 'Every piece +1')}</div>
-      <h3>The world</h3><div class="buttons">${btn('warden', 'Warden down')}${btn('lift', 'Lift restored')}${btn('been', 'Been everywhere')}${btn('nextcase', 'Skip to the next suspect')}${btn('cases', 'Close every case')}${btn('resetcases', 'Reset the cases')}${btn('kill', 'Kill everything here')}${btn('respawn', 'Respawn enemies')}${btn('undo', 'Restore stripped machines')}</div>
+      <h3>Give</h3><div class="buttons">${btn('cr', '+1000 cr')}${btn('salvage', '+10 of every salvage')}</div>
+      <h3>The world</h3><div class="buttons">${btn('been', 'Been everywhere')}${btn('undo', 'Restore stripped machines')}</div>
       ${City.on ? `<h3>The block's minds · Tyrell</h3><div class="buttons">${btn('back', 'Back an hour (time walk)')}${btn('fwd', 'On an hour')}</div><p class="dim">The block remembers back to ${this.when(City.w.esper.earliest())}. Tap someone to see what's on their mind:</p><div class="buttons">${TOWN_ORDER.map((id) => `<button data-devmind="${id}">${RESIDENTS[id].name}</button>`).join('')}</div><pre class="mind" id="devMind"></pre>` : ''}
-      <h3>Go to</h3><div class="buttons">${spawns}</div>
+      <h3>Go to someone</h3>${this.peopleHtml()}
+      <h3>Go to a place</h3><div class="goto">${this.goHtml()}</div>
       <p class="dim">Credits ${s.cr} · day ${s.day} · level ${World.L.id} at ${Math.round(Player.x)}, ${Math.round(Player.y)}</p>`;
   },
   bind(body) {
     const s = Game.s;
     body.querySelectorAll('input[data-dev]').forEach((i) => (i.onchange = () => { this.s[i.dataset.dev] = i.checked; this.save(); }));
     body.querySelectorAll('input[data-devrange]').forEach((i) => (i.oninput = () => { const v = +i.value; if (i.dataset.devrange === 'speed') { this.s.speed = v; this.save(); } else { s.time = v; Actors.load(); } i.previousElementSibling.textContent = i.dataset.devrange === 'speed' ? 'Run speed · ×' + v : 'Time of day · ' + Game.clock(); }));
-    const all = (o, keys) => { for (const k of keys) o[k] = 1; };
     const act = {
-      cr: () => { s.cr += 1000; }, parts: () => { for (const k of SALVAGE_ORDER) Game.give(k, 10); },
-      gear: () => all(s.gear.owned, Object.keys(GEAR)), gadgets: () => { all(s.gadgets, GADGET_ORDER); RunnerArt.cache.clear(); }, programs: () => { all(s.programs, PROGRAM_ORDER); s.prog = s.prog || 'breach'; },
-      heal: () => { s.hp = T.player.hp; s.ram = T.ram.max; }, levels: () => { for (const id in s.gear.owned) s.gear.lvl[id] = Math.min(FAB.maxLevel, (s.gear.lvl[id] || 0) + 1); },
-      warden: () => { s.flags.warden = true; Actors.load(); }, lift: () => { s.flags.lift = true; for (const p of World.props) p.spr = null; },
+      cr: () => { s.cr += 1000; }, salvage: () => { for (const k of SALVAGE_ORDER) Game.give(k, 10); },
       been: () => { for (const id in LEVELS) s.flags['been:' + id] = true; },
-      cases: () => { for (const id of QUEST_ORDER) s.quests[id] = { st: QUESTS[id].steps.length, n: 0, done: true }; for (const id of CASE_ORDER) s.cases[id] = { found: {}, leads: {}, done: true, verdict: 'arrest', synth: true }; }, resetcases: () => { s.quests = {}; s.cases = {}; s.night = null; s.track = null; },
-      nextcase: () => { const id = CASE_ORDER.find((q) => !Cases.closed(q)); if (!id) return; if (!Cases.st(id)) { const C = CASES[id]; for (const a of C.after || []) if (QUESTS[a]) s.quests[a] = { st: 9, n: 0, done: true }; else s.cases[a] = { found: {}, leads: {}, done: true, verdict: 'arrest', synth: true }; Cases.start(id); } const C = CASES[id], c = Cases.st(id); for (const k in C.clues) c.found[k] = 1; for (const L of C.leads) c.leads[L.id] = 1; if (C.gate) s.flags[ENEMY[C.gate.boss].flag] = true; World.questProps(); Actors.questSpawns(); },
-      kill: () => { for (const e of Actors.enemies.slice()) if (!e.ally) Actors.damage(e, 1e6, 1); }, respawn: () => Actors.load(),
       back: () => { s.time -= 1; if (s.time < 0) { s.time += 24; s.day--; } City.sync(); Actors.load(); }, fwd: () => { Game.pass(1); City.sync(); Actors.load(); },
       undo: () => { for (const p of World.props) if (p.done) { p.done = false; delete s.done[p.id]; p.spr = null; Props.init(p); } },
     };
@@ -51,5 +66,7 @@ const Dev = {
     body.querySelectorAll('button[data-devwx]').forEach((b) => (b.onclick = () => { this.s.weather = b.dataset.devwx; this.save(); Hud.panel('dev'); }));
     body.querySelectorAll('button[data-devres]').forEach((b) => (b.onclick = () => { this.s.res = b.dataset.devres; if (this.s.res === 'auto') View.q = 3; this.save(); View.resize(); Hud.panel('dev'); }));
     body.querySelectorAll('button[data-devgo]').forEach((b) => (b.onclick = () => { const [l, sp] = b.dataset.devgo.split(':'); Hud.toggle(null); Game.go(l, sp); }));
+    // to someone: into their level, beside them
+    body.querySelectorAll('button[data-devwho]').forEach((b) => (b.onclick = () => { const st = Town.state(b.dataset.devwho, Game.hour()); if (!st.level) return; Hud.toggle(null); this.landAt = { level: st.level, x: st.x + 14, y: st.y }; Game.go(st.level, Object.keys((LEVELS[st.level].built || (LEVELS[st.level].built = LEVELS[st.level].make())).spawns)[0]); }));
   },
 };

@@ -1,12 +1,12 @@
 # Under the White Dragon
 
-A side-scrolling cyberpunk game for the phone. You fix what the city breaks, in a hidden basement under the White Dragon, a noodle bar in the Stack; the way down is a trapdoor under a rug in the storeroom, and some of what you fix is illegal.
+A side-scrolling cyberpunk game for the phone. You fix what the city breaks, in a hidden basement under the White Dragon, a noodle bar high in a vertical city; the way down is a trapdoor under a rug in the storeroom, and some of what you fix is illegal.
 
 **Play:** https://doctorallen.github.io/under-the-white-dragon/ (best on a phone held sideways).
 
 People bring broken things to the bar: Ozzy's cab nav unit, Vey's seizing arm. Take a job to your bench and open it up for real: back the screws out (ease off when one binds, or strip it), probe each part, melt the joints of the bad one with the iron (not too long, or you cook the board), seat a good one and solder it in, close it up and power it up. Parts have a kind, a grade (scrap, street, clinic, Meridian) and a history: strip them from machines, buy them at the Overpass Market and Clinic Row, or take them from where you shouldn't. Hand the fix back at the counter, and the next morning you hear what it did. Heat is how close the precinct is to your door: illegal work and traceable parts raise it, honest repairs and time bring it down. The design is in [the design doc](https://claude.ai/artifact/6q6FiLoTUN74PSnhsy7hNT).
 
-There are no enemies and no gun: the danger is heat. The game grew out of Downlevel, a detective game in the same city; its cases, side jobs and the precinct are still in the code but switched off (`LEGACY` in `game.js`). The sections after **The basement** describe that game.
+There's no fighting: the danger is heat. The game grew out of Downlevel, a detective game in the same city; its cases, enemies, gear and the precinct are gone, and its deeper districts are part of the city now.
 
 ## The basement
 
@@ -16,8 +16,6 @@ There are no enemies and no gun: the danger is heat. The game grew out of Downle
 - **Jobs and heat** (`jobs.js`): Ozzy (an honest repair) and Vey (a synth's arm: a scrap servo from Nurse Kade, or a Meridian one from the clinic cabinet that can be traced). At 40 heat the block starts to talk; at 70 a detective knocks before dawn and searches upstairs; at 90 he finds the trapdoor and takes any illegal work off the bench.
 - **Where parts come from**: machines you strip (junk piles, vending machines and parked cars come back after a few days, `RESTOCK` in `things.js`), Mo's grocery (cells and relays), Mechanic Ana and Nurse Kade, and residents' tips. The stalls' scrap bins take dead parts and salvage.
 - **Tips and tools** (`tips.js`): residents message you in the morning (or tell you to your face) about a crashed drone, a forgotten junction box, a dumped autodoc. It's there to strip until you do, but the good ones need better tools: the precision kit (150 cr, Ana) and the clinic micro-kit (400 cr, Kade). Better tools also strip server racks and get cleaner parts out of everything.
-
-Take a case from Lieutenant Hale at the precinct, fly out in your spinner, find the clues (pick things up, enhance a photo, ask people and catch their lies with evidence), work out the leads on the case board, follow them to the suspect, run the baseline test, and decide: retire, arrest or let go. A case takes a few minutes; the night desk always has another. Strip machines for parts, cut through grates and shutters, jack into data nodes for programs, and take side work from the people you meet. Implants are illegal and you hunt the people who carry them; you carry gadgets instead, built by the precinct's quartermaster, and gear made and upgraded by Mags the fabricator. The way down from each level is guarded.
 
 ## Running it
 
@@ -34,12 +32,9 @@ On Android the browser offers to install it the first time you tap; after that, 
 | Move (walk or run) | Arrows / WASD, hold Shift to walk | Drag on the left side: a little to walk, all the way to run |
 | Ladders | Up / down | Stick up / down |
 | Drop through a walkway | Down + jump | Stick down + Jump |
-| Jump (twice with jump jets) | Space / K | Jump |
-| Fire (a blow up close) | J | Fire |
-| Use (hold to strip or cut) | E | The button names the action: Trade, Talk, Strip, Cut, Hack, Climb… |
-| Run program / pick next | Q / R | Program (hold to pick) |
-| Use the quick item / switch it | G / T | Item |
-| Inventory (cases, gear, items, gadgets) | I | Gear |
+| Jump | Space / K | Jump |
+| Use (hold to strip) | E | The button names the action: Trade, Talk, Strip, Climb… |
+| Jobs and pockets | I | Jobs |
 | A cab home | | Cab |
 | The map (drag, zoom) | M | Pause, then Map |
 | Dev settings | | Pause, then Dev settings |
@@ -47,42 +42,29 @@ On Android the browser offers to install it the first time you tap; after that, 
 
 ## The city
 
-- **35 places, every one built by hand**, from the Spires above the clouds to the Bowels: home, the precinct, the Stack and street level; up high Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge and the Arcology Gardens; on the street the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley and Clinic Row; under it the undercity (the Main Drain, Boiler House Nine, Substation Seven, the Waterworks); then Old Town and its arcade, chapel, old line, cistern market and lantern quarter; the Works with its pump hall, foundry, server farm and coolant vats; the Bowels with its cable run, cooling vaults, gut and old roots.
-- **The city map:** every way out (a spinner pad, a subway platform, a lift cage, a manhole) opens a cross-section of the whole city with every place pinned at its depth; tap one and go. The pause menu shows it too.
-- **Five story cases** (`CASES` in `cases.js`): the Menagerie on Neon Row, then Iris, Bishop and Wren (the synths who ran, each behind a boss), and the maker in the Spires, with three endings. **The night desk** makes a short case every night (a shot pet, a chrome deal, a missing person) somewhere you can reach.
-- **Eighteen jobs** (`QUESTS` in `quests.js`) from Hale and the people of every hub, and a **warrants board** of named chromers.
-- **Enemies** (`ENEMY` in `enemies.js`): drones, sentinels, gangers, gunners, bruisers, spider-bots, turrets, shielded corp guards, ferals, Meridian enforcers, and six bosses: the Warden, the Gutter King, the Old Mayor, the Foreman, the Root and Halden. A suspect who runs is a fugitive.
-- **Items:** noodle cups, med-patches and stims; frag grenades and EMPs; keys that open the way down; evidence.
-
-## The first slice
-
-- **Floor 31 (home):** your apartment (bed, closet, a window on the city), the hall past the neighbours' doors, the elevator to the Stack and, once you've been there, street level, and the landing pad with your spinner.
-- **Precinct 9:** a pad for the spinner, the desk sergeant, the cells, Lieutenant Hale's office (cases) and Quartermaster Ito's armoury (gadgets).
-- **The Stack (L1):** the elevator up home, Doc Vasquez's clinic (he doesn't fit chrome any more, he says), the market with Mama Ruiz's noodles, Kit's salvage stand and Mags's fabrication stall, Juno's bar (she's an informant now), two walkways up, the residential block, block drones, a data node with Breach, and the service yard with the Warden, the freight lift and the shaft down.
-- **Street level (L2):** under the overpasses. Ozu pays more for salvage, a back-alley clinic hides a node with Puppet, a fire escape leads to a rooftop node with Ghost (jump jets needed), gangers hold the turf past the fire, a heavy shutter hides their stash (a plasma cutter needed), and the old subway to Old Town is sealed for now.
-- **Gadgets:** spectral lenses, jump jets, a plasma cutter. **Programs:** Breach, Ghost, Puppet. **Cases:** three from Hale: the walkway drones, a chrome warrant on the street gang, then the clinic's record.
+- **Every place built by hand**, from the Spires above the clouds down to the Bowels: up high the White Dragon's block, Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge and the Arcology Gardens; on the street the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley and Clinic Row; under the street the Main Drain, Boiler House Nine, Substation Seven and the Waterworks; then Old Town and its districts, the Works and its districts, and the Bowels. Each band down opens once you've been in the one above.
+- **The city map:** every way out (a cab stand, a subway platform, a lift cage, a manhole) opens a cross-section of the whole city with every place pinned at its depth; tap one and go. The pause menu shows it too.
+- **Its people:** the block's residents live their days (homes, jobs, friends, errands) whether you're watching or not, and remember what you do in front of them; everyone else has a name of their own.
+- **Weather:** rain comes and goes through the day, and the streets shine only while they're wet.
 
 ## Files
 
 | File | What it is |
 |---|---|
 | `index.html` | The page; loads every script in order |
-| `css/style.css` | HUD, touch controls, panels, jacking in |
+| `css/style.css` | HUD, touch controls, panels |
 | `js/util.js` | Maths, `hash`, `noise`, `Rng`, colours, `rampOf`, `strokeRow` |
 | `js/tuning.js` | Every number (`T`) |
 | `js/spr.js` | The shape painter for sprites (`Spr`) |
 | `js/paint.js` | Materials, the city painter (`Pix`), decals, the chunk cache |
-| `js/people.js` | People, drones, the Warden |
-| `js/props.js` | Props: stalls, machines, doors, grates, nodes, the lift, the bench and shelf |
+| `js/people.js` | People, side-on and from behind |
+| `js/props.js` | Props: stalls, machines, doors, the bench and shelf |
 | `js/dragon.js` | The White Dragon's neon sign and the dragon drawn as tubes (also the icon) |
-| `js/items.js` | Salvage, consumables, throwables, keys, evidence, gadgets, programs, gear, shops, loot, the fabricator |
-| `js/quests.js` | Jobs and side work (`QUESTS`, `Quests`), named elites, the warrants board |
-| `js/cases.js` | Cases (`CASES`, `Cases`), the night desk, ranks, the baseline test |
-| `js/enhance.js` | The photo enhancer: a camera still, spots to zoom in on, the clue among decoys |
+| `js/items.js` | Salvage: what you carry |
 | `js/world.js` | The level builder and `World` |
-| `js/levels.js` | Home, the precinct, the Stack and street level; `cityLayers` |
+| `js/levels.js` | What places share: deco by name, everyone's names, passers-by, `cityLayers` |
 | `js/kit.js` | The architect's kit: shophouses, capsule towers, townhouses, temples, shrine gates, pagodas, glass towers, shanty stacks, slab blocks, theatres, bathhouses, arcades, shopfronts, trees, fifteen kinds of stall; and `district()`, the frame every place is built in |
-| `js/travel.js` | `Travel` (what's open and how you get there), boss arenas, key doors, locals' lines |
+| `js/travel.js` | `Travel` (what's open and how you get there), great halls, locals' lines |
 | `js/d_high.js` | Up high: Neon Row, Kessler Blocks, Glasshouse Plaza, the Skybridge, the Arcology Gardens, the Spires |
 | `js/d_street.js` | Street level: the Overpass Market, the Canal Docks, the Scrapyard, Chop Shop Alley, Clinic Row |
 | `js/d_under.js` | The undercity: the Main Drain, Boiler House Nine, Substation Seven, the Waterworks |
@@ -92,13 +74,11 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/d_dragon.js` | The White Dragon: its street, the noodle bar and storeroom, and the basement under it |
 | `js/d_block.js` | The block's other interiors: Mo's grocery, the flats |
 | `js/things.js` | Props in play: looks, yields, prompts, uses |
-| `js/game.js` | `Game`: state and rules; programs |
+| `js/game.js` | `Game`: state and rules |
 | `js/save.js` | localStorage save and load |
 | `js/input.js` | Keyboard and touch |
-| `js/player.js` | The runner: movement, ladders, strikes, Use; effects |
-| `js/enemies.js` | `ENEMY` and `Foes`: what each enemy is and how it moves, fights and looks |
-| `js/actors.js` | People's routines and roles, case witnesses and suspects, enemies in play, bolts, thrown things |
-| `js/hack.js` | Jacking in |
+| `js/player.js` | The runner: movement, ladders, Use; sparks |
+| `js/actors.js` | People's routines, roles and talk |
 | `js/parts.js` | Parts, devices, stall stock and the notebook (`Parts`) |
 | `js/bench.js` | The bench: the repair, its tools and its drawing (`Bench`) |
 | `js/jobs.js` | Jobs at the White Dragon, residents' odd jobs, heat, the morning after (`Jobs`) |
@@ -106,16 +86,17 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/town.js` | The block's residents: homes, jobs, friends, a day plan each, walked along their routes (`Town`, `RESIDENTS`) |
 | `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which keeps their days, needs, memories and gossip, and saves them (`City`) |
 | `vendor/tyrell/` | Tyrell, the minds engine (a git submodule; the game loads `dist/tyrell.js`) |
+| `js/day.js` | Day and night, and the weather (`Day`, `Weather`) |
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
 | `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |
 | `js/worldmap.js` | The city map: the city in cross-section, every place at its depth; travel from it |
-| `js/dev.js` | Dev settings: switches and cheats for testing, kept in this browser only |
+| `js/dev.js` | Dev settings for testing, kept in this browser only: switches, weather, go to a place or someone |
 | `js/flight.js` | Flying: the spinner's destinations, cabs, the flight through the city |
 | `js/skyline.js` | The city behind: layered towers, clouds, giant holograms, the monorail |
 | `js/gl.js` | The frame's last stage in WebGL2: bloom, reflections, the scale-up |
 | `js/render.js` | The frame: layers, light, actors, rain; a 2D finish without WebGL2 |
 | `js/hud.js` | HUD and panels |
-| `js/panels.js` | The detective's panels: talk, the baseline test, the enhancer, travel, the case file, items |
+| `js/panels.js` | Panels: talk, the morning, the stalls, the bench, the shelf, travel, pockets |
 | `js/pwa.js` | Installing, and reloading onto a new deploy |
 | `js/main.js` | Boot and the loop |
 | `fonts/dragon.woff`, `tools/mkfont.py` | Dragon Pixel, the game's own pixel font, and the script that builds it from its glyphs |

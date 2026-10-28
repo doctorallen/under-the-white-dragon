@@ -1,8 +1,8 @@
 'use strict';
 // ---------------------------------------------------------------------------
 // Getting about the city: what's open to you and how you get there (Travel),
-// the boss arenas and the locked ways on that hubs share, and what locals
-// say. The places themselves are built by hand in the d_*.js files.
+// the great halls some places share, and what locals say. The places
+// themselves are built by hand in the d_*.js files.
 // ---------------------------------------------------------------------------
 const LOCAL_LINES = {
   neon: ['Everything on the Row is for sale. Even the rain, if you ask the right stall.', 'Don\'t stand still too long, tinker. People notice.', 'My cousin sold a synth dog once. Got more for it than for his kidney.'],
@@ -21,37 +21,31 @@ const LOCAL_LINES = {
 // ---- travel between places: what's open, and how you get there -----------------
 // Any way out (a cab stand, a subway platform, a lift cage, a manhole)
 // opens the city map, and from it you can go anywhere you've opened: the
-// cab flies the sky and the street (for a fare, until Ozzy owes you), a manhole ladder takes you down into
-// the undercity, the old subway runs to Old Town, lift cages go deeper.
+// cab flies the sky and the street (for a fare, until Ozzy owes you), a
+// manhole ladder takes you down into the undercity, the old subway runs
+// from street level to Old Town, and lift cages go on down, to the Works
+// and the Bowels. Each band down opens once you've been in the one above.
+const BAND_ABOVE = { under: 'street', old: 'street', works: 'old', bowels: 'works' };
 const Travel = {
   // the band of the city a place is in, from its depth
   band(id) { const L = LEVELS[id]; return L && L.metres !== undefined ? stratumOf(L.metres).id : 'high'; },
   // is a place open to you yet
   open(id) {
-    const L = LEVELS[id], f = (k) => Game.flag(k);
-    if (!L || L.metres === undefined) return false;
-    if (!LEGACY && (id === 'home' || id === 'precinct' || id === 'stack' || id === 'street')) return false;
-    if (!LEGACY && !['high', 'street', 'under'].includes(this.band(id))) return false; // (the deep city's ways down were the detective's)
-    if (L.hidden) return false; // (the basement: only through the trapdoor)
-    if (f('been:' + id) || id === 'd_dragon' || id === 'stack') return true;
-    if (id === 'spires') return Game.s.pack.spirepass > 0;
-    if (id === 'oldtown') return Game.s.pack.subwaypass > 0 && f('been:street');
-    const b = this.band(id);
-    if (b === 'high') return true;
-    if (b === 'street') return true;
-    if (b === 'under') return LEGACY ? f('been:street') : this.row('street').some((k) => f('been:' + k));
-    if (b === 'old') return f('been:oldtown');
-    if (b === 'works') return f('been:works');
-    if (b === 'bowels') return f('been:bowels');
-    return false;
+    const L = LEVELS[id];
+    if (!L || L.metres === undefined || L.hidden) return false; // (the basement: only through the trapdoor)
+    if (Game.flag('been:' + id) || id === 'd_dragon') return true;
+    const above = BAND_ABOVE[this.band(id)];
+    return !above || this.row(above).some((k) => Game.flag('been:' + k));
   },
+  // why a place isn't open yet
+  lock(id) { return { under: 'Walk the street-level places first: the manholes are there', old: 'Get down to street level first: the old subway runs from there', works: 'Ride the subway down to Old Town first: the lift cages are there', bowels: 'Take a lift down to the Works first' }[this.band(id)] || 'Not yet'; },
   // how you'd get there
   how(id) { const f = Flight.cabFare(); const cab = f ? 'Cab · ' + f + ' cr' : 'Ozzy\'s cab'; return { sky: cab, high: cab, street: cab, under: 'Down a manhole', old: 'Subway', works: 'Lift cage', bowels: 'Lift cage' }[this.band(id)]; },
   spawnFor(id) { const L = LEVELS[id].built || (LEVELS[id].built = LEVELS[id].make()); if (L.spawns.enter) return 'enter'; if (World.L && this.band(World.L.id) === 'under' && L.spawns.manhole) return 'manhole'; for (const k of ['pad', 'elevator', 'subway', 'lift']) if (L.spawns[k]) return k; return Object.keys(L.spawns)[0]; },
   go(id) {
     Hud.toggle(null);
     const sp = this.spawnFor(id), b = this.band(id);
-    if (b === 'under' && !LEGACY && !['street', 'under'].includes(this.band(World.L.id))) { Game.toast('The manholes are at street level: get a cab down there first.'); return; }
+    if (b === 'under' && !['street', 'under'].includes(this.band(World.L.id))) { Game.toast('The manholes are at street level: get a cab down there first.'); return; }
     if (b === 'street' && this.band(World.L.id) === 'under') { Game.toast('You climb the ladder up into the rain.'); Game.go(id, sp); return; } // (up out of the undercity on foot, no cab)
     if (b === 'sky' || b === 'high' || b === 'street') { const f = Flight.cabFare(); if (f && !Game.pay({ cr: f })) { Game.toast('You can\'t afford the fare: ' + f + ' cr.'); return; } Flight.start(id, sp, true); }
     else { Game.toast({ under: 'You climb down the ladder into the dark and the drip.', old: 'The old train lurches off into the dark.', works: 'The cage drops, and keeps dropping.', bowels: 'The cage drops past the last of the lights.' }[b]); Game.go(id, sp); }
@@ -70,11 +64,10 @@ const Travel = {
     if (!off) return;
     Game.pass(0.15); Game.go(e.to, e.dir === 'west' ? 'east' : 'west');
   },
-  // where a key door leads
-  KEYS: { subwaypass: 'oldtown', mayorkey: 'works', workspass: 'bowels' },
 };
 
-// ---- the story's hubs share these: a boss's arena, and a locked way on --------
+// ---- a great hall at the end of some places: a town hall, a crane shed, a
+// chamber, a penthouse
 function arena(L, x0, x1, G, style) {
   const S = {
     hall: { wall: MAT.brick, trim: MAT.wood, light: [1, 0.75, 0.45], deco: '#ffb040' },
@@ -88,6 +81,3 @@ function arena(L, x0, x1, G, style) {
   L.sign(x0 + 30, 70, 6, S.deco, { r: 70 });
   L.dry.push([x0, 0, x1, L.h]);
 }
-// a way on that wants a key: a lift, a shaft, a gate
-function keyDoor(L, x, G, key, mode, label) { L.prop('keydoor', x, G, { key, mode, label }); L.light(x, G - 30, 40, [1, 0.6, 0.3], 0.5); }
-

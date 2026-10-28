@@ -1,9 +1,9 @@
 'use strict';
 // ---------------------------------------------------------------------------
 // Saving: Game.s, in localStorage. The levels are built from code, so a save
-// only needs what's changed: props done by id, flags, what you carry and
-// wear, the parts, the notebook, what's on the bench, the jobs and the heat,
-// and the residents' minds (city).
+// only needs what's changed: props done by id, flags, what you carry, the
+// parts, the notebook, what's on the bench, the jobs and the heat, and the
+// residents' minds (city).
 // Every read and write is guarded, since storage can be missing or full.
 // ---------------------------------------------------------------------------
 const Save = {
@@ -25,8 +25,8 @@ const Save = {
     for (const k of this.OLD) try { localStorage.removeItem(k); } catch (e) { /* ignore */ }
     const d = this.read(), f = Game.fresh();
     if (d && d.v === f.v) {
-      Game.s = Object.assign(f, d, { gear: Object.assign(f.gear, d.gear || {}), warrants: d.warrants || f.warrants, notes: Object.assign(f.notes, d.notes || {}) });
-      Game.s.gear.lvl = Game.s.gear.lvl || {};
+      Game.s = Object.assign(f, d, { notes: Object.assign(f.notes, d.notes || {}) });
+      for (const k of Game.OLD) delete Game.s[k]; // (what Downlevel kept: health, gear, cases...)
       return true;
     }
     Game.s = f; return false;

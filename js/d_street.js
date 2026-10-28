@@ -187,13 +187,12 @@ addDistrict('d_overpass', 'Overpass Market', 2, -40, 300, 'A market packed under
     // bay 5: a pawnshop under a stair up to a hung gantry, crates
     bShophouse(L, 1970, 2100, G, { floors: 1, wall: MAT.brickD, shops: [['pawn', '#ffb040']], roof: 'flat', balcony: false, seed: 202 });
     L.stairs(2110, G, 2190, G - 70); L.walk(2110, 2330, G - 70, 4, MAT.steelD); L.paint(2110, DY + 24, 2330, G - 70, (P) => { for (const x of [2140, 2240, 2320]) for (let y = DY + 22; y < G - 70; y++) P.put(x, y, tone(MAT.steel, 0.4)); });
-    L.prop('locker', 2290, G - 70, { tier: 2, label: 'locker' }); L.prop('ac', 2210, G - 70, { label: 'air conditioner' });
+    L.prop('ac', 2210, G - 70, { label: 'air conditioner' });
     for (const [x, c] of [[2160, '#3a4a5a'], [2176, '#5a4a2a'], [2168, '#4a5a3a']]) L.prop('deco', x, x === 2168 ? G - 10 : G, { art: DECO.crate({ col: c, w: 14, h: 10 }), id: 'ovcr' + x });
     kStallAt(L, 2240, G, 'yakitori');
     // bay 6: the market's end, junk and a car at the kerb
     kStallAt(L, 2420, G, 'fruit', { col: '#2a6a8a' }); L.prop('junk', 2500, G, { label: 'junk pile' }); L.prop('car', 2600, G, { look: { col: '#3a3a2a', under: '#ffb040' }, label: 'parked car' });
-    L.prop('locker', 760, G, { tier: 2, label: 'locker' }); L.prop('wreck', 1520, DY, { label: 'downed drone' });
-    kFoes(L, G, [['gang', 1000, 860, 1040], ['gunner', 1500, 1440, 1700], ['bruiser', 2050, 1960, 2300], ['drone', 1200, 1050, 1450, DY - 60], ['drone', 2400, 2250, 2600, DY - 60], ['gang', 2500, 2380, 2650]]);
+    L.prop('wreck', 1520, DY, { label: 'downed drone' });
     L.spots.push([330, G], [580, G], [870, G], [1060, G], [1380, G], [1590, G], [1960, G], [2280, G], [2460, G], [2220, G - 70], [1300, DY]);
     L.critter('rat', 200, 2600, G, 3); L.critter('dog', 600, 2000, G, 1); L.litter(200, 2600, G, 9);
   },
@@ -238,7 +237,7 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     L.walk(820, 1010, G - 22, 0, MAT.steel, { rail: false }); L.walk(1010, 1240, G - 22, 0, MAT.steel, { rail: false });
     L.ladder(1050, G - 44, G - 22); L.ladder(870, G - 66, G - 44);
     L.light(900, G - 120, 80, [1, 0.85, 0.5], 0.8); L.light(1120, G - 90, 70, [1, 0.9, 0.7], 0.6); L.lamp(812, G - 22, 60, '#fff0d0', 1); L.lamp(1050, G - 22, 60, '#fff0d0', 1);
-    L.prop('locker', 920, G - 66, { tier: 2, label: 'container locker' }); L.spots.push([920, G - 66], [1140, G - 44]);
+    L.spots.push([920, G - 66], [1140, G - 44]);
     // the quay edge, the barge moored in the second water
     L.paint(1240, G - 12, 1300, G, (P) => { stBollard(P, 1260, G, 30); stBollard(P, 1285, G, 0); });
     L.light(1400, G - 40, 80, [1, 0.85, 0.6], 0.6); L.light(1470, G - 80, 30, [1, 0.95, 0.85], 0.6);
@@ -261,9 +260,7 @@ addDistrict('d_docks', 'Canal Docks', 2, -70, 120, 'Quays over the black canal: 
     // the far quay: crates, a small crane, a car, the dark end
     L.paint(2520, G - 140, 2800, G, (P) => { stBollard(P, 2520, G, 0); for (let y = G - 120; y < G; y++) { P.put(2620, y, tone(rp('#c88a20', 6), 0.6)); P.put(2621, y, tone(rp('#c88a20', 6), 0.35)); } for (let k = 0; k <= 60; k++) P.put(2620 + k, G - 120 + k * 0.2, tone(rp('#c88a20', 6), 0.6)); for (let y = G - 108; y < G - 60; y++) P.put(2680, y, [20, 20, 24]); stBox(P, 2650, G - 60, 60, 18, '#3a6a4a'); stBox(P, 2700, G - 22, 90, 22, '#8a2a2a', 'MRD 0007'); });
     L.prop('car', 2590, G, { look: { col: '#2a2a2a', under: '#ffb040' }, label: 'dock truck' }); L.prop('junk', 2560, G, { label: 'junk pile' });
-    L.prop('locker', 2760, G, { tier: 2, label: 'locker' });
     L.lamp(1270, G, 70, '#ffd8a8', 0.9); L.lamp(2000, G, 70, '#ffd8a8', 0.9); L.lamp(2540, G, 70, '#c8e0ff', 0.9);
-    kFoes(L, G, [['gang', 1150, 1060, 1240], ['gunner', 1700, 1560, 1760, G - 96], ['bruiser', 1880, 1780, 1960], ['gunner', 2370, 2220, 2500], ['gang', 2650, 2540, 2760], ['drone', 960, 820, 1100, G - 80]]);
     L.spots.push([350, G], [650, G], [1000, G - 22], [1390, G], [1600, G], [1850, G], [2050, G], [2350, G], [2600, G]);
     L.critter('rat', 200, 2700, G, 3); L.litter(300, 2700, G, 4);
   },
@@ -300,7 +297,6 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
     L.paint(1150, G - 80, 1350, G, (P) => stCubes(P, 1160, G, 8, 3, 21));
     L.solid(1160, G - 54, 1340, G); L.walk(1160, 1340, G - 54, 0, MAT.steel, { rail: false });
     L.stairs(1100, G, 1160, G - 54, MAT.rust); L.stairs(1340, G - 54, 1392, G, MAT.rust); L.spots.push([1250, G - 54]);
-    L.prop('locker', 1300, G - 54, { tier: 2, label: 'stash in the wrecks' });
     // the compactor: a press over a pit, cubes coming out of it
     L.paint(1380, G - 150, 1640, G, (P) => {
       P.block(1390, G - 120, 1600, G, MAT.steelD, { base: 0.38, panels: [70, 40], drips: 0.2, dripLen: 20 });
@@ -321,9 +317,8 @@ addDistrict('d_scrapyard', 'The Scrapyard', 2, -65, 820, 'Mountains of scrap beh
     // the back gate: a tower of cubes, a lookout shack on top
     L.paint(2120, G - 160, 2400, G, (P) => { stCubes(P, 2130, G, 6, 4, 45); corrugated(P, 2180, G - 106, 2250, G - 72, KMAT.corrGreen); kWin(P, 2195, G - 98, 10, 8, { lit: '#ffd890', cross: false }); stFence(P, 2290, 2400, G, 56); });
     L.solid(2130, G - 72, 2262, G); L.walk(2130, 2262, G - 72, 0, MAT.steel, { rail: false }); L.ladder(2268, G - 72, G);
-    L.prop('locker', 2240, G - 72, { tier: 2, label: 'lookout locker' }); L.light(2205, G - 92, 40, [1, 0.85, 0.55], 0.5); L.spots.push([2200, G - 72]);
+    L.light(2205, G - 92, 40, [1, 0.85, 0.55], 0.5); L.spots.push([2200, G - 72]);
     L.lamp(2420, G, 60, '#c8e0ff', 0.8);
-    kFoes(L, G, [['gang', 1000, 900, 1100], ['spider', 1300, 1170, 1330, G - 54], ['bruiser', 1800, 1700, 1950], ['gunner', 1990, 1880, 2100], ['gang', 2380, 2290, 2460], ['drone', 1500, 1380, 1650, G - 180]]);
     L.spots.push([400, G], [760, G], [900, G], [1080, G], [1660, G], [1840, G], [2020, G], [2300, G], [2440, G]);
     L.critter('rat', 200, 2400, G, 3); L.litter(200, 2400, G, 6);
   },
@@ -348,7 +343,7 @@ addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of ill
     // a stack of shacks over a parts shop, a stair up to a gallery
     bStack(L, 740, 900, G, { levels: 4, shop: 'pawn', shopCol: '#3af0e0', blade: '#ff4ab0', seed: 402 });
     L.stairs(905, G, 960, G - 76); L.walk(740, 1090, G - 76, 4, MAT.steelD);
-    L.prop('locker', 800, G - 76, { tier: 2, label: 'locker' }); L.prop('ac', 1040, G - 76, { label: 'air conditioner' }); L.spots.push([1000, G - 76]);
+    L.prop('ac', 1040, G - 76, { label: 'air conditioner' }); L.spots.push([1000, G - 76]);
     kStallAt(L, 950, G, 'parts', { col: '#5a2a5a', npc: { name: 'Fence', lines: ['Arms, eyes, a liver if you want one. Not for you, of course. You just fix things.', 'The King gets a slice of everything sold in this alley.'] } });
     // the back-room surgery, seen through a door left open
     L.paint(1000, G - 150, 1150, G, (P) => { P.block(1000, G - 140, 1150, G, MAT.brickD, { base: 0.35, drips: 0.25, dripLen: 30 }); kFill(P, 1040, G - 48, 1110, G, '#0e2a2a', 0.25); for (let y = G - 46; y < G; y++) for (let x = 1042; x < 1108; x++) if ((x + y) % 7 === 0) P.put(x, y, [120, 255, 230], 0.3); P.block(1036, G - 52, 1114, G - 48, MAT.steelD, { base: 0.5 }); for (let k = 0; k < 20; k++) P.put(1015 + k, G - 100 + k * 0.5, [255, 74, 176]); kWin(P, 1020, G - 120, 14, 14, { lit: '#9af0e0', bars: true }); kWin(P, 1110, G - 120, 14, 14, { bars: true }); });
@@ -375,9 +370,6 @@ addDistrict('d_chopshop', 'Chop Shop Alley', 2, -60, 560, 'A narrow alley of ill
       stCubes(P, 1712, G, 1, 3, 50); stCubes(P, 2160, G, 1, 3, 51);
     });
     L.light(1985, G - 100, 80, [1, 0.8, 0.3], 0.8); L.light(1790, G - 130, 40, [1, 0.4, 0.6], 0.5); L.light(2110, G - 130, 40, [0.4, 1, 0.9], 0.5);
-    L.enemy('king', 1980, G, { range: [1720, 2180] });
-    L.prop('locker', 2240, G, { tier: 2, label: 'the King\'s strongbox' });
-    kFoes(L, G, [['gang', 600, 450, 720], ['gang', 1000, 960, 1150], ['gunner', 900, 760, 1080, G - 76], ['bruiser', 1450, 1360, 1600], ['drone', 1300, 1160, 1500, G - 120]]);
     L.spots.push([300, G], [480, G], [700, G], [860, G], [1130, G], [1300, G], [1500, G], [1650, G], [2250, G]);
     L.critter('rat', 200, 1700, G, 4); L.litter(200, 1700, G, 8);
   },
@@ -429,7 +421,7 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     bShophouse(L, 1800, 1930, G, { floors: 4, wall: KMAT.stucco, shops: [['tea', '#ffd040']], roof: 'tank', balcony: false, seed: 508, gh: 44 });
     L.stairs(1565, G, 1630, G - 82); L.walk(1565, 1925, G - 82, 5);
     for (const x of [1660, 1740, 1820, 1880]) L.prop('deco', x, G - 82, { art: DECO.door({ col: '#e0e8e8', light: x % 2 ? '#e8f8ff' : '#9af0e0' }), id: 'crdoor' + x });
-    L.prop('locker', 1900, G - 82, { tier: 2, label: 'locker' }); L.spots.push([1780, G - 82]);
+    L.spots.push([1780, G - 82]);
     kStallAt(L, 1870, G, 'herbs', { npc: false });
     // a little garden of rest at the end, a shrine to the sick, a bench
     bPark(L, 1960, 2180, G, { trees: ['willow', 'sakura'], seed: 509 });
@@ -437,8 +429,6 @@ addDistrict('d_clinicrow', 'Clinic Row', 2, -55, 700, 'A whole street of clinics
     bShophouse(L, 2230, 2370, G, { floors: 5, wall: KMAT.whitepanel, shops: [['clinic', '#e8f4ff'], ['pharmacy', '#3aff80']], roof: 'garden', seed: 510 }); stWait(L, 2230, 2300, G);
     L.prop('car', 2430, G, { look: { col: '#e8e8e8', under: '#ff3a4a' }, label: 'parked car' });
     L.prop('ac', 2380, G, { label: 'air conditioner' }); L.prop('junk', 1950, G, { label: 'junk pile' });
-    L.prop('locker', 2470, G, { tier: 2, label: 'locker' });
-    kFoes(L, G, [['gang', 1320, 1260, 1400], ['gunner', 1750, 1600, 1900, G - 82], ['drone', 2050, 1950, 2200], ['gang', 2300, 2200, 2450], ['spider', 1500, 1420, 1560]]);
     L.spots.push([260, G], [600, G], [760, G], [1270, G], [1450, G], [1620, G], [2000, G], [2150, G], [2400, G]);
     L.critter('rat', 200, 2400, G, 2); L.litter(200, 2400, G, 5);
   },

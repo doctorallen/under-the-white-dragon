@@ -164,22 +164,6 @@ function haze(P, x0, x1, y0, y1, colr, k) {
   const c = col3(colr);
   for (let y = Math.max(y0, P.oy); y < Math.min(y1, P.oy + P.h); y++) { const t = 1 - Math.abs((y - (y0 + y1) / 2) / ((y1 - y0) / 2)); for (let x = Math.max(x0, P.ox); x < Math.min(x1, P.ox + P.w); x++) P.tint(x, y, c, t * k * (0.8 + noise(x / 30, y / 6, 77) * 0.4)); }
 }
-function skyline(P, x0, x1, base, o = {}) {
-  const r = new Rng(o.seed || 5), ramp = o.ramp || MAT.concreteD, fog = o.fog || 0, fogc = o.fogc || [40, 24, 60];
-  let x = x0 - r.i(0, 20);
-  while (x < x1) {
-    const w = r.i(o.wmin || 14, o.wmax || 40), h = r.i(o.hmin || 40, o.hmax || 150), xe = x + w, top = base - h, sp = r.f() < 0.5, sw = r.i(3, Math.max(4, w / 3)), sx = x + r.i(1, Math.max(1, w - sw)), sh = r.i(6, 20), ant = r.f() < 0.4;
-    P.block(x, top, xe, base, ramp, { base: 0.35, fog, fogc, grain: 0.06, lip: 0.4 });
-    if (sp) P.block(sx, top - sh, sx + sw, top, ramp, { base: 0.3, fog, fogc });
-    if (P.sees(x, top, xe, base)) for (let wy = top + 4; wy < base - 2; wy += 3) for (let wx = x + 2; wx < xe - 1; wx += 2) if (hash(wx, wy, o.seed || 5) < (o.lit || 0.12)) P.put(wx, wy, mixRgb(col3(hash(wx, wy, 6) < 0.6 ? '#ffd8a0' : hash(wx, wy, 7) < 0.5 ? '#9af0ff' : '#ff80c8'), fogc, fog * 0.7), 0.5);
-    if (ant) P.put(x + (w >> 1), top - 1, [255, 40, 40], 1);
-    x = xe + r.i(-6, 4);
-  }
-}
-function sky(P, x0, x1, y0, y1, o = {}) {
-  const ramp = o.ramp || MAT.sky, h = y1 - y0;
-  P.area(x0, y0, x1, y1, ramp, (x, y) => (o.low || 0.15) + Math.pow((y - y0) / h, 1.6) * (o.span || 0.7) + (noise(x / 60, y / 10, 9) - 0.5) * 0.12, { jit: 0.6 });
-}
 function tubePaint(P, x, y, w, colr) { const c = col3(colr); for (let i = 0; i < w; i++) { P.put(x + i, y, mixRgb(c, [255, 255, 255], 0.5), 1); P.put(x + i, y + 1, mixRgb(c, [0, 0, 0], 0.2), 0.6); } }
 function lampPaint(P, x, y, h, colr) {
   for (let j = 0; j < h; j++) { P.put(x, y - j, tone(MAT.steel, 0.5)); P.put(x + 1, y - j, tone(MAT.steel, 0.25)); }
@@ -211,11 +195,6 @@ function heap(P, x0, x1, ybase, hgt, ramp, seed = 5) {
 }
 function corrugated(P, x0, y0, x1, y1, ramp, o = {}) {
   P.area(x0, y0, x1, y1, ramp, (x, y) => { let v = 0.45 + ((x - x0) % 3 === 0 ? 0.2 : (x - x0) % 3 === 2 ? -0.15 : 0) + (noise(x / 12, y / 12, 41) - 0.5) * 0.4; if (y - y0 < 1) v = 0.9; if (y1 - y < 1) v -= 0.3; if (noise(x / 6, y / 5, 43) > 0.72) v -= 0.25; return v; }, o);
-}
-function stringLightsPaint(P, x0, y0, x1, y1, sag, cols) {
-  cable(P, x0, y0, x1, y1, sag, '#0e0c0a');
-  const n = Math.floor(Math.abs(x1 - x0) / 7);
-  for (let k = 1; k < n; k++) { const t = k / n, x = lerp(x0, x1, t), y = lerp(y0, y1, t) + Math.sin(Math.PI * t) * sag + 1, c = col3(cols[k % cols.length]); P.put(x, y, mixRgb(c, [255, 255, 255], 0.4), 1); P.put(x, y + 1, c, 0.7); }
 }
 function railing(P, x0, x1, y, ramp, o = {}) {
   const h = o.h || 7;

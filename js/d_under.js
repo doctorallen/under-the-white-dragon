@@ -145,12 +145,11 @@ addDistrict('d_drain', 'The Main Drain', 2, -95, 300, 'The great brick sewer und
     // catwalks over the channel side, ladders up to them
     L.walk(560, 860, G - 96, 4, MAT.steelD); L.ladder(580, G - 96, G); L.ladder(840, G - 96, G);
     L.walk(1620, 1880, G - 110, 4, MAT.steelD); L.stairs(1630, G, 1720, G - 110);
-    L.prop('locker', 760, G - 96, { tier: 2, label: 'maintenance locker' }); L.prop('locker', 2600, G, { tier: 2, label: 'flood locker' }); L.prop('locker', 1820, G - 110, { tier: 2, label: 'maintenance locker' });
+     
     L.prop('junk', 520, G, { label: 'washed-up junk' }); L.prop('junk', 1500, G, { label: 'washed-up junk' }); L.prop('wreck', 2140, G, { label: 'drowned drone' }); L.prop('ac', 980, G, { label: 'pump motor' });
     for (const [x, y] of [[400, G - 60], [800, G - 70], [1250, G - 60], [1700, G - 60], [2300, G - 60], [2600, G - 70]]) unLamp(L, x, y, [1, 0.78, 0.5], 0.75, { flick: x % 3 ? null : 'bad' });
     for (let x = 300; x < W; x += 230) L.drips.push({ x, y0: YS + 4, y1: G });
     // the channel's people: ferals out of the side tunnels, spiders in the pipes, a gang's dump
-    kFoes(L, G, [['feral', 1350, 1240, 1460], ['feral', 2230, 2120, 2340], ['spider', 1750, 1640, 1880, G - 110], ['gang', 2500, 2380, 2650], ['spider', 700, 600, 840, G - 96]]);
     L.spots.push([470, G], [700, G - 96], [910, G], [1140, G], [1350, G], [1750, G - 110], [2000, G], [2230, G], [2420, G], [2600, G]);
     L.critter('rat', 200, W - 100, G, 5); L.litter(200, W - 100, G, 4);
   },
@@ -212,7 +211,7 @@ addDistrict('d_boilers', 'Boiler House Nine', 2, -105, 520, 'The district heatin
     });
     // a catwalk along the boilers' faces, ladders up, a stair down
     L.walk(260, 1300, G - 128, 4, MAT.steelD); L.ladder(280, G - 128, G); L.ladder(1290, G - 128, G); L.stairs(1300, G - 128, 1400, G);
-    L.prop('locker', 870, G - 128, { tier: 2, label: 'stoker\'s locker' }); L.spots.push([650, G - 128], [1100, G - 128]);
+    L.spots.push([650, G - 128], [1100, G - 128]);
     // the coal bunker and its conveyor
     L.paint(1380, G - 220, 1900, G, (P) => unHopper(P, 1620, 1760, G));
     L.lamp(1560, G, 70, '#ffd8a0', 0.9); unLamp(L, 1690, G - 100, [1, 0.8, 0.55], 0.9, { r: 110 }); unLamp(L, 1450, G - 110, [1, 0.8, 0.55], 0.7);
@@ -230,7 +229,7 @@ addDistrict('d_boilers', 'Boiler House Nine', 2, -105, 520, 'The district heatin
       for (let x = CX0 + 160; x < CX1 - 10; x += 22) kWin(P, x, G - 76, 14, 12, { lit: hash(x, 2, 2) < 0.6 ? '#c8ffd0' : null });
     });
     L.walk(CX0, CX1, CF, 4, MAT.steelD); L.stairs(CX0 - 90, G, CX0, CF);
-    L.prop('rack', 2120, CF, { label: 'control cabinet' }); L.prop('rack', 2140, CF, { label: 'control cabinet' }); L.prop('locker', 2250, CF, { tier: 2, label: 'engineer\'s locker' });
+    L.prop('rack', 2120, CF, { label: 'control cabinet' }); L.prop('rack', 2140, CF, { label: 'control cabinet' });
     L.tube(CX0 + 40, CF - 84, 30, '#c8ffd8', 0.6); L.tube(CX0 + 180, CF - 84, 30, '#c8ffd8', 0.6); L.spots.push([2100, CF]);
     L.npc({ name: 'Engineer Okoro', look: { skin: SKINS[5], hair: 'helmet', armor: '#e8b030', visor: '#3a3a3a', top: '#3a5a3a', legs: '#2a2a2a' }, x: 2060, y: CF, face: 1, sched: [[0, 24, 2060, 'stand']], lines: ['Pressure\'s up on four again. It\'s always four.', 'Those screens are older than me. They still work. That\'s the trouble.', 'If the alarms go, run. Don\'t look back, don\'t play detective.'] });
     // the valve wall at the end: wheels, gauges, a manifold, steam leaking
@@ -242,10 +241,9 @@ addDistrict('d_boilers', 'Boiler House Nine', 2, -105, 520, 'The district heatin
     });
     for (const x of [2380, 2470, 2560]) L.vents.push({ x, y: G - 140, kind: 'steam' });
     for (const [x, y] of [[180, G - 80], [1350, G - 80], [1700, G - 120], [2400, G - 70]]) unLamp(L, x, y, [1, 0.8, 0.55], 0.8);
-    L.prop('ac', 2300, G, { label: 'feed pump' }); L.prop('locker', 2580, G, { tier: 2, label: 'tool locker' });
+    L.prop('ac', 2300, G, { label: 'feed pump' });
     // pipes in front, close to the eye
     for (const x of [480, 1240, 2010]) L.prop('deco', x, G, { art: () => unFrontPipe(170, x), id: 'unfp' + x, front: 1 });
-    kFoes(L, G, [['gunner', 900, 760, 1100], ['spider', 640, 300, 1280, G - 128], ['gang', 1700, 1500, 1880], ['turret', 2340, 2320, 2600, G - 110], ['gunner', 2450, 2320, 2580]]);
     L.spots.push([400, G], [800, G], [1200, G], [1500, G], [1880, G], [2400, G], [2550, G]);
     L.critter('rat', 200, W - 100, G, 2);
   },
@@ -318,7 +316,7 @@ addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under t
     // the generator hall: two sets, a walkway over them
     L.paint(1380, G - 200, 2080, G, (P) => { unGenerator(P, 1420, G, { rot: 0.2 }); unGenerator(P, 1760, G, { rot: 0.9, ramp: R(['#10141a', '#202a36', '#36465a', '#7a90a8']) }); });
     L.walk(1400, 2060, G - 120, 4, MAT.steelD); L.stairs(1380, G, 1460, G - 120); L.ladder(2050, G - 120, G);
-    L.prop('locker', 1700, G - 120, { tier: 2, label: 'engineer\'s locker' }); L.spots.push([1600, G - 120], [1900, G - 120]);
+    L.spots.push([1600, G - 120], [1900, G - 120]);
     for (const x of [1460, 1800]) L.light(x, G - 60, 90, [0.5, 1, 0.7], 0.5);
     // the control desk under the mimic board, the switchgear
     L.paint(2120, G - 170, 2420, G, (P) => {
@@ -329,11 +327,9 @@ addDistrict('d_substation', 'Substation Seven', 2, -115, 720, 'The power under t
     L.prop('deco', 2200, G, { art: () => desk({ col: '#2a3a2a' }), id: 'undesk1' }); L.prop('deco', 2320, G, { art: () => desk({ col: '#2a3a2a' }), id: 'undesk2' }); L.light(2260, G - 100, 120, [0.5, 1, 0.65], 0.7);
     L.npc({ name: 'Chief Engineer Wu', look: { skin: SKINS[0], hair: 'helmet', armor: '#e8e8e8', visor: '#3a3a3a', top: '#3a3a4a', coat: 'long', legs: '#2a2a2a', glasses: true }, x: 2260, y: G, face: -1, sched: [[0, 24, 2260, 'stand']], lines: ['Every light up there, tinker. Every single one. From this room.', 'Someone\'s been tapping our lines for a chrome clinic. You find them, you tell me first.', 'The board\'s older than the Stack. Never once gone dark.'] });
     for (const x of [2450, 2475, 2500, 2525, 2550]) L.prop('rack', x, G, { label: 'switchgear cabinet' });
-    L.prop('locker', 2590, G, { tier: 2, label: 'fuse locker' });
     L.prop('ac', 1360, G, { label: 'cooling fan' }); L.prop('junk', 2100, G, { label: 'burnt-out switchgear' });
     for (const x of [200, 700, 1250, 2000, 2440]) L.tube(x, G - 150, 26, '#e8f4ff', 0.8);
     for (const x of [680, 1900]) L.prop('deco', x, G, { art: () => unFrontPipe(200, x), id: 'unfp' + x, front: 1 });
-    kFoes(L, G, [['sentinel', 700, 400, 1200, G - 80], ['drone', 1250, 1000, 1350], ['spider', 1700, 1420, 2040, G - 120], ['turret', 2110, 2000, 2400, G - 100], ['gunner', 2470, 2420, 2590]]);
     L.spots.push([200, G], [450, G], [700, G], [950, G], [1200, G], [1550, G], [1950, G], [2260, G], [2500, G]);
     L.critter('rat', 200, W - 100, G, 2);
   },
@@ -386,7 +382,7 @@ addDistrict('d_waterworks', 'The Waterworks', 2, -122, 900, 'Where the city\'s w
     });
     for (const x of [200, 500]) L.light(x, G - 70, 110, [1, 0.8, 0.55], 0.7);
     L.walk(80, 700, G - 112, 4, MAT.steelD); L.stairs(60, G, 150, G - 112); L.ladder(690, G - 112, G);
-    L.prop('locker', 360, G - 112, { tier: 2, label: 'keeper\'s locker' }); L.spots.push([300, G - 112], [600, G - 112]);
+    L.spots.push([300, G - 112], [600, G - 112]);
     L.prop('ac', 330, G, { label: 'pump motor' }); L.prop('junk', 640, G, { label: 'old pump parts' });
     // the cistern: a walkway over the water, columns going off into the dark
     L.paint(CX0, 0, CX1, G, (P) => unCistern(P, CX0, CX1, G));
@@ -398,7 +394,7 @@ addDistrict('d_waterworks', 'The Waterworks', 2, -122, 900, 'Where the city\'s w
     L.wet.push({ y: G + 4, x0: CX0, x1: CX1, depth: 40, k: 0.65 });
     for (let x = CX0 + 60; x < CX1; x += 240) { unLamp(L, x, G - 110, [1, 0.85, 0.6], 0.8, { r: 110 }); L.drips.push({ x: x + 40, y0: G - 150, y1: G - 30 }); }
     L.walk(1180, 1560, G - 120, 4, MAT.steelD); L.ladder(1190, G - 120, G); L.ladder(1550, G - 120, G);
-    L.prop('locker', 1480, G - 120, { tier: 2, label: 'survey locker' }); L.spots.push([1350, G - 120]);
+    L.spots.push([1350, G - 120]);
     // a rowing boat moored behind the rail, a sign about the depth
     L.paint(1640, G - 44, 1740, G - 20, (P) => { P.area(1650, G - 34, 1730, G - 24, KMAT.plywood, (x, y) => 0.55 - (y - G + 34) / 16, { inside: (x, y) => y < G - 24 - Math.max(0, Math.abs(x - 1690) - 30) * 0.3 }); kH(P, 1650, 1730, G - 34, tone(KMAT.plywood, 0.8)); });
     L.paint(900, G - 70, 960, G - 50, (P) => unSign(P, 902, G - 66, 11, { seed: 71, bg: '#7a1a1a' }));
@@ -417,9 +413,8 @@ addDistrict('d_waterworks', 'The Waterworks', 2, -122, 900, 'Where the city\'s w
     });
     L.light(2560, G - 90, 120, [0.4, 0.8, 1], 0.7);
     L.prop('vending', 2400, G, { look: { col: '#3af0e0', body: '#2a4a5a' }, label: 'vending machine' }); L.light(2400, G - 14, 34, [0.3, 0.9, 1], 0.6);
-    L.prop('locker', 2650, G, { tier: 2, label: 'keeper\'s locker' }); L.prop('wreck', 2300, G, { label: 'dead survey drone' });
+    L.prop('wreck', 2300, G, { label: 'dead survey drone' });
     L.npc({ name: 'Pump Hand Joss', look: { skin: SKINS[2], hair: 'cap', capCol: '#2a4a6a', top: '#3a4a5a', apron: '#2a2a2a', legs: '#2a2a2a' }, x: 2560, y: G, face: -1, sched: [[0, 24, 2560, 'stand']], lines: ['Levels are down three percent. Somebody upstream is stealing water. Again.', 'The engines are a hundred years old. Still the best thing down here.'] });
-    kFoes(L, G, [['spider', 450, 100, 700, G - 112], ['feral', 1100, 900, 1350], ['feral', 1700, 1500, 1950], ['drone', 1400, 1200, 1600], ['gunner', 2200, 2050, 2380]]);
     L.spots.push([250, G], [600, G], [900, G], [1200, G], [1500, G], [1850, G], [2150, G], [2500, G]);
     L.critter('rat', 200, 750, G, 2); L.critter('rat', 2000, W - 100, G, 1);
   },
