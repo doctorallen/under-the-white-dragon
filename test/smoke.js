@@ -4,9 +4,11 @@
 // desktop run without WebGL2, so the 2D path is played too); the bench and the
 // shelf answer Use, and the basement isn't on the city map; the tutorial walks Lin's radio through the bench, and it goes back to her;
 // the ladder leads up through the trapdoor into the noodle bar's storeroom,
-// where people eat; Ozzy's job is taken, fixed, handed back and slept on; the
+// where people eat; Ozzy pitches his job in a conversation (Voice), and it's
+// taken there, fixed, handed back and slept on; the
 // front door leads out onto the street; the block's residents shop, work the
-// till and eat when their days say, and talk when stopped; the vending machine
+// till and eat when their days say, and talk when stopped; a witness has it out
+// with you over a machine you stripped (deny it, own up, pay them off); the vending machine
 // out front gives a scrap part; the old game (enemies, guns, gear, cases) is
 // gone; the help and the pack talk
 // about the basement; a cab flies from the stand to the Overpass Market, where Ana
@@ -108,19 +110,23 @@ async function run(B, url, vp, name, failures) {
   const ended = await E(() => !Tutorial.active());
   await E((i) => { Tutorial.s.i = i; }, saved);
   if (!gotIt || !ended) fail('the tutorial\'s Got it button does not take a click ' + JSON.stringify({ gotIt, ended }));
-  // a job: Ozzy's waiting at the bar; take it, fix it, hand it back, sleep on it
+  // a job: Ozzy's waiting at the bar; he pitches it as you talk (Voice), you ask
+  // what's wrong with it and take it there; fix it, hand it back, sleep on it
   const job = await E(() => {
     Hud.toggle(null); Bench.clear(); const oz = Actors.npcs.find((n) => n.def.name === 'Ozzy'); if (!oz) return { oz: false };
-    Actors.talk(oz); const talk = Hud.open; Jobs.take('ozzy'); const on = Bench.b && Bench.b.job;
+    Actors.talk(oz); const talk = Hud.open, v = Talk.view, pitched = !!(v && v.thread && v.thread.id === 'job') && /nav went dark/.test($('panelBody').textContent);
+    const ask = v && v.answers.find((a) => a.approach === 'ask'); if (ask) Talk.answer(ask.i); const told = /fuse/.test($('panelBody').textContent);
+    const take = document.querySelector('button[data-job="take:ozzy"]'), pulse = !!(take && take.classList.contains('tut')); if (take) take.click();
+    const on = Bench.b && Bench.b.job, kept = City.w.voice.history('ozzy').seen.job !== undefined && Hud.open === 'talk';
     Parts.give(Parts.make('cell', 'street'), true); Parts.give(Parts.make('aerial', 'street'), true);
     const B = Bench; B.b.open = true; for (const k of ['cell', 'aerial']) { B.b.slots[k].j = ['open', 'open']; B.sel = k; Parts.give(B.b.slots[k].p, true); B.b.slots[k].p = null; B.fit(Parts.have(k).find((p) => p.st === 'ok').id); B.b.slots[k].j = ['solid', 'solid']; }
     B.close(); B.b.screws.forEach((s) => (s.st = 'in')); B.test(); const res = B.b.tested.res, cr = Game.s.cr;
     Jobs.handBack('ozzy'); const paid = Game.s.cr - cr;
     Hud.toggle('bed'); document.querySelector('button[data-act="sleep"]').click();
-    return { oz: true, talk, on, res, paid, morning: Hud.open, rides: Game.flag('ozzy:rides'), fare: Flight.cabFare() };
+    return { oz: true, talk, pitched, told, pulse, kept, on, res, paid, morning: Hud.open, rides: Game.flag('ozzy:rides'), fare: Flight.cabFare() };
   });
   await shot('morning');
-  if (!job.oz || job.talk !== 'talk' || job.on !== 'ozzy' || job.res !== 'works' || job.paid !== 80 || job.morning !== 'morning' || !job.rides || job.fare) fail('Ozzy\'s job did not play through ' + JSON.stringify(job));
+  if (!job.oz || job.talk !== 'talk' || !job.pitched || !job.told || !job.pulse || !job.kept || job.on !== 'ozzy' || job.res !== 'works' || job.paid !== 80 || job.morning !== 'morning' || !job.rides || job.fare) fail('Ozzy\'s job did not play through ' + JSON.stringify(job));
   // an odd job from a resident: take it, swap the bad parts, hand it back for pay
   const odd = await E(() => {
     Hud.toggle(null); const ids = Jobs.oddToday(); if (!ids.length) return { n: 0 };
@@ -166,7 +172,8 @@ async function run(B, url, vp, name, failures) {
     let g = see('d_grocery', 18.75); const mo = g.find((n) => n.def.town === 'mo');
     // (someone's in doing their shopping at some hour of the day)
     let shoppers = 0; for (let h = 9; h < 20 && !shoppers; h += 0.5) { g = see('d_grocery', h); shoppers = g.filter((n) => RESIDENTS[n.def.town].job === undefined || RESIDENTS[n.def.town].job.place !== 'd_grocery').length; }
-    const shopper = g.find((n) => n.def.town !== 'mo' && n.def.town !== 'jun'); if (shopper) Actors.talk(shopper); const said = shopper && shopper.bubble && shopper.bubble.text;
+    // (stopped, they talk: what they're about is the first thing they say)
+    const shopper = g.find((n) => n.def.town !== 'mo' && n.def.town !== 'jun'); if (shopper) Actors.talk(shopper); const first = Hud.open === 'talk' && $('panelBody').querySelector('.talk .sub'), said = first ? first.textContent : shopper && shopper.bubble && shopper.bubble.text; Hud.toggle(null);
     g = see('d_grocery', 18.75); const mo2 = g.find((n) => n.def.town === 'mo'); if (mo2) Actors.talk(mo2); const till = Hud.open; Hud.toggle(null);
     const eating = see('d_noodles', 20.1).filter((n) => !n.moving && n.act === 'sit').length;
     Game.s.time = t0; Game.arrive('d_dragon', 'door'); T_.run({}, 10);
@@ -177,7 +184,7 @@ async function run(B, url, vp, name, failures) {
   // saw you do and what you fixed, a rewind gives back the very same block, and
   // the minds go in the save
   const minds = await E(() => {
-    const w = City.w, out = { on: City.on, people: w ? w.people().length : 0, n: TOWN_ORDER.length };
+    const w = City.w, out = { on: City.on, people: w ? w.people().filter((p) => p.def.tags.includes('resident')).length : 0, n: TOWN_ORDER.length }; // (and Lin and Ozzy, talked to)
     const oddRes = Object.values(Game.s.jobs).map((c) => c.res).find((r) => r && RESIDENTS[r]);
     out.fixed = oddRes ? (w.reverie.file(oddRes, 'player') || { tally: {} }).tally.fixed || 0 : -1;
     City.did('talked', 'okonkwo'); // he knows your face
@@ -187,10 +194,36 @@ async function run(B, url, vp, name, failures) {
     Game.pass(2); T_.run({}, 3); const moved = City.w.hash() !== h0;
     Game.s.time = t0; Game.s.day = d0; City.sync();
     out.rewound = moved && City.w.hash() === h0 && JSON.stringify(City.state('sato')) === at0;
-    City.stash(); const copy = JSON.parse(JSON.stringify(Game.s.city)); out.saved = copy.s.now === w.s.now && Object.keys(copy.s.people).length === out.people;
+    City.stash(); const copy = JSON.parse(JSON.stringify(Game.s.city)); out.saved = copy.s.now === w.s.now && Object.keys(copy.s.people).filter((id) => RESIDENTS[id]).length === out.people;
     return out;
   });
   if (!minds.on || minds.people !== minds.n || minds.fixed === 0 || !/saw you take the till apart/.test(minds.remark || '') || !minds.rewound || !minds.saved) fail('the residents\' minds (Tyrell) are not working ' + JSON.stringify(minds));
+  // a witness has it out with you as soon as you talk: Mr Okonkwo saw you take the
+  // till apart. Deny it (believed, they let it go; not, heat and their regard),
+  // own up to Mrs Sato (taken well, she keeps it to herself), or pay Mo off
+  // (taken, quiet and 20 cr; not, heat); talked out, it doesn't come up again;
+  // and the talks are in the minds' save
+  const wit = await E(() => {
+    Hud.toggle(null); const w = City.w, out = [];
+    for (const [id, how] of [['okonkwo', 'bluff'], ['sato', 'straight'], ['mo', 'bribe']]) {
+      const R = RESIDENTS[id], n = { def: { name: R.name, town: id, look: R.look, lines: [] }, x: Player.x, y: Player.y, face: 1 };
+      if (id !== 'okonkwo') { City.did('talked', id); w.sense({ kind: 'strip', actor: 'player', what: 'till', seenBy: [id] }); } // (they know your face, so they know it was you)
+      Game.s.cr = Math.max(Game.s.cr, 40); const h0 = Game.s.heat, c0 = Game.s.cr, r0 = w.fellowship.regard(id, 'player');
+      const opened = Talk.open(n), v = Talk.view, raised = !!(v && v.thread && v.thread.id === 'saw') && /till/.test($('panelBody').textContent);
+      const a = v && v.answers.find((q) => q.approach === how); if (a) Talk.answer(a.i);
+      const b = w.reverie.beliefRecord(id, 'did:player:strip'), o = { id, how, opened, raised, said: !!a, landed: Talk.view && Talk.view.landed, heat: Game.s.heat - h0, paid: c0 - Game.s.cr, regard: Math.round((w.fellowship.regard(id, 'player') - r0) * 100) / 100, quiet: !!(b && b.silenced) };
+      Hud.toggle(null); Talk.open(n); o.again = !!(Talk.view && Talk.view.thread && Talk.view.thread.id === 'saw'); Hud.toggle(null);
+      o.ok = opened && raised && o.said && !o.again && ({
+        bluff: o.landed === 'well' ? o.quiet && !o.heat : o.heat >= 4 && o.regard < 0,
+        straight: o.landed === 'well' ? o.quiet && !o.heat : o.heat >= 3 && o.regard < 0,
+        bribe: o.landed === 'badly' ? o.heat >= 6 && o.regard < 0 && !o.paid : o.quiet && o.paid === 20,
+      })[how];
+      out.push(o);
+    }
+    City.stash(); const saved = JSON.parse(JSON.stringify(Game.s.city)).s.mod.voice;
+    return { out, saved: !!(saved && saved.bonds['okonkwo>player'] && saved.bonds['okonkwo>player'].seen.saw !== undefined) };
+  });
+  if (wit.out.some((o) => !o.ok) || !wit.saved) fail('a witness did not have it out with you ' + JSON.stringify(wit));
   // the city: everyone a resident, with a name of their own and a home, every
   // child at a school, and nobody in the server farm but the people who work there
   const city = await E(() => {
