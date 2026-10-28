@@ -53,7 +53,7 @@ const Props = {
       for (const part of Parts.strip(p)) got.push({ n: 1, name: PART[part.k].name.toLowerCase(), tag: [GRADE[part.g].name.toLowerCase(), part.gauge, part.st === 'worn' ? 'worn' : ''].filter(Boolean).join(', '), icon: Parts.icon(part.k, part.g) });
       this.finish(p); Fx.sparks(p.x, p.y - 8, 10);
       if (got.length) Game.gain(p.x, p.y - 28, got); else Game.toast('Nothing worth taking.');
-      if (OWNED[p.kind]) { const seen = Actors.npcs.some((n) => !n.hidden && Math.abs(n.x - p.x) < 150 && Math.abs(n.y - p.y) < 40); Jobs.heat(OWNED[p.kind] + (seen ? 4 : 0), seen ? 'Somebody saw you do it.' : 'That was somebody\'s.'); City.strip(p); }
+      if (OWNED[p.kind]) { const seen = City.witnesses(p).length > 0; Jobs.heat(OWNED[p.kind] + (seen ? 4 : 0), seen ? 'Somebody saw you do it.' : 'That was somebody\'s.'); City.strip(p); }
       return;
     }
     if (p.kind === 'bed') { Hud.toggle('bed'); return; }

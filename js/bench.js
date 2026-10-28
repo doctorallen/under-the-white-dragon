@@ -85,9 +85,9 @@ const Bench = {
       if (!b.open) { if (this.onDevice(x, y)) this.lift(); return; }
       const k = this.slotAt(x, y); if (!k) { this.sel = null; this.side(); return; }
       const s = b.slots[k], nm = PART[this.D.slots[k].kind].name.toLowerCase();
-      if (!s.p) { this.sel = k; this.say(`An empty mount. It takes ${PART[this.D.slots[k].kind].took}${this.D.slots[k].gauge ? ', ' + this.D.slots[k].gauge + ' gauge' : ''}.`); return; }
+      if (!s.p) { this.sel = k; this.say(`An empty mount. It takes ${PART[this.D.slots[k].kind].took}${this.D.slots[k].gauge ? ', ' + this.D.slots[k].gauge + ' gauge' : ''}.`); this.side(); return; } // (the side shows what you have that fits)
       const open = s.j.filter((j) => j === 'open').length;
-      if (open === 2) { const p = s.p; s.p = null; this.sel = k; if (k === 'board') b.scorch = []; Parts.give(p, true); this.lit[k] = null; this.say(`You lift the ${nm} out and set it on the shelf: ${Parts.name(p).toLowerCase()}, ${PART_STATE[p.st]}.`); }
+      if (open === 2) { const p = s.p; s.p = null; this.sel = k; if (k === 'board') b.scorch = []; Parts.give(p, true); this.lit[k] = null; this.say(`You lift the ${nm} out and set it on the shelf: ${Parts.name(p).toLowerCase()}, ${PART_STATE[p.st]}.`); this.side(); }
       else this.say(open ? `One end of the ${nm}'s still soldered.` : `The ${nm}'s soldered in at both ends. Melt each joint with the iron to free it.`);
     }
   },

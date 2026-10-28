@@ -210,10 +210,54 @@ const City = {
   },
   // ---- the player's doings, as the residents see them ---------------------
   // stripping someone's machine in front of people: they saw, and they'll remember
+  // who sees something done at a prop: in a room, everyone in it; on the
+  // street, whoever's within shouting distance on the same floor
+  witnesses(p) {
+    const room = LEVELS[World.L.id].hidden, near = (n) => room || (Math.abs(n.x - p.x) < 180 && Math.abs(n.y - p.y) < 40);
+    return Actors.npcs.filter((n) => !n.hidden && near(n)).sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x));
+  },
   strip(p) {
-    if (!this.on) return;
-    const seenBy = Actors.npcs.filter((n) => n.def.town && !n.hidden && Math.abs(n.x - p.x) < 150 && Math.abs(n.y - p.y) < 40).map((n) => n.def.town);
-    if (seenBy.length) this.w.sense({ kind: 'strip', actor: 'player', what: p.label || p.kind, seenBy });
+    const saw = this.witnesses(p);
+    const seenBy = saw.filter((n) => n.def.town).map((n) => n.def.town);
+    if (this.on && seenBy.length) this.w.sense({ kind: 'strip', actor: 'player', what: p.label || p.kind, seenBy });
+    this.react(p, saw);
+  },
+  // Said out loud, there and then, by whoever saw: the one whose place it is
+  // first (they work here), then a couple of the others, a beat apart, each
+  // turning to look at you. Some residents have their own way of putting it.
+  REACT: {
+    owner: ['Hey! That\'s my {what}!', 'Put that down! That\'s the {place}\'s {what}!', 'What do you think you\'re doing to my {what}?', 'That {what} is not yours!'],
+    first: ['Hey! That\'s not yours!', 'Did you just strip that {what}?', 'You can\'t just take that apart!', 'Whoa. Whose {what} is that?'],
+    other: ['Yeah, we were going to use that!', '{owner}, are you seeing this?', 'Unbelievable.', 'I\'m not getting involved.', 'Somebody call someone.', 'In front of everyone, too.'],
+    by: {
+      kai: ['Whoa. You\'re gonna get it.', 'Can I have a bit?'], wen: ['In my day we paid for things.', 'Shameful. In broad light.'],
+      sato: ['Oh! Oh, that\'s not right.', 'I\'ll be telling people about this.'], okonkwo: ['Forty years I worked machines. You don\'t treat them like that.'],
+      sal: ['Ha. Nice.', 'Not my business. But nice.'], ueda: ['The regulars use that!', 'Out. Out of my bar.'], mo: ['My shop! My shop!', 'I\'ve got cameras, you know. Probably.'],
+      goro: ['Floor\'s got eyes, friend.', 'That\'s the house\'s.'], vin: ['You\'re done in here.', 'Bad idea. Real bad idea.'], hana: ['Not here. Not in front of the fox.'],
+    },
+  },
+  react(p, saw) {
+    if (!saw.length) return;
+    const R = this.REACT, what = (p.label || p.kind).replace(/^(a|an|the) /i, ''), here = World.L.id;
+    const used = new Set(), pick = (list, n, k) => { const free = list.filter((l) => !used.has(l)), from = free.length ? free : list, l = from[Math.floor(hash(n.i + k, Game.s.day, what.length) * from.length)]; used.add(l); return l; }; // (nobody says the same thing twice)
+    const fill = (t, owner) => t.replace(/\{what\}/g, what).replace(/\{place\}/g, World.L.name.replace(/^the /i, '')).replace(/\{owner\}/g, owner ? owner.def.name : 'Hey');
+    // the one whose place this is: a resident who works in this level, if they're here
+    const owner = saw.find((n) => n.def.town && RESIDENTS[n.def.town].job && TOWN_PLACE[RESIDENTS[n.def.town].job] && TOWN_PLACE[RESIDENTS[n.def.town].job].level === here);
+    const order = owner ? [owner].concat(saw.filter((n) => n !== owner)) : saw;
+    order.slice(0, 3).forEach((n, i) => {
+      const own = R.by[n.def.town];
+      let line = i === 0 ? pick(owner ? R.owner : R.first, n, 1) : pick(R.other.filter((l) => owner || !l.includes('{owner}')), n, 2 + i);
+      if (own && hash(n.i, Game.s.day, 7) < 0.6 && !(i === 0 && owner && n !== owner)) line = pick(own, n, 3);
+      this.said.push({ t: Game.t + 0.35 + i * 1.3, n, text: fill(line, owner) });
+    });
+  },
+  said: [],
+  // what was said, when its moment comes (Town.chatter calls this every frame)
+  speak() {
+    if (!this.said.length) return;
+    const now = Game.t;
+    for (const q of this.said) if (q.t <= now && !q.done) { q.done = true; if (!q.n.hidden && Actors.npcs.includes(q.n)) { q.n.face = Math.sign(Player.x - q.n.x) || q.n.face; Actors.say(q.n, q.text); } }
+    this.said = this.said.filter((q) => !q.done);
   },
   // a deed done for (or to) a resident: 'fixed', 'botched'
   did(verb, res, what) { if (this.on && this.w.get(res)) this.w.did('player', verb, { for: res, what: what || '' }); },

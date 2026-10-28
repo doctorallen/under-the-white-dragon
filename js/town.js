@@ -246,6 +246,7 @@ const Town = {
   },
   // ---- talk: small talk at a table or a counter, greetings in passing
   chatter(dt) {
+    City.speak(); // (what witnesses say, as it comes)
     this.chatT -= dt; if (this.chatT > 0) return; this.chatT = 1.5;
     const people = Actors.npcs.filter((n) => n.def.town && !n.hidden), day = Game.s.day;
     for (const n of people) for (const m of people) {
