@@ -5,7 +5,7 @@
 // residents are moved by Town (town.js) and their minds by Tyrell (city.js).
 // ---------------------------------------------------------------------------
 const NPC_ROLE = {
-  noodles: { verb: 'Eat', prompt: () => 'A bowl of noodles · 6 cr', use: (n) => { const paid = Game.pay({ cr: 6 }); Game.rest(0.25); n.line = (n.line || 0) + 1; Actors.say(n, paid ? n.def.lines[n.line % n.def.lines.length] : 'Eat. Pay me when you\'ve got it.'); Hud.refresh(); } },
+  noodles: { verb: 'Eat', talks: true, prompt: () => 'A bowl of noodles · 6 cr', use: (n) => { const paid = Game.pay({ cr: 6 }); Game.rest(0.25); n.line = (n.line || 0) + 1; Actors.say(n, paid ? n.def.lines[n.line % n.def.lines.length] : 'Eat. Pay me when you\'ve got it.'); Hud.refresh(); } },
   vendor: { verb: 'Trade', prompt: (n) => 'Trade with ' + n.def.name, use: (n) => Hud.toggle('vendor', n) },
   parts: { verb: 'Trade', prompt: (n) => 'Parts from ' + n.def.name, use: (n) => Hud.toggle('partshop', n) },
 };
@@ -46,9 +46,10 @@ const Actors = {
   talk(n) {
     if (n.def.town) { Town.talk(n); return; }
     // work for the bench through them: the talk panel (someone with a trade
-    // and only an offer opens their trade, the work on top)
+    // and only an offer opens their trade, the work on top); Lin and the
+    // customers at her counter talk (talk.js), her noodles a button there
     const acts = Jobs.actionsFor(n.def.name), trade = ['vendor', 'parts'].includes(n.def.role);
-    if (acts.some((a) => a.kind !== 'offer') || (acts.length && !trade)) { n.face = Math.sign(Player.x - n.x) || n.face; Hud.toggle('talk', n); return; }
+    if (acts.some((a) => a.kind !== 'offer') || (acts.length && !trade) || (n.def.role && NPC_ROLE[n.def.role].talks && Talk.can(n))) { n.face = Math.sign(Player.x - n.x) || n.face; if (!Talk.open(n)) Hud.toggle('talk', n); return; }
     if (n.def.role) { NPC_ROLE[n.def.role].use(n); return; }
     const L = n.def.lines; this.say(n, L[n.line % L.length]); n.line++;
     n.face = Math.sign(Player.x - n.x) || n.face;

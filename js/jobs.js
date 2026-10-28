@@ -67,7 +67,7 @@ const Jobs = {
   st(id) { return Game.s.jobs[id] || (Game.s.jobs[id] = { st: 'offer' }); },
   // a job's definition: one of the story's, or a resident's odd job
   def(id) {
-    if (JOBS[id]) return JOBS[id];
+    if (JOBS[id]) { const c = Game.s.jobs[id]; return c && c.pay !== undefined ? Object.assign({}, JOBS[id], { pay: c.pay }) : JOBS[id]; } // (a pay haggled in talk.js)
     const c = Game.s.jobs[id] || this.oddMake(id), T = ODD[c.tpl], R = RESIDENTS[c.res];
     return { name: R.name, title: R.name + '\'s ' + T.name, dev: T.dev, pay: c.pay, honest: true, look: R.look, parts: c.parts, odd: true, res: c.res, offer: T.ask, waiting: T.waiting, thanks: T.thanks };
   },
@@ -153,8 +153,17 @@ const Jobs = {
     if (what === 'take') this.take(id);
     if (what === 'back') this.handBack(id);
   },
-  take(id) {
+  // what they'd go to on the pay, haggled (talk.js): a quarter more, to a five, or
+  // up to what they have (a kid's thirty); nothing for a favor or Lin's radio
+  haggle(id) {
+    const J = this.def(id), pay = J.pay || 0, r5 = (x) => Math.round(x / 5) * 5;
+    if (!pay || J.self) return { more: pay, mid: pay };
+    const T = J.odd ? ODD[(Game.s.jobs[id] || this.oddMake(id)).tpl] : null, more = Math.min(T && T.cap ? T.cap : Infinity, Math.max(pay + 5, r5(pay * 1.25)));
+    return { more: Math.max(pay, more), mid: Math.max(pay, r5((pay + more) / 2)) };
+  },
+  take(id, pay) {
     if (id.startsWith('odd:') && !Game.s.jobs[id]) Game.s.jobs[id] = this.oddMake(id);
+    if (pay !== undefined) this.st(id).pay = pay; // (what was agreed in talk)
     const J = this.def(id), c = this.st(id), o = { job: id, name: J.title, parts: J.parts, rusty: J.rusty };
     if (Game.s.bench) Game.s.aside[id] = Bench.make(J.dev, o); else Bench.put(J.dev, o);
     c.st = 'bench'; c.since = Game.s.day;
@@ -184,20 +193,20 @@ const Jobs = {
       else if (!d || d.do !== 'collect') City.direct(c.res, { do: 'collect', at: 'd_noodles', rank: 1.6, label: 'collect their ' + ODD[c.tpl].name });
     }
   },
-  handBack(id, collected) {
+  handBack(id, collected, talking) {
     const J = this.def(id), c = this.st(id), b = this.dev(id); if (!b || !b.tested) return;
     const t = b.tested, pay = J.pay ? (t.res === 'works' ? J.pay : Math.round(J.pay / 2)) : 0;
     if (!J.odd) Object.assign(c, { st: 'back', day: Game.s.day, res: t.res, loose: t.loose, scorch: b.scorch.length, traced: this.traced(b), parts: Object.fromEntries(Object.entries(b.slots).map(([k, s]) => [k, s.p && { g: s.p.g, how: s.p.how, st: s.p.st, gauge: s.p.gauge }])) });
     if (J.odd) City.did(t.res === 'works' ? 'fixed' : 'botched', c.res, ODD[c.tpl].name);
     if (J.odd) Object.assign(c, { st: 'done', back: Game.s.day, fitted: Object.values(b.slots).filter((s) => s.p && s.p.how !== 'pull').map((s) => ({ k: s.p.k, g: s.p.g })) });
-    // (collected: they came to the White Dragon and Lin handed it over; if you're there, they say so)
+    // (collected: they came to the White Dragon and Lin handed it over; if you're there, they say so; in a talk, they say it there)
     const there = World.L && Actors.npcs.find((n) => n.def.name === J.name && !n.hidden);
-    if (there) Actors.say(there, pay ? J.thanks || 'That\'s it working. Thank you.' : 'I owe you.');
+    if (there && !talking) Actors.say(there, pay ? J.thanks || 'That\'s it working. Thank you.' : 'I owe you.');
     if (pay) { Game.s.cr += pay; Game.toast(collected ? `${J.name} came by the White Dragon for ${J.title.replace(/^.*?'s /, 'the ')}. Lin took ${pay} cr for you.` : J.odd ? `"${J.thanks}" ${J.name} pays you ${pay} cr.` : `${J.name} pays you ${pay} cr.`, 'good'); }
     else Game.toast(collected ? `${J.name} took ${J.title.replace(/^.*?'s /, 'the ')} from Lin, and left a message: "I owe you."` : `${J.name} flexes the hand, slowly. "I owe you."`, 'good');
     if (J.honest) this.heat(J.odd ? -3 : -10, J.odd ? null : 'An honest repair, seen to be done.');
     if (Game.s.bench === b) Bench.clear(); else delete Game.s.aside[id];
-    if (!collected) Hud.toggle(null); else if (Hud.open === 'jobs' || Hud.open === 'pack') Hud.panel(Hud.open);
+    if (!collected && !talking) Hud.toggle(null); else if (Hud.open === 'jobs' || Hud.open === 'pack') Hud.panel(Hud.open);
     this.spawn(); Hud.refresh(); Save.write();
   },
   // a customer's face, for their card (made once)

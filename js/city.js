@@ -63,10 +63,13 @@ const City = {
     const w = (this.w = Tyrell.create({
       seed: 'white-dragon',
       start: now - 5 * 60, // (a save, if there is one, replaces all of this)
-      modules: ['reverie', 'fellowship', 'wormtongue', 'cityspeak', 'mentat', 'ceres'],
+      modules: ['reverie', 'fellowship', 'wormtongue', 'cityspeak', 'mentat', 'ceres', 'voice'],
       shell: { travel: (a, b) => this.travel(a, b) },
       config: { logSize: Dev.shown() ? 6000 : 200, decisions: Dev.shown() ? 12 : 4 }, // (Tyrell mode, in dev, reads more of what happened and why)
-      moduleConfig: { fellowship: { forget: 6 } }, // (a face in the crowd is forgotten in a week: a city's too big to know everyone)
+      moduleConfig: {
+        fellowship: { forget: 6 }, // (a face in the crowd is forgotten in a week: a city's too big to know everyone)
+        voice: { theirs: 1, choices: 4, onWell: ['regard+=0.02'], onBadly: ['regard-=0.02'] }, // (talk.js: what's theirs to raise, they always raise; four answers at most)
+      },
       esper: { every: 60, keep: 26 * 60, sparseAfter: 180, sparseEvery: 240 }, // (hourly for three hours back, every four hours to a day: a big city's snapshots are big)
     }));
     // needs
@@ -109,6 +112,7 @@ const City = {
     w.deed('botched', { feeling: 'wronged', regard: -0.25, memory: 6, sentiment: 'botched a repair' });
     w.wormtongue.crime({ kind: 'strip', severity: 0.6, heat: CITY.reportHeat });
     w.on('report', (r) => { if (r.actor === 'player') this.reported.push(r); });
+    Talk.declare(w); // (conversations: talk.js)
     // the people
     for (let i = 0; i < TOWN_ORDER.length; i++) {
       const id = TOWN_ORDER[i], R = RESIDENTS[id], traits = { honesty: 0.3 + hash(i, 3, 71) * 0.7, talkative: hash(i, 4, 71), courage: hash(i, 5, 71), thrift: hash(i, 6, 71), kid: R.age === 'kid' ? 1 : 0 };
