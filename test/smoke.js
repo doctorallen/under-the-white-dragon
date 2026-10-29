@@ -312,7 +312,13 @@ async function run(B, url, vp, name, failures) {
     const btn = (k, t) => [...body().querySelectorAll(`button[data-devset="${k}"]`)].find((b) => b.textContent === t);
     btn('speed', '−').click(); Dev.frame(1 / 60); const tag = document.getElementById('dev-tag'), slow = Dev.s.speed, tagged = !tag.hidden && tag.textContent;
     btn('speed', '↺').click(); Dev.frame(1 / 60); const back = Dev.s.speed === 1 && tag.hidden;
-    const n = Actors.npcs.find((q) => q.def.town && !q.hidden && q.x > View.cx + 8 && q.x < View.cx + View.w * 0.45), zone = document.getElementById('stickzone');
+    // (someone in the open part of the screen, left of the drawer: whoever's
+    // about, with the camera turned onto them, since who's on screen just
+    // then depends on the clock)
+    const open = (q) => q.x > View.cx + 8 && q.x < View.cx + View.w * 0.45;
+    let n = Actors.npcs.find((q) => q.def.town && !q.hidden && open(q));
+    for (const q of n ? [] : Actors.npcs.filter((p) => p.def.town && !p.hidden)) { Game.cam.x = q.x + View.w * 0.25; render(); if (open(q)) { n = q; break; } }
+    const zone = document.getElementById('stickzone');
     let picked = null, mind = '';
     if (n) {
       const sc = View.scale / devicePixelRatio, at = { clientX: (n.x - View.cx) * sc, clientY: (n.y - 16 - View.cy) * sc, bubbles: true, pointerId: 9 };
