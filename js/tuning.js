@@ -31,4 +31,7 @@ const T = {
     favor: 4, // known this well, they offer what they'd offer nobody else (a friend's price, a lead, a job)
     bands: [1, 2.5, 4], // how well you know each other: a face you know, an acquaintance, you know each other, well
   },
+  // a talk (talk.js): a subject about what was just said is worth this much
+  // more among those offered (Voice's followPull)
+  talk: { follow: 3 },
 };
