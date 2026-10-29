@@ -54,7 +54,7 @@ function loop(now) {
   if (!Game.paused) Steps.advance(dt, step); else Steps.hold();
   const t1 = performance.now();
   render(); const t2 = performance.now();
-  Dev.overlays(); Hud.tick();
+  Dev.overlays(); Hud.tick(); Snd.tick(dt); // (the sound runs on, paused or not: sound.js, music.js)
   if (performance.now() - now < 9 || Game.frame % 4 === 0) Paint.ahead(Game.cam.x, Game.cam.y);
   Dev.times(t1 - t0, t2 - t1, performance.now() - t2); // (how the frame went, for the dev drawer's line)
   requestAnimationFrame(loop);

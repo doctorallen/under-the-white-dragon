@@ -72,7 +72,7 @@ const Life = {
     for (const n of Actors.npcs) if (n.def.smoke && !n.hidden && Math.abs(n.x - Game.cam.x) < 300 && hash(n.i, Math.floor(t * 3), 9) < 0.5 && Math.floor(t * 3) !== n.lastPuff) { n.lastPuff = Math.floor(t * 3); this.puffs.push({ x: n.x + n.face * 6, y: n.y - 24, vy: -9, t: 0, life: 2.2, kind: 'smoke', thin: true }); }
     for (const p of Tycho.fx.age(this.puffs, dt)) { p.y += p.vy * dt; p.x += wind * 0.25 * dt * (p.t / p.life + 0.2); }
     for (const d of L.drips) if (hash(d.x, Math.floor(t * 2 + d.x), 10) < 0.5 && Math.floor(t * 2 + d.x) !== d.last) { d.last = Math.floor(t * 2 + d.x); this.drops.push({ x: d.x, y: d.y0, vy: 0, y1: d.y1 }); }
-    for (const d of this.drops) { d.vy += 500 * dt; d.y += d.vy * dt; if (d.y >= d.y1) { d.done = true; this.splashes.push({ x: d.x, y: d.y1, t: 0 }); } }
+    for (const d of this.drops) { d.vy += 500 * dt; d.y += d.vy * dt; if (d.y >= d.y1) { d.done = true; this.splashes.push({ x: d.x, y: d.y1, t: 0 }); snd('drip', { x: d.x, y: d.y1 }); } }
     this.drops = this.drops.filter((d) => !d.done);
     const rk = L.rain ? Weather.rain() : 0;
     if (rk > 0.05) for (const w of L.wet) for (let k = 0; k < Math.ceil(3 * rk); k++) { const x = Game.cam.x + (hash(Game.frame, k, 21) - 0.5) * View.w; if (x > w.x0 && x < w.x1 && !(L.dry || []).some((r) => x > r[0] && x < r[2] && w.y - 1 > r[1] && w.y - 1 < r[3])) this.splashes.push({ x, y: w.y - 1, t: 0 }); }

@@ -49,6 +49,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 - **Talk** (`talk.js`): stop someone and you talk. They raise what's theirs first (what they saw you strip, a job for the bench, the thing you fixed, a lead), then you ask after their work, their fun, who's at home, what's going round. How you say it (straight, warm, a joke, a question, haggling, a lie, money) lands well or badly by who they are and how things stand, and moves their regard; a witness you talk round, or pay off, keeps quiet.
 - **Knowing people** (`known.js`): what someone tells you about themselves you keep, and it counts. The next time you can ask after it ("How's the sweeping?", their children by name, their hobby), and that lands better than small talk (the answers marked ✎). Someone who knows you takes everything better, is slower to report you, goes higher on a job's pay and gives you a better price at their stall; known well, they offer what they'd offer nobody else, once: a friend's price, a lead only they know of, or a job they'd bring only to you. Doors say who lives behind them only once you know them. Your notebook's People page (the People tab, or People you know on the shelf) has everyone you've talked to: their face, what you remember, how well you know each other and how they stand with you, and the work you've done for them, open and done.
 - **Weather:** rain comes and goes through the day, and the streets shine only while they're wet.
+- **Sound** (`sound.js`, `music.js`), all made in code: the music is the city at night in A minor, and changes with the place (an arpeggio echoing off the street, a koto in Old Town, high voices in the Spires, a machine's beat in the Works, dread in the deep, a kick through the floor of the Coil), sparser by day, darker with heat. Each place sounds like itself: traffic and sirens, the market's voices, drips and pipes under the street, bowls and broth in the bar, the bar's footsteps through the basement's ceiling, rain where it rains and drumming on the roof where it doesn't. The White Dragon's music is Lin's kitchen radio, static until you fix it. Footsteps by what's underfoot, the cutter and the bench's tools as you hold them, doors by what they're made of, people's words as they're said. Music and Sound are each on, soft or off on the pause menu.
 
 ## Files
 
@@ -102,6 +103,8 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/worldmap.js` | The city map: the city in cross-section, every place at its depth; travel from it |
 | `js/dev.js` | Dev tools for testing (with `?dev`), on Tycho's dev drawer: a resident's mind, the city's events, the world, the switches and steppers, go to a place or someone, the overlays; kept in this browser only (`Dev`) |
 | `js/flight.js` | Flying: the spinner's destinations, cabs, the flight through the city |
+| `js/sound.js` | Sound, made in code on Tycho's engine (`Tycho.audio`): the settings, and every effect's recipe (`snd(name)`) |
+| `js/music.js` | The music, by place and hour, and each place's own sound (traffic, rain, rooms, machines); what it hears the game do every frame (footsteps, the cutter, the bench's tools, talk) |
 | `js/skyline.js` | The city behind: layered towers, clouds, giant holograms, the monorail |
 | `js/render.js` | The frame: layers, light, actors, rain, drawn on the GPU through Tycho's renderer (or on 2D canvases without WebGL2, finished in 2D) |
 | `js/hud.js` | HUD and panels (toasts and rising lines on Tycho's `Tycho.ui`) |
@@ -112,6 +115,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `sw.js`, `manifest.webmanifest`, `icons/` | The service worker (network first), the app manifest and icons |
 | `test/check.sh` | Static checks |
 | `test/traces.js` | The runner's movement replayed against traces recorded before it moved onto Tycho (`test/traces.json`), bit for bit |
+| `test/sound.js` | Every cue and every place's music rendered offline, sounding, finite and under full scale, and the game played to hear what it calls for (`--wav` writes previews to listen to in `test/out`) |
 | `test/smoke.js` | Headless play-through on phone and desktop |
 | `test/city.js` | The city run for a few days, for tuning what passes between residents: lines said on screen, exchanges, grudges, regard, what people did, a day's CPU (`npm run city`; not in `npm test`) |
 

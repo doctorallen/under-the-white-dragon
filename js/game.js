@@ -56,5 +56,5 @@ const Game = {
   // what Use just got, a line each ("+1 coil"), rising over where it came from
   gain(x, y, list) { Hud.rising.add(x, y, list); },
   // news, a line or two at the top (the same words again soon keep the last one up)
-  toast(text, kind = '') { Hud.toaster.show(text, kind); },
+  toast(text, kind = '') { Hud.toaster.show(text, kind); if (kind === 'good') snd('good'); },
 };

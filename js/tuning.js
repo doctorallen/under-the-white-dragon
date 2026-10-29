@@ -34,4 +34,23 @@ const T = {
   // a talk (talk.js): a subject about what was just said is worth this much
   // more among those offered (Voice's followPull)
   talk: { follow: 3 },
+  // sound (sound.js, music.js): the mix (the master, the music's and the
+  // effects' levels, the space's echoes, voices at once, the least gap
+  // between two plays of a cue; full within near[0] px of the runner, gone at
+  // near[1], panned dx / panW up to panMax) and soft, a setting at soft.
+  // The music: its beat scheduled `ahead` s; each chord a phrase this likely
+  // (keysChance, kotoChance); the arpeggio's, the beat's, the keys' and the
+  // koto's levels; heat from heatFrom brings the dark layer in up to
+  // heatDark; the music ducks to duckTalk while someone's speaking and to
+  // duckBench at the bench. The places' sound: their bands (bed), events,
+  // rain open and on a roof; what's held (the cutter, the driver, the iron's
+  // sizzle) and what's near (a tube's buzz, a vent's steam, a fire), and the
+  // cab's engine in flight.
+  sound: {
+    master: 0.9, music: 0.45, sfx: 0.85, space: 0.3, voices: 14, gap: 0.03, near: [60, 320], panW: 260, panMax: 0.7, soft: 0.4,
+    ahead: 0.3, keysChance: 0.45, kotoChance: 0.55, arp: 0.07, beat: 0.12, keys: 0.12, koto: 0.11,
+    heatFrom: 40, heatDark: 0.8, duckTalk: 0.65, duckBench: 0.75,
+    bed: 1.8, events: 0.22, rain: 0.055, roof: 0.045,
+    cutter: 0.035, driver: 0.03, sizzle: 0.05, buzz: 0.012, steam: 0.06, fire: 0.08, engine: 0.06,
+  },
 };

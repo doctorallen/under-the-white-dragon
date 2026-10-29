@@ -18,14 +18,14 @@ const Flight = {
     }
     Object.assign(this, { on: true, t: 0, to: level, spawn, cab: !!cab, skip: false });
     Input.useHit = Input.jumpHit = Input.strikeHit = false;
-    this.art = spinner({ cab }); Hud.toggle(null); $('hud').classList.add('flying');
+    this.art = spinner({ cab }); Hud.toggle(null); $('hud').classList.add('flying'); snd('liftoff');
     Game.toast(Game.flag('ozzy:rides') ? 'Ozzy\'s cab lifts off. "Anywhere you want. On me."' : 'The cab lifts off.');
   },
   step(dt) {
     this.t += dt;
     if (Input.take('useHit') || Input.take('jumpHit') || Input.take('strikeHit')) this.skip = true;
     Game.fade = this.t < 0.35 ? 1 - this.t / 0.35 : Math.max(0, (this.t - (this.dur - 0.45)) / 0.45);
-    if (this.t >= this.dur || this.skip) { this.on = false; $('hud').classList.remove('flying'); Game.fade = 1; Game.arrive(this.to, this.spawn); Save.write(); }
+    if (this.t >= this.dur || this.skip) { this.on = false; $('hud').classList.remove('flying'); Game.fade = 1; Game.arrive(this.to, this.spawn); Save.write(); snd('touchdown'); }
   },
   draw(g, gg, w, h) {
     const t = this.t, X = t * 520 + 200, bank = Math.sin(t * 1.3) * 0.5;

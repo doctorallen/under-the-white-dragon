@@ -53,16 +53,17 @@ const Props = {
       for (const [item, a, b] of YIELDS[p.kind]) { const n = a + Math.floor(hash(p.x, p.y, item.length + Game.s.day) * (b - a + 1)); if (n <= 0) continue; if (item === 'cr') { Game.s.cr += n; got.push({ n, name: 'cr', kind: 'cr' }); } else { const took = Game.give(item, n); if (took) got.push({ n: took, name: SALVAGE[item].name.toLowerCase() }); } }
       for (const part of Parts.strip(p)) got.push({ n: 1, name: PART[part.k].name.toLowerCase(), tag: [GRADE[part.g].name.toLowerCase(), part.gauge, part.st === 'worn' ? 'worn' : ''].filter(Boolean).join(', '), icon: Parts.icon(part.k, part.g) });
       this.finish(p); Fx.sparks(p.x, p.y - 8, 10); Game.s.flags.stripped = 1;
+      snd('strip', { x: p.x, y: p.y - 8 }); if (got.some((g) => g.icon)) snd('part'); // (and the coins: music.js hears the money)
       if (got.length) Game.gain(p.x, p.y - 28, got); else Game.toast('Nothing worth taking.');
       if (OWNED[p.kind]) { const seen = City.witnesses(p).length > 0; Jobs.heat(OWNED[p.kind] + (seen ? 4 : 0), seen ? 'Somebody saw you do it.' : 'That was somebody\'s.'); City.strip(p); }
       return;
     }
     if (p.kind === 'bed') { Hud.toggle('bed'); return; }
     if (p.kind === 'workbench') { Bench.open(); return; }
-    if (p.kind === 'door' && !p.to) { Game.toast(Census.doorUse(p)); return; }
-    if (p.kind === 'trapdoor' || p.kind === 'door') { Game.go(p.to[0], p.to[1]); return; }
+    if (p.kind === 'door' && !p.to) { if (p.home) snd('knock'); Game.toast(Census.doorUse(p)); return; }
+    if (p.kind === 'trapdoor' || p.kind === 'door') { snd(p.kind === 'trapdoor' ? 'trapdoor' : 'door', { look: sndDoorLook(p) }); Game.go(p.to[0], p.to[1]); return; }
     if (p.kind === 'cabinet') {
-      this.finish(p); Fx.sparks(p.x, p.y - 20, 6);
+      this.finish(p); Fx.sparks(p.x, p.y - 20, 6); snd('jimmy');
       Parts.give(Parts.make('servo', 'military', { gauge: 'heavy', how: 'take' }));
       Jobs.heat(15, 'Meridian counts its stock.'); return;
     }

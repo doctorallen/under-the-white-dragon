@@ -94,6 +94,7 @@ const Jobs = {
   heat(n, why) {
     const s = Game.s, was = s.heat; s.heat = clamp(Math.round(s.heat + n), 0, 100);
     if (s.heat === was) { Hud.refresh(); return; }
+    if (s.heat > was) snd('heat', { n: s.heat - was });
     if (why && n > 0) Game.toast(`Heat +${s.heat - was}. ${why}`, 'warn');
     if (why && n < 0) Game.toast(`Heat ${s.heat - was}. ${why}`, 'good');
     Hud.refresh();

@@ -4,14 +4,15 @@
   "private": true,
   "description": "Downlevel, a side-scrolling cyberpunk descent through a vertical city, for the phone browser, in plain JavaScript. The game itself needs nothing installed: these are the test tools only.",
   "scripts": {
-    "test": "sh test/check.sh && node test/golden.js && node test/traces.js && node test/gpu.js && node test/smoke.js",
+    "test": "sh test/check.sh && node test/golden.js && node test/traces.js && node test/gpu.js && node test/sound.js && node test/smoke.js",
     "check": "sh test/check.sh",
     "traces": "node test/traces.js",
     "smoke": "node test/smoke.js",
     "city": "node test/city.js",
     "golden": "node test/golden.js",
     "golden:update": "node test/golden.js --update",
-    "gpu": "node test/gpu.js"
+    "gpu": "node test/gpu.js",
+    "sound": "node test/sound.js"
   },
   "devDependencies": {
     "puppeteer-core": "^25.13.0"

@@ -88,7 +88,7 @@ const Player = {
     if (!useHit || !best) return;
     if (best.n) { Actors.talk(best.n); return; }
     if (best.pr.hold) { this.hold = { p: best.p, t: 0, need: best.pr.hold }; return; }
-    if (best.pr.no) { Game.toast(best.pr.text + '.'); return; }
+    if (best.pr.no) { snd('nope'); Game.toast(best.pr.text + '.'); return; }
     Props.use(best.p);
   },
   pose() {

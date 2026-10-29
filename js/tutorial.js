@@ -102,7 +102,7 @@ const Tutorial = {
   tick() {
     const passed = this.G.tick();
     if (!passed.length) return;
-    this.flash = { t: performance.now(), name: passed[passed.length - 1].name };
+    this.flash = { t: performance.now(), name: passed[passed.length - 1].name }; snd('tut');
     Save.write();
     if (Hud.open === 'bench') Bench.side(); else if (TUT_PANELS.includes(Hud.open)) Hud.panel(Hud.open);
   },

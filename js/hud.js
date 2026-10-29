@@ -66,7 +66,8 @@ const Hud = {
   },
   toggle(which, who) {
     if (this.open === 'talk' && (which !== 'talk' || (who && who !== this.who))) Talk.close(); // (a talk ends with its panel)
-    if (!which || (this.open === which && !who)) { this.open = null; this.who = null; $('panel').hidden = true; Game.paused = false; return; }
+    if (!which || (this.open === which && !who)) { if (this.open) snd('close'); this.open = null; this.who = null; $('panel').hidden = true; Game.paused = false; return; }
+    if (!this.open) snd('open');
     this.open = which; this.who = who || this.who; Game.paused = true; $('panel').hidden = false; this.panel(which);
   },
   items(o, cls = '') { return SALVAGE_ORDER.filter((k) => o[k]).map((k) => `<span class="item ${cls}"><i style="background:${SALVAGE[k].col[1]}"></i>${SALVAGE[k].name} <b>${o[k]}</b></span>`).join('') || '<span class="dim">Nothing.</span>'; },
@@ -108,16 +109,17 @@ const Hud = {
         <div class="help"><p><b>Move</b> arrows or WASD, or the left side of the screen. <b>Ladders</b> up and down. <b>Drop</b> through a walkway: down and jump.<br><b>Jump</b> Space or K. <b>Use</b> E (hold it to strip machines). <b>Jobs</b> I. <b>Map</b> M. On a phone: the stick on the left, Use and Jump on the right.</p>
         <p>You fix what the city breaks, in a hidden basement under the White Dragon, Auntie Lin\'s noodle bar, and some of what you fix is illegal. The way down is a trapdoor under the rug in Auntie Lin\'s storeroom. People bring their broken things to the bar: talk to them, take the job down to your bench, and open it up. Hold the driver on the screws (ease off when one binds), probe the parts, melt the bad one free with the iron, seat a good one, solder it, close it up and power it up. Parts come from machines you strip, from the stalls (Mechanic Ana at the Overpass Market, Nurse Kade on Clinic Row), or from places you shouldn\'t be. Hand the fix back to whoever brought it, and sleep on it: in the morning you hear what it did. People on the block bring small repairs too, and tell you where there are parts to be had; better tools from the stalls let you strip the good ones.</p>
         <p>Heat is how close the precinct is to your trapdoor. Illegal work, stolen parts and traceable serials raise it; honest repairs and time bring it down. There\'s a cab stand out front, and a cab gets you home from anywhere: you pay the fare, until someone owes you a ride.</p></div>
-        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button>${Dev.shown() ? '<button data-act="dev">Dev</button>' : ''}<button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
+        <div class="buttons"><button data-act="resume" class="go">Resume</button><button data-act="map">Map</button><button data-act="citymap">The city</button><button data-act="music">Music · ${SndSet.word('music')}</button><button data-act="sfx">Sound · ${SndSet.word('sfx')}</button>${Dev.shown() ? '<button data-act="dev">Dev</button>' : ''}<button data-act="newgame" class="quiet">New game…</button></div>` + Pwa.html();
     }
     const keep = this.lastPanel === which + (this.tab || '') ? body.scrollTop : 0; this.lastPanel = which + (this.tab || '');
     body.innerHTML = h; body.scrollTop = keep;
     // where money changes hands, what you have is in the header
     const crEl = $('panelCr'); crEl.hidden = !['vendor', 'cab', 'pack', 'partshop', 'grocer'].includes(which); crEl.textContent = s.cr + ' cr';
     // the buttons
-    const act = { resume: () => this.toggle(null), sleep: () => { const h0 = Game.hour(); Game.pass(h0 < 8 ? 8 - h0 : 32 - h0); const fresh = Game.s.morning !== Game.s.day; Game.s.morning = Game.s.day; const news = fresh ? Jobs.morning() : (Jobs.news = []); /* (one morning a day: a nap before eight doesn't bring another) */ Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
+    const act = { resume: () => this.toggle(null), sleep: () => { snd('sleep'); const h0 = Game.hour(); Game.pass(h0 < 8 ? 8 - h0 : 32 - h0); const fresh = Game.s.morning !== Game.s.day; Game.s.morning = Game.s.day; const news = fresh ? Jobs.morning() : (Jobs.news = []); /* (one morning a day: a nap before eight doesn't bring another) */ Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
       sellAll: () => { const rate = Known.rate(this.who), cr = bag.worth(s.pack, (k, n) => Math.round(n * SALVAGE[k].price * rate), SALVAGE_ORDER); bag.empty(s.pack, SALVAGE_ORDER); s.cr += cr; s.flags.sold = 1; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
+      music: () => { SndSet.cycle('music'); this.panel('pause'); }, sfx: () => { SndSet.cycle('sfx'); this.panel('pause'); }, // (on, soft, off: sound.js)
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => { this.toggle(null); Dev.drawer.open(); },
       cab: () => { const fare = Flight.cabFare(); if (['d_dragon', 'd_noodles', 'd_cellar'].includes(World.L.id) || (fare && !Game.pay({ cr: fare }))) return; Flight.start('d_dragon', 'enter', true); },
       newgame: (b) => { if (b.dataset.sure) { Save.wipe(); location.reload(); } else { b.dataset.sure = 1; b.textContent = 'Tap again: this wipes your save'; } } };

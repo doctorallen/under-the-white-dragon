@@ -87,7 +87,7 @@ const Bench = {
       const s = b.slots[k], nm = PART[this.D.slots[k].kind].name.toLowerCase();
       if (!s.p) { this.sel = k; this.say(`An empty mount. It takes ${PART[this.D.slots[k].kind].took}${this.D.slots[k].gauge ? ', ' + this.D.slots[k].gauge + ' gauge' : ''}.`); this.side(); return; } // (the side shows what you have that fits)
       const open = s.j.filter((j) => j === 'open').length;
-      if (open === 2) { const p = s.p; s.p = null; this.sel = k; if (k === 'board') b.scorch = []; Parts.give(p, true); this.lit[k] = null; this.say(`You lift the ${nm} out and set it on the shelf: ${Parts.name(p).toLowerCase()}, ${PART_STATE[p.st]}.`); this.side(); }
+      if (open === 2) { snd('pull'); const p = s.p; s.p = null; this.sel = k; if (k === 'board') b.scorch = []; Parts.give(p, true); this.lit[k] = null; this.say(`You lift the ${nm} out and set it on the shelf: ${Parts.name(p).toLowerCase()}, ${PART_STATE[p.st]}.`); this.side(); }
       else this.say(open ? `One end of the ${nm}'s still soldered.` : `The ${nm}'s soldered in at both ends. Melt each joint with the iron to free it.`);
     }
   },
@@ -103,14 +103,14 @@ const Bench = {
     if (r.out !== out) Object.assign(r, { p: 0, bi: 0, bind: -1, out });
     if (r.bind >= 0) {
       r.bind += dt;
-      if (r.bind > 0.45) { sc.strip = true; r.bind = -1; r.bi = 9; this.say('The driver jumps and chews the head. That screw will never hold tight again.'); }
+      if (r.bind > 0.45) { snd('chew'); sc.strip = true; r.bind = -1; r.bi = 9; this.say('The driver jumps and chews the head. That screw will never hold tight again.'); }
       return;
     }
     const binds = sc.strip ? [] : this.binds(h.i, out);
     r.p += dt / (sc.strip ? 1.1 : 0.7);
-    if (r.bi < binds.length && r.p >= binds[r.bi]) { r.p = binds[r.bi]; r.bind = 0; this.say('It\'s binding. Ease off, now, or you\'ll strip it.'); return; }
+    if (r.bi < binds.length && r.p >= binds[r.bi]) { snd('bind'); r.p = binds[r.bi]; r.bind = 0; this.say('It\'s binding. Ease off, now, or you\'ll strip it.'); return; }
     if (r.p >= 1) {
-      sc.st = out ? 'out' : 'in'; this.rt[h.i] = null; h.done = true; this.b.tested = null; // (changed since it was tested: test it again)
+      sc.st = out ? 'out' : 'in'; this.rt[h.i] = null; h.done = true; snd('screw', { in: !out }); this.b.tested = null; // (changed since it was tested: test it again)
       const left = this.b.screws.filter((s) => s.st === 'in').length;
       if (out) this.say(left ? `It's out. ${left} to go.` : 'That\'s the last one. Lift the casing.');
       else this.say(sc.strip ? 'It spins in but never bites. Loose.' : left === this.b.screws.length ? 'All in. Power it up.' : 'Snug.');
@@ -124,22 +124,24 @@ const Bench = {
     const v = (this.heat[key] = (this.heat[key] || 0) + dt * 1.25);
     if (v >= 1 && !h.done) {
       h.done = true;
-      if (s.p && s.j[h.ji] === 'solid') { s.j[h.ji] = 'open'; this.say(s.j.every((j) => j === 'open') ? `Both ends free. Lift the ${nm} out with your hands.` : 'The solder melts and wicks away. That end\'s free.'); }
-      else if (s.p && s.j[h.ji] === 'open') { s.j[h.ji] = 'solid'; this.say(s.j.every((j) => j === 'solid') ? `The ${nm}'s in.` : 'The solder flows and sets bright. One more end.'); }
+      if (s.p && s.j[h.ji] === 'solid') { snd('flow'); s.j[h.ji] = 'open'; this.say(s.j.every((j) => j === 'open') ? `Both ends free. Lift the ${nm} out with your hands.` : 'The solder melts and wicks away. That end\'s free.'); }
+      else if (s.p && s.j[h.ji] === 'open') { snd('flow', { set: true }); s.j[h.ji] = 'solid'; this.say(s.j.every((j) => j === 'solid') ? `The ${nm}'s in.` : 'The solder flows and sets bright. One more end.'); }
       else this.say('There\'s nothing there to solder.');
     }
     if (v >= 1.8) {
       this.heat[key] = 1.15; b.scorch.push([h.tx + Math.round((hash(b.scorch.length, 3, 9) - 0.5) * 4), h.ty + Math.round((hash(b.scorch.length, 4, 9) - 0.5) * 4)]);
-      const bd = b.slots.board && b.slots.board.p;
-      if (b.scorch.length >= 3 && bd && bd.st !== 'burnt') { bd.st = 'burnt'; this.say('The board browns, then blackens. You\'ve cooked it.'); }
+      const bd = b.slots.board && b.slots.board.p, cooked = b.scorch.length >= 3 && bd && bd.st !== 'burnt';
+      snd('scorch', { cooked });
+      if (cooked) { bd.st = 'burnt'; this.say('The board browns, then blackens. You\'ve cooked it.'); }
       else this.say('Too long: the board browns under the tip.');
     }
   },
   probe(k) {
     const b = this.b, s = b.slots[k], S = this.D.slots[k];
-    if (!s.p) { this.say(`Nothing in that mount. It takes ${PART[S.kind].took}${S.gauge ? ', ' + S.gauge + ' gauge' : ''}.`); return; }
+    if (!s.p) { snd('probe'); this.say(`Nothing in that mount. It takes ${PART[S.kind].took}${S.gauge ? ', ' + S.gauge + ' gauge' : ''}.`); return; }
     const bad = s.p.st !== 'ok' || (S.gauge && s.p.gauge !== S.gauge);
     this.lit[k] = s.p.st === 'ok' && !bad ? 'ok' : s.p.st === 'worn' || s.p.st === 'ok' ? 'worn' : 'dead';
+    snd('probe', { r: this.lit[k] });
     this.say(`${GRADE[s.p.g].name} ${PART[S.kind].name.toLowerCase()}: ${Parts.reading(s.p, S)}`);
     b.probed[k] = 1;
     if (bad && b.job) Parts.jot(b.job + ':' + k, `${b.name}: the ${PART[S.kind].name.toLowerCase()} is ${s.p.st === 'ok' ? 'the wrong gauge' : PART_STATE[s.p.st]}. It needs ${PART[S.kind].took}${S.gauge ? ', ' + S.gauge + ' gauge' : ''}.`);
@@ -148,12 +150,12 @@ const Bench = {
   lift() {
     const n = this.b.screws.filter((s) => s.st === 'in').length;
     if (n) { this.say(`Still screwed down: ${n} screw${n > 1 ? 's' : ''} to go.`); return; }
-    this.b.open = true; this.b.tested = null; this.tool = 'probe'; this.fx = null; this.say('The casing comes away. Probe the parts to find what\'s wrong.'); this.side();
+    this.b.open = true; this.b.tested = null; this.tool = 'probe'; this.fx = null; snd('casing'); this.say('The casing comes away. Probe the parts to find what\'s wrong.'); this.side();
   },
-  close() { this.b.open = false; this.tool = 'driver'; this.sel = null; this.lit = {}; this.say('Casing on. Drive the screws home, then power it up.'); this.side(); },
+  close() { snd('casing', { on: true }); this.b.open = false; this.tool = 'driver'; this.sel = null; this.lit = {}; this.say('Casing on. Drive the screws home, then power it up.'); this.side(); },
   fit(id) {
     const k = this.sel, s = this.b.slots[k]; if (!k || s.p) return;
-    s.p = Parts.take(id); s.j = ['open', 'open']; if (k === 'board') this.b.scorch = []; this.lit[k] = null; this.b.probed[k] = 0;
+    snd('seat'); s.p = Parts.take(id); s.j = ['open', 'open']; if (k === 'board') this.b.scorch = []; this.lit[k] = null; this.b.probed[k] = 0;
     this.say(`Seated. Now solder both ends with the iron.`); this.tool = 'iron'; this.side();
   },
   // power it up: what works, what doesn't, and why
@@ -170,7 +172,7 @@ const Bench = {
       else if (S.gauge && s.p.gauge !== S.gauge) worse('half', `the ${nm}'s the wrong gauge`);
     }
     const loose = this.loose(); b.tested = { res, loose, day: Game.s.day };
-    this.fx = { res, t: performance.now() };
+    this.fx = { res, t: performance.now() }; snd('power', { res });
     const list = why.length ? ' ' + why.join(', ').replace(/^./, (c) => c.toUpperCase()) + '.' : '';
     this.say({ works: 'It powers up clean.' + (loose ? ` The casing rattles, though: ${loose} screw${loose > 1 ? 's' : ''} loose.` : ' Good work.'), half: 'It comes on, stutters, and runs. Mostly.' + list, dead: 'Nothing.' + list, smoke: 'A thread of smoke from the seam, and the smell.' + list }[res]);
     Save.write(); this.side();
@@ -218,7 +220,7 @@ const Bench = {
     cv.onpointermove = (e) => { const h = this.hold; if (!h) return; const [x, y] = at(e); h.x = x; h.y = y; if (h.tx !== undefined && (x - h.tx) ** 2 + (y - h.ty) ** 2 > 16 * 16) this.release(); };
     cv.onpointerup = cv.onpointercancel = () => this.release();
     document.querySelectorAll('.benchside button[data-tool]').forEach((x) => (x.onclick = () => { this.tool = x.dataset.tool; this.sel = null; this.msg = ''; this.side(); }));
-    const lens = document.querySelector('.benchside button[data-lens]'); if (lens) lens.onclick = () => { this.lens = !this.lens; this.side(); };
+    const lens = document.querySelector('.benchside button[data-lens]'); if (lens) lens.onclick = () => { this.lens = !this.lens; snd('lens'); this.side(); };
     this.side(); this.loop();
   },
   loop() {

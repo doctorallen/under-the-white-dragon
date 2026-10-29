@@ -46,9 +46,9 @@ const Travel = {
     Hud.toggle(null);
     const sp = this.spawnFor(id), b = this.band(id);
     if (b === 'under' && !['street', 'under'].includes(this.band(World.L.id))) { Game.toast('The manholes are at street level: get a cab down there first.'); return; }
-    if (b === 'street' && this.band(World.L.id) === 'under') { Game.toast('You climb the ladder up into the rain.'); Game.go(id, sp); return; } // (up out of the undercity on foot, no cab)
+    if (b === 'street' && this.band(World.L.id) === 'under') { snd('manhole'); Game.toast('You climb the ladder up into the rain.'); Game.go(id, sp); return; } // (up out of the undercity on foot, no cab)
     if (b === 'sky' || b === 'high' || b === 'street') { const f = Flight.cabFare(); if (f && !Game.pay({ cr: f })) { Game.toast('You can\'t afford the fare: ' + f + ' cr.'); return; } Flight.start(id, sp, true); }
-    else { Game.toast({ under: 'You climb down the ladder into the dark and the drip.', old: 'The old train lurches off into the dark.', works: 'The cage drops, and keeps dropping.', bowels: 'The cage drops past the last of the lights.' }[b]); Game.go(id, sp); }
+    else { snd({ under: 'manhole', old: 'subway' }[b] || 'cage'); Game.toast({ under: 'You climb down the ladder into the dark and the drip.', old: 'The old train lurches off into the dark.', works: 'The cage drops, and keeps dropping.', bowels: 'The cage drops past the last of the lights.' }[b]); Game.go(id, sp); }
   },
   // ---- on foot: the places at one depth run on from each other, west to east
   // as they sit on the city map, so walking off the end of one street takes
