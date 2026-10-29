@@ -14,7 +14,7 @@ function boot() {
   if (loaded && Game.s.px) Player.place(Game.s.px, Game.s.py); else Player.place(sp[0], sp[1]);
   Actors.load(); Life.load();
   Game.cam.x = Player.x; Game.cam.y = Player.y - 30;
-  Hud.init();
+  Hud.init(); Dev.start(); // (the dev drawer, with ?dev: dev.js)
   if (loaded) Game.toast('Back at ' + World.L.name + '.'); else Hud.toggle('intro'); // (a new game opens on how things stand)
   addEventListener('visibilitychange', () => { if (document.hidden) Save.write(); });
   addEventListener('pagehide', () => Save.write());
@@ -50,9 +50,13 @@ const Perf = new Tycho.loop.Governor({ window: 2, below: 40, lower: () => {
 const Steps = new Tycho.loop.Stepper({ dt: 1 / 60, max: 4 });
 function loop(now) {
   const dt = Steps.since(now); Dev.frame(dt); Perf.check(dt, !(Game.paused || Flight.on || document.hidden));
+  const t0 = performance.now();
   if (!Game.paused) Steps.advance(dt, step); else Steps.hold();
-  render(); Hud.tick();
+  const t1 = performance.now();
+  render(); const t2 = performance.now();
+  Dev.overlays(); Hud.tick();
   if (performance.now() - now < 9 || Game.frame % 4 === 0) Paint.ahead(Game.cam.x, Game.cam.y);
+  Dev.times(t1 - t0, t2 - t1, performance.now() - t2); // (how the frame went, for the dev drawer's line)
   requestAnimationFrame(loop);
 }
 addEventListener('load', () => setTimeout(boot, 30));

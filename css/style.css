@@ -122,12 +122,6 @@ body:has(#hud.flying) #pads, body:has(#hud.flying) #stick { visibility: hidden; 
 .mapbtns { position: absolute; right: 12px; top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .mapbtns button { min-width: 44px; }
 .maphint { position: absolute; left: 12px; bottom: 6px; margin: 0; color: var(--dim); font-size: 12px; pointer-events: none; }
-/* dev settings */
-.togs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 14px; }
-.tog { display: flex; gap: 8px; align-items: flex-start; }
-.tog input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--teal); }
-.tog small { display: block; color: var(--dim); font-size: 12px; }
-input[type=range] { width: min(420px, 100%); accent-color: var(--teal); }
 
 /* ---- the detective: the objective line, talk, the test, the enhancer, the case file ---- */
 #where { flex-wrap: wrap; justify-content: center; max-width: 52vw; row-gap: 2px; }
@@ -360,17 +354,15 @@ pre.mind:empty { display: none; }
 #gains .gain i { font-style: normal; color: #b0a6c0; }
 #gains .gain img { height: 12px; width: auto; image-rendering: pixelated; filter: drop-shadow(1px 1px 0 #120c18); }
 
-/* dev: Go to, a band at a time, each street with its rooms */
-.goto h4.band { margin: 10px 0 4px; font-size: 15px; color: #b0a6c0; letter-spacing: 0.06em; text-transform: uppercase; }
-.goto .streets { display: flex; flex-direction: column; gap: 4px; }
-.goto .street { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.goto .street button.room { opacity: 0.85; font-size: 15px; padding: 4px 8px; }
-.goto .street button.room::before { content: '↳ '; color: #8a809a; }
-button[data-devwho] small { color: #a69cb6; }
-.devfind { width: 100%; box-sizing: border-box; margin: 4px 0 8px; padding: 8px 10px; font: inherit; color: #e8e0f0; background: #1a1424; border: 2px solid #3a3050; }
-details.folk { margin: 2px 0; }
-details.folk > summary { cursor: pointer; padding: 4px 0; color: #b0a6c0; letter-spacing: 0.04em; }
-details.folk > .buttons { margin: 4px 0 8px; }
+/* the dev drawer (dev.js, on Tycho's: its own compact look, in the game's
+   colors): docked at the right, with a panel opened beside it making room */
+.dev { --dv-acc: var(--teal); --dv-hi: #ffd040; --dv-bg: rgba(10, 8, 16, 0.94); --dv-line: #2e2640; --dv-btn: #1c1628; --dv-fg: #e4dcee; --dv-dim: #9a8eae; }
+.dev .dev-goto button.room::before { content: '↳ '; color: var(--dv-dim); }
+.dev .dev-goto .dev-chips { margin: 2px 0; }
+.dev details.dev-folk > .buttons { margin: 2px 0 6px; }
+body.dev-on #panel { right: var(--dev-right, 0px); }
+#dev-layer { z-index: 1; }
+#dev-tag { bottom: max(4px, env(safe-area-inset-bottom)); }
 
 /* talk (talk.js): a thread, docked on the right with the two of you in view
    on the left: their face and name, then what's been said, their bubbles on

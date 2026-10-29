@@ -13,7 +13,8 @@
 // out front gives a scrap part; the old game (enemies, guns, gear, cases) is
 // gone; the help and the pack talk
 // about the basement; a cab flies from the stand to the Overpass Market, where Ana
-// sells a part; the map and dev settings work; on Clinic Row Kade's stall
+// sells a part; the map works, and the dev drawer (its tabs, a resident
+// picked by a tap, a stepper and the tag, the overlays, Tyrell mode from it); on Clinic Row Kade's stall
 // opens, and the cabinet gives a Meridian servo and heat; Ozzy's
 // cab flies home for free; every level loads and draws, and
 // nobody in them is only a part ("Commuter") or shares a name; a
@@ -275,9 +276,51 @@ async function run(B, url, vp, name, failures) {
   const ana = await E(() => { const on = () => Actors.npcs.find((n) => n.def.role === 'parts'); T_.until(on); const a = on(); if (!a) return { o: 'nobody on the parts stall at ' + Game.hour().toFixed(2), who: Actors.npcs.map((n) => n.def.name + ':' + (n.townState && n.townState.act)).join(',') }; Player.place(a.x - 14, a.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open, n = Game.s.parts.length; Game.s.cr += 30; Hud.panel('partshop'); const b = document.querySelector('button[data-buypart="0"]'); if (b) b.click(); Hud.toggle(null); return { o, bought: Game.s.parts.length - n }; });
   if (ana.o !== 'partshop' || ana.bought !== 1) fail('the parts stall did not sell a part ' + JSON.stringify(ana));
   await shot('overpass');
-  // the map draws the whole level, and a dev button works
-  const mapdev = await E(() => { Hud.toggle('map'); const ok = !!MapView.cache.d_overpass && MapView.s > 0; Hud.toggle(null); Hud.toggle('dev'); const c0 = Game.s.cr; document.querySelector('button[data-devdo="cr"]').click(); Hud.toggle(null); return { ok, cr: Game.s.cr - c0 }; });
-  if (!mapdev.ok || mapdev.cr !== 1000) fail('the map or dev settings failed ' + JSON.stringify(mapdev));
+  // the map draws the whole level
+  const map = await E(() => { Hud.toggle('map'); const ok = !!MapView.cache.d_overpass && MapView.s > 0; Hud.toggle(null); return ok; });
+  if (!map) fail('the map did not draw the level');
+  // the dev drawer (as with ?dev): docked over the game, which runs on; a
+  // resident tapped on screen is picked and their mind read; a button gives,
+  // a stepper slows the runner, the tag says so, and ↺ puts it back
+  const dv = await E(() => {
+    Dev.flags.s.shown = true; const D = Dev.drawer, body = () => document.getElementById('dev-body');
+    D.open('tools'); const f0 = Game.frame; T_.run({}, 10); render(); const runs = !Game.paused && Game.frame > f0 && !document.getElementById('dev').hidden;
+    const c0 = Game.s.cr; body().querySelector('button[data-devact="cr"]').click(); const cr = Game.s.cr - c0;
+    const btn = (k, t) => [...body().querySelectorAll(`button[data-devset="${k}"]`)].find((b) => b.textContent === t);
+    btn('speed', '−').click(); Dev.frame(1 / 60); const tag = document.getElementById('dev-tag'), slow = Dev.s.speed, tagged = !tag.hidden && tag.textContent;
+    btn('speed', '↺').click(); Dev.frame(1 / 60); const back = Dev.s.speed === 1 && tag.hidden;
+    const n = Actors.npcs.find((q) => q.def.town && !q.hidden && q.x > View.cx + 8 && q.x < View.cx + View.w * 0.45), zone = document.getElementById('stickzone');
+    let picked = null, mind = '';
+    if (n) {
+      const sc = View.scale / devicePixelRatio, at = { clientX: (n.x - View.cx) * sc, clientY: (n.y - 16 - View.cy) * sc, bubbles: true, pointerId: 9 };
+      zone.dispatchEvent(new PointerEvent('pointerdown', at)); zone.dispatchEvent(new PointerEvent('pointerup', at));
+      picked = D.sel === n.def.town && D.current().id; mind = body().textContent;
+    }
+    return { runs, cr, slow, tagged, back, picked, who: n && n.def.town, mind: /Today|Why/.test(mind) && /If they chose now/.test(mind), stick: !!Input.C.stick };
+  });
+  if (!dv.runs || dv.cr !== 1000 || dv.slow !== 0.75 || !/run ×0\.75/.test(dv.tagged || '') || !dv.back) fail('the dev drawer\'s tools failed ' + JSON.stringify(dv));
+  if (!dv.who || dv.picked !== 'mind' || !dv.mind || dv.stick) fail('a tap did not pick a resident and show their mind ' + JSON.stringify(dv));
+  await sleep(300); await shot('drawer-mind');
+  // the events (Tyrell's log and the game's own notes), the world, the overlays drawn over the game
+  const dv2 = await E(() => {
+    const D = Dev.drawer, body = () => document.getElementById('dev-body');
+    D.show('events'); const ev = body().querySelectorAll('.dev-ev').length, kinds = body().querySelectorAll('[data-devkind]').length;
+    D.show('world'); const world = /The city/.test(body().textContent) && /working/.test(body().textContent);
+    D.st.ov.boxes = true; render(); Dev.overlays(); const lay = document.getElementById('dev-layer'), drawn = !!lay && !lay.hidden;
+    return { ev, kinds, world, drawn };
+  });
+  if (!dv2.ev || dv2.kinds < 5 || !dv2.world || !dv2.drawn) fail('the dev drawer\'s events, world or overlays failed ' + JSON.stringify(dv2));
+  await sleep(300); await shot('drawer-world');
+  await E(() => Dev.drawer.show('events')); await sleep(300); await shot('drawer-events');
+  await E(() => Dev.drawer.show('tools')); await sleep(300); await shot('drawer-tools');
+  // Tyrell mode's city map, from the drawer (which steps aside for it); then it's closed again
+  const dv3 = await E(() => {
+    const D = Dev.drawer; D.st.ov.boxes = false;
+    const who = D.sel; document.querySelector('#dev-body button[data-devact="tyrell"]').click(); const tm = Hud.open === 'tyrell' && !D.on && TyrellMode.view === 'city' && TyrellMode.dots.length > 100 && (!who || TyrellMode.sel === who);
+    Hud.toggle(null); D.close(); Dev.flags.s.shown = false; Dev.save();
+    return { tm, closed: !D.on && document.getElementById('dev').hidden };
+  });
+  if (!dv3.tm || !dv3.closed) fail('Tyrell mode did not open from the dev drawer ' + JSON.stringify(dv3));
   // Clinic Row: Kade's stall (whoever's on shift), and the cabinet, for heat
   await E(() => { Game.arrive('d_clinicrow', 'enter'); T_.run({}, 10); });
   const kade = await E(() => { const on = () => Actors.npcs.find((n) => n.def.role === 'parts'); T_.until(on); const k = on(); if (!k) return 'nobody on shift: ' + Actors.npcs.map((n) => n.def.name + ':' + (n.townState && n.townState.act)).join(','); Player.place(k.x - 14, k.y); T_.run({}, 4); T_.tap('useHit'); const o = Hud.open; Hud.toggle(null); return o; });

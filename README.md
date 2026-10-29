@@ -37,7 +37,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | Jobs and pockets | I | Jobs |
 | A cab home | | Cab |
 | The map (drag, zoom) | M | Pause, then Map |
-| Dev settings | | Pause, then Dev settings |
+| Dev tools (with `?dev`) | ` | Dev |
 | Pause | Esc | II |
 
 ## The city
@@ -89,7 +89,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/town.js` | The city's people on screen: the block's own residents and their days, the routes between places, who's in your level now (`Town`, `RESIDENTS`) |
 | `js/census.js` | Every place in the city people live, work and spend time, read from the levels: streets, rooms, doors, spots, posts (`Census`) |
 | `js/folk.js` | The city's population: households made to fill the jobs and homes, with schools and hobbies (`Folk`) |
-| `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`, on Tycho's inspector) |
+| `js/tyrellmode.js` | Dev: Tyrell mode, the city's minds on a map, each mind open to read, and the clock to run (`TyrellMode`, on Tycho's inspector; opened from the dev drawer) |
 | `js/city.js` | The residents' minds: the White Dragon's shell for Tyrell, which runs their days, needs, hobbies, memories and gossip, and saves them (`City`) |
 | `js/chat.js` | What passes between residents, on Tyrell's Bree: small talk, the till and the counter, arguments, grudges and making up, and their words over their heads; greetings in passing, and what witnesses say when you strip a machine (`Chat`, `TOWN_SMALL`, `TOWN_PAIR`, `TOWN_NEWS`, `CHAT_REACT`) |
 | `js/talk.js` | Conversations, on Tyrell's Voice: the ways of coming at someone, the subjects (a job pitched and haggled, the hand-back, a lead, a witness having it out with you, small talk from their lives) and their words (`Talk`) |
@@ -98,7 +98,7 @@ On Android the browser offers to install it the first time you tap; after that, 
 | `js/life.js` | The living city: flicker, adverts, flying traffic, rats and a cat, litter, smoke, drips |
 | `js/map.js` | The map: the whole level painted at once, dragged and zoomed, with markers |
 | `js/worldmap.js` | The city map: the city in cross-section, every place at its depth; travel from it |
-| `js/dev.js` | Dev settings for testing, kept in this browser only: switches, weather, go to a place or someone |
+| `js/dev.js` | Dev tools for testing (with `?dev`), on Tycho's dev drawer: a resident's mind, the city's events, the world, the switches and steppers, go to a place or someone, the overlays; kept in this browser only (`Dev`) |
 | `js/flight.js` | Flying: the spinner's destinations, cabs, the flight through the city |
 | `js/skyline.js` | The city behind: layered towers, clouds, giant holograms, the monorail |
 | `js/render.js` | The frame: layers, light, actors, rain, drawn on the GPU through Tycho's renderer (or on 2D canvases without WebGL2, finished in 2D) |

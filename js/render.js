@@ -47,7 +47,7 @@ const View = {
 
 function render() {
   const V = View, g = V.lg, gg = V.gg, w = V.w, h = V.h, L = World.L;
-  const cx = Math.round(clamp(Game.cam.x - w / 2, 0, Math.max(0, L.w - w))), cy = Math.round(clamp(Game.cam.y - h / 2, 0, Math.max(0, L.h - h)));
+  const cx = Math.round(clamp(Game.cam.x + Dev.shift() - w / 2, 0, Math.max(0, L.w - w))), cy = Math.round(clamp(Game.cam.y - h / 2, 0, Math.max(0, L.h - h)));
   V.cx = cx; V.cy = cy;
   if (V.gpu) V.gpu.frameBegin([g, gg]);
   g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
