@@ -8,8 +8,9 @@
 //           list): what they're doing and until when, needs, mood, why they
 //           chose it and what they'd choose now, today, lately, who they
 //           know (Tycho.inspect.mind), live
-//   Events  what's happening in the city: Tyrell's log (Westmarch) and the
-//           game's own notes (a strip, a job taken or handed back, heat), by kind
+//   Events  what's happening in the city: Tyrell's log (Westmarch, in its
+//           own words) and the game's own notes (a strip, a job taken or
+//           handed back, heat), by kind
 //   World   the clock, the weather, the city's counts, this level and who's
 //           in it, you, the frame
 //   Tools   the switches, the weather, resolution, run speed and time of day
@@ -31,44 +32,23 @@ const DEV_PLAY = [
   { key: 'res', def: 'auto', word: (v) => 'resolution ' + v + '×' },
 ];
 const DEV_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4];
-// Tyrell's log as the events show it: each kind of entry, the events' kind
-// it goes under, and its words (N a person's name, P a place's)
+// Tyrell's log as the events show it: the events' kind each kind of entry
+// goes under (its words are Westmarch's own, describe), anything else
+// 'other'; a conversation's start and who joined or left it are left out
+// (how it ended says it)
 const DEV_LOG = {
-  'set-out': ['moves', (e, d, N, P) => `${N(e.who)} sets out for ${P(d.to)}${d.for ? ' (' + d.for + ')' : ''}`],
-  arrived: ['moves', (e, d, N, P) => `${N(e.who)} gets to ${P(d.place)}`],
-  started: ['doing', (e, d, N, P) => `${N(e.who)}: ${d.action}${d.place ? ' at ' + P(d.place) : ''}${d.target ? ' with ' + N(d.target) : ''}`],
-  finished: ['doing', (e, d, N) => `${N(e.who)} finishes ${d.action}`],
-  stopped: ['doing', (e, d, N) => `${N(e.who)} stops ${d.action} part way (${Math.round((d.frac || 0) * 100)}%)`],
-  interrupted: ['doing', (e, d, N) => `${N(e.who)} is interrupted at ${d.action}: ${d.why}`],
-  failed: ['doing', (e, d, N) => `${N(e.who)} couldn't: ${d.why}`],
-  directed: ['doing', (e, d, N) => `${N(e.who)} is told to ${d.do}${d.label ? ': ' + d.label : ''}`],
-  released: ['doing', (e, d, N) => `${N(e.who)} is let off ${d.do}`],
-  exchanged: ['talk', (e, d, N) => `${N(e.who)} and ${(d.with || []).map(N).join(', ')}: ${d.kind}, ${d.outcome} (${d.turns} turns)`],
-  talked: ['talk', (e, d, N) => `${N(e.who)} talked with ${N(d.by)}${d.threads && d.threads.length ? ': ' + d.threads.join(', ') : ''}`],
-  escalated: ['rows', (e, d, N) => `${N(e.who)}'s ${d.from} with ${N(d.against)} turns into ${d.to}`],
-  grudge: ['rows', (e, d, N) => `${N(e.who)} holds a grudge against ${N(d.against)} (${d.why}, ${(+d.strength).toFixed(2)})`],
-  feud: ['rows', (e, d, N) => `${N(e.who)} and ${N(d.with)}: a feud${d.strength ? ' ' + (+d.strength).toFixed(2) : ' over'} (${d.why})`],
-  mended: ['rows', (e, d, N) => `${N(e.who)} and ${N(d.with)} make it up (${d.why})`],
-  saw: ['rows', (e, d, N) => `${N(e.who)} sees ${N(d.actor)}'s ${d.kind}${d.against ? ' with ' + N(d.against) : ''}`],
-  sensed: ['crime', (e, d, N) => `${N(e.who)}: ${d.kind}${d.what ? ' (' + d.what + ')' : ''}, seen by ${(d.by || []).map(N).join(', ') || 'nobody'}`],
-  witnessed: ['crime', (e, d, N) => `${N(e.who)} saw ${N(d.actor)} ${d.kind}${d.what ? ' the ' + d.what : ''}${d.recognized === false ? ', not knowing who' : ''}`],
-  report: ['crime', (e, d, N) => `${N(e.who)} reports ${N(d.actor)}'s ${d.kind}`],
-  silenced: ['crime', (e, d, N) => `${N(e.who)} keeps quiet about ${N(d.actor)} (${d.how}${d.ok === false ? ', not believed' : ''})`],
-  exposed: ['crime', (e, d, N) => `everyone knows about ${N(e.who)}: ${d.key}`],
-  told: ['word', (e, d, N) => `${N(e.who)} tells ${N(d.to)} about ${d.key}${d.lie ? ' (a lie)' : ''}`],
-  owes: ['word', (e, d, N) => `${N(e.who)} owes ${N(d.target)}`],
-  felt: ['feel', (e, d, N) => `${N(e.who)} feels ${d.label || d.feeling}${d.cause && !/^[a-z]\d+$/.test(d.cause) ? ' (' + N(d.cause) + ')' : ''}`], // (a cause that's only an exchange's number left out)
-  broke: ['feel', (e, d, N) => `${N(e.who)} breaks down: ${d.kind}`],
-  met: ['bonds', (e, d, N) => `${N(e.who)} spends time with ${N(d.target)} (${d.minutes} min)`],
-  regard: ['bonds', (e, d, N) => `${N(e.who)} thinks ${d.by > 0 ? 'more' : 'less'} of ${N(d.target)} (${d.why})`],
-  sentiment: ['bonds', (e, d, N) => `${N(e.who)} feels ${d.label} toward ${N(d.target)}`],
-  did: ['deeds', (e, d, N) => { const t = d.for || d.to || d.target; return `${N(e.who)}: ${d.verb}${t ? ' → ' + N(t) : ''}`; }],
-  fact: ['world', (e, d) => `${d.key} = ${JSON.stringify(d.value)}`],
-  day: ['world', (e, d) => `day ${d.day}`],
-  director: ['world', (e, d, N, P) => `the city's director: ${d.storylet}${d.place ? ' at ' + P(d.place) : ''}`],
-  gone: ['world', (e, d, N) => `${N(e.who)} leaves for good (${d.why})`],
+  'set-out': 'moves', arrived: 'moves',
+  started: 'doing', finished: 'doing', stopped: 'doing', interrupted: 'doing', failed: 'doing', directed: 'doing', released: 'doing',
+  exchanged: 'talk', talk: 'talk', talked: 'talk', said: 'talk', social: 'talk', learned: 'talk', promised: 'talk', promise: 'talk',
+  escalated: 'rows', grudge: 'rows', feud: 'rows', mended: 'rows', saw: 'rows',
+  sensed: 'crime', witnessed: 'crime', report: 'crime', silenced: 'crime', exposed: 'crime',
+  told: 'word', owes: 'word',
+  felt: 'feel', broke: 'feel', changed: 'feel',
+  met: 'bonds', regard: 'bonds', sentiment: 'bonds',
+  did: 'deeds',
+  fact: 'world', day: 'world', director: 'world', joined: 'world', gone: 'world', away: 'world', back: 'world', timer: 'world', tuned: 'world', promoted: 'world',
 };
-const DEV_KINDS = ['strip', 'job', 'heat', 'crime', 'rows', 'word', 'deeds', 'feel', 'world', 'talk', 'bonds', 'doing', 'moves'];
+const DEV_KINDS = ['strip', 'job', 'heat', 'crime', 'rows', 'word', 'deeds', 'feel', 'world', 'talk', 'bonds', 'doing', 'moves', 'other'];
 
 const Dev = {
   flags: DEV_FLAGS,
@@ -94,7 +74,6 @@ const Dev = {
   // the runner in the middle of what's left (view px)
   shift() { const c = this.drawer.cover; return c.right || c.left ? ((c.right - c.left) / 2) * (window.devicePixelRatio || 1) / View.scale : 0; },
   name(id) { return id === 'player' ? 'you' : RESIDENTS[id] ? RESIDENTS[id].name : (City.on && City.w.get(id) && City.w.get(id).name) || id || 'someone'; },
-  place(pid) { return Census.places[pid] ? Census.places[pid].label : pid || 'anywhere'; },
 
   // ---- a setting changed (a stepper, a switch, a choice) ----------------------------------
   set(k, v, d) {
@@ -231,13 +210,13 @@ const Dev = {
     if (!City.on) return [];
     const log = City.w.s.log, last = log[log.length - 1];
     if (log === this.logOf && last === this.logLast && log.length === this.logN) return this.logList;
-    const N = (id) => this.name(id), P = (pid) => this.place(pid), out = [];
+    const W = City.w.westmarch, out = [];
     for (const e of log) {
       let ev = this.made.get(e);
       if (ev === undefined) {
-        const f = DEV_LOG[e.k], dd = e.d || {};
         // (Bree's 'joined' and 'parted' are someone joining or leaving a conversation; the core's 'joined', someone new in the world)
-        ev = !f || (e.k === 'joined' || e.k === 'parted') ? null : { t: e.t, kind: f[0], text: f[1](e, dd, N, P) };
+        const skip = e.k === 'exchange' || ((e.k === 'joined' || e.k === 'parted') && e.d && e.d.id !== undefined);
+        ev = skip ? null : { t: e.t, kind: DEV_LOG[e.k] || 'other', text: (e.who !== undefined ? this.name(e.who) + ' ' : '') + W.describe(e) };
         this.made.set(e, ev);
       }
       if (ev) out.push(ev);
@@ -341,11 +320,11 @@ Dev.drawer = new Tycho.dev.Drawer({
   input: { findwho: (v, el, e, d) => Dev.filterWho(d.body), findmind: (v, el, e, d) => { Dev.q = el.value; d.refresh(true); } },
   pick: (x, y) => Dev.pick(x, y), selectTab: 'mind',
   events: {
-    most: 800, kinds: DEV_KINDS, apart: ['talk', 'bonds', 'doing', 'moves'], find: true,
+    most: 800, kinds: DEV_KINDS, apart: ['talk', 'bonds', 'doing', 'moves', 'other'], find: true,
     clock: () => City.minutes(),
     when: (t) => { const h = (t / 60) % 24; return 'd' + Math.floor(t / 1440) + ' ' + String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0'); },
     from: () => Dev.logEvents(),
     colors: { strip: '#ff4a6a', job: '#3aff80', heat: '#ffb040', crime: '#ff7a9a', rows: '#ff9a5a', talk: '#8ae6a0', word: '#c8a0ff', feel: '#ffd040', deeds: '#3af0e0' },
-    hint: (f) => (['talk', 'bonds', 'doing', 'moves'].includes(f) ? '<small>left out of all: there are a lot of them</small>' : ''),
+    hint: (f) => (['talk', 'bonds', 'doing', 'moves', 'other'].includes(f) ? '<small>left out of all: there are a lot of them</small>' : ''),
   },
 });
