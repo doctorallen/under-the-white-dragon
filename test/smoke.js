@@ -317,7 +317,10 @@ async function run(B, url, vp, name, failures) {
     // then depends on the clock)
     const open = (q) => q.x > View.cx + 8 && q.x < View.cx + View.w * 0.45;
     let n = Actors.npcs.find((q) => q.def.town && !q.hidden && open(q));
-    for (const q of n ? [] : Actors.npcs.filter((p) => p.def.town && !p.hidden)) { Game.cam.x = q.x + View.w * 0.25; render(); if (open(q)) { n = q; break; } }
+    // (and if the street's empty, as it can be late at night, the noodle bar at dinner)
+    const look = () => { for (const q of Actors.npcs.filter((p) => p.def.town && !p.hidden)) { Game.cam.x = q.x + View.w * 0.25; render(); if (open(q)) return q; } return null; };
+    if (!n) n = look();
+    if (!n) { Game.s.time = 19.2; Game.arrive('d_noodles', 'door'); T_.run({}, 30); render(); n = look(); }
     const zone = document.getElementById('stickzone');
     let picked = null, mind = '';
     if (n) {
