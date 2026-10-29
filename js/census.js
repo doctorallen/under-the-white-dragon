@@ -175,14 +175,15 @@ const Census = {
   mapLabel(p) {
     const pl = this.places[p.place]; if (!pl) return p.label || 'Door';
     if (!pl.home) return pl.label;
-    const hh = Folk.householdsAt(pl.id);
-    return hh.length === 1 ? hh[0].label : hh.length ? `${pl.label} · ${hh.length} homes` : pl.label + ' · empty';
+    const hh = Folk.householdsAt(pl.id); if (!hh.length) return pl.label + ' · empty';
+    const named = Known.door(pl, hh, true); if (named !== null) return named; // (who lives there, once you know them: known.js)
+    return hh.length === 1 ? hh[0].label : `${pl.label} · ${hh.length} homes`;
   },
-  // what a door says, and what knocking on it does
+  // what a door says, and what knocking on it does (who lives there, once you know them)
   doorText(p) {
     const pl = this.places[p.place];
     if (!pl) return p.label || 'A door';
-    if (pl.home) { const hh = Folk.householdsAt(pl.id); return (hh.length === 1 ? hh[0].label : pl.label + (hh.length ? ` · ${hh.length} homes` : '')); }
+    if (pl.home) { const hh = Folk.householdsAt(pl.id), named = hh.length ? Known.door(pl, hh) : null; if (named !== null) return named; return (hh.length === 1 ? hh[0].label : pl.label + (hh.length ? ` · ${hh.length} homes` : '')); }
     const open = !pl.hours || Props.openNow(pl.hours), n = Folk.inside(pl.id);
     return pl.label + (open ? (n ? ` · ${n} inside` : ' · open') : ` · shut till ${String(pl.hours[0]).padStart(2, '0')}:00`);
   },

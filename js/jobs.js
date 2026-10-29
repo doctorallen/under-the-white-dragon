@@ -153,13 +153,24 @@ const Jobs = {
     if (what === 'take') this.take(id);
     if (what === 'back') this.handBack(id);
   },
-  // what they'd go to on the pay, haggled (talk.js): a quarter more, to a five, or
-  // up to what they have (a kid's thirty); nothing for a favor or Lin's radio
+  // what they'd go to on the pay, haggled (talk.js): a quarter more, and more
+  // the better they know you (known.js), to a five, or up to what they have (a
+  // kid's thirty); nothing for a favor or Lin's radio
   haggle(id) {
     const J = this.def(id), pay = J.pay || 0, r5 = (x) => Math.round(x / 5) * 5;
     if (!pay || J.self) return { more: pay, mid: pay };
-    const T = J.odd ? ODD[(Game.s.jobs[id] || this.oddMake(id)).tpl] : null, more = Math.min(T && T.cap ? T.cap : Infinity, Math.max(pay + 5, r5(pay * 1.25)));
+    const O = J.odd ? ODD[(Game.s.jobs[id] || this.oddMake(id)).tpl] : null, more = Math.min(O && O.cap ? O.cap : Infinity, Math.max(pay + 5, r5(pay * (1.25 + Known.haggleUp(this.whose(id))))));
     return { more: Math.max(pay, more), mid: Math.max(pay, r5((pay + more) / 2)) };
+  },
+  // whose a job is: one of the three at the counter, or a resident's
+  whose(id) { return JOBS[id] ? id : (Game.s.jobs[id] || this.oddMake(id)).res; },
+  // something of theirs that's broken, brought only to you once you know
+  // each other well (a favor: known.js): one of the things ODD says they
+  // own, or a thing like it; an odd job of its own, today's
+  favorJob(res) {
+    const R = RESIDENTS[res]; if (!R) return null;
+    const own = Object.keys(ODD).filter((k) => ODD[k].who.includes(res)), pool = own.length ? own : Object.keys(ODD).filter((k) => (k === 'drone') === (R.age === 'kid'));
+    return 'odd:' + Game.s.day + ':' + res + ':' + pool[Math.floor(hash(Town.idn(res), pool.length, 109) * pool.length)] + ':favor';
   },
   take(id, pay) {
     if (id.startsWith('odd:') && !Game.s.jobs[id]) Game.s.jobs[id] = this.oddMake(id);
@@ -196,9 +207,10 @@ const Jobs = {
   handBack(id, collected, talking) {
     const J = this.def(id), c = this.st(id), b = this.dev(id); if (!b || !b.tested) return;
     const t = b.tested, pay = J.pay ? (t.res === 'works' ? J.pay : Math.round(J.pay / 2)) : 0;
+    c.paid = pay; // (what it came to, for your notebook: known.js)
     if (!J.odd) Object.assign(c, { st: 'back', day: Game.s.day, res: t.res, loose: t.loose, scorch: b.scorch.length, traced: this.traced(b), parts: Object.fromEntries(Object.entries(b.slots).map(([k, s]) => [k, s.p && { g: s.p.g, how: s.p.how, st: s.p.st, gauge: s.p.gauge }])) });
     if (J.odd) City.did(t.res === 'works' ? 'fixed' : 'botched', c.res, ODD[c.tpl].name);
-    if (J.odd) Object.assign(c, { st: 'done', back: Game.s.day, fitted: Object.values(b.slots).filter((s) => s.p && s.p.how !== 'pull').map((s) => ({ k: s.p.k, g: s.p.g })) });
+    if (J.odd) Object.assign(c, { st: 'done', back: Game.s.day, out: t.res, fitted: Object.values(b.slots).filter((s) => s.p && s.p.how !== 'pull').map((s) => ({ k: s.p.k, g: s.p.g })) });
     // (collected: they came to the White Dragon and Lin handed it over; if you're there, they say so; in a talk, they say it there)
     const there = World.L && Actors.npcs.find((n) => n.def.name === J.name && !n.hidden);
     if (there && !talking) Actors.say(there, pay ? J.thanks || 'That\'s it working. Thank you.' : 'I owe you.');
@@ -293,7 +305,7 @@ const Jobs = {
     for (const id in s.jobs) {
       const c = s.jobs[id]; if (!id.startsWith('odd:') || c.st !== 'done' || c.checked || c.back === undefined || c.back >= s.day) continue;
       c.checked = true; const R = RESIDENTS[c.res], bad = (c.fitted || []).find((p, i) => p.g === 'scrap' && hash(s.day, i, id.length + 107) < 0.35);
-      if (bad) { s.flags['sour:' + c.res] = s.day + 3; City.did('botched', c.res, ODD[c.tpl].name); news.push(`${R.name}'s ${ODD[c.tpl].name} died again overnight: the scrap ${PART[bad.k].name.toLowerCase()} you fitted gave out. ${R.name} isn't asking for the money back, but won't be bringing you anything for a few days.`); }
+      if (bad) { c.died = s.day; s.flags['sour:' + c.res] = s.day + 3; City.did('botched', c.res, ODD[c.tpl].name); news.push(`${R.name}'s ${ODD[c.tpl].name} died again overnight: the scrap ${PART[bad.k].name.toLowerCase()} you fitted gave out. ${R.name} isn't asking for the money back, but won't be bringing you anything for a few days.`); }
     }
     Tips.morning(news);
     City.morning(news); // (what's going round the block about you)

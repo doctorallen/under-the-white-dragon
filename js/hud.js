@@ -80,11 +80,11 @@ const Hud = {
     const s = Game.s, body = $('panelBody'), title = $('panelTitle'); let h = '';
     const talking = which === 'talk' && Talk.showing(this.who); $('panel').classList.toggle('talking', talking); if (!talking) $('panel').classList.remove('typing');
     if (which === 'pack') {
-      // your jobs, and what's in your pockets
-      const tab = this.tab === 'items' ? 'items' : 'jobs';
-      title.textContent = tab === 'jobs' ? 'Jobs' : 'Pockets';
-      h += '<nav class="tabs">' + [['jobs', 'Jobs'], ['items', 'Items']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
-      h += tab === 'items' ? itemsTab(s) : Jobs.list();
+      // your jobs, what's in your pockets, and the people you know (your notebook's People page: known.js)
+      const tab = ['items', 'people'].includes(this.tab) ? this.tab : 'jobs';
+      title.textContent = { jobs: 'Jobs', items: 'Pockets', people: 'Notebook · People' }[tab];
+      h += '<nav class="tabs">' + [['jobs', 'Jobs'], ['items', 'Items'], ['people', 'People']].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${n}</button>`).join('') + '</nav>';
+      h += tab === 'items' ? itemsTab(s) : tab === 'people' ? Known.html() : Jobs.list();
     } else if (which === 'bed') {
       title.textContent = 'Your cot';
       h += `<p class="sub">A cot behind the shelves, the bar's noise through the ceiling. It's ${Game.clock()}, day ${s.day}.</p><div class="buttons"><button data-act="sleep" class="go">Sleep till morning</button></div><p class="dim">In the morning you hear how your fixes held up, and who's been asking.</p>`;
@@ -93,9 +93,9 @@ const Hud = {
       title.textContent = 'Call a cab';
       h += `<p class="sub">${home ? 'You\'re home already.' : `A cab home, from anywhere in the city: ${fare} cr. It sets you down out front of the White Dragon.`}</p><div class="buttons"><button data-act="cab" class="go" ${!home && s.cr >= fare ? '' : 'disabled'}>${fare ? `Call a cab · ${fare} cr` : 'Call Ozzy · free'}</button></div>${!home && s.cr < fare ? '<p class="dim">You can\'t afford the fare.</p>' : ''}`;
     } else if (which === 'vendor') {
-      const n = this.who, rate = (n && n.def.rate) || 1, worth = bag.worth(s.pack, (k, c) => Math.round(c * SALVAGE[k].price * rate), SALVAGE_ORDER);
+      const n = this.who, rate = Known.rate(n), worth = bag.worth(s.pack, (k, c) => Math.round(c * SALVAGE[k].price * rate), SALVAGE_ORDER); // (better for you, the better they know you: known.js)
       title.textContent = n ? n.def.name : 'Vendor';
-      h += `<p class="sub">${n ? n.def.lines[0] : ''}</p>${talkBtn(n)}<div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${bag.count(s.pack, k)}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
+      h += `<p class="sub">${n ? n.def.lines[0] : ''}</p>${n ? Known.deal(n, false) : ''}${talkBtn(n)}<div class="rows">` + SALVAGE_ORDER.map((k) => `<div class="row"><img class="rowico" src="${this.icon(k)}" alt=""><div class="grow"><b>${SALVAGE[k].name}</b><small>${Math.round(SALVAGE[k].price * rate)} cr each · you carry ${bag.count(s.pack, k)}</small></div><button data-sell="${k}" ${s.pack[k] ? '' : 'disabled'}>Sell</button></div>`).join('') + '</div>';
       h += `<div class="buttons"><button data-act="sellAll" ${worth ? '' : 'disabled'}>Sell everything for ${worth} cr</button></div>`;
     } else if (PANELS[which]) {
       const [t, html] = PANELS[which](s); title.textContent = t; h += html;
@@ -116,7 +116,7 @@ const Hud = {
     const crEl = $('panelCr'); crEl.hidden = !['vendor', 'cab', 'pack', 'partshop', 'grocer'].includes(which); crEl.textContent = s.cr + ' cr';
     // the buttons
     const act = { resume: () => this.toggle(null), sleep: () => { const h0 = Game.hour(); Game.pass(h0 < 8 ? 8 - h0 : 32 - h0); const fresh = Game.s.morning !== Game.s.day; Game.s.morning = Game.s.day; const news = fresh ? Jobs.morning() : (Jobs.news = []); /* (one morning a day: a nap before eight doesn't bring another) */ Actors.load(); Game.toast('You sleep. Morning, or what passes for it.', 'good'); if (news.length) this.toggle('morning'); else this.toggle(null); this.refresh(); Save.write(); },
-      sellAll: () => { const rate = (this.who && this.who.def.rate) || 1, cr = bag.worth(s.pack, (k, n) => Math.round(n * SALVAGE[k].price * rate), SALVAGE_ORDER); bag.empty(s.pack, SALVAGE_ORDER); s.cr += cr; s.flags.sold = 1; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
+      sellAll: () => { const rate = Known.rate(this.who), cr = bag.worth(s.pack, (k, n) => Math.round(n * SALVAGE[k].price * rate), SALVAGE_ORDER); bag.empty(s.pack, SALVAGE_ORDER); s.cr += cr; s.flags.sold = 1; Game.toast('Sold for ' + cr + ' cr.'); this.refresh(); Save.write(); },
       install: () => Pwa.install(),
       map: () => this.toggle('map'), citymap: () => this.toggle('citymap'), dev: () => { this.toggle(null); Dev.drawer.open(); },
       cab: () => { const fare = Flight.cabFare(); if (['d_dragon', 'd_noodles', 'd_cellar'].includes(World.L.id) || (fare && !Game.pay({ cr: fare }))) return; Flight.start('d_dragon', 'enter', true); },
@@ -128,6 +128,6 @@ const Hud = {
     if (which === 'map') MapView.attach();
     if (which === 'tyrell') TyrellMode.attach();
     body.querySelectorAll('button[data-tab]').forEach((b) => (b.onclick = () => { this.tab = b.dataset.tab; this.panel('pack'); }));
-    body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = (this.who && this.who.def.rate) || 1, n = bag.count(s.pack, k); s.cr += Math.round(n * SALVAGE[k].price * rate); bag.empty(s.pack, [k]); s.flags.sold = 1; this.refresh(); }));
+    body.querySelectorAll('button[data-sell]').forEach((b) => (b.onclick = () => { const k = b.dataset.sell, rate = Known.rate(this.who), n = bag.count(s.pack, k); s.cr += Math.round(n * SALVAGE[k].price * rate); bag.empty(s.pack, [k]); s.flags.sold = 1; this.refresh(); }));
   },
 };
