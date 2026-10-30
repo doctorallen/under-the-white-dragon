@@ -74,6 +74,38 @@ const CITY_FREE = {
   laundry: { relieves: { chores: 0.7 }, minutes: 50, price: 3 },
   clinic: { relieves: { energy: 0.05 }, minutes: 60, base: 0.012, cooldown: 4 * 1440, adult: true },
 };
+// How the city's days are told (Irulan, the narrator: the dev drawer's
+// Mind): what each action is in a sentence after someone's name, done
+// ('did') and still going ('doing'); {place} is where (left out when the
+// walk there says it), {target} whoever it's with. A list is variants.
+const CITY_TELL = {
+  sleep: { did: 'slept', doing: 'was asleep' },
+  home: { did: ['took it easy', 'put their feet up'], doing: 'was taking it easy' },
+  eat_home: { did: ['ate', 'had something from the cupboard'], doing: 'was eating' },
+  eat: { did: ['ate at {place}', 'had a bowl at {place}', 'got something to eat at {place}'], doing: 'was eating at {place}' },
+  drink: { did: ['had a drink at {place}', 'had a few at {place}'], doing: 'was drinking at {place}' },
+  pachi: { did: 'played pachinko at {place}', doing: 'was playing pachinko at {place}' },
+  watch: { did: 'saw a picture at {place}', doing: 'was watching a picture at {place}' },
+  dance: { did: 'danced at {place}', doing: 'was dancing at {place}' },
+  arcade: { did: 'played the cabinets at {place}', doing: 'was playing the cabinets at {place}' },
+  bathe: { did: 'had a soak at {place}', doing: 'was soaking at {place}' },
+  pray: { did: ['said a prayer at {place}', 'lit incense at {place}'], doing: 'was praying at {place}' },
+  loaf: { did: ['killed time at {place}', 'hung about {place}'], doing: 'was hanging about {place}' },
+  festival: { did: 'took in the festival at {place}', doing: 'was at the festival at {place}' },
+  play: { did: 'played at {place}', doing: 'was playing at {place}' },
+  shop: { did: 'did some shopping at {place}', doing: 'was shopping at {place}' },
+  laundry: { did: 'did the laundry at {place}', doing: 'was doing the laundry at {place}' },
+  clinic: { did: 'was seen to at {place}', doing: 'was waiting to be seen at {place}' },
+  work: { did: ['worked a shift at {place}', 'put in a shift at {place}'], doing: 'was at work at {place}' },
+  stock: { did: 'stocked the shelves at {place}', doing: 'was stocking the shelves at {place}' },
+  sweep: { did: 'swept up at {place}', doing: 'was sweeping up at {place}' },
+  school: { did: 'had lessons at {place}', doing: 'was in class at {place}' },
+  browse: { did: 'browsed at {place}', doing: 'was browsing at {place}' },
+  visit: { did: 'called round at {place}', doing: 'was visiting at {place}' },
+  host: { did: 'had people round', doing: 'had people round' },
+  pay: { did: 'stopped in at {place}', doing: 'was at the counter at {place}' }, // (the paying is the till's: chat.js)
+  collect: { did: 'picked something up from Lin at {place}', doing: 'was picking something up from Lin at {place}' },
+};
 const City = {
   // (the glue every game with people on Tyrell has is Tycho's bridge,
   // Tycho.minds: the clock, the save, seats, presence, travel times,
@@ -128,7 +160,7 @@ const City = {
     // actions: what the days are made of, and what needs and hobbies choose
     const night = { name: 'night', input: 'hour', range: [0, 24], curve: [[0, 1], [6 / 24, 1], [8 / 24, 0.15], [20 / 24, 0.3], [22.5 / 24, 1], [1, 1]] };
     const near = { name: 'near', input: 'travel', range: [0, 180], curve: [[0, 1], [0.15, 0.75], [0.5, 0.25], [1, 0.05]] }, close = { name: 'near home', input: 'travel', range: [0, 60], curve: [[0, 1], [0.3, 0.5], [0.7, 0.03], [1, 0]] };
-    const A = (id, o) => w.action(Object.assign({ id, minutes: 60, pose: TOWN_POSE[id] || 'stand' }, o));
+    const A = (id, o) => w.action(Object.assign({ id, minutes: 60, pose: TOWN_POSE[id] || 'stand', tell: CITY_TELL[id] }, o));
     A('sleep', { at: 'home', minutes: [420, 480], relieves: { energy: 0.95 }, rates: { hunger: 0.4, fun: 0.2, company: 0.2, chores: 0.2 }, tags: ['sleep'], considerations: [night] });
     A('home', { at: 'home', relieves: { energy: 0.12, fun: 0.08 }, base: 0.04, label: 'at home' });
     A('eat_home', { at: 'home', minutes: 25, relieves: { hunger: 0.45 }, pose: 'sit', label: 'something from the cupboard' });
@@ -149,6 +181,9 @@ const City = {
     // coming by the White Dragon for something you fixed (Jobs.collections sends them; never arriving in the night)
     A('collect', { at: 'd_noodles', minutes: 12, rank: -1, hours: [7, 22.5], fill: false, label: 'picking something up from Lin' });
     // what deeds mean to the people they're done to
+    // (something broken off: what they were doing, till what came first)
+    const TILL = { 'something mattered more': 'something else came up', 'time for something else': 'it was time for something else', 'went away': 'they had to go' };
+    w.irulan.words('interrupted', (e) => { const T = CITY_TELL[e.d.action], doing = T && [].concat(T.doing)[0]; return doing ? doing.replace(/ (at|about) \{place\}/, '') + ' till ' + (TILL[e.d.why] || e.d.why.replace(/^joined /, 'they joined ').replace(/^following /, 'they went along with ')) : undefined; });
     w.deed('fixed', { feeling: 'helped', regard: 0.2, memory: 6, sentiment: 'fixed my things' });
     w.deed('botched', { feeling: 'wronged', regard: -0.25, memory: 6, sentiment: 'botched a repair' });
     w.wormtongue.crime({ kind: 'strip', severity: 0.6, heat: CITY.reportHeat });

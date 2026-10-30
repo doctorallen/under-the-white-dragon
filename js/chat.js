@@ -151,15 +151,15 @@ const Chat = {
     cs.addLines(lines);
     // the kinds: small talk, and what can come of it
     // (a word in passing meets no need: a chat at home shouldn't keep anyone from the bar, the bath or the park)
-    b.kind({ id: 'chat', label: 'a word or two', tags: ['talk', 'friendly'], topics: ['tag:small'], if: [beside], escalates: 'argue', weight: [{ name: 'talkative', input: 'nature.talkative', out: [0.5, 1.5] }] });
-    b.kind({ id: 'argue', label: 'words', tags: ['hostile', 'talk'], to: ['grudge>0.1'], if: [beside], turns: [2, 4], base: -1, traits: { temper: -1, patience: 1 }, regard: 1.5, weight: [{ name: 'grudge', input: 'grudge', out: [0.1, 1.5] }], on: { row: { memory: 5 } } });
-    b.kind({ id: 'apologize', label: 'an apology', tags: ['friendly'], to: ['grudged>0.05'], if: [beside], turns: 2, base: 0.5, traits: { forgiveness: 1.5, temper: -0.5 }, skill: { warmth: 0.5 }, mends: 0.5, weight: [{ name: 'their grudge', input: 'grudged', out: [0.3, 2] }, { name: 'warmth', input: 'nature.warmth', out: [0.3, 1.5] }], on: { sour: { feel: ['snubbed', null] }, row: { feel: ['snubbed', null] } } });
-    b.kind({ id: 'make_up', label: 'making up', tags: ['friendly'], to: ['grudge>0.05', 'grudged>0.05'], if: [beside], turns: 2, base: 0.5, traits: { forgiveness: 1.5 }, mends: 0.6, mutual: true, weight: [{ name: 'forgiveness', input: 'nature.forgiveness', out: [0.3, 2] }] });
-    b.kind({ id: 'avoid', label: 'the cold shoulder', tags: ['hostile'], to: ['grudge>0.3'], turns: 1, base: -1, regard: 0.5, grudge: 0, weight: [{ name: 'grudge', input: 'grudge', out: [0, 2] }], on: { end: { feel: [null, 'snubbed'] } } });
+    b.kind({ id: 'chat', label: 'a word or two', tell: ['had a word with {with}', 'passed the time with {with}', 'chatted with {with}'], tags: ['talk', 'friendly'], topics: ['tag:small'], if: [beside], escalates: 'argue', weight: [{ name: 'talkative', input: 'nature.talkative', out: [0.5, 1.5] }] });
+    b.kind({ id: 'argue', label: 'words', tell: ['had words with {with}', 'argued with {with}'], tags: ['hostile', 'talk'], to: ['grudge>0.1'], if: [beside], turns: [2, 4], base: -1, traits: { temper: -1, patience: 1 }, regard: 1.5, weight: [{ name: 'grudge', input: 'grudge', out: [0.1, 1.5] }], on: { row: { memory: 5 } } });
+    b.kind({ id: 'apologize', label: 'an apology', tell: 'said sorry to {with}', tags: ['friendly'], to: ['grudged>0.05'], if: [beside], turns: 2, base: 0.5, traits: { forgiveness: 1.5, temper: -0.5 }, skill: { warmth: 0.5 }, mends: 0.5, weight: [{ name: 'their grudge', input: 'grudged', out: [0.3, 2] }, { name: 'warmth', input: 'nature.warmth', out: [0.3, 1.5] }], on: { sour: { feel: ['snubbed', null] }, row: { feel: ['snubbed', null] } } });
+    b.kind({ id: 'make_up', label: 'making up', tell: 'made it up with {with}', tags: ['friendly'], to: ['grudge>0.05', 'grudged>0.05'], if: [beside], turns: 2, base: 0.5, traits: { forgiveness: 1.5 }, mends: 0.6, mutual: true, weight: [{ name: 'forgiveness', input: 'nature.forgiveness', out: [0.3, 2] }] });
+    b.kind({ id: 'avoid', label: 'the cold shoulder', tell: 'gave {with} the cold shoulder', tags: ['hostile'], to: ['grudge>0.3'], turns: 1, base: -1, regard: 0.5, grudge: 0, weight: [{ name: 'grudge', input: 'grudge', out: [0, 2] }], on: { end: { feel: [null, 'snubbed'] } } });
     // and what's said on arriving somewhere (begun by the action: weight 0)
-    b.kind({ id: 'till', label: 'paying', topics: ['tag:till'], turns: 2, weight: 0, base: 0.5, regard: 0.5 });
-    b.kind({ id: 'order', label: 'an order', turns: 2, weight: 0, base: 0.5, regard: 0.5 });
-    b.kind({ id: 'visit', label: 'a visit', tags: ['friendly'], turns: 2, weight: 0, base: 1 });
+    b.kind({ id: 'till', label: 'paying', tell: 'paid {with}', topics: ['tag:till'], turns: 2, weight: 0, base: 0.5, regard: 0.5 });
+    b.kind({ id: 'order', label: 'an order', tell: 'ordered from {with}', turns: 2, weight: 0, base: 0.5, regard: 0.5 });
+    b.kind({ id: 'visit', label: 'a visit', tell: 'had a word at the door with {with}', tags: ['friendly'], turns: 2, weight: 0, base: 1 });
     // how people talk: plainly, warmly, or with an edge
     b.manner({ id: 'plain', base: 0.1 });
     b.manner({ id: 'warm', traits: { warmth: 1 }, fits: [{ if: ['mood>0.6'], by: 0.2 }], lands: [{ by: 0.25 }] });

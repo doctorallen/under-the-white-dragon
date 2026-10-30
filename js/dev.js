@@ -119,7 +119,7 @@ const Dev = {
     const st = City.state(id), O = TyrellMode.ins.o;
     const where = st.gap ? 'between streets' : st.level ? LEVELS[st.level].name + (st.hidden ? ', indoors' : ` at x ${Math.round(st.x)}`) + (st.level === World.L.id ? ' (here)' : '') : 'nowhere drawn';
     return d.hint(`On screen: ${where} · ${st.act}${st.moving ? ', on the move' : ''} · <a data-devact="pick">someone else</a>`)
-      + Tycho.inspect.mind(City.w, id, { prefix: 'dev', name: O.name, who: O.who, place: O.place, walking: O.walking, about: O.about, selectable: O.selectable, numbers: true, chances: true, table: true, now: true, options: 8,
+      + Tycho.inspect.mind(City.w, id, { prefix: 'dev', name: O.name, who: O.who, place: O.place, walking: O.walking, about: O.about, selectable: O.selectable, numbers: true, chances: true, table: true, now: true, options: 8, story: true, // (lately told as a story, and their storylines: Irulan)
         buttons: () => `<button data-devdo="go" ${st.level && !st.hidden ? '' : 'disabled'}>Go there</button><button data-devdo="tyrell">On the city map</button>` });
   },
   // nobody picked: who's here, and a box to find anyone
