@@ -187,6 +187,11 @@ const City = {
     w.deed('fixed', { feeling: 'helped', regard: 0.2, memory: 6, sentiment: 'fixed my things' });
     w.deed('botched', { feeling: 'wronged', regard: -0.25, memory: 6, sentiment: 'botched a repair' });
     w.wormtongue.crime({ kind: 'strip', severity: 0.6, heat: CITY.reportHeat });
+    // how many times each has seen you strip a machine, and how many of those
+    // they said something: what they say the next time (Chat.react,
+    // CHAT_REACT.again and more); a few days without and they let it go
+    w.defineInput('strip:seen', (ids) => { for (const id of ids) { const v = w.s.people[id] && w.s.people[id].vars; if (!v) continue; if (w.now - (v.stripAt ?? -1e9) > CHAT_REACT.forget * 1440) v.stripSeen = v.stripTold = 0; v.stripSeen = (v.stripSeen || 0) + 1; v.stripAt = w.now; } });
+    w.defineInput('strip:told', (said) => { for (const [id, key] of said) { const v = w.s.people[id] && w.s.people[id].vars; if (v) { v.stripTold = (v.stripTold || 0) + 1; v.stripLast = key; } } });
     this.reports = Tycho.minds.collect(w, 'report', (r) => r.actor === 'player');
     Talk.declare(w); // (conversations with you: talk.js)
     Chat.declare(w); // (and between residents: chat.js)
@@ -328,8 +333,9 @@ const City = {
   strip(p) {
     const saw = this.witnesses(p);
     const seenBy = saw.filter((n) => n.def.town).map((n) => n.def.town);
-    if (this.on && seenBy.length) this.w.sense({ kind: 'strip', actor: 'player', what: p.label || p.kind, seenBy });
-    Chat.react(p, saw); // (what they say: chat.js)
+    if (this.on && seenBy.length) { this.w.sense({ kind: 'strip', actor: 'player', what: p.label || p.kind, seenBy }); this.w.input('strip:seen', [seenBy]); }
+    const told = Chat.react(p, saw); // (what they say: chat.js; more, the more they've seen)
+    if (this.on && told.length) this.w.input('strip:told', [told]);
   },
   // ---- between residents (chat.js) -----------------------------------------
   // who sees what passes between two people (Bree's witnesses): the same

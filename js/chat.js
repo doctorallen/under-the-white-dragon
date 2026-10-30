@@ -117,6 +117,38 @@ const CHAT_REACT = {
     goro: ['Floor\'s got eyes, friend.', 'That\'s the house\'s.'], vin: ['You\'re done in here.', 'Bad idea. Real bad idea.'], hana: ['Not here. Not in front of the fox.'],
   },
   own: 0.6, // how often a resident with words of their own uses them
+  // Seen at it again, they say so: the second time (again) and the third and
+  // after (more), the most specific line winning (pri), so a tier's lines
+  // outrank the last's, a resident's own included. 'told' are for those who
+  // said something last time ("What did I just tell you?"), 'seen' for those
+  // who only watched; 'other' and their own words fit either. A few days
+  // without catching you at it (forget), and they let it go. (City.strip
+  // keeps the count with their minds: var.stripSeen, var.stripTold.)
+  again: {
+    pri: 4,
+    owner: { told: ['Again? What did I just tell you?', 'I told you to leave my {what} alone!', 'Not again. I told you once already.'], seen: ['That\'s two. Don\'t think I didn\'t see the last one.', 'Twice now. I saw you the first time.'] },
+    first: { told: ['I told you already! Stop that!', 'Again? I just said something!', 'You heard me the first time.'], seen: ['That\'s twice now.', 'You did that before, too. I saw.'] },
+    other: ['Again?', 'Not this again.', 'Here we go again.', 'Same as last time.'],
+    by: {
+      goro: ['Floor\'s got eyes, friend. I said so already.', 'Twice. The house remembers.'], ueda: ['I told you. Not my regulars\' things.'], mo: ['Again! My shop! I told you!'],
+      vin: ['You were told.'], wen: ['Twice now. Your mother would weep.'], sato: ['Again! Oh, I told you, didn\'t I?'], kai: ['Again? You\'re mental.'],
+      sal: ['Again, eh. Bold.'], okonkwo: ['Twice now. I told you how to treat a machine.'], hana: ['The fox saw you the first time too.'],
+    },
+  },
+  more: {
+    pri: 8,
+    owner: { told: ['I\'m not telling you again. Out!', 'I\'ve told you and told you!', 'How many times? Get out of my {place}!'], seen: ['That\'s {count} now. I\'ve been counting.', 'Every time you\'re in here. Every time.'] },
+    first: { told: ['I\'ve told you {times} now! Somebody stop them!', 'Are you even listening to me?', 'How many times do I have to say it?'], seen: ['That\'s {count} now.', 'You\'re not even hiding it anymore.'] },
+    other: ['This is getting ridiculous.', 'Somebody do something.', 'Every time.', 'They\'re not going to stop, are they.'],
+    by: {
+      goro: ['{Nth} time. The house is done with you.', 'That\'s it. Out the door, friend.', 'The house counts, friend. That\'s {count}.'], ueda: ['Out. I won\'t say it again.', 'Not one more. Out.'], mo: ['That\'s it. I\'m checking the cameras. If I have any.', 'My shop! Again! Every time!'],
+      vin: ['You\'re done. I mean it this time.', 'That\'s {count}. I\'m done talking.'], wen: ['{Count} times. Have you no shame at all?', 'Again. Shameless.'], sato: ['Everyone will hear about this. Everyone.'], kai: ['Okay, now you\'re definitely gonna get it.'],
+      sal: ['Ha. Okay, that\'s a lot.'], okonkwo: ['I\'ve said it. You won\'t listen.'], hana: ['Leave. The fox has seen enough.'],
+    },
+  },
+  forget: 3, // days
+  // how many times they've seen it, in words, for {count}, {times} and {Nth}
+  count: ['once', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'], nth: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'],
 };
 
 const Chat = {
@@ -147,6 +179,13 @@ const Chat = {
     for (const k of ['owner', 'first', 'other']) {
       CHAT_REACT[k].forEach((text, i) => lines.push({ key: 'strip.' + k + '.' + i, topic: 'strip.' + k, text }));
       for (const id in CHAT_REACT.by) CHAT_REACT.by[id].forEach((text, i) => lines.push({ key: 'strip.' + k + '.' + id + '.' + i, topic: 'strip.' + k, who: id, when: ['chance:' + CHAT_REACT.own], text }));
+      // seen at it again: the second time, then the third and after
+      for (const [tier, n] of [['again', 2], ['more', 3]]) {
+        const E = CHAT_REACT[tier], seen = 'var.stripSeen>=' + n, at = (key, o) => lines.push(Object.assign({ key: 'strip.' + k + '.' + tier + '.' + key, topic: 'strip.' + k, pri: E.pri }, o));
+        if (k === 'other') E.other.forEach((text, i) => at(i, { when: [seen], text }));
+        else { E[k].told.forEach((text, i) => at('told.' + i, { when: [seen, 'var.stripTold>=1'], text })); E[k].seen.forEach((text, i) => at('seen.' + i, { when: [seen], text })); }
+        for (const id in E.by) E.by[id].forEach((text, i) => at(id + '.' + i, { who: id, when: [seen, 'chance:' + CHAT_REACT.own], text }));
+      }
     }
     cs.addLines(lines);
     // the kinds: small talk, and what can come of it
@@ -234,27 +273,32 @@ const Chat = {
     return (ex ? ` · ${(b.kinds.get(ex.kind) || {}).label || ex.kind} with ${ex.who.filter((q) => q !== id).map(name).join(', ')}` : '') + (g ? ` · a grudge against ${name(g.id)}` : '');
   },
   // ---- what witnesses say when you strip a machine -----------------------------
+  // (returns the residents who spoke up, and what they said: they've told you now)
   react(p, saw) {
-    if (!saw.length) return;
+    if (!saw.length) return [];
     const R = CHAT_REACT, what = (p.label || p.kind).replace(/^(a|an|the) /i, ''), here = World.L.id;
-    const fill = (t, owner) => t.replace(/\{what\}/g, what).replace(/\{place\}/g, World.L.name.replace(/^the /i, '')).replace(/\{owner\}/g, owner ? owner.def.name : 'Hey');
+    const up = (t) => t[0].toUpperCase() + t.slice(1), count = (n) => R.count[n - 1] || 'too many', nth = (n) => R.nth[n - 1] || 'umpteenth', times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : count(n) + ' times');
+    const fill = (t, owner, n) => t.replace(/\{what\}/g, what).replace(/\{place\}/g, World.L.name.replace(/^the /i, '')).replace(/\{owner\}/g, owner ? owner.def.name : 'Hey')
+      .replace(/\{count\}/g, count(n)).replace(/\{Count\}/g, up(count(n))).replace(/\{nth\}/g, nth(n)).replace(/\{Nth\}/g, up(nth(n))).replace(/\{times\}/g, times(n));
     // the one whose place this is: a resident who works in this level, if they're here
     const owner = saw.find((n) => { const j = n.def.town && RESIDENTS[n.def.town].job; return j && Census.places[j.place] && Census.places[j.place].level === here; });
     const order = owner ? [owner].concat(saw.filter((n) => n !== owner)) : saw;
-    const used = new Set(), minds = City.on && City.w.cityspeak;
+    const used = new Set(), minds = City.on && City.w.cityspeak, spoke = [];
     order.slice(0, 3).forEach((n, i) => {
-      const k = i === 0 ? (owner ? 'owner' : 'first') : 'other', id = n.def.town;
+      const k = i === 0 ? (owner ? 'owner' : 'first') : 'other', id = n.def.town, v = (minds && id && City.w.s.people[id] && City.w.s.people[id].vars) || {};
       let line = null;
       if (minds && id && City.w.get(id)) {
         // (nobody says the same thing twice; with nobody's place it is, nobody's asked if they're seeing this)
-        const said = minds.choose(id, { topic: 'strip.' + k, exact: true, salt: [i], avoid: (key) => used.has(key), skip: (l) => !owner && /\{owner\}/.test(l.text) });
-        if (said) { used.add(said.key); line = said.text; }
+        // (nor what they said to you last time)
+        const said = minds.choose(id, { topic: 'strip.' + k, exact: true, salt: [i], avoid: (key) => used.has(key) || key === v.stripLast, skip: (l) => !owner && /\{owner\}/.test(l.text) });
+        if (said) { used.add(said.key); line = said.text; spoke.push([id, said.key]); }
       } else {
         const pick = (list, j) => { const free = list.filter((l) => !used.has(l)), from = free.length ? free : list, l = from[Math.floor(hash(n.i + j, Game.s.day, what.length) * from.length)]; used.add(l); return l; };
         line = pick(R[k].filter((l) => owner || !l.includes('{owner}')), i === 0 ? 1 : 2 + i);
         if (R.by[id] && hash(n.i, Game.s.day, 7) < R.own) line = pick(R.by[id], 3);
       }
-      if (line) this.say(n, fill(line, owner), 0.35 + i * 1.3, true);
+      if (line) this.say(n, fill(line, owner, v.stripSeen || 1), 0.35 + i * 1.3, true);
     });
+    return spoke;
   },
 };
