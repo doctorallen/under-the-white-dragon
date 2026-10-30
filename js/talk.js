@@ -128,6 +128,12 @@ const TALK_LINES = [
   { key: 'saw.kid.paid', topic: 'saw.paid', who: ['is:child'], text: 'Twenty! I didn\'t see ANYTHING.' },
   { key: 'saw.kid.insulted', topic: 'saw.insulted', who: ['is:child'], text: 'I\'m not taking that. I\'m telling my mom.' },
   { key: 'saw.kid.liar', topic: 'saw.liar', who: ['is:child'], text: 'Liar! I SAW you.' },
+  // (caught at it more than once: Wormtongue's repeats, as Chat.react's)
+  { key: 'saw.again.doubt', topic: 'saw.doubt', when: ['witnessed:player.strip>=2'], text: '...Twice I saw it. But fine. Maybe.' },
+  { key: 'saw.again.liar', topic: 'saw.liar', when: ['witnessed:player.strip>=2'], text: 'Not you? Every time? Don\'t.' },
+  { key: 'saw.again.square', topic: 'saw.square', when: ['witnessed:player.strip>=2'], text: 'Saying so doesn\'t make it better the second time.' },
+  { key: 'saw.again.square.told', topic: 'saw.square', when: ['witnessed:player.strip>=2', 'warned:player.strip>=1'], text: 'You say so now. I told you to stop.' },
+  { key: 'saw.again.owned', topic: 'saw.owned', when: ['witnessed:player.strip>=2'], text: 'Again, and you own it. Then the precinct can have it.' },
   { key: 'heard.shrug', topic: 'heard.shrug', text: 'They do. Forget I asked.' },
   { key: 'heard.doubt', topic: 'heard.doubt', text: 'Mm. If you say so.' },
   { key: 'heard.fair', topic: 'heard.fair', text: 'Junk\'s junk, I suppose.' },
@@ -147,7 +153,12 @@ const TALK_WORDS = {
   'back.thanks': (T) => { const j = talkJob(T, 'given', 'handback'), J = j && Jobs.def(j.id); return !J ? '' : J.pay ? J.thanks || 'That\'s it working. Thank you.' : 'I owe you.'; },
   'back.laugh': (T) => 'Ha. ' + TALK_WORDS['back.thanks'](T),
   'tip.start': (T) => { const id = T.tip || T.told; return id ? TIPS[id].say : ''; },
-  'saw.start': (T, n, id) => { const b = City.w.reverie.beliefRecord(id, 'did:player:strip'), what = b && typeof b.v === 'string' ? b.v.replace(/^(a|an|the) /i, '') : 'machine'; return (TALK_SAW[id] || 'I saw you take the {what} apart. I\'m not blind.').replace('{what}', what); },
+  // (more than once, they say so: Wormtongue's repeats)
+  'saw.start': (T, n, id) => {
+    const b = City.w.reverie.beliefRecord(id, 'did:player:strip'), what = b && typeof b.v === 'string' ? b.v.replace(/^(a|an|the) /i, '') : 'machine', times = City.w.wormtongue.seenTimes(id, 'player', 'strip');
+    const again = times >= 3 ? `That's ${CHAT_REACT.count[times - 1] || 'too many'} times I've watched you take things apart. I'm not blind, and I'm not stupid.` : times === 2 ? 'Twice now. I watched you take the {what} apart, and I watched you do it before.' : null;
+    return (again || TALK_SAW[id] || 'I saw you take the {what} apart. I\'m not blind.').replace('{what}', what);
+  },
   'heard.start': (T, n, id) => { const b = City.w.reverie.beliefRecord(id, 'did:player:strip'), from = b && b.from && City.w.get(b.from); return `${from ? from.name : 'Someone'} says you've been stripping machines. Is that right?`; },
   'fixed.start': (T) => T.fixed ? (T.fixed.sour ? `That ${T.fixed.thing} you fixed for me died again. I'll think about it.` : `That ${T.fixed.thing} you fixed for me? Still going.`) : '',
   'small.work': (T, n, id) => { const R = RESIDENTS[id], shift = T.moment && T.moment.kind === 'work'; if (!R.gen && R.say.work && !shift) return R.say.work; // (stopped at it, their greeting was that already)

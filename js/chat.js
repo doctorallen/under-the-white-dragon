@@ -122,8 +122,9 @@ const CHAT_REACT = {
   // outrank the last's, a resident's own included. 'told' are for those who
   // said something last time ("What did I just tell you?"), 'seen' for those
   // who only watched; 'other' and their own words fit either. A few days
-  // without catching you at it (forget), and they let it go. (City.strip
-  // keeps the count with their minds: var.stripSeen, var.stripTold.)
+  // without catching you at it (forget), and they let it go; and each time
+  // before makes them likelier to report it (report). (The count is
+  // Wormtongue's repeats: witnessed:player.strip, warned:player.strip.)
   again: {
     pri: 4,
     owner: { told: ['Again? What did I just tell you?', 'I told you to leave my {what} alone!', 'Not again. I told you once already.'], seen: ['That\'s two. Don\'t think I didn\'t see the last one.', 'Twice now. I saw you the first time.'] },
@@ -146,7 +147,7 @@ const CHAT_REACT = {
       sal: ['Ha. Okay, that\'s a lot.'], okonkwo: ['I\'ve said it. You won\'t listen.'], hana: ['Leave. The fox has seen enough.'],
     },
   },
-  forget: 3, // days
+  forget: 3, report: 0.5, // days; and each time seen before, this much likelier to report it
   // how many times they've seen it, in words, for {count}, {times} and {Nth}
   count: ['once', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'], nth: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'],
 };
@@ -181,9 +182,9 @@ const Chat = {
       for (const id in CHAT_REACT.by) CHAT_REACT.by[id].forEach((text, i) => lines.push({ key: 'strip.' + k + '.' + id + '.' + i, topic: 'strip.' + k, who: id, when: ['chance:' + CHAT_REACT.own], text }));
       // seen at it again: the second time, then the third and after
       for (const [tier, n] of [['again', 2], ['more', 3]]) {
-        const E = CHAT_REACT[tier], seen = 'var.stripSeen>=' + n, at = (key, o) => lines.push(Object.assign({ key: 'strip.' + k + '.' + tier + '.' + key, topic: 'strip.' + k, pri: E.pri }, o));
+        const E = CHAT_REACT[tier], seen = 'witnessed:player.strip>=' + n, at = (key, o) => lines.push(Object.assign({ key: 'strip.' + k + '.' + tier + '.' + key, topic: 'strip.' + k, pri: E.pri }, o));
         if (k === 'other') E.other.forEach((text, i) => at(i, { when: [seen], text }));
-        else { E[k].told.forEach((text, i) => at('told.' + i, { when: [seen, 'var.stripTold>=1'], text })); E[k].seen.forEach((text, i) => at('seen.' + i, { when: [seen], text })); }
+        else { E[k].told.forEach((text, i) => at('told.' + i, { when: [seen, 'warned:player.strip>=1'], text })); E[k].seen.forEach((text, i) => at('seen.' + i, { when: [seen], text })); }
         for (const id in E.by) E.by[id].forEach((text, i) => at(id + '.' + i, { who: id, when: [seen, 'chance:' + CHAT_REACT.own], text }));
       }
     }
@@ -297,7 +298,7 @@ const Chat = {
         line = pick(R[k].filter((l) => owner || !l.includes('{owner}')), i === 0 ? 1 : 2 + i);
         if (R.by[id] && hash(n.i, Game.s.day, 7) < R.own) line = pick(R.by[id], 3);
       }
-      if (line) this.say(n, fill(line, owner, v.stripSeen || 1), 0.35 + i * 1.3, true);
+      if (line) this.say(n, fill(line, owner, (minds && id && City.w.wormtongue.seenTimes(id, 'player', 'strip')) || 1), 0.35 + i * 1.3, true);
     });
     return spoke;
   },
